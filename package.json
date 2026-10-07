@@ -1,0 +1,48 @@
+{
+  "name": "church-management",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0",
+    "npm": ">=10.0.0"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,green \"npm run dev --workspace @church/api\" \"npm run dev --workspace @church/web\"",
+    "build": "npm run build --workspace @church/shared && npm run build --workspace @church/api && npm run build --workspace @church/web",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run test --workspace @church/api && npm run test --workspace @church/web",
+    "pretest": "npm run build --workspace @church/shared",
+    "db:generate": "npm run db:generate --workspace @church/api",
+    "db:migrate": "npm run db:migrate --workspace @church/api --",
+    "db:studio": "npm run db:studio --workspace @church/api",
+    "db:seed": "npm run db:seed --workspace @church/api"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "concurrently": "^10.0.5",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.46.4"
+  },
+  "overrides": {
+    "concurrently": {
+      "shell-quote": "1.12.0"
+    },
+    "@nestjs/swagger": {
+      "js-yaml": "5.4.3"
+    },
+    "deepmerge-ts": "8.0.2"
+  }
+}

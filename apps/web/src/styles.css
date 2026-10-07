@@ -1,0 +1,160 @@
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  background: #f7f8fa;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.brand-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  background: #245b4a;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.sidebar-label {
+  padding: 1rem 1.5rem 0.5rem;
+  color: #77817d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.navigation-list {
+  padding: 0 0.75rem;
+}
+
+.navigation-link {
+  min-height: 46px;
+  margin: 0.2rem 0;
+  border-radius: 8px !important;
+  color: #56615c;
+}
+
+.navigation-link .MuiListItemIcon-root {
+  min-width: 38px;
+  color: inherit;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.5rem;
+}
+
+.app-header {
+  border-bottom: 1px solid #e9edeb;
+  background: rgba(255, 255, 255, 0.96) !important;
+}
+
+.header-toolbar {
+  min-height: 68px !important;
+  gap: 0.75rem;
+}
+
+.profile-avatar {
+  width: 34px !important;
+  height: 34px !important;
+  background: #dce9e3 !important;
+  color: #245b4a !important;
+  font-size: 0.9rem !important;
+  font-weight: 700;
+}
+
+.main-content {
+  min-height: 100vh;
+}
+
+.dashboard-content {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  height: 100%;
+}
+
+.dashboard-panels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr);
+  gap: 1rem;
+}
+
+.empty-state {
+  display: grid;
+  min-height: 200px;
+  place-content: center;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  border: 1px dashed #d6dfda;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.login-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 1.5rem;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(36, 91, 74, 0.1), transparent 38%),
+    #f7f8fa;
+}
+
+.login-card {
+  width: min(100%, 440px);
+  padding: 1rem;
+}
+
+.account-grid,
+.detail-grid,
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.account-grid {
+  align-items: start;
+}
+
+.clickable-row {
+  cursor: pointer;
+}
+
+@media (max-width: 700px) {
+  .account-grid,
+  .detail-grid,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-content {
+    padding-top: 1.5rem;
+  }
+
+  .summary-grid,
+  .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+}
