@@ -3,11 +3,14 @@
   "services": {
     "api": {
       "root": "apps/api",
-      "framework": "nestjs"
+      "framework": "nestjs",
+      "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run db:generate && npm run build --workspace @church/api"
     },
     "web": {
       "root": "apps/web",
-      "framework": "vite"
+      "framework": "vite",
+      "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run build --workspace @church/web",
+      "outputDirectory": "dist"
     }
   },
   "rewrites": [
