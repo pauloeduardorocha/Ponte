@@ -20,6 +20,7 @@ import { PostgresThrottlerStorage } from './modules/auth/postgres-throttler.stor
 import { SafeExceptionFilter } from './common/safe-exception.filter';
 import { CommunityModule } from './modules/community/community.controller';
 import { OperationsModule } from './modules/operations/operations.controller';
+import { EventsModule } from './modules/events/events.controller';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { OperationsModule } from './modules/operations/operations.controller';
     PrivacyModule,
     CommunityModule,
     OperationsModule,
+    EventsModule,
     HealthModule,
     AuthModule,
     MembersModule,

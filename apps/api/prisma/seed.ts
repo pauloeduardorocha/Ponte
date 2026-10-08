@@ -33,8 +33,24 @@ async function seed() {
         for (const name of INITIAL_ROLES) {
           const role = await tx.role.upsert({
             where: { name },
-            create: { name },
-            update: {},
+            create: {
+              name,
+              ...(name === 'EVENT_MANAGER'
+                ? {
+                    displayName: 'Gestor de Eventos',
+                    description:
+                      'Responsável pela gestão operacional dos eventos aos quais foi atribuído.',
+                  }
+                : {}),
+            },
+            update:
+              name === 'EVENT_MANAGER'
+                ? {
+                    displayName: 'Gestor de Eventos',
+                    description:
+                      'Responsável pela gestão operacional dos eventos aos quais foi atribuído.',
+                  }
+                : {},
           });
           const allowed = await tx.permission.findMany({
             where: { code: { in: [...ROLE_PERMISSIONS[name]] } },

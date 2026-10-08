@@ -79,7 +79,9 @@ export function OperationDetail({
       apiRequest<{ memberId: string | null }>('/operations/identity'),
     enabled: resource === 'schedules',
   });
-  const canManage = hasPermission(configs[resource].update);
+  const canManage =
+    hasPermission(configs[resource].update) ||
+    (resource === 'events' && hasPermission('EVENT_REGISTRATION_MANAGE'));
   const member: Field = {
     key: 'memberId',
     label: 'Membro',

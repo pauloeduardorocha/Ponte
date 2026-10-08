@@ -2,11 +2,13 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { resolve, extname } from 'node:path';
+import { PrismaService } from '../../database/prisma.service';
 export interface PrivateUpload {
   originalname: string;
   mimetype: string;
@@ -17,7 +19,20 @@ export const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
 @Injectable()
 export class StorageService {
   private readonly root: string;
-  constructor(config: ConfigService) {
+  private readonly databaseStorage: boolean;
+  constructor(
+    config: ConfigService,
+    @Optional() private readonly db?: PrismaService,
+  ) {
+    this.databaseStorage =
+      config.get<string>('PRIVATE_STORAGE_DRIVER') === 'database';
+    if (this.databaseStorage && !db)
+      throw new Error('Database storage requires PrismaService');
+    if (config.get<string>('VERCEL') === '1' && !this.databaseStorage) {
+      throw new Error(
+        'Vercel requires PRIVATE_STORAGE_DRIVER=database for persistent attachments',
+      );
+    }
     this.root = resolve(
       config.get<string>('PRIVATE_STORAGE_PATH') ?? './private-storage',
     );
@@ -76,12 +91,26 @@ export class StorageService {
       file.size > MAX_ATTACHMENT_SIZE
     )
       throw new BadRequestException();
-    await mkdir(this.root, { recursive: true, mode: 0o700 });
     const key = randomUUID();
+    if (this.databaseStorage) {
+      await this.db!.privateFile.create({
+        data: { id: key, content: new Uint8Array(file.buffer) },
+      });
+      return key;
+    }
+    await mkdir(this.root, { recursive: true, mode: 0o700 });
     await writeFile(this.path(key), file.buffer, { flag: 'wx', mode: 0o600 });
     return key;
   }
   async get(key: string) {
+    this.path(key);
+    if (this.databaseStorage) {
+      const file = await this.db!.privateFile.findUnique({
+        where: { id: key },
+      });
+      if (!file) throw new NotFoundException('Arquivo indisponível');
+      return Buffer.from(file.content);
+    }
     try {
       return await readFile(this.path(key));
     } catch (e) {
@@ -91,6 +120,11 @@ export class StorageService {
     }
   }
   async remove(key: string) {
+    this.path(key);
+    if (this.databaseStorage) {
+      await this.db!.privateFile.deleteMany({ where: { id: key } });
+      return;
+    }
     await unlink(this.path(key));
   }
 }

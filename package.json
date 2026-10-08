@@ -23,7 +23,8 @@
     "db:generate": "npm run db:generate --workspace @church/api",
     "db:migrate": "npm run db:migrate --workspace @church/api --",
     "db:studio": "npm run db:studio --workspace @church/api",
-    "db:seed": "npm run db:seed --workspace @church/api"
+    "db:seed": "npm run db:seed --workspace @church/api",
+    "db:bootstrap:production": "node apps/api/prisma/bootstrap-production.cjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

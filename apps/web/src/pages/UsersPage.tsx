@@ -197,7 +197,11 @@ function RolesDialog({
             roles.data.map((role) => (
               <FormControlLabel
                 key={role.id}
-                label={role.name}
+                label={
+                  role.name === 'EVENT_MANAGER'
+                    ? 'Gestor de Eventos'
+                    : role.name
+                }
                 control={
                   <Checkbox
                     checked={selected.includes(role.id)}

@@ -4,6 +4,7 @@ import { StorageService, MAX_ATTACHMENT_SIZE } from './storage.service';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { PrismaService } from '../../database/prisma.service';
 describe('Private financial storage', () => {
   let root: string;
   let storage: StorageService;
@@ -46,5 +47,39 @@ describe('Private financial storage', () => {
   });
   it('rejects path traversal keys', async () => {
     await expect(storage.get('../secret')).rejects.toThrow(BadRequestException);
+  });
+  it('persists attachments across service instances with database storage', async () => {
+    const files = new Map<string, { id: string; content: Buffer }>();
+    const db = {
+      privateFile: {
+        create: jest.fn(async ({ data }) => {
+          files.set(data.id, data);
+          return data;
+        }),
+        findUnique: jest.fn(async ({ where }) => files.get(where.id) ?? null),
+        deleteMany: jest.fn(async ({ where }) => {
+          files.delete(where.id);
+          return { count: 1 };
+        }),
+      },
+    } as unknown as PrismaService;
+    const config = new ConfigService({
+      PRIVATE_STORAGE_DRIVER: 'database',
+      VERCEL: '1',
+    });
+    const writer = new StorageService(config, db);
+    const reader = new StorageService(config, db);
+    const file = pdf();
+    file.size = file.buffer.length;
+    const key = await writer.put(file);
+    expect(await reader.get(key)).toEqual(file.buffer);
+    await expect(reader.get('../secret')).rejects.toThrow(BadRequestException);
+    await reader.remove(key);
+    await expect(writer.get(key)).rejects.toThrow('Arquivo indisponível');
+  });
+  it('refuses ephemeral filesystem storage on Vercel', () => {
+    expect(
+      () => new StorageService(new ConfigService({ VERCEL: '1' })),
+    ).toThrow('PRIVATE_STORAGE_DRIVER=database');
   });
 });

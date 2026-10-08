@@ -129,8 +129,14 @@ export class OperationsService {
     user: CurrentUser,
   ): Promise<Prisma.CommunityEventWhereInput> {
     if (this.all(user) || user.permissions.includes('EVENT_WRITE')) return {};
+    // Granular event permissions require an active assignment. Legacy leaders retain their policy.
+    if (!user.permissions.includes('EVENT_MANAGE'))
+      return {
+        managerAssignments: { some: { userId: user.id, revokedAt: null } },
+      };
     return {
       OR: [
+        { managerAssignments: { some: { userId: user.id, revokedAt: null } } },
         { createdByUserId: user.id },
         { smallGroup: await this.groupScope(user) },
         { ministry: await this.ministryScope(user) },
@@ -265,6 +271,7 @@ export class OperationsService {
           'MINISTRY_MANAGE',
           'SCHEDULE_MANAGE',
           'EVENT_MANAGE',
+          'EVENT_REGISTRATION_MANAGE',
           'VISITOR_CREATE',
         ].includes(p),
       );
@@ -909,12 +916,33 @@ export class OperationsService {
     if (!e) throw new NotFoundException();
     return e;
   }
+  private async lockEvent(
+    tx: Prisma.TransactionClient,
+    id: string,
+    user: CurrentUser,
+  ) {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${id}))`;
+    if (
+      !(await tx.communityEvent.findFirst({
+        where: { AND: [{ id }, await this.eventScope(user)] },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException();
+  }
   async saveEvent(
     id: string | undefined,
     dto: D.OperationalEventDto | D.OperationalEventPatch,
     user: CurrentUser,
   ) {
     const old = id ? await this.event(id, user) : undefined;
+    if (
+      dto.status &&
+      !user.permissions.some((p) =>
+        ['EVENT_PUBLISH', 'EVENT_MANAGE', 'EVENT_WRITE'].includes(p),
+      )
+    )
+      throw new ForbiddenException();
     if (dto.smallGroupId) await this.group(dto.smallGroupId, user);
     if (dto.ministryId) await this.ministry(dto.ministryId, user);
     const { title, startDateTime, endDateTime, ...rest } = dto;
@@ -923,12 +951,13 @@ export class OperationsService {
     if (!startsAt || !endsAt || endsAt <= startsAt)
       throw new BadRequestException('Fim deve ser posterior ao início.');
     return this.write(async (tx) => {
+      if (id) await this.lockEvent(tx, id, user);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
       if (
         id &&
         dto.capacity &&
         (await tx.eventRegistration.count({
-          where: { eventId: id, status: 'REGISTERED' },
+          where: { eventId: id, status: { in: ['REGISTERED', 'APPROVED'] } },
         })) > dto.capacity
       )
         throw new ConflictException('Capacidade inferior às inscrições.');
@@ -962,6 +991,14 @@ export class OperationsService {
           where: { eventId: id, status: { in: ['DRAFT', 'PUBLISHED'] } },
           data: { status: 'CANCELLED' },
         });
+      if (!id)
+        await tx.eventManagerAssignment.create({
+          data: {
+            eventId: saved.id,
+            userId: user.id,
+            assignedByUserId: user.id,
+          },
+        });
       return saved;
     });
   }
@@ -982,16 +1019,32 @@ export class OperationsService {
   async register(id: string, dto: D.PersonDto, user: CurrentUser) {
     await this.event(id, user);
     return this.write(async (tx) => {
+      await this.lockEvent(tx, id, user);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
       const e = await tx.communityEvent.findUniqueOrThrow({ where: { id } });
       if (!e.active || e.status !== 'SCHEDULED')
         throw new ConflictException('Evento não aceita inscrições.');
-      await this.accessiblePerson(tx, dto, user);
+      if (user.permissions.includes('EVENT_REGISTRATION_MANAGE')) {
+        this.person(dto);
+        await this.validMember(tx, dto.memberId);
+        if (
+          dto.visitorId &&
+          !(await tx.visitor.findUnique({
+            where: { id: dto.visitorId },
+            select: { id: true },
+          }))
+        )
+          throw new NotFoundException();
+      } else await this.accessiblePerson(tx, dto, user);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009001)`;
       const identity = await this.personIdentity(tx, dto);
       if (
         await tx.eventRegistration.findFirst({
-          where: { eventId: id, ...identity, status: 'REGISTERED' },
+          where: {
+            eventId: id,
+            ...identity,
+            status: { in: ['REGISTERED', 'APPROVED'] },
+          },
           select: { id: true },
         })
       )
@@ -999,12 +1052,12 @@ export class OperationsService {
       const old = await tx.eventRegistration.findFirst({
         where: { eventId: id, ...identity },
       });
-      if (old?.status === 'REGISTERED')
+      if (old && ['REGISTERED', 'APPROVED'].includes(old.status))
         throw new ConflictException('Pessoa já inscrita.');
       if (
         e.capacity &&
         (await tx.eventRegistration.count({
-          where: { eventId: id, status: 'REGISTERED' },
+          where: { eventId: id, status: { in: ['REGISTERED', 'APPROVED'] } },
         })) >= e.capacity
       )
         throw new ConflictException('Capacidade do evento atingida.');
@@ -1023,6 +1076,7 @@ export class OperationsService {
   ) {
     await this.event(id, user);
     return this.write(async (tx) => {
+      await this.lockEvent(tx, id, user);
       const row = await tx.eventRegistration.findFirst({
         where: { id: registrationId, eventId: id },
       });

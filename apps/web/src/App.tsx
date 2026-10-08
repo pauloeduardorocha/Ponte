@@ -8,6 +8,7 @@ const AccountPage = lazy(() =>
   import('./pages/AccountPage').then((m) => ({ default: m.AccountPage })),
 );
 import { DashboardPage } from './pages/DashboardPage';
+import { EventWorkspace } from './pages/events/EventWorkspace';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
@@ -66,6 +67,7 @@ export function App() {
               <Route index element={<DashboardPage />} />
               <Route path="operations" element={<OperationsDashboardPage />} />
               <Route path="inbox" element={<InboxPage />} />
+              <Route path="my-events" element={<EventWorkspace />} />
               <Route path="account" element={<AccountPage />} />
               <Route path="library" element={<LibraryPage />} />
               <Route

@@ -515,20 +515,20 @@ export function LibraryPage() {
                         <MenuItem value="">Todos</MenuItem>
                         {(tab === 'copies'
                           ? [
-                              'AVAILABLE',
-                              'LOANED',
-                              'RESERVED',
-                              'MAINTENANCE',
-                              'LOST',
-                              'DISPOSED',
-                            ]
+                            'AVAILABLE',
+                            'LOANED',
+                            'RESERVED',
+                            'MAINTENANCE',
+                            'LOST',
+                            'DISPOSED',
+                          ]
                           : [
-                              'ACTIVE',
-                              'OVERDUE',
-                              'RETURNED',
-                              'LOST',
-                              'CANCELLED',
-                            ]
+                            'ACTIVE',
+                            'OVERDUE',
+                            'RETURNED',
+                            'LOST',
+                            'CANCELLED',
+                          ]
                         ).map((s) => (
                           <MenuItem key={s} value={s}>
                             {s}
@@ -652,95 +652,100 @@ export function LibraryPage() {
                 {books.data.items.map((book) => (
                   <Card key={book.id} variant="outlined">
                     <CardContent>
-                      <Stack spacing={1}>
-                        {book.cover && (
-                          <Box
-                            component="img"
-                            src={book.cover}
-                            alt={`Capa de ${book.title}`}
-                            sx={{
-                              width: 100,
-                              height: 140,
-                              objectFit: 'contain',
-                            }}
-                          />
-                        )}
-                        <Typography variant="h6">{book.title}</Typography>
-                        <Typography>
-                          {book.subtitle} · {book.author} ·{' '}
-                          {book.category ?? 'Sem categoria'}
-                        </Typography>
-                        <Typography>
-                          {book.publisher} · {book.edition} · {book.year} ·{' '}
-                          {book.language} · {book.pages} páginas
-                        </Typography>
-                        <Typography>{book.description}</Typography>
-                        <Typography>{book.keywords?.join(', ')}</Typography>
-                        <Typography>
-                          Exemplares: {book.quantity} · Disponíveis:{' '}
-                          {book.available}
-                        </Typography>
-                        <Typography variant="caption">
-                          ID: {book.id} · ISBN: {book.isbn}
-                        </Typography>
-                        <Stack direction="row" flexWrap="wrap">
-                          <Can permission="LIBRARY_BOOK_UPDATE">
-                            <Button
-                              onClick={() =>
-                                open(
-                                  'Editar livro',
-                                  (v) =>
-                                    api.updateBook(book.id, bookInput(v, true)),
-                                  bookFields,
-                                  valuesOf(book),
-                                )
-                              }
-                            >
-                              Editar
-                            </Button>
-                          </Can>
-                          <Can permission="LIBRARY_BOOK_DELETE">
-                            <Button
-                              color="error"
-                              onClick={() =>
-                                open('Excluir livro sem histórico', () =>
-                                  api.deleteBook(book.id),
-                                )
-                              }
-                            >
-                              Excluir
-                            </Button>
-                          </Can>
-                          <Can permission="LIBRARY_COPY_CREATE">
-                            <Button
-                              onClick={() =>
-                                open(
-                                  'Novo exemplar',
-                                  (v) => api.createCopy(book.id, copyInput(v)),
-                                  copyFields,
-                                )
-                              }
-                            >
-                              Novo exemplar
-                            </Button>
-                          </Can>
-                          <Can permission="LIBRARY_RESERVATION_CREATE">
-                            <Button
-                              onClick={() =>
-                                open(
-                                  `Reservar ${book.title}`,
-                                  (v) =>
-                                    api.reserve({
-                                      bookId: book.id,
-                                      memberId: v.memberId ?? '',
-                                    }),
-                                  [memberField],
-                                )
-                              }
-                            >
-                              Reservar
-                            </Button>
-                          </Can>
+                      <Stack direction="row">
+
+                        <Stack spacing={1} >
+                          <Typography variant="h6">{book.title}</Typography>
+                          <Typography>
+                            {book.subtitle} · {book.author} ·{' '}
+                            {book.category ?? 'Sem categoria'}
+                          </Typography>
+                          <Typography>
+                            {book.publisher} · {book.edition} · {book.year} ·{' '}
+                            {book.language} · {book.pages} páginas
+                          </Typography>
+                          <Typography>{book.description}</Typography>
+                          <Typography>{book.keywords?.join(', ')}</Typography>
+                          <Typography>
+                            Exemplares: {book.quantity} · Disponíveis:{' '}
+                            {book.available}
+                          </Typography>
+                          <Typography variant="caption">
+                            ID: {book.id} · ISBN: {book.isbn}
+                          </Typography>
+                          <Stack direction="row" flexWrap="wrap">
+                            <Can permission="LIBRARY_BOOK_UPDATE">
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    'Editar livro',
+                                    (v) =>
+                                      api.updateBook(book.id, bookInput(v, true)),
+                                    bookFields,
+                                    valuesOf(book),
+                                  )
+                                }
+                              >
+                                Editar
+                              </Button>
+                            </Can>
+                            <Can permission="LIBRARY_BOOK_DELETE">
+                              <Button
+                                color="error"
+                                onClick={() =>
+                                  open('Excluir livro sem histórico', () =>
+                                    api.deleteBook(book.id),
+                                  )
+                                }
+                              >
+                                Excluir
+                              </Button>
+                            </Can>
+                            <Can permission="LIBRARY_COPY_CREATE">
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    'Novo exemplar',
+                                    (v) => api.createCopy(book.id, copyInput(v)),
+                                    copyFields,
+                                  )
+                                }
+                              >
+                                Novo exemplar
+                              </Button>
+                            </Can>
+                            <Can permission="LIBRARY_RESERVATION_CREATE">
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    `Reservar ${book.title}`,
+                                    (v) =>
+                                      api.reserve({
+                                        bookId: book.id,
+                                        memberId: v.memberId ?? '',
+                                      }),
+                                    [memberField],
+                                  )
+                                }
+                              >
+                                Reservar
+                              </Button>
+                            </Can>
+                          </Stack>
+                        </Stack>
+                        <Stack>
+                          {book.cover && (
+                            <Box
+                              component="img"
+                              src={book.cover}
+                              alt={`Capa de ${book.title}`}
+                              sx={{
+                                width: 100,
+                                height: 140,
+                                objectFit: 'contain',
+                              }}
+                            />
+                          )}
                         </Stack>
                       </Stack>
                     </CardContent>
@@ -782,9 +787,9 @@ export function LibraryPage() {
                                   api.updateCopy(copy.id, {
                                     ...copyInput(v, true),
                                     ...(v.status === 'AVAILABLE' ||
-                                    v.status === 'MAINTENANCE' ||
-                                    v.status === 'LOST' ||
-                                    v.status === 'DISPOSED'
+                                      v.status === 'MAINTENANCE' ||
+                                      v.status === 'LOST' ||
+                                      v.status === 'DISPOSED'
                                       ? { status: v.status }
                                       : {}),
                                     justification: v.justification ?? '',
@@ -818,31 +823,31 @@ export function LibraryPage() {
                         </Can>
                         {(copy.status === 'AVAILABLE' ||
                           copy.status === 'RESERVED') && (
-                          <Can permission="LIBRARY_LOAN_CREATE">
-                            <Button
-                              onClick={() =>
-                                open(
-                                  `Emprestar ${copy.assetCode}`,
-                                  (v) =>
-                                    api.borrow({
-                                      memberId: v.memberId ?? '',
-                                      bookCopyId: copy.id,
-                                      observations: v.observations || undefined,
-                                    }),
-                                  [
-                                    memberField,
-                                    {
-                                      name: 'observations',
-                                      label: 'Observações',
-                                    },
-                                  ],
-                                )
-                              }
-                            >
-                              Emprestar
-                            </Button>
-                          </Can>
-                        )}
+                            <Can permission="LIBRARY_LOAN_CREATE">
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    `Emprestar ${copy.assetCode}`,
+                                    (v) =>
+                                      api.borrow({
+                                        memberId: v.memberId ?? '',
+                                        bookCopyId: copy.id,
+                                        observations: v.observations || undefined,
+                                      }),
+                                    [
+                                      memberField,
+                                      {
+                                        name: 'observations',
+                                        label: 'Observações',
+                                      },
+                                    ],
+                                  )
+                                }
+                              >
+                                Emprestar
+                              </Button>
+                            </Can>
+                          )}
                       </Stack>
                     </Stack>
                   </CardContent>

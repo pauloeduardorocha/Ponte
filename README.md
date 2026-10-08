@@ -7,6 +7,9 @@ A infraestrutura, health check e proxy Nginx/Vite são preservados.
 
 ## Requisitos
 
+Para publicar frontend, API e PostgreSQL nos planos gratuitos Vercel/Neon,
+consulte [o guia de deployment](docs/vercel-deployment.md).
+
 - Node.js 22.13 ou superior e npm 10 ou superior
 - Docker Engine e Docker Compose v2 para executar a stack completa
 - Para desenvolvimento local: PostgreSQL 17 ou Docker para iniciá-lo

@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import * as argon2 from 'argon2';
+import { ROLE_PERMISSIONS } from '@church/shared';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
@@ -123,6 +124,14 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
       data: { name: 'Preserve renamed category' },
     });
     seed({ SEED_DEMO_PASSWORD: 'Changed-seed-password-is-not-applied' });
+    const eventManager = await db.role.findUniqueOrThrow({
+      where: { name: 'EVENT_MANAGER' },
+      include: { permissions: { include: { permission: true } } },
+    });
+    expect(eventManager.displayName).toBe('Gestor de Eventos');
+    expect(
+      eventManager.permissions.map((p) => p.permission.code).sort(),
+    ).toEqual([...ROLE_PERMISSIONS.EVENT_MANAGER].sort());
     expect(await db.financialCategory.count()).toBe(13);
     expect(
       (

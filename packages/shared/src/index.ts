@@ -10,6 +10,24 @@ export const PERMISSIONS = [
   'MINISTRY_READ',
   'MINISTRY_MANAGE',
   'EVENT_MANAGE',
+  'EVENT_CREATE',
+  'EVENT_UPDATE',
+  'EVENT_PUBLISH',
+  'EVENT_REGISTRATION_READ',
+  'EVENT_REGISTRATION_MANAGE',
+  'EVENT_REGISTRATION_APPROVE',
+  'EVENT_ATTENDEE_READ',
+  'EVENT_ATTENDEE_MANAGE',
+  'EVENT_TICKET_MANAGE',
+  'EVENT_COUPON_MANAGE',
+  'EVENT_PAYMENT_READ',
+  'EVENT_CHECKIN',
+  'EVENT_CHECKIN_REVERSE',
+  'EVENT_NOTIFICATION_SEND',
+  'EVENT_REPORT_READ',
+  'EVENT_REPORT_EXPORT',
+  'EVENT_REFUND_APPROVE',
+  'EVENT_MANAGER_ASSIGN',
   'SCHEDULE_READ',
   'SCHEDULE_MANAGE',
   'ATTENDANCE_READ',
@@ -86,6 +104,7 @@ export const INITIAL_ROLES = [
   'LIBRARY',
   'SECRETARY',
   'MEMBER',
+  'EVENT_MANAGER',
 ] as const;
 
 export type InitialRole = (typeof INITIAL_ROLES)[number];
@@ -102,7 +121,14 @@ const OPERATIONAL_PERMISSIONS = PERMISSIONS.filter(
       'ATTENDANCE_',
       'NOTIFICATION_',
     ].some((prefix) => code.startsWith(prefix)) &&
-    !['VISITOR_WRITE', 'EVENT_WRITE'].includes(code),
+    (!code.startsWith('EVENT_') ||
+      ['EVENT_READ', 'EVENT_MANAGE'].includes(code)) &&
+    ![
+      'VISITOR_WRITE',
+      'EVENT_WRITE',
+      'EVENT_MANAGER_ASSIGN',
+      'EVENT_REFUND_APPROVE',
+    ].includes(code),
 );
 
 export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
@@ -138,6 +164,25 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
   FINANCE: PERMISSIONS.filter((code) => code.startsWith('FINANCE_')),
   LIBRARY: PERMISSIONS.filter((code) => code.startsWith('LIBRARY_')),
   MEMBER: [],
+  EVENT_MANAGER: [
+    'EVENT_READ',
+    'EVENT_CREATE',
+    'EVENT_UPDATE',
+    'EVENT_PUBLISH',
+    'EVENT_REGISTRATION_READ',
+    'EVENT_REGISTRATION_MANAGE',
+    'EVENT_REGISTRATION_APPROVE',
+    'EVENT_ATTENDEE_READ',
+    'EVENT_ATTENDEE_MANAGE',
+    'EVENT_TICKET_MANAGE',
+    'EVENT_COUPON_MANAGE',
+    'EVENT_PAYMENT_READ',
+    'EVENT_CHECKIN',
+    'EVENT_CHECKIN_REVERSE',
+    'EVENT_NOTIFICATION_SEND',
+    'EVENT_REPORT_READ',
+    'EVENT_REPORT_EXPORT',
+  ],
 };
 
 export interface CurrentUser {

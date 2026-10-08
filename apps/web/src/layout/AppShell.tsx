@@ -54,6 +54,62 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
+    label: 'Meus eventos',
+    group: 'Eventos',
+    to: '/my-events',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_REGISTRATION_READ',
+  },
+  {
+    label: 'Criar evento',
+    group: 'Eventos',
+    to: '/my-events?create=true',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_CREATE',
+  },
+  {
+    label: 'Inscrições',
+    group: 'Eventos',
+    to: '/my-events?section=registrations',
+    icon: PeopleAltRounded,
+    permission: 'EVENT_REGISTRATION_READ',
+  },
+  {
+    label: 'Participantes',
+    group: 'Eventos',
+    to: '/my-events?section=attendees',
+    icon: PeopleAltRounded,
+    permission: 'EVENT_ATTENDEE_READ',
+  },
+  {
+    label: 'Ingressos',
+    group: 'Eventos',
+    to: '/my-events?section=tickets',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_TICKET_MANAGE',
+  },
+  {
+    label: 'Pagamentos',
+    group: 'Eventos',
+    to: '/my-events?section=payments',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_PAYMENT_READ',
+  },
+  {
+    label: 'Credenciamento',
+    group: 'Eventos',
+    to: '/my-events?section=checkin',
+    icon: PeopleAltRounded,
+    permission: 'EVENT_CHECKIN',
+  },
+  {
+    label: 'Relatórios',
+    group: 'Eventos',
+    to: '/my-events?section=reports',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_REPORT_READ',
+  },
+  {
     label: 'Vida da igreja',
     group: 'Operação',
     to: '/operations',

@@ -7,13 +7,20 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { Permission } from '@church/shared';
 import { AuthRequest } from './auth.guard';
-import { PERMISSION_KEY } from './permission.decorator';
+import { PERMISSION_KEY, PERMISSION_ANY_KEY } from './permission.decorator';
 
 @Injectable()
 export class PermissionGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext) {
+    const any = this.reflector.getAllAndOverride<Permission[]>(
+      PERMISSION_ANY_KEY,
+      [context.getHandler(), context.getClass()],
+    );
+    const request = context.switchToHttp().getRequest<AuthRequest>();
+    if (any?.length && !any.some((p) => request.user?.permissions.includes(p)))
+      throw new ForbiddenException();
     const required = this.reflector.getAllAndOverride<Permission[]>(
       PERMISSION_KEY,
       [context.getHandler(), context.getClass()],

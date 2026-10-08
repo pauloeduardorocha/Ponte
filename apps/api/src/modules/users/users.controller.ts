@@ -176,6 +176,7 @@ export class UsersController {
       orderBy: { name: 'asc' },
     });
     return roles.map((role) => ({
+      displayName: role.displayName ?? role.name,
       id: role.id,
       name: role.name,
       assignable: role.permissions.every(({ permission }) =>

@@ -12,7 +12,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { Permission } from '../auth/permission.decorator';
+import { Permission, PermissionAny } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { OperationsService } from './operations.service';
 import {
@@ -167,13 +167,15 @@ export class OperationsController {
   ) {
     return this.service.events(q, r.user);
   }
-  @Post('events') @Permission('EVENT_MANAGE') createEvent(
+  @Post('events') @PermissionAny('EVENT_MANAGE', 'EVENT_CREATE') createEvent(
     @Body() dto: D.OperationalEventDto,
     @Req() r: AuthRequest,
   ) {
     return this.service.saveEvent(undefined, dto, r.user);
   }
-  @Patch('events/:id') @Permission('EVENT_MANAGE') updateEvent(
+  @Patch('events/:id')
+  @PermissionAny('EVENT_MANAGE', 'EVENT_UPDATE')
+  updateEvent(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.OperationalEventPatch,
     @Req() r: AuthRequest,
@@ -285,14 +287,18 @@ export class OperationsController {
   ) {
     return this.service.leave('ministry', id, participantId, r.user);
   }
-  @Get('events/:id/registrations') @Permission('EVENT_READ') registrations(
+  @Get('events/:id/registrations')
+  @PermissionAny('EVENT_MANAGE', 'EVENT_REGISTRATION_READ')
+  registrations(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() q: D.OperationQuery,
     @Req() r: AuthRequest,
   ) {
     return this.service.registrations(id, q, r.user);
   }
-  @Post('events/:id/registrations') @Permission('EVENT_MANAGE') register(
+  @Post('events/:id/registrations')
+  @PermissionAny('EVENT_MANAGE', 'EVENT_REGISTRATION_MANAGE')
+  register(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.PersonDto,
     @Req() r: AuthRequest,
@@ -300,7 +306,7 @@ export class OperationsController {
     return this.service.register(id, dto, r.user);
   }
   @Post('events/:id/registrations/:registrationId/cancel')
-  @Permission('EVENT_MANAGE')
+  @PermissionAny('EVENT_MANAGE', 'EVENT_REGISTRATION_MANAGE')
   cancelRegistration(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('registrationId', ParseUUIDPipe) registrationId: string,

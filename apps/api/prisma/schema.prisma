@@ -2,6 +2,15 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Optional persistent private attachments for serverless hosting.
+model PrivateFile {
+  id        String   @id @db.Uuid
+  content   Bytes
+  createdAt DateTime @default(now())
+
+  @@map("private_files")
+}
+
 model Visitor {
   createdByUserId   String?             @db.Uuid
   creator           User?               @relation("VisitorCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
@@ -37,6 +46,13 @@ model Visitor {
 }
 
 model CommunityEvent {
+  managerAssignments EventManagerAssignment[]
+  tickets            EventTicket[]
+  coupons            EventCoupon[]
+  payments           EventPayment[]
+  sessions           EventSession[]
+  publishedAt        DateTime?
+
   type                 String              @default("OTHER") @db.VarChar(30)
   endsAt               DateTime?           @db.Timestamptz(6)
   capacity             Int?
@@ -86,6 +102,9 @@ enum UserStatus {
 }
 
 model User {
+  managedEvents         EventManagerAssignment[] @relation("EventManager")
+  assignedEventManagers EventManagerAssignment[] @relation("EventAssigner")
+
   invoiceImports        InvoiceImport[]       @relation("InvoiceUploader")
   invoiceAssociations   FinancialInvoice[]    @relation("InvoiceAssociator")
   createdVisitors       Visitor[]             @relation("VisitorCreator")
@@ -123,6 +142,8 @@ model User {
 }
 
 model Role {
+  displayName String? @map("display_name") @db.VarChar(120)
+
   id          String           @id @default(uuid()) @db.Uuid
   name        String           @unique @db.VarChar(64)
   description String?          @db.VarChar(255)
@@ -882,6 +903,11 @@ model MinistryMember {
 }
 
 model EventRegistration {
+  qrToken     String                @unique @default(uuid()) @db.Uuid
+  checkedInAt DateTime?
+  checkins    EventSessionCheckin[]
+  payments    EventPayment[]
+
   id        String         @id @default(uuid()) @db.Uuid
   eventId   String         @db.Uuid
   event     CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
@@ -1035,4 +1061,109 @@ model FinancialInvoice {
   @@index([bankTransactionId])
   @@index([currency, amount, date])
   @@map("financial_invoices")
+}
+
+model EventManagerAssignment {
+  id               String         @id @default(uuid()) @db.Uuid
+  eventId          String         @db.Uuid
+  userId           String         @db.Uuid
+  assignedByUserId String         @db.Uuid
+  createdAt        DateTime       @default(now())
+  revokedAt        DateTime?
+  event            CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  user             User           @relation("EventManager", fields: [userId], references: [id], onDelete: Restrict)
+  assignedBy       User           @relation("EventAssigner", fields: [assignedByUserId], references: [id], onDelete: Restrict)
+
+  @@unique([eventId, userId])
+  @@index([userId, revokedAt, eventId])
+  @@map("event_manager_assignments")
+}
+
+model EventTicket {
+  id        String         @id @default(uuid()) @db.Uuid
+  eventId   String         @db.Uuid
+  event     CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  name      String         @db.VarChar(160)
+  price     Decimal        @db.Decimal(14, 2)
+  capacity  Int
+  startsAt  DateTime       @db.Timestamptz(6)
+  endsAt    DateTime       @db.Timestamptz(6)
+  createdAt DateTime       @default(now())
+
+  @@index([eventId])
+  @@map("event_tickets")
+}
+
+model EventCoupon {
+  id              String         @id @default(uuid()) @db.Uuid
+  eventId         String         @db.Uuid
+  event           CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  code            String         @db.VarChar(60)
+  discountPercent Int
+  courtesy        Boolean        @default(false)
+  createdAt       DateTime       @default(now())
+
+  @@unique([eventId, code])
+  @@map("event_coupons")
+}
+
+model EventPayment {
+  id             String            @id @default(uuid()) @db.Uuid
+  eventId        String            @db.Uuid
+  event          CommunityEvent    @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  registrationId String            @db.Uuid
+  registration   EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Restrict)
+  amount         Decimal           @db.Decimal(14, 2)
+  discount       Decimal           @default(0) @db.Decimal(14, 2)
+  gatewayFee     Decimal           @default(0) @db.Decimal(14, 2)
+  refundedAmount Decimal           @default(0) @db.Decimal(14, 2)
+  currency       String            @default("EUR") @db.VarChar(3)
+  status         String            @default("PENDING") @db.VarChar(20)
+  createdAt      DateTime          @default(now())
+  refunds        EventRefund[]
+
+  @@index([eventId, status])
+  @@map("event_payments")
+}
+
+model EventRefund {
+  id                String       @id @default(uuid()) @db.Uuid
+  paymentId         String       @db.Uuid
+  payment           EventPayment @relation(fields: [paymentId], references: [id], onDelete: Restrict)
+  requestedByUserId String       @db.Uuid
+  approvedByUserId  String?      @db.Uuid
+  reason            String       @db.VarChar(2000)
+  status            String       @default("REQUESTED") @db.VarChar(20)
+  result            String?      @db.VarChar(2000)
+  createdAt         DateTime     @default(now())
+  approvedAt        DateTime?
+
+  @@index([paymentId, status])
+  @@map("event_refunds")
+}
+
+model EventSession {
+  id       String                @id @default(uuid()) @db.Uuid
+  eventId  String                @db.Uuid
+  event    CommunityEvent        @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  name     String                @db.VarChar(160)
+  startsAt DateTime              @db.Timestamptz(6)
+  endsAt   DateTime              @db.Timestamptz(6)
+  checkins EventSessionCheckin[]
+
+  @@index([eventId])
+  @@map("event_sessions")
+}
+
+model EventSessionCheckin {
+  id             String            @id @default(uuid()) @db.Uuid
+  sessionId      String            @db.Uuid
+  session        EventSession      @relation(fields: [sessionId], references: [id], onDelete: Restrict)
+  registrationId String            @db.Uuid
+  registration   EventRegistration @relation(fields: [registrationId], references: [id], onDelete: Restrict)
+  checkedInAt    DateTime          @default(now())
+  reversedAt     DateTime?
+
+  @@unique([sessionId, registrationId])
+  @@map("event_session_checkins")
 }

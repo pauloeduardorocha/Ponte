@@ -45,11 +45,13 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     { hasPermission } = useAuth();
   const allowed = hasPermission(c.read),
     canCreate =
-      hasPermission(c.create) &&
+      (hasPermission(c.create) ||
+        (resource === 'events' && hasPermission('EVENT_CREATE'))) &&
       (resource !== 'notification-templates' ||
         hasPermission('OPERATION_SCOPE_ALL')),
     canUpdate =
-      hasPermission(c.update) &&
+      (hasPermission(c.update) ||
+        (resource === 'events' && hasPermission('EVENT_UPDATE'))) &&
       (resource !== 'notification-templates' ||
         hasPermission('OPERATION_SCOPE_ALL'));
   const [params] = useSearchParams();
@@ -83,7 +85,11 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         : resource === 'events'
           ? [
               { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
-              { key: 'smallGroupId', label: 'Grupo familiar', lookup: 'small-groups' },
+              {
+                key: 'smallGroupId',
+                label: 'Grupo familiar',
+                lookup: 'small-groups',
+              },
             ]
           : resource === 'schedules'
             ? [
