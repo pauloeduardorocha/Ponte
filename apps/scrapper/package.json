@@ -1,0 +1,14 @@
+{
+  "name": "scrapper",
+  "version": "1.0.0",
+  "license": "ISC",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node teste.js",
+    "test": "node --test normalize.test.js"
+  },
+  "dependencies": {
+    "puppeteer": "^25.12.0"
+  }
+}

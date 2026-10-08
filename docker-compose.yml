@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-church}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}
     ports:
-      - '5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -26,10 +26,13 @@ services:
       API_PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
       DATABASE_URL: postgresql://${POSTGRES_USER:-church}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
+      PRIVATE_STORAGE_PATH: /app/private-storage
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Configure JWT_ACCESS_SECRET in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Configure JWT_REFRESH_SECRET in .env}
     ports:
       - '${API_PORT:-3000}:3000'
+    volumes:
+      - financial_storage:/app/private-storage
     depends_on:
       postgres:
         condition: service_healthy
@@ -57,5 +60,24 @@ services:
       api:
         condition: service_healthy
 
+  seed:
+    profiles: ['demo']
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['node', 'apps/api/dist-seed/seed.js']
+    environment:
+      NODE_ENV: development
+      SEED_DEMO: 'true'
+      SEED_DEMO_PASSWORD: ${SEED_DEMO_PASSWORD:-}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-church}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
+      PRIVATE_STORAGE_PATH: /app/private-storage
+    volumes:
+      - financial_storage:/app/private-storage
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres_data:
+  financial_storage:

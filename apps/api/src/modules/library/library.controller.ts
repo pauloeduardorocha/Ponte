@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -31,6 +32,8 @@ import {
 } from './library.dto';
 import { LibraryService } from './library.service';
 
+@ApiTags('Biblioteca')
+@ApiBearerAuth()
 @Controller('library')
 export class LibraryController {
   constructor(private readonly library: LibraryService) {}

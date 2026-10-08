@@ -23,17 +23,28 @@ FROM node:22-alpine AS runtime
 
 ENV NODE_ENV=production
 ENV API_PORT=3000
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV EFATURA_CHROMIUM_NO_SANDBOX=true
 WORKDIR /app
+
+RUN apk add --no-cache chromium
+COPY apps/scrapper/package.json apps/scrapper/package-lock.json ./apps/scrapper/
+RUN npm ci --omit=dev --prefix apps/scrapper
+COPY --chown=node:node apps/scrapper/*.js ./apps/scrapper/
 
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/package-lock.json ./package-lock.json
 COPY --from=build --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+COPY --from=build --chown=node:node /app/apps/api/dist-seed ./apps/api/dist-seed
 COPY --from=build --chown=node:node /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build --chown=node:node /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
 COPY --from=build --chown=node:node /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
+
+RUN mkdir -p /app/private-storage && chown node:node /app/private-storage && chmod 700 /app/private-storage
 
 USER node
 EXPOSE 3000

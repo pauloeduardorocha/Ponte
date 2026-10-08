@@ -20,7 +20,6 @@ describe('Library maintenance lifecycle', () => {
       expect(transaction).toHaveBeenCalledTimes(1);
       expect(error).toHaveBeenCalledWith(
         'Library overdue/reservation maintenance failed',
-        expect.any(Error),
       );
       library.onModuleDestroy();
       expect(jest.getTimerCount()).toBe(0);

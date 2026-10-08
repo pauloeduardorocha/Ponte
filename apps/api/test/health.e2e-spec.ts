@@ -58,9 +58,6 @@ describe('HealthController', () => {
         services: { api: 'up', database: 'down' },
       });
 
-    expect(logError).toHaveBeenCalledWith(
-      'Database health check failed',
-      expect.any(String),
-    );
+    expect(logError).toHaveBeenCalledWith('Database health check failed');
   });
 });

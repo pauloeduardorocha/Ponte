@@ -2,6 +2,78 @@ generator client {
   provider = "prisma-client-js"
 }
 
+model Visitor {
+  createdByUserId   String?             @db.Uuid
+  creator           User?               @relation("VisitorCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  firstName         String              @default("") @db.VarChar(60)
+  lastName          String              @default("") @db.VarChar(60)
+  birthDate         DateTime?           @db.Date
+  gender            String?             @db.VarChar(30)
+  howDidYouHear     String?             @db.VarChar(200)
+  invitedByMemberId String?             @db.Uuid
+  invitedBy         Member?             @relation("VisitorInviter", fields: [invitedByMemberId], references: [id], onDelete: Restrict)
+  memberId          String?             @unique @db.Uuid
+  member            Member?             @relation("ConvertedVisitor", fields: [memberId], references: [id], onDelete: Restrict)
+  convertedByUserId String?             @db.Uuid
+  convertedBy       User?               @relation("VisitorConverter", fields: [convertedByUserId], references: [id], onDelete: Restrict)
+  convertedAt       DateTime?
+  followUps         FollowUp[]
+  registrations     EventRegistration[]
+  attendances       Attendance[]
+  notifications     Notification[]
+  id                String              @id @default(uuid()) @db.Uuid
+  name              String              @db.VarChar(120)
+  email             String?             @db.VarChar(320)
+  phone             String?             @db.VarChar(32)
+  visitedAt         DateTime            @db.Date
+  status            String              @default("NEW") @db.VarChar(20)
+  notes             String?             @db.VarChar(2000)
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@index([status, visitedAt])
+  @@index([createdByUserId], map: "visitors_creator_idx")
+  @@map("visitors")
+}
+
+model CommunityEvent {
+  type                 String              @default("OTHER") @db.VarChar(30)
+  endsAt               DateTime?           @db.Timestamptz(6)
+  capacity             Int?
+  registrationRequired Boolean             @default(false)
+  active               Boolean             @default(true)
+  createdByUserId      String?             @db.Uuid
+  creator              User?               @relation("EventCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  ministryId           String?             @db.Uuid
+  ministry             Ministry?           @relation(fields: [ministryId], references: [id], onDelete: Restrict)
+  smallGroupId         String?             @db.Uuid
+  smallGroup           SmallGroup?         @relation(fields: [smallGroupId], references: [id], onDelete: Restrict)
+  registrations        EventRegistration[]
+  schedules            VolunteerSchedule[]
+  attendances          Attendance[]
+  id                   String              @id @default(uuid()) @db.Uuid
+  name                 String              @db.VarChar(160)
+  startsAt             DateTime            @db.Timestamptz(6)
+  location             String              @db.VarChar(200)
+  status               String              @default("SCHEDULED") @db.VarChar(20)
+  description          String?             @db.VarChar(2000)
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+
+  @@index([status, startsAt])
+  @@map("community_events")
+}
+
+model RateLimitBucket {
+  key          String    @id @db.VarChar(64)
+  hits         Int
+  expiresAt    DateTime  @map("expires_at") @db.Timestamptz(6)
+  blockedUntil DateTime? @map("blocked_until") @db.Timestamptz(6)
+
+  @@index([expiresAt], map: "rate_limit_expiry_idx")
+  @@map("rate_limit_buckets")
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -14,17 +86,36 @@ enum UserStatus {
 }
 
 model User {
-  id             String          @id @default(uuid()) @db.Uuid
-  name           String          @default("") @db.VarChar(120)
-  email          String          @unique @db.VarChar(320)
-  passwordHash   String          @map("password_hash") @db.VarChar(255)
-  status         UserStatus      @default(INVITED)
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  deletedAt      DateTime?       @map("deleted_at") @db.Timestamptz(6)
-  userRoles      UserRole[]
-  refreshTokens  RefreshToken[]
-  passwordResets PasswordReset[]
+  invoiceImports        InvoiceImport[]       @relation("InvoiceUploader")
+  invoiceAssociations   FinancialInvoice[]    @relation("InvoiceAssociator")
+  createdVisitors       Visitor[]             @relation("VisitorCreator")
+  createdNotifications  Notification[]        @relation("NotificationCreator")
+  convertedVisitors     Visitor[]             @relation("VisitorConverter")
+  followUps             FollowUp[]
+  interactions          FollowUpInteraction[]
+  createdEvents         CommunityEvent[]      @relation("EventCreator")
+  registeredAttendances Attendance[]
+  id                    String                @id @default(uuid()) @db.Uuid
+  name                  String                @default("") @db.VarChar(120)
+  email                 String                @unique @db.VarChar(320)
+  passwordHash          String                @map("password_hash") @db.VarChar(255)
+  status                UserStatus            @default(INVITED)
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt             DateTime?             @map("deleted_at") @db.Timestamptz(6)
+  memberId              String?               @unique @map("member_id") @db.Uuid
+  member                Member?               @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  userRoles             UserRole[]
+  refreshTokens         RefreshToken[]
+  passwordResets        PasswordReset[]
+  bankClassifications   BankTransaction[]     @relation("BankClassifier")
+  bankAssociations      BankTransaction[]     @relation("BankAssociator")
+  bankDuplicateReviews  BankTransaction[]     @relation("BankDuplicateReviewer")
+  bankUploads           BankImport[]          @relation("BankUploader")
+  bankConfirmations     BankImport[]          @relation("BankConfirmer")
+  bankReconciliations   BankReconciliation[]  @relation("BankReconciler")
+  bankUndoActions       BankReconciliation[]  @relation("BankUndoer")
+  financialUploads      FinancialAttachment[] @relation("AttachmentUploader")
 
   @@index([status])
   @@index([deletedAt])
@@ -111,17 +202,38 @@ enum MemberStatus {
 }
 
 model Member {
-  id           String        @id @default(uuid()) @db.Uuid
-  name         String        @db.VarChar(120)
-  email        String?       @db.VarChar(320)
-  phone        String?       @db.VarChar(32)
-  status       MemberStatus  @default(ACTIVE)
-  birthDate    DateTime?     @map("birth_date") @db.Date
-  notes        String?       @db.VarChar(2000)
-  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
-  loans        Loan[]
-  reservations Reservation[]
+  invitedVisitors     Visitor[]             @relation("VisitorInviter")
+  convertedVisitor    Visitor?              @relation("ConvertedVisitor")
+  followUps           FollowUp[]
+  ledGroups           SmallGroup[]          @relation("GroupLeader")
+  coLedGroups         SmallGroup[]          @relation("GroupCoLeader")
+  hostedGroups        SmallGroup[]          @relation("GroupHost")
+  groupMemberships    SmallGroupMember[]
+  ledMinistries       Ministry[]            @relation("MinistryLeader")
+  ministryMemberships MinistryMember[]
+  eventRegistrations  EventRegistration[]
+  assignments         VolunteerAssignment[]
+  attendances         Attendance[]
+  notifications       Notification[]
+  id                  String                @id @default(uuid()) @db.Uuid
+  name                String                @db.VarChar(120)
+  email               String?               @db.VarChar(320)
+  phone               String?               @db.VarChar(32)
+  status              MemberStatus          @default(ACTIVE)
+  birthDate           DateTime?             @map("birth_date") @db.Date
+  notes               String?               @db.VarChar(2000)
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user                User?
+  privacyRequests     PrivacyRequest[]
+  consents            MemberConsent[]
+  anonymizedAt        DateTime?             @map("anonymized_at") @db.Timestamptz(6)
+  legalHold           Boolean               @default(false) @map("legal_hold")
+  incomes             Income[]
+  contributions       Contribution[]
+  loans               Loan[]
+  reservations        Reservation[]
+  bankTransactions    BankTransaction[]
 
   @@index([status, name])
   @@map("members")
@@ -306,15 +418,621 @@ model Reservation {
 }
 
 model AuditLog {
-  id         String   @id @default(uuid()) @db.Uuid
-  actorId    String?  @map("actor_id") @db.Uuid
-  action     String   @db.VarChar(120)
-  entityType String   @map("entity_type") @db.VarChar(100)
-  entityId   String?  @map("entity_id") @db.VarChar(100)
-  metadata   Json?
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String?  @map("actor_id") @db.Uuid
+  action        String   @db.VarChar(120)
+  entity        String   @map("entity_type") @db.VarChar(100)
+  entityId      String?  @map("entity_id") @db.VarChar(100)
+  metadata      Json?
+  oldValues     Json?    @map("old_values")
+  newValues     Json?    @map("new_values")
+  ip            String?  @db.VarChar(64)
+  userAgent     String?  @map("user_agent") @db.VarChar(1024)
+  transactionId String?  @map("transaction_id") @db.VarChar(32)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  @@index([actorId, createdAt])
-  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@index([entity, entityId, createdAt])
+  @@index([createdAt], map: "audit_logs_created_at_idx")
+  @@index([action, createdAt], map: "audit_logs_action_created_at_idx")
+  @@index([transactionId, entity, entityId], map: "audit_logs_transaction_entity_idx")
   @@map("audit_logs")
+}
+
+enum FinancialKind {
+  INCOME
+  EXPENSE
+}
+
+enum FinancialStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum ContributionType {
+  TITHE
+  OFFERING
+  DONATION
+  OTHER
+}
+
+model FinancialCategory {
+  id               String              @id @default(uuid()) @db.Uuid
+  name             String              @db.VarChar(120)
+  kind             FinancialKind
+  parentId         String?             @db.Uuid
+  parent           FinancialCategory?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: Restrict)
+  children         FinancialCategory[] @relation("CategoryTree")
+  incomes          Income[]
+  expenses         Expense[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+  bankTransactions BankTransaction[]
+
+  @@index([parentId])
+  @@map("financial_categories")
+}
+
+model BankAccount {
+  id             String       @id @default(uuid()) @db.Uuid
+  bank           String       @db.VarChar(120)
+  name           String       @db.VarChar(120)
+  branch         String?      @db.VarChar(40)
+  account        String?      @db.VarChar(80)
+  iban           String?      @db.VarChar(34)
+  currency       String       @db.Char(3)
+  openingBalance Decimal      @default(0) @db.Decimal(14, 2)
+  status         MemberStatus @default(ACTIVE)
+  incomes        Income[]
+  expenses       Expense[]
+  imports        BankImport[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@map("bank_accounts")
+}
+
+model Supplier {
+  id               String            @id @default(uuid()) @db.Uuid
+  name             String            @db.VarChar(120)
+  taxId            String?           @db.VarChar(40)
+  email            String?           @db.VarChar(320)
+  phone            String?           @db.VarChar(32)
+  expenses         Expense[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  bankTransactions BankTransaction[]
+
+  @@map("suppliers")
+}
+
+model Income {
+  id                String               @id @default(uuid()) @db.Uuid
+  amount            Decimal              @db.Decimal(14, 2)
+  date              DateTime             @db.Date
+  categoryId        String               @db.Uuid
+  category          FinancialCategory    @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  accountId         String               @db.Uuid
+  account           BankAccount          @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  description       String               @db.VarChar(2000)
+  origin            String               @db.VarChar(200)
+  memberId          String?              @db.Uuid
+  member            Member?              @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  costCenter        String?              @db.VarChar(120)
+  reference         String?              @db.VarChar(200)
+  status            FinancialStatus      @default(PENDING)
+  bankTransactionId String?              @db.Uuid
+  bankTransaction   BankTransaction?     @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  reconciliations   BankReconciliation[]
+  contribution      Contribution?
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@index([date, status])
+  @@index([accountId, date], map: "incomes_account_date_idx")
+  @@index([memberId], map: "incomes_member_idx")
+  @@map("incomes")
+}
+
+model Expense {
+  id                String                @id @default(uuid()) @db.Uuid
+  amount            Decimal               @db.Decimal(14, 2)
+  date              DateTime              @db.Date
+  dueDate           DateTime              @db.Date
+  paidAt            DateTime?             @db.Date
+  categoryId        String                @db.Uuid
+  category          FinancialCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  supplierId        String?               @db.Uuid
+  supplier          Supplier?             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  accountId         String                @db.Uuid
+  account           BankAccount           @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  costCenter        String?               @db.VarChar(120)
+  description       String                @db.VarChar(2000)
+  document          String?               @db.VarChar(200)
+  status            FinancialStatus       @default(PENDING)
+  bankTransactionId String?               @db.Uuid
+  bankTransaction   BankTransaction?      @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  reconciliations   BankReconciliation[]
+  attachments       FinancialAttachment[]
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  @@index([date, status])
+  @@index([accountId, paidAt], map: "expenses_account_payment_idx")
+  @@index([supplierId], map: "expenses_supplier_idx")
+  @@map("expenses")
+}
+
+model Contribution {
+  id        String           @id @default(uuid()) @db.Uuid
+  memberId  String           @db.Uuid
+  member    Member           @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  incomeId  String           @unique @db.Uuid
+  income    Income           @relation(fields: [incomeId], references: [id], onDelete: Restrict)
+  type      ContributionType
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([memberId])
+  @@map("contributions")
+}
+
+model FinancialAttachment {
+  id         String   @id @default(uuid()) @db.Uuid
+  expenseId  String   @db.Uuid
+  expense    Expense  @relation(fields: [expenseId], references: [id], onDelete: Restrict)
+  storageKey String   @unique @db.VarChar(100)
+  filename   String   @db.VarChar(255)
+  mime       String   @db.VarChar(100)
+  size       Int
+  uploadedBy String   @db.Uuid
+  createdAt  DateTime @default(now())
+  uploader   User     @relation("AttachmentUploader", fields: [uploadedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "attachment_uploaded_by_fk")
+
+  @@index([expenseId])
+  @@map("financial_attachments")
+}
+
+model BankImport {
+  id           String            @id @default(uuid()) @db.Uuid
+  accountId    String            @db.Uuid
+  account      BankAccount       @relation(fields: [accountId], references: [id], onDelete: Restrict)
+  storageKey   String            @unique @db.VarChar(100)
+  filename     String            @db.VarChar(255)
+  status       BankImportStatus  @default(UPLOADED)
+  format       String?           @db.VarChar(10)
+  mime         String?           @db.VarChar(100)
+  size         Int?
+  fileHash     String?           @db.VarChar(64)
+  uploadedBy   String?           @db.Uuid
+  confirmedBy  String?           @db.Uuid
+  confirmedAt  DateTime?
+  error        String?           @db.VarChar(2000)
+  updatedAt    DateTime          @default(now()) @updatedAt
+  transactions BankTransaction[]
+  createdAt    DateTime          @default(now())
+  uploader     User?             @relation("BankUploader", fields: [uploadedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_uploaded_by_fk")
+  confirmer    User?             @relation("BankConfirmer", fields: [confirmedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_confirmed_by_fk")
+
+  @@index([accountId, createdAt])
+  @@map("bank_imports")
+}
+
+model BankTransaction {
+  id                  String                @id @default(uuid()) @db.Uuid
+  importId            String                @db.Uuid
+  import              BankImport            @relation(fields: [importId], references: [id], onDelete: Restrict)
+  amount              Decimal               @db.Decimal(14, 2)
+  date                DateTime              @db.Date
+  reference           String                @db.VarChar(200)
+  direction           BankDirection         @default(CREDIT)
+  description         String                @default("") @db.VarChar(2000)
+  bankIdentifier      String?               @db.VarChar(200)
+  fingerprint         String?               @db.VarChar(64)
+  rowNumber           Int                   @default(0)
+  status              BankTransactionStatus @default(PENDING_REVIEW)
+  classification      BankClassification?
+  categoryId          String?               @db.Uuid
+  memberId            String?               @db.Uuid
+  supplierId          String?               @db.Uuid
+  contributionType    ContributionType?
+  associatedBy        String?               @db.Uuid
+  associatedAt        DateTime?
+  classifiedBy        String?               @db.Uuid
+  duplicateReviewedBy String?               @db.Uuid
+  duplicateReviewedAt DateTime?
+  duplicateReason     String?               @db.VarChar(500)
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @default(now()) @updatedAt
+  incomes             Income[]
+  expenses            Expense[]
+  reconciliations     BankReconciliation[]
+  invoices            FinancialInvoice[]
+  category            FinancialCategory?    @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_category_fk")
+  member              Member?               @relation(fields: [memberId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_member_fk")
+  supplier            Supplier?             @relation(fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_supplier_fk")
+  classifier          User?                 @relation("BankClassifier", fields: [classifiedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_classified_by_fk")
+  associator          User?                 @relation("BankAssociator", fields: [associatedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_associated_by_fk")
+  duplicateReviewer   User?                 @relation("BankDuplicateReviewer", fields: [duplicateReviewedBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_duplicate_by_fk")
+
+  @@index([fingerprint])
+  @@index([importId, status])
+  @@index([date, status])
+  @@index([memberId])
+  @@index([categoryId])
+  @@index([supplierId])
+  @@map("bank_transactions")
+}
+
+enum BankImportStatus {
+  UPLOADED
+  PROCESSING
+  READY_FOR_REVIEW
+  CONFIRMED
+  FAILED
+}
+
+enum BankDirection {
+  CREDIT
+  DEBIT
+}
+
+enum BankTransactionStatus {
+  PENDING_REVIEW
+  CLASSIFIED
+  RECONCILED
+  REJECTED
+  POSSIBLE_DUPLICATE
+}
+
+enum BankClassification {
+  INCOME
+  EXPENSE
+  IGNORE
+}
+
+model BankReconciliation {
+  id                String          @id @default(uuid()) @db.Uuid
+  bankTransactionId String          @db.Uuid
+  bankTransaction   BankTransaction @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  incomeId          String?         @db.Uuid
+  income            Income?         @relation(fields: [incomeId], references: [id], onDelete: Restrict)
+  expenseId         String?         @db.Uuid
+  expense           Expense?        @relation(fields: [expenseId], references: [id], onDelete: Restrict)
+  createdLedger     Boolean
+  active            Boolean         @default(true)
+  reconciledBy      String          @db.Uuid
+  reconciledAt      DateTime        @default(now())
+  undoneBy          String?         @db.Uuid
+  undoneAt          DateTime?
+  undoReason        String?         @db.VarChar(500)
+  reconciler        User            @relation("BankReconciler", fields: [reconciledBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_reconciled_by_fk")
+  undoer            User?           @relation("BankUndoer", fields: [undoneBy], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_undone_by_fk")
+
+  @@index([bankTransactionId, active])
+  @@map("bank_reconciliations")
+}
+
+model AuthLoginThrottle {
+  key         String    @id @db.VarChar(64)
+  failures    Int       @default(0)
+  windowStart DateTime  @map("window_start") @db.Timestamptz(6)
+  lockedUntil DateTime? @map("locked_until") @db.Timestamptz(6)
+
+  @@index([windowStart])
+  @@map("auth_login_throttles")
+}
+
+model PrivacyRequest {
+  id          String    @id @default(uuid()) @db.Uuid
+  memberId    String    @map("member_id") @db.Uuid
+  member      Member    @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  kind        String    @db.VarChar(32)
+  status      String    @default("PENDING") @db.VarChar(32)
+  details     String    @db.VarChar(2000)
+  requestedBy String    @map("requested_by") @db.Uuid
+  resolvedBy  String?   @map("resolved_by") @db.Uuid
+  resolution  String?   @db.VarChar(2000)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt  DateTime? @map("resolved_at") @db.Timestamptz(6)
+
+  @@index([memberId, status])
+  @@map("privacy_requests")
+}
+
+model MemberConsent {
+  id            String   @id @default(uuid()) @db.Uuid
+  memberId      String   @map("member_id") @db.Uuid
+  member        Member   @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  purpose       String   @db.VarChar(120)
+  policyVersion String   @map("policy_version") @db.VarChar(120)
+  granted       Boolean
+  recordedBy    String   @map("recorded_by") @db.Uuid
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([memberId, purpose, createdAt])
+  @@map("member_consents")
+}
+
+model PrivacyRetentionPolicy {
+  dataClass     String   @id @map("data_class") @db.VarChar(64)
+  minimumMonths Int      @map("minimum_months")
+  legalBasis    String   @map("legal_basis") @db.VarChar(2000)
+  updatedBy     String   @map("updated_by") @db.Uuid
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("privacy_retention_policies")
+}
+
+model FollowUp {
+  id               String                @id @default(uuid()) @db.Uuid
+  visitorId        String?               @db.Uuid
+  visitor          Visitor?              @relation(fields: [visitorId], references: [id], onDelete: Restrict)
+  memberId         String?               @db.Uuid
+  member           Member?               @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  assignedToUserId String                @db.Uuid
+  assignedTo       User                  @relation(fields: [assignedToUserId], references: [id], onDelete: Restrict)
+  status           String                @default("PENDING") @db.VarChar(20)
+  startedAt        DateTime              @default(now()) @db.Timestamptz(6)
+  completedAt      DateTime?             @db.Timestamptz(6)
+  nextContactAt    DateTime?             @db.Timestamptz(6)
+  notes            String?               @db.VarChar(2000)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  interactions     FollowUpInteraction[]
+
+  @@index([assignedToUserId, status, nextContactAt])
+  @@index([visitorId])
+  @@index([memberId])
+  @@map("follow_ups")
+}
+
+model FollowUpInteraction {
+  id                String    @id @default(uuid()) @db.Uuid
+  followUpId        String    @db.Uuid
+  followUp          FollowUp  @relation(fields: [followUpId], references: [id], onDelete: Restrict)
+  type              String    @db.VarChar(20)
+  interactionDate   DateTime  @db.Timestamptz(6)
+  performedByUserId String    @db.Uuid
+  performedBy       User      @relation(fields: [performedByUserId], references: [id], onDelete: Restrict)
+  notes             String    @db.VarChar(2000)
+  nextActionAt      DateTime? @db.Timestamptz(6)
+  createdAt         DateTime  @default(now())
+
+  @@index([followUpId, interactionDate])
+  @@map("follow_up_interactions")
+}
+
+model SmallGroup {
+  id               String             @id @default(uuid()) @db.Uuid
+  name             String             @db.VarChar(120)
+  description      String?            @db.VarChar(2000)
+  leaderMemberId   String             @db.Uuid
+  leader           Member             @relation("GroupLeader", fields: [leaderMemberId], references: [id], onDelete: Restrict)
+  coLeaderMemberId String?            @db.Uuid
+  coLeader         Member?            @relation("GroupCoLeader", fields: [coLeaderMemberId], references: [id], onDelete: Restrict)
+  hostMemberId     String?            @db.Uuid
+  host             Member?            @relation("GroupHost", fields: [hostMemberId], references: [id], onDelete: Restrict)
+  address          String             @db.VarChar(200)
+  meetingDay       Int
+  meetingTime      String             @db.VarChar(5)
+  active           Boolean            @default(true)
+  capacity         Int?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  members          SmallGroupMember[]
+  events           CommunityEvent[]
+  attendances      Attendance[]
+
+  @@index([leaderMemberId, active])
+  @@index([coLeaderMemberId])
+  @@index([meetingDay, active])
+  @@map("small_groups")
+}
+
+model SmallGroupMember {
+  id           String     @id @default(uuid()) @db.Uuid
+  smallGroupId String     @db.Uuid
+  smallGroup   SmallGroup @relation(fields: [smallGroupId], references: [id], onDelete: Restrict)
+  memberId     String     @db.Uuid
+  member       Member     @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  role         String     @default("MEMBER") @db.VarChar(20)
+  joinedAt     DateTime   @default(now()) @db.Timestamptz(6)
+  leftAt       DateTime?  @db.Timestamptz(6)
+  active       Boolean    @default(true)
+
+  @@index([smallGroupId, active])
+  @@index([memberId, active])
+  @@map("small_group_members")
+}
+
+model Ministry {
+  id             String                @id @default(uuid()) @db.Uuid
+  name           String                @db.VarChar(120)
+  description    String?               @db.VarChar(2000)
+  leaderMemberId String                @db.Uuid
+  leader         Member                @relation("MinistryLeader", fields: [leaderMemberId], references: [id], onDelete: Restrict)
+  active         Boolean               @default(true)
+  createdAt      DateTime              @default(now())
+  updatedAt      DateTime              @updatedAt
+  members        MinistryMember[]
+  events         CommunityEvent[]
+  schedules      VolunteerSchedule[]
+  assignments    VolunteerAssignment[]
+
+  @@index([leaderMemberId, active])
+  @@map("ministries")
+}
+
+model MinistryMember {
+  id         String    @id @default(uuid()) @db.Uuid
+  ministryId String    @db.Uuid
+  ministry   Ministry  @relation(fields: [ministryId], references: [id], onDelete: Restrict)
+  memberId   String    @db.Uuid
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  role       String    @default("MEMBER") @db.VarChar(20)
+  joinedAt   DateTime  @default(now()) @db.Timestamptz(6)
+  leftAt     DateTime? @db.Timestamptz(6)
+  active     Boolean   @default(true)
+
+  @@index([ministryId, active])
+  @@index([memberId, active])
+  @@map("ministry_members")
+}
+
+model EventRegistration {
+  id        String         @id @default(uuid()) @db.Uuid
+  eventId   String         @db.Uuid
+  event     CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  memberId  String?        @db.Uuid
+  member    Member?        @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  visitorId String?        @db.Uuid
+  visitor   Visitor?       @relation(fields: [visitorId], references: [id], onDelete: Restrict)
+  status    String         @default("REGISTERED") @db.VarChar(20)
+  createdAt DateTime       @default(now())
+
+  @@unique([eventId, memberId])
+  @@unique([eventId, visitorId])
+  @@map("event_registrations")
+}
+
+model VolunteerSchedule {
+  id          String                @id @default(uuid()) @db.Uuid
+  eventId     String                @db.Uuid
+  event       CommunityEvent        @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  ministryId  String?               @db.Uuid
+  ministry    Ministry?             @relation(fields: [ministryId], references: [id], onDelete: Restrict)
+  title       String                @db.VarChar(160)
+  date        DateTime              @db.Timestamptz(6)
+  notes       String?               @db.VarChar(2000)
+  status      String                @default("DRAFT") @db.VarChar(20)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  assignments VolunteerAssignment[]
+
+  @@index([ministryId, date])
+  @@index([eventId])
+  @@map("volunteer_schedules")
+}
+
+model VolunteerAssignment {
+  id                     String                @id @default(uuid()) @db.Uuid
+  scheduleId             String                @db.Uuid
+  schedule               VolunteerSchedule     @relation(fields: [scheduleId], references: [id], onDelete: Restrict)
+  memberId               String                @db.Uuid
+  member                 Member                @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  ministryId             String?               @db.Uuid
+  ministry               Ministry?             @relation(fields: [ministryId], references: [id], onDelete: Restrict)
+  function               String                @db.VarChar(120)
+  status                 String                @default("INVITED") @db.VarChar(20)
+  confirmedAt            DateTime?             @db.Timestamptz(6)
+  notes                  String?               @db.VarChar(2000)
+  replacedByAssignmentId String?               @db.Uuid
+  replacement            VolunteerAssignment?  @relation("Replacement", fields: [replacedByAssignmentId], references: [id], onDelete: Restrict)
+  replaces               VolunteerAssignment[] @relation("Replacement")
+
+  @@index([scheduleId, status])
+  @@index([memberId, status])
+  @@map("volunteer_assignments")
+}
+
+model Attendance {
+  id                 String          @id @default(uuid()) @db.Uuid
+  memberId           String?         @db.Uuid
+  member             Member?         @relation(fields: [memberId], references: [id], onDelete: Restrict)
+  visitorId          String?         @db.Uuid
+  visitor            Visitor?        @relation(fields: [visitorId], references: [id], onDelete: Restrict)
+  eventId            String?         @db.Uuid
+  event              CommunityEvent? @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  smallGroupId       String?         @db.Uuid
+  smallGroup         SmallGroup?     @relation(fields: [smallGroupId], references: [id], onDelete: Restrict)
+  attendanceDate     DateTime        @db.Date
+  status             String          @db.VarChar(20)
+  source             String          @default("MANUAL") @db.VarChar(20)
+  registeredByUserId String?         @db.Uuid
+  registeredBy       User?           @relation(fields: [registeredByUserId], references: [id], onDelete: Restrict)
+  createdAt          DateTime        @default(now())
+
+  @@index([memberId, attendanceDate])
+  @@index([eventId, attendanceDate])
+  @@index([smallGroupId, attendanceDate])
+  @@map("attendances")
+}
+
+model Notification {
+  id                 String    @id @default(uuid()) @db.Uuid
+  recipientMemberId  String?   @db.Uuid
+  recipientMember    Member?   @relation(fields: [recipientMemberId], references: [id], onDelete: Restrict)
+  recipientVisitorId String?   @db.Uuid
+  recipientVisitor   Visitor?  @relation(fields: [recipientVisitorId], references: [id], onDelete: Restrict)
+  channel            String    @db.VarChar(20)
+  subject            String?   @db.VarChar(200)
+  content            String    @db.VarChar(5000)
+  status             String    @default("PENDING") @db.VarChar(20)
+  scheduledAt        DateTime? @db.Timestamptz(6)
+  sentAt             DateTime? @db.Timestamptz(6)
+  error              String?   @db.VarChar(500)
+  createdByUserId    String    @db.Uuid
+  creator            User      @relation("NotificationCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "notification_creator_fk")
+  createdAt          DateTime  @default(now())
+
+  @@index([status, scheduledAt])
+  @@index([recipientMemberId, createdAt])
+  @@index([recipientVisitorId, createdAt])
+  @@map("notifications")
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique @db.VarChar(120)
+  channel   String   @db.VarChar(20)
+  subject   String?  @db.VarChar(200)
+  content   String   @db.VarChar(5000)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_templates")
+}
+
+model InvoiceImport {
+  id         String             @id @default(uuid()) @db.Uuid
+  filename   String             @db.VarChar(255)
+  storageKey String             @unique @db.VarChar(36)
+  fileHash   String             @db.VarChar(64)
+  capturedAt DateTime
+  uploadedBy String             @db.Uuid
+  uploader   User               @relation("InvoiceUploader", fields: [uploadedBy], references: [id], onDelete: Restrict)
+  createdAt  DateTime           @default(now())
+  invoices   FinancialInvoice[]
+
+  @@index([createdAt])
+  @@map("invoice_imports")
+}
+
+model FinancialInvoice {
+  id                String           @id @default(uuid()) @db.Uuid
+  importId          String           @db.Uuid
+  import            InvoiceImport    @relation(fields: [importId], references: [id], onDelete: Restrict)
+  issuerName        String           @db.VarChar(200)
+  issuerTaxId       String           @db.VarChar(32)
+  recipientTaxId    String           @db.VarChar(32)
+  number            String           @db.VarChar(200)
+  date              DateTime         @db.Date
+  amount            Decimal          @db.Decimal(14, 2)
+  currency          String           @db.VarChar(3)
+  documentUrl       String?          @db.VarChar(2000)
+  fingerprint       String           @unique @db.VarChar(64)
+  bankTransactionId String?          @db.Uuid
+  bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  associatedBy      String?          @db.Uuid
+  associator        User?            @relation("InvoiceAssociator", fields: [associatedBy], references: [id], onDelete: Restrict)
+  associatedAt      DateTime?
+  createdAt         DateTime         @default(now())
+
+  @@index([importId])
+  @@index([bankTransactionId])
+  @@index([currency, amount, date])
+  @@map("financial_invoices")
 }

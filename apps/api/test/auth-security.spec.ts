@@ -25,12 +25,17 @@ describe('Authentication security configuration', () => {
   ])(
     'refuses startup with missing, weak, placeholder or identical secrets',
     (configuration) => {
+      const config = new ConfigService({
+        JWT_ACCESS_SECRET: '',
+        JWT_REFRESH_SECRET: '',
+        ...configuration,
+      });
       expect(
         () =>
           new AuthService(
             new PrismaService(),
             new JwtService(),
-            new ConfigService(configuration),
+            config,
             new PendingEmailDelivery(),
           ),
       ).toThrow();

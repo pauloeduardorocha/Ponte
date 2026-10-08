@@ -110,6 +110,20 @@ function routes() {
     },
   };
 }
+async function selectEntity(name: string, value: string) {
+  const select = within(screen.getByRole('dialog')).getByRole('combobox', {
+    name: new RegExp(`^${name}`),
+  });
+  await waitFor(() =>
+    expect(
+      within(select).getByRole('option', {
+        name:
+          name === 'Membro' ? 'Ana Biblioteca' : 'Livro Ponte · Autora Ponte',
+      }),
+    ).toBeInTheDocument(),
+  );
+  fireEvent.change(select, { target: { value } });
+}
 async function tab(name: string) {
   fireEvent.click(await screen.findByRole('tab', { name }));
 }
@@ -129,6 +143,8 @@ async function confirm() {
   await waitFor(() =>
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
   );
+  // MUI restores the background's accessibility after its exit transition.
+  await screen.findByRole('main');
 }
 
 describe('Library frontend', () => {
@@ -288,7 +304,7 @@ describe('Library frontend', () => {
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Emprestar' }).at(-1)!,
     );
-    fill('ID do membro', 'm1');
+    await selectEntity('Membro', 'm1');
     await confirm();
     expect(
       requests.find((r) => r.method === 'POST' && r.path === '/library/loans')
@@ -360,8 +376,8 @@ describe('Library frontend', () => {
     renderApp('/library');
     await tab('Reservas');
     fireEvent.click(await screen.findByRole('button', { name: 'Reservar' }));
-    fill('ID do membro', 'm1');
-    fill('ID do livro', 'b1');
+    await selectEntity('Membro', 'm1');
+    await selectEntity('Livro', 'b1');
     await confirm();
     fireEvent.click(screen.getByRole('button', { name: 'Emprestar reserva' }));
     await confirm();

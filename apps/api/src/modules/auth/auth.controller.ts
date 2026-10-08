@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth, ApiCookieAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -24,6 +25,7 @@ import {
 import { AuthRequest } from './auth.guard';
 import { Public } from './permission.decorator';
 
+@ApiTags('Autenticacao')
 @Controller('auth')
 @Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class AuthController {
@@ -87,6 +89,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiCookieAuth('refresh_token')
   @Post('refresh')
   @HttpCode(200)
   async refresh(
@@ -99,6 +102,7 @@ export class AuthController {
   }
 
   @Public()
+  @ApiCookieAuth('refresh_token')
   @Post('logout')
   @HttpCode(204)
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
@@ -106,12 +110,14 @@ export class AuthController {
     res.clearCookie('refresh_token', this.cookieOptions);
   }
 
+  @ApiBearerAuth()
   @Get('me')
   me(@Req() req: AuthRequest, @Res({ passthrough: true }) res: Response) {
     res.setHeader('Cache-Control', 'no-store');
     return req.user;
   }
 
+  @ApiBearerAuth()
   @Patch('password')
   @HttpCode(204)
   async password(

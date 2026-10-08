@@ -4,6 +4,38 @@ body {
   background: #f7f8fa;
 }
 
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+.MuiCard-root {
+  transition: background-color 0.15s ease;
+}
+.MuiButton-root {
+  white-space: normal;
+}
+.MuiDialogContent-root form,
+.MuiCardContent-root {
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+  .metric-grid .MuiTypography-h4 {
+    font-size: 1.4rem;
+  }
+  .metric-grid .MuiCardContent-root {
+    padding: 12px;
+  }
+  .MuiTablePagination-toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
 .app-shell {
   min-height: 100vh;
 }
@@ -36,6 +68,9 @@ body {
 
 .navigation-list {
   padding: 0 0.75rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .navigation-link {
@@ -53,6 +88,7 @@ body {
 .sidebar-footer {
   margin-top: auto;
   padding: 1rem 1.5rem;
+  flex-shrink: 0;
 }
 
 .app-header {

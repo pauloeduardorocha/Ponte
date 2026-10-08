@@ -1,3 +1,4 @@
+import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import {
   BadRequestException,
   ConflictException,
@@ -52,11 +53,8 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   onModuleInit() {
     this.timer = setInterval(() => {
-      void this.transaction(async () => undefined).catch((error: unknown) => {
-        this.logger.error(
-          'Library overdue/reservation maintenance failed',
-          error,
-        );
+      void this.transaction(async () => undefined).catch(() => {
+        this.logger.error('Library overdue/reservation maintenance failed');
       });
     }, 60_000);
     this.timer.unref();
@@ -72,6 +70,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     try {
       return await this.db.$transaction(
         async (tx) => {
+          await bindAudit(tx);
           // One shared transaction lock also serializes limits, queues and payments across replicas.
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(716023, 1)`;
           const now = new Date();
@@ -97,17 +96,18 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   private audit(
     tx: Tx,
-    actorId: string | null,
+    userId: string | null,
     action: string,
-    entityType: string,
+    entity: string,
     entityId: string,
     metadata: Prisma.InputJsonValue = {},
   ) {
     return tx.auditLog.create({
       data: {
-        actorId,
+        ...auditRequestFields(),
+        userId,
         action: `LIBRARY_${action}`,
-        entityType,
+        entity,
         entityId,
         metadata,
       },
@@ -272,6 +272,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   listBooks(query: BookQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where: Prisma.BookWhereInput = {
         author: query.author
           ? { contains: query.author, mode: 'insensitive' }
@@ -329,6 +330,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   createBook(dto: BookDto, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const book = await tx.book.create({ data: dto });
       await this.audit(tx, actor, 'BOOK_CREATE', 'Book', book.id, {
         changes: JSON.parse(JSON.stringify(dto)) as Prisma.InputJsonValue,
@@ -339,6 +341,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   updateBook(id: string, dto: UpdateBookDto, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const before = await tx.book.findUniqueOrThrow({ where: { id } });
       const book = await tx.book.update({ where: { id }, data: dto });
       await this.audit(tx, actor, 'BOOK_UPDATE', 'Book', id, {
@@ -351,6 +354,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   deleteBook(id: string, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       await tx.book.delete({ where: { id } });
       await this.audit(tx, actor, 'BOOK_DELETE', 'Book', id);
     });
@@ -358,6 +362,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   listCopies(query: CopyQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where: Prisma.BookCopyWhereInput = {
         bookId: query.bookId,
         status: query.status,
@@ -406,7 +411,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         orderBy: { createdAt: 'desc' },
       }),
       events: await tx.auditLog.findMany({
-        where: { entityType: 'BookCopy', entityId: id },
+        where: { entity: 'BookCopy', entityId: id },
         orderBy: { createdAt: 'desc' },
       }),
     }));
@@ -476,6 +481,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   listLoans(query: LoanQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where: Prisma.LoanWhereInput = {
         memberId: query.memberId,
         status: query.status,
@@ -671,6 +677,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   memberHistory(id: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       await tx.member.findUniqueOrThrow({ where: { id } });
       return {
         loans: await tx.loan.findMany({
@@ -692,6 +699,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   members(query: LibraryQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where: Prisma.MemberWhereInput = query.search
         ? { name: { contains: query.search, mode: 'insensitive' } }
         : {};
@@ -712,6 +720,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   listReservations(query: LibraryQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where = { memberId: query.memberId, bookId: query.bookId };
       return {
         items: await tx.reservation.findMany({
@@ -800,6 +809,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   updateSettings(dto: SettingsDto, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const before = await this.settings(tx);
       const settings = await tx.librarySettings.update({
         where: { id: 1 },
@@ -815,6 +825,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   listFines(query: LibraryQuery) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const where: Prisma.FineWhereInput = {
         loan: {
           memberId: query.memberId,
@@ -847,6 +858,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   pay(id: string, dto: PaymentDto, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const amount = new Prisma.Decimal(dto.amount);
       const previous = await tx.finePayment.findUnique({
         where: { idempotencyKey: dto.idempotencyKey },
@@ -895,6 +907,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   adjust(id: string, dto: AdjustmentDto, actor: string) {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const fine = await tx.fine.findUniqueOrThrow({ where: { id } });
       if (fine.status !== 'OPEN')
         throw new ConflictException('Multa não está pendente');
@@ -946,6 +959,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
 
   dashboard() {
     return this.transaction(async (tx) => {
+      await bindAudit(tx);
       const copies = await tx.bookCopy.groupBy({
         by: ['status'],
         _count: true,

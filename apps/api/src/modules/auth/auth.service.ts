@@ -1,4 +1,9 @@
 import {
+  bindAudit,
+  auditRequestFields,
+  auditContext,
+} from '../audit/audit-context';
+import {
   ConflictException,
   Injectable,
   UnauthorizedException,
@@ -76,24 +81,27 @@ export class AuthService {
       type: argon2.argon2id,
     });
     try {
-      const user = await this.db.user.create({
-        data: {
-          name: dto.name,
-          email: dto.email,
-          passwordHash,
-          status: 'ACTIVE',
-          userRoles: {
-            create: {
-              role: {
-                connectOrCreate: {
-                  where: { name: 'MEMBER' },
-                  create: { name: 'MEMBER' },
+      const user = await this.db.$transaction(async (tx) => {
+        await bindAudit(tx);
+        return tx.user.create({
+          data: {
+            name: dto.name,
+            email: dto.email,
+            passwordHash,
+            status: 'ACTIVE',
+            userRoles: {
+              create: {
+                role: {
+                  connectOrCreate: {
+                    where: { name: 'MEMBER' },
+                    create: { name: 'MEMBER' },
+                  },
                 },
               },
             },
           },
-        },
-        include: userInclude,
+          include: userInclude,
+        });
       });
       return safeUser(user);
     } catch (error) {
@@ -107,6 +115,21 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
+    const key = this.hashToken('login:' + email);
+    const throttle = await this.db.authLoginThrottle.findUnique({
+      where: { key },
+    });
+    if (throttle?.lockedUntil && throttle.lockedUntil > new Date()) {
+      await this.db.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          action: 'AUTH_LOGIN_BLOCKED',
+          entity: 'Authentication',
+          metadata: { accountKey: key },
+        },
+      });
+      throw new UnauthorizedException('Credenciais inválidas');
+    }
     const user = await this.db.user.findUnique({
       where: { email },
       include: userInclude,
@@ -115,10 +138,50 @@ export class AuthService {
       user?.passwordHash ?? (await this.dummyHash),
       password,
     );
-    if (!valid || !user || user.status !== 'ACTIVE' || user.deletedAt)
+    if (!valid || !user || user.status !== 'ACTIVE' || user.deletedAt) {
+      await this.db.$transaction(async (tx) => {
+        await bindAudit(tx);
+        const now = new Date();
+        await tx.authLoginThrottle.upsert({
+          where: { key },
+          create: { key, windowStart: now },
+          update: {},
+        });
+        await tx.$queryRaw`SELECT key FROM auth_login_throttles WHERE key = ${key} FOR UPDATE`;
+        const previous = await tx.authLoginThrottle.findUniqueOrThrow({
+          where: { key },
+        });
+        const expired =
+          now.getTime() - previous.windowStart.getTime() > 15 * 60 * 1000;
+        const failures = expired ? 1 : previous.failures + 1;
+        await tx.authLoginThrottle.update({
+          where: { key },
+          data: {
+            failures,
+            windowStart: expired ? now : previous.windowStart,
+            lockedUntil:
+              failures >= 10 ? new Date(now.getTime() + 15 * 60 * 1000) : null,
+          },
+        });
+        await tx.auditLog.create({
+          data: {
+            ...auditRequestFields(),
+            userId: user?.id,
+            action: 'AUTH_LOGIN_FAILED',
+            entity: 'Authentication',
+            entityId: user?.id,
+            metadata: { accountKey: key },
+          },
+        });
+      });
       throw new UnauthorizedException('Credenciais inválidas');
+    }
+    const context = auditContext.getStore();
+    if (context) context.userId = user.id;
+
     const token = randomBytes(32).toString('base64url');
     const session = await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
       // Serialize session creation with password/status changes.
       await tx.$queryRaw`SELECT id FROM users WHERE id = ${user.id}::uuid FOR UPDATE`;
       const current = await tx.user.findUniqueOrThrow({
@@ -137,6 +200,16 @@ export class AuthService {
           familyId: randomUUID(),
           tokenHash: this.hashToken(token),
           expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+        },
+      });
+      await tx.authLoginThrottle.deleteMany({ where: { key } });
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId: current.id,
+          action: 'AUTH_LOGIN',
+          entity: 'User',
+          entityId: current.id,
         },
       });
       return { user: current, refresh };
@@ -174,7 +247,16 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Sessão inválida');
     }
-    if (typeof claims.sub !== 'string' || typeof claims.sid !== 'string')
+    if (
+      typeof claims.sub !== 'string' ||
+      typeof claims.sid !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        claims.sub,
+      ) ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        claims.sid,
+      )
+    )
       throw new UnauthorizedException();
     const session = await this.db.refreshToken.findUnique({
       where: { id: claims.sid },
@@ -195,6 +277,7 @@ export class AuthService {
   async refresh(token: string) {
     const nextToken = randomBytes(32).toString('base64url');
     const result = await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
       const session = await tx.refreshToken.findUnique({
         where: { tokenHash: this.hashToken(token) },
       });
@@ -208,6 +291,15 @@ export class AuthService {
         include: userInclude,
       });
       if (current.revokedAt) {
+        await tx.auditLog.create({
+          data: {
+            ...auditRequestFields(),
+            userId: user.id,
+            action: 'AUTH_REFRESH_REUSE',
+            entity: 'User',
+            entityId: user.id,
+          },
+        });
         await tx.refreshToken.updateMany({
           where: { familyId: session.familyId, revokedAt: null },
           data: { revokedAt: new Date() },
@@ -233,6 +325,15 @@ export class AuthService {
           expiresAt: session.expiresAt,
         },
       });
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId: user.id,
+          action: 'AUTH_REFRESH',
+          entity: 'User',
+          entityId: user.id,
+        },
+      });
       return { user, next };
     });
     if (!result) throw new UnauthorizedException('Sessão inválida');
@@ -242,10 +343,20 @@ export class AuthService {
   async logout(token: string | undefined) {
     if (!token) return;
     await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
       const session = await tx.refreshToken.findUnique({
         where: { tokenHash: this.hashToken(token) },
       });
       if (!session) return;
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId: session.userId,
+          action: 'AUTH_LOGOUT',
+          entity: 'User',
+          entityId: session.userId,
+        },
+      });
       await tx.$queryRaw`SELECT id FROM users WHERE id = ${session.userId}::uuid FOR UPDATE`;
       await tx.refreshToken.updateMany({
         where: { familyId: session.familyId, revokedAt: null },
@@ -259,6 +370,7 @@ export class AuthService {
       type: argon2.argon2id,
     });
     await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
       await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       if (
@@ -268,6 +380,15 @@ export class AuthService {
       )
         throw new UnauthorizedException('Senha atual inválida');
       await tx.user.update({ where: { id: userId }, data: { passwordHash } });
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId,
+          action: 'AUTH_PASSWORD_CHANGE',
+          entity: 'User',
+          entityId: userId,
+        },
+      });
       await tx.refreshToken.updateMany({
         where: { userId, revokedAt: null },
         data: { revokedAt: new Date() },
@@ -285,6 +406,7 @@ export class AuthService {
       const token = randomBytes(32).toString('base64url');
       const expiresAt = new Date(Date.now() + RESET_TTL_MS);
       const queued = await this.db.$transaction(async (tx) => {
+        await bindAudit(tx);
         await tx.$queryRaw`SELECT id FROM users WHERE id = ${user.id}::uuid FOR UPDATE`;
         const current = await tx.user.findUniqueOrThrow({
           where: { id: user.id },
@@ -301,6 +423,15 @@ export class AuthService {
             expiresAt,
           },
         });
+        await tx.auditLog.create({
+          data: {
+            ...auditRequestFields(),
+            userId: user.id,
+            action: 'AUTH_RESET_REQUEST',
+            entity: 'User',
+            entityId: user.id,
+          },
+        });
         return true;
       });
       if (queued)
@@ -314,6 +445,7 @@ export class AuthService {
       type: argon2.argon2id,
     });
     await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
       const reset = await tx.passwordReset.findUnique({
         where: { tokenHash: this.hashToken(dto.token) },
       });
@@ -330,6 +462,15 @@ export class AuthService {
         current.user.deletedAt
       )
         throw new UnauthorizedException('Token inválido ou expirado');
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId: reset.userId,
+          action: 'AUTH_PASSWORD_RESET',
+          entity: 'User',
+          entityId: reset.userId,
+        },
+      });
       await tx.user.update({
         where: { id: reset.userId },
         data: { passwordHash },

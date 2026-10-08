@@ -1,3 +1,4 @@
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -14,6 +15,8 @@ import { Permission } from '../auth/permission.decorator';
 import { CreateMemberDto, MemberQuery, UpdateMemberDto } from './member.dto';
 import { MembersService } from './members.service';
 
+@ApiTags('Membros')
+@ApiBearerAuth()
 @Controller('members')
 export class MembersController {
   constructor(private readonly members: MembersService) {}

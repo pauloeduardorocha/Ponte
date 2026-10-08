@@ -2,6 +2,12 @@ import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import * as argon2 from 'argon2';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import {
+  CsvStatementParser,
+  transactionFingerprint,
+} from '../src/modules/banking/statement.parsers';
 
 const integration = process.env.TEST_DATABASE_URL ? describe : describe.skip;
 
@@ -51,8 +57,46 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
   it('is idempotent, preserves edited data/passwords and assigns least-privilege roles', async () => {
     seed();
     const first = await db.user.findMany({ orderBy: { email: 'asc' } });
-    expect(first).toHaveLength(4);
+    expect(first).toHaveLength(5);
     expect(await db.member.count()).toBe(3);
+    expect(await db.loan.count()).toBe(2);
+    expect(await db.smallGroup.count()).toBe(1);
+    expect(await db.smallGroupMember.count()).toBe(2);
+    expect(await db.ministry.count()).toBe(1);
+    expect(await db.ministryMember.count()).toBe(2);
+    expect(await db.followUp.count()).toBe(1);
+    expect(await db.followUpInteraction.count()).toBe(1);
+    expect(await db.volunteerSchedule.count()).toBe(1);
+    expect(await db.volunteerAssignment.count()).toBe(1);
+    expect(await db.attendance.count()).toBe(1);
+    expect(await db.notificationTemplate.count()).toBe(1);
+    expect(await db.fine.count()).toBe(1);
+    expect(await db.bankAccount.count()).toBe(1);
+    expect(await db.income.count()).toBe(4);
+    expect(await db.expense.count()).toBe(2);
+    expect(await db.contribution.count()).toBe(3);
+    expect(await db.bankTransaction.count()).toBe(150);
+    expect(await db.financialCategory.count()).toBe(13);
+    const imported = await db.bankImport.findFirstOrThrow();
+    const parsed = await new CsvStatementParser().parse({
+      originalname: imported.filename,
+      mimetype: 'text/csv',
+      size: imported.size!,
+      buffer: readFileSync(
+        resolve(
+          env.PRIVATE_STORAGE_PATH ?? './private-storage',
+          imported.storageKey,
+        ),
+      ),
+    });
+    expect(parsed).toHaveLength(150);
+    const movements = await db.bankTransaction.findMany({
+      where: { importId: imported.id },
+      orderBy: { rowNumber: 'asc' },
+    });
+    expect(
+      parsed.map((r) => transactionFingerprint(imported.accountId, r)),
+    ).toEqual(movements.map((r) => r.fingerprint));
     const admin = await db.user.findUniqueOrThrow({
       where: { email: 'admin@ponte.example' },
     });
@@ -62,7 +106,22 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
       where: { id: member.id },
       data: { notes: 'Preserve existing edit' },
     });
+    const demoIncome = await db.income.findUniqueOrThrow({
+      where: { id: 'd0000007-0000-4000-8000-000000000001' },
+    });
+    await db.financialCategory.update({
+      where: { id: demoIncome.categoryId },
+      data: { name: 'Preserve renamed category' },
+    });
     seed({ SEED_DEMO_PASSWORD: 'Changed-seed-password-is-not-applied' });
+    expect(await db.financialCategory.count()).toBe(13);
+    expect(
+      (
+        await db.financialCategory.findUniqueOrThrow({
+          where: { id: demoIncome.categoryId },
+        })
+      ).name,
+    ).toBe('Preserve renamed category');
     const second = await db.user.findMany({ orderBy: { email: 'asc' } });
     expect(second.map((user) => [user.id, user.passwordHash])).toEqual(
       first.map((user) => [user.id, user.passwordHash]),

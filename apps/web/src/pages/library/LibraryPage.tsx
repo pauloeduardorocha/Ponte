@@ -1,4 +1,9 @@
-import { useState, type ReactNode } from 'react';
+import { EntitySelect } from '../../components/EntitySelect';
+import { STATUS_LABELS } from '../../lib/status-labels';
+import { LibraryDashboardPanel } from './LibraryDashboardPanel';
+import { useSearchParams } from 'react-router-dom';
+import { StatusChip } from '../../components/DataPresentation';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -33,6 +38,8 @@ interface Field {
   required?: boolean;
   type?: string;
   multiline?: boolean;
+  endpoint?: string;
+  query?: Record<string, string>;
   options?: readonly string[];
 }
 interface Action {
@@ -43,7 +50,8 @@ interface Action {
 }
 const memberField: Field = {
   name: 'memberId',
-  label: 'ID do membro (UUID)',
+  label: 'Membro',
+  endpoint: '/library/members',
   required: true,
 };
 const copyFields: Field[] = [
@@ -125,9 +133,11 @@ function valuesOf(value: object): Record<string, string> {
 function ActionDialog({
   action,
   close,
+  onSaved,
 }: {
   action: Action;
   close: () => void;
+  onSaved: () => void;
 }) {
   const { control, handleSubmit } = useForm<Record<string, string>>({
     defaultValues: Object.fromEntries(
@@ -142,6 +152,8 @@ function ActionDialog({
     mutationFn: (values: Record<string, string>) => action.run(values),
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['library'] });
+      await client.invalidateQueries({ queryKey: ['entity-options'] });
+      onSaved();
       close();
     },
   });
@@ -175,32 +187,46 @@ function ActionDialog({
                 rules={{
                   required: field.required ? 'Campo obrigatório' : false,
                 }}
-                render={({ field: input, fieldState }) => (
-                  <TextField
-                    {...input}
-                    inputRef={input.ref}
-                    label={field.label}
-                    required={field.required}
-                    type={field.type ?? 'text'}
-                    multiline={field.multiline}
-                    minRows={field.multiline ? 2 : undefined}
-                    select={Boolean(field.options)}
-                    disabled={mutation.isPending}
-                    error={Boolean(fieldState.error)}
-                    helperText={fieldState.error?.message}
-                    slotProps={
-                      field.type === 'date'
-                        ? { inputLabel: { shrink: true } }
-                        : undefined
-                    }
-                  >
-                    {field.options?.map((option) => (
-                      <MenuItem key={option} value={option}>
-                        {option}
-                      </MenuItem>
-                    ))}
-                  </TextField>
-                )}
+                render={({ field: input, fieldState }) =>
+                  field.endpoint ? (
+                    <EntitySelect
+                      {...input}
+                      inputRef={input.ref}
+                      endpoint={field.endpoint}
+                      query={field.query}
+                      label={field.label}
+                      required={field.required}
+                      disabled={mutation.isPending}
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                    />
+                  ) : (
+                    <TextField
+                      {...input}
+                      inputRef={input.ref}
+                      label={field.label}
+                      required={field.required}
+                      type={field.type ?? 'text'}
+                      multiline={field.multiline}
+                      minRows={field.multiline ? 2 : undefined}
+                      select={Boolean(field.options)}
+                      disabled={mutation.isPending}
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                      slotProps={
+                        field.type === 'date'
+                          ? { inputLabel: { shrink: true } }
+                          : undefined
+                      }
+                    >
+                      {field.options?.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {STATUS_LABELS[option] ?? option}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  )
+                }
               />
             ))}
           </Stack>
@@ -249,43 +275,6 @@ function Paged({
         </Button>
       </Stack>
     </Stack>
-  );
-}
-
-export function LibraryDashboardPanel() {
-  const dashboard = useQuery({
-    queryKey: ['library', 'dashboard'],
-    queryFn: api.getLibraryDashboard,
-  });
-  if (dashboard.isPending)
-    return <CircularProgress aria-label="Carregando painel da biblioteca" />;
-  if (dashboard.isError)
-    return (
-      <QueryError
-        error={dashboard.error}
-        onRetry={() => void dashboard.refetch()}
-      />
-    );
-  const d = dashboard.data;
-  return (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack spacing={1}>
-          <Typography variant="h6">Biblioteca — visão geral</Typography>
-          <Typography>
-            Livros: {d.totalBooks} · Exemplares: {d.totalCopies} · Disponíveis:{' '}
-            {d.available} · Emprestados: {d.loaned} · Atrasados: {d.overdue}
-          </Typography>
-          <Typography>Multas pendentes: {d.pendingFines}</Typography>
-          <Typography fontWeight={600}>Mais emprestados</Typography>
-          {d.mostBorrowed.map((book) => (
-            <Typography key={book.bookId}>
-              {book.title} — {book.count}
-            </Typography>
-          ))}
-        </Stack>
-      </CardContent>
-    </Card>
   );
 }
 
@@ -344,18 +333,27 @@ export function LibraryPage() {
     ['members', 'Membros / histórico', 'LIBRARY_HISTORY_READ'],
   ] as const;
   const allowed = tabs.filter((tab) => hasPermission(tab[2]));
-  const [chosenTab, setTab] = useState<string>();
-  const tab = allowed.some((entry) => entry[0] === chosenTab)
-    ? chosenTab
+  const [params, setParams] = useSearchParams();
+  const [chosenTab, setTab] = useState<string>(params.get('tab') ?? '');
+  const tab = allowed.some(
+    (entry) => entry[0] === (params.get('tab') ?? chosenTab),
+  )
+    ? (params.get('tab') ?? chosenTab)
     : allowed[0]?.[0];
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(params.get('search') ?? '');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('');
   const [available, setAvailable] = useState('');
   const [memberId, setMemberId] = useState('');
   const [bookId, setBookId] = useState('');
-  const [status, setStatus] = useState('');
+  const [status, setStatus] = useState(params.get('status') ?? '');
+  useEffect(() => {
+    setSearch(params.get('search') ?? '');
+    setStatus(params.get('status') ?? '');
+    setPage(1);
+  }, [params]);
+  const [notice, setNotice] = useState('');
   const [action, setAction] = useState<Action>();
   const [copyHistory, setCopyHistory] = useState<string>();
   const [historyMember, setHistoryMember] = useState<string>();
@@ -421,6 +419,11 @@ export function LibraryPage() {
 
   return (
     <Stack spacing={3}>
+      {notice && (
+        <Alert severity="success" onClose={() => setNotice('')}>
+          {notice}
+        </Alert>
+      )}
       <PageHeader
         title="Biblioteca"
         subtitle="Catálogo, circulação, reservas e multas"
@@ -439,6 +442,7 @@ export function LibraryPage() {
             variant="scrollable"
             onChange={(_, value: string) => {
               setTab(value);
+              setParams({ tab: value });
               setPage(1);
               setStatus('');
             }}
@@ -483,18 +487,23 @@ export function LibraryPage() {
               ) : (
                 tab !== 'members' && (
                   <>
-                    <TextField
-                      label="ID do livro (filtro)"
-                      value={bookId}
-                      onChange={(e) => filter(setBookId, e.target.value)}
-                    />
-                    {tab !== 'copies' && (
-                      <TextField
-                        label="ID do membro (filtro)"
-                        value={memberId}
-                        onChange={(e) => filter(setMemberId, e.target.value)}
+                    {hasPermission('LIBRARY_BOOK_READ') && (
+                      <EntitySelect
+                        endpoint="/library/books"
+                        label="Livro (filtro)"
+                        value={bookId}
+                        onChange={(e) => filter(setBookId, e.target.value)}
                       />
                     )}
+                    {tab !== 'copies' &&
+                      hasPermission('LIBRARY_HISTORY_READ') && (
+                        <EntitySelect
+                          endpoint="/library/members"
+                          label="Membro (filtro)"
+                          value={memberId}
+                          onChange={(e) => filter(setMemberId, e.target.value)}
+                        />
+                      )}
                     {(tab === 'copies' || tab === 'loans') && (
                       <TextField
                         select
@@ -566,7 +575,9 @@ export function LibraryPage() {
                         memberField,
                         {
                           name: 'bookCopyId',
-                          label: 'ID do exemplar (UUID)',
+                          label: 'Exemplar',
+                          endpoint: '/library/copies',
+                          query: { status: 'AVAILABLE' },
                           required: true,
                         },
                         { name: 'observations', label: 'Observações' },
@@ -594,7 +605,8 @@ export function LibraryPage() {
                         memberField,
                         {
                           name: 'bookId',
-                          label: 'ID do livro (UUID)',
+                          label: 'Livro',
+                          endpoint: '/library/books',
                           required: true,
                         },
                       ],
@@ -747,8 +759,8 @@ export function LibraryPage() {
                         {copy.book.title} · {copy.assetCode}
                       </Typography>
                       <Typography>
-                        {copy.status} · {copy.condition} · {copy.location} ·{' '}
-                        {copy.notes}
+                        {<StatusChip status={copy.status} />} · {copy.condition}{' '}
+                        · {copy.location} · {copy.notes}
                       </Typography>
                       <Typography variant="caption">
                         ID: {copy.id} · Livro: {copy.bookId} · Barcode:{' '}
@@ -849,8 +861,9 @@ export function LibraryPage() {
                         {loan.member.name}
                       </Typography>
                       <Typography>
-                        {loan.status} · Emprestado {formatDate(loan.borrowedAt)}{' '}
-                        · Vence {formatDate(loan.dueAt)} · Devolvido{' '}
+                        {<StatusChip status={loan.status} />} · Emprestado{' '}
+                        {formatDate(loan.borrowedAt)} · Vence{' '}
+                        {formatDate(loan.dueAt)} · Devolvido{' '}
                         {loan.returnedAt ? formatDate(loan.returnedAt) : '—'} ·
                         Renovações {loan.renewedCount}
                       </Typography>
@@ -930,9 +943,9 @@ export function LibraryPage() {
                         {fine.loan?.bookCopy.book.title}
                       </Typography>
                       <Typography>
-                        {fine.status} · Total {fine.amount} · Pago{' '}
-                        {fine.paidAmount} · Ajustado {fine.discount} · Saldo{' '}
-                        {api.fineBalance(fine)}
+                        {<StatusChip status={fine.status} />} · Total{' '}
+                        {fine.amount} · Pago {fine.paidAmount} · Ajustado{' '}
+                        {fine.discount} · Saldo {api.fineBalance(fine)}
                       </Typography>
                       {fine.payments.map((p) => (
                         <Typography key={p.id} variant="body2">
@@ -1047,7 +1060,8 @@ export function LibraryPage() {
                   <CardContent>
                     <Stack spacing={1}>
                       <Typography variant="h6">
-                        {r.book.title} · {r.member.name} · {r.status}
+                        {r.book.title} · {r.member.name} ·{' '}
+                        <StatusChip status={r.status} />
                       </Typography>
                       <Typography>
                         Fila criada {formatDate(r.createdAt)} · Expira{' '}
@@ -1188,7 +1202,11 @@ export function LibraryPage() {
         </>
       )}
       {action && (
-        <ActionDialog action={action} close={() => setAction(undefined)} />
+        <ActionDialog
+          onSaved={() => setNotice('Operação concluída com sucesso.')}
+          action={action}
+          close={() => setAction(undefined)}
+        />
       )}
       {copyHistory && (
         <CopyHistoryDialog

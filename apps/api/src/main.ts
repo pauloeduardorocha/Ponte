@@ -37,10 +37,11 @@ async function bootstrap() {
 
   if (config.get<string>('NODE_ENV') !== 'production') {
     const swaggerConfig = new DocumentBuilder()
-      .setTitle('Church Management API')
+      .setTitle('Ponte API')
       .setDescription('API para gestão da igreja')
       .setVersion('0.1.0')
       .addBearerAuth()
+      .addCookieAuth('refresh_token', undefined, 'refresh_token')
       .build();
     SwaggerModule.setup(
       'api/v1/docs',

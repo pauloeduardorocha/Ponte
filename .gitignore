@@ -1,8 +1,13 @@
 node_modules/
 dist/
+dist-seed/
 coverage/
 .env
 .env.*
 !.env.example
 apps/api/generated/
 apps/api/prisma/*.db
+
+private-storage/
+apps/scrapper/faturas*.json
+apps/scrapper/efatura-config.json

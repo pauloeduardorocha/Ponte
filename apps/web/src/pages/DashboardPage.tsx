@@ -2,172 +2,226 @@ import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Box,
+  Button,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
+  Skeleton,
   Stack,
   Typography,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
-import { getHealth } from '../lib/api';
-import { listMembers } from '../lib/members-api';
-import { Can } from '../auth/guards';
-import { LibraryDashboardPanel } from './library/LibraryPage';
-import { getLibraryDashboard } from '../lib/library-api';
+import { apiRequest, getHealth } from '../lib/api';
+import { MetricCard, BreakdownChart } from '../components/DataPresentation';
+import { LibraryDashboardPanel } from './library/LibraryDashboardPanel';
+import { FinancialDashboardPanel } from './FinancialDashboardPanel';
+import { OperationalDashboard } from './operations/OperationalDashboard';
 
+type Counts = { status: string; _count: { _all: number } };
+type Community = {
+  members?: Counts[];
+  visitors?: Counts[];
+  events?: number;
+  upcomingEvents?: {
+    id: string;
+    name: string;
+    startsAt: string;
+    location: string;
+  }[];
+};
 export function DashboardPage() {
-  const { hasPermission } = useAuth();
-  const canReadMembers = hasPermission('MEMBER_READ');
-  const library = useQuery({
-    queryKey: ['library', 'dashboard'],
-    queryFn: getLibraryDashboard,
-    enabled: hasPermission('LIBRARY_DASHBOARD_READ'),
-  });
+  const { hasPermission, user } = useAuth();
+  const canCommunity = ['MEMBER_READ', 'VISITOR_READ', 'EVENT_READ'].some((p) =>
+    user?.permissions.some((code) => code === p),
+  );
   const health = useQuery({
     queryKey: ['health'],
     queryFn: getHealth,
     retry: 1,
+    staleTime: 60000,
   });
-  const activeMembers = useQuery({
-    queryKey: ['members', 'active-count'],
-    queryFn: () =>
-      listMembers({
-        status: 'ACTIVE',
-        page: 1,
-        pageSize: 1,
-        sortBy: 'name',
-        sortOrder: 'asc',
-      }),
-    enabled: canReadMembers,
+  const community = useQuery({
+    queryKey: ['community', 'dashboard'],
+    queryFn: () => apiRequest<Community>('/community/dashboard'),
+    enabled: canCommunity,
+    staleTime: 30000,
   });
-
+  const d = community.data;
   return (
     <Stack spacing={4}>
+      <OperationalDashboard />
       <Box>
-        <Typography variant="overline" color="primary" fontWeight={700}>
-          {new Intl.DateTimeFormat('pt-BR', {
+        <Typography variant="overline" color="primary.main">
+          {new Date().toLocaleDateString('pt-PT', {
             weekday: 'long',
-            day: '2-digit',
+            day: 'numeric',
             month: 'long',
-          })
-            .format(new Date())
-            .toLocaleUpperCase('pt-BR')}
+          })}
         </Typography>
-        <Typography variant="h4" component="h1" fontWeight={700}>
+        <Typography variant="h4" component="h1">
           Bom dia, comunidade
         </Typography>
-        <Typography color="text.secondary" sx={{ mt: 1 }}>
-          Aqui está um resumo da vida da sua igreja.
+        <Typography color="text.secondary">
+          Olá, {user?.name}. Acompanhe os dados e acesse as listas pelo seu
+          painel.
         </Typography>
       </Box>
-
       {health.isError && (
         <Alert severity="warning">
-          Não foi possível conectar à API. Verifique se os serviços estão em
-          execução.
+          Não foi possível conectar à API. Tente novamente em instantes.
         </Alert>
       )}
-
-      <Can permission="LIBRARY_DASHBOARD_READ">
-        <LibraryDashboardPanel />
-      </Can>
-      <Box className="summary-grid">
-        {[
-          {
-            label: 'Membros ativos',
-            value: activeMembers.data ? String(activeMembers.data.total) : '—',
-            detail: 'Cadastro de membros',
-          },
-          {
-            label: 'Próximos eventos',
-            value: '—',
-            detail: 'Agenda da comunidade',
-          },
-          {
-            label: 'Livros disponíveis',
-            value: library.data ? String(library.data.available) : '—',
-            detail: 'Acervo da biblioteca',
-          },
-        ].map((item) => (
-          <Card key={item.label} variant="outlined" className="summary-card">
-            <CardContent>
-              <Typography color="text.secondary" variant="body2">
-                {item.label}
-              </Typography>
-              <Typography variant="h3" fontWeight={700} sx={{ my: 1 }}>
-                {item.value}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {item.detail}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
-
-      <Box className="dashboard-panels">
-        <Card variant="outlined">
-          <CardContent>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-            >
-              <Box>
-                <Typography variant="h6" fontWeight={700}>
-                  Visão geral
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Os indicadores aparecerão conforme os módulos forem ativados.
-                </Typography>
-              </Box>
-              <Chip
-                size="small"
-                label={
-                  health.isPending
-                    ? 'Verificando'
-                    : health.isSuccess
-                      ? 'Sistema operacional'
-                      : 'Sistema indisponível'
+      {canCommunity && community.isPending && (
+        <Skeleton
+          variant="rounded"
+          height={140}
+          aria-label="Carregando indicadores da comunidade"
+        />
+      )}
+      {community.isError && (
+        <Alert
+          severity="error"
+          action={
+            <Button onClick={() => void community.refetch()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          Não foi possível carregar os indicadores da comunidade.
+        </Alert>
+      )}
+      {d && (
+        <>
+          <Box className="metric-grid">
+            {d.members && (
+              <MetricCard
+                label="Membros ativos"
+                value={
+                  d.members.find((m) => m.status === 'ACTIVE')?._count._all ?? 0
                 }
-                color={health.isSuccess ? 'success' : 'default'}
-                icon={
-                  health.isPending ? (
-                    <CircularProgress size={14} aria-label="Verificando API" />
-                  ) : undefined
-                }
+                detail={`${d.members.reduce((v, m) => v + m._count._all, 0)} membros cadastrados`}
+                href="/members?status=ACTIVE"
               />
-            </Stack>
-            <Box className="empty-state">
-              <Typography fontWeight={600}>
-                Seu painel está pronto para começar
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Os dados serão exibidos aqui quando os cadastros estiverem
-                disponíveis.
-              </Typography>
-            </Box>
-          </CardContent>
-        </Card>
-        <Card variant="outlined">
-          <CardContent>
-            <Typography variant="h6" fontWeight={700}>
-              Próximos passos
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Configure os módulos da comunidade para preencher este espaço.
-            </Typography>
-            <Divider sx={{ my: 2 }} />
-            <Typography variant="body2">Membros e ministérios</Typography>
-            <Divider sx={{ my: 1.5 }} />
-            <Typography variant="body2">Eventos e biblioteca</Typography>
-            <Divider sx={{ my: 1.5 }} />
-            <Typography variant="body2">Relatórios e financeiro</Typography>
-          </CardContent>
-        </Card>
-      </Box>
+            )}
+            {d.visitors && (
+              <MetricCard
+                label="Visitantes"
+                value={d.visitors.reduce((v, m) => v + m._count._all, 0)}
+                detail="Acolhimento e acompanhamento"
+                color="info.main"
+                href="/visitors"
+              />
+            )}
+            {d.events !== undefined && (
+              <MetricCard
+                label="Próximos eventos"
+                value={d.events}
+                detail="Agenda da comunidade"
+                color="secondary.main"
+                href="/events?status=SCHEDULED"
+              />
+            )}
+          </Box>
+          <Box className="dashboard-panels">
+            {d.members && (
+              <BreakdownChart
+                title="Situação dos membros"
+                items={[
+                  {
+                    label: 'Ativos',
+                    value:
+                      d.members.find((m) => m.status === 'ACTIVE')?._count
+                        ._all ?? 0,
+                    color: '#24754c',
+                  },
+                  {
+                    label: 'Inativos',
+                    value:
+                      d.members.find((m) => m.status === 'INACTIVE')?._count
+                        ._all ?? 0,
+                    color: '#64748b',
+                  },
+                ]}
+              />
+            )}{' '}
+            {d.visitors && (
+              <BreakdownChart
+                title="Acompanhamento de visitantes"
+                items={[
+                  {
+                    label: 'Novos',
+                    value:
+                      d.visitors.find((v) => v.status === 'NEW')?._count._all ??
+                      0,
+                    color: '#a85d08',
+                  },
+                  {
+                    label: 'Contactados',
+                    value:
+                      d.visitors.find((v) => v.status === 'CONTACTED')?._count
+                        ._all ?? 0,
+                    color: '#24754c',
+                  },
+                  {
+                    label: 'Arquivados',
+                    value:
+                      d.visitors.find((v) => v.status === 'ARCHIVED')?._count
+                        ._all ?? 0,
+                    color: '#64748b',
+                  },
+                ]}
+              />
+            )}
+          </Box>
+          {d.upcomingEvents && (
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="h6">Agenda próxima</Typography>
+                {!d.upcomingEvents.length && (
+                  <Typography color="text.secondary" sx={{ mt: 2 }}>
+                    Nenhum evento agendado.{' '}
+                    <Button component={Link} to="/events">
+                      Abrir agenda
+                    </Button>
+                  </Typography>
+                )}
+                {d.upcomingEvents.map((e) => (
+                  <Stack
+                    key={e.id}
+                    direction="row"
+                    justifyContent="space-between"
+                    gap={2}
+                    sx={{ py: 1 }}
+                  >
+                    <Box>
+                      <Typography fontWeight={600}>{e.name}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {new Date(e.startsAt).toLocaleString('pt-PT')} ·{' '}
+                        {e.location}
+                      </Typography>
+                    </Box>
+                    <Button component={Link} to="/events">
+                      Ver agenda
+                    </Button>
+                  </Stack>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </>
+      )}
+      {hasPermission('LIBRARY_DASHBOARD_READ') && <LibraryDashboardPanel />}
+      {hasPermission('FINANCE_DASHBOARD_READ') && <FinancialDashboardPanel />}
+      {!canCommunity &&
+        !hasPermission('LIBRARY_DASHBOARD_READ') &&
+        !hasPermission('FINANCE_DASHBOARD_READ') && (
+          <Alert severity="info">
+            Seu perfil não possui acesso aos painéis administrativos.{' '}
+            <Button component={Link} to="/account">
+              Minha conta
+            </Button>
+          </Alert>
+        )}
     </Stack>
   );
 }

@@ -1,3 +1,4 @@
+import { auditContext } from '../audit/audit-context';
 import {
   CanActivate,
   ExecutionContext,
@@ -34,6 +35,8 @@ export class AuthGuard implements CanActivate {
     const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
     if (!match?.[1]) throw new UnauthorizedException();
     const session = await this.auth.authenticate(match[1]);
+    const audit = auditContext.getStore();
+    if (audit) audit.userId = session.user.id;
     request.user = session.user;
     request.sessionId = session.sessionId;
     return true;

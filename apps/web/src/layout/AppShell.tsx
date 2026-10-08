@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 import {
   AppBar,
   Avatar,
@@ -11,6 +11,7 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
+  LinearProgress,
   Menu,
   MenuItem,
   Stack,
@@ -36,6 +37,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { initials } from '../lib/format';
 import type { Permission } from '../lib/types';
+import { AUDIT_PERMISSIONS } from '../lib/audit-permissions';
 
 const sidebarWidth = 264;
 
@@ -43,19 +45,99 @@ interface NavigationItem {
   label: string;
   to: string;
   icon: typeof DashboardRounded;
+  group?: string;
   permission?: Permission;
-  permissionPrefix?: 'LIBRARY_';
+  permissions?: Permission[];
+  anyPermissions?: Permission[];
+  permissionPrefix?: 'LIBRARY_' | 'FINANCE_';
 }
 
 const navigation: NavigationItem[] = [
+  {
+    label: 'Vida da igreja',
+    group: 'Operação',
+    to: '/operations',
+    icon: DashboardRounded,
+    anyPermissions: [
+      'VISITOR_READ',
+      'FOLLOWUP_READ',
+      'SMALL_GROUP_READ',
+      'MINISTRY_READ',
+      'EVENT_READ',
+      'SCHEDULE_READ',
+      'ATTENDANCE_READ',
+    ],
+  },
+  {
+    label: 'Auditoria',
+    to: '/audit',
+    icon: AdminPanelSettingsRounded,
+    permissions: AUDIT_PERMISSIONS,
+  },
   { label: 'Visão geral', to: '/', icon: DashboardRounded },
   {
     label: 'Membros',
+    group: 'Pessoas',
     to: '/members',
     icon: PeopleAltRounded,
     permission: 'MEMBER_READ',
   },
-  { label: 'Eventos', to: '/events', icon: CalendarMonthRounded },
+  {
+    label: 'Eventos',
+    group: 'Operação',
+    to: '/events',
+    icon: CalendarMonthRounded,
+    permission: 'EVENT_READ',
+  },
+  {
+    label: 'Visitantes',
+    group: 'Pessoas',
+    to: '/visitors',
+    icon: PeopleAltRounded,
+    permission: 'VISITOR_READ',
+  },
+  {
+    label: 'Acompanhamento',
+    group: 'Pessoas',
+    to: '/follow-ups',
+    icon: PeopleAltRounded,
+    permission: 'FOLLOWUP_READ',
+  },
+  {
+    label: 'Grupos familiares',
+    group: 'Grupos',
+    to: '/small-groups',
+    icon: PeopleAltRounded,
+    permission: 'SMALL_GROUP_READ',
+  },
+  {
+    label: 'Ministérios',
+    group: 'Grupos',
+    to: '/ministries',
+    icon: PeopleAltRounded,
+    permission: 'MINISTRY_READ',
+  },
+  {
+    label: 'Escalas',
+    group: 'Operação',
+    to: '/schedules',
+    icon: CalendarMonthRounded,
+    permission: 'SCHEDULE_READ',
+  },
+  {
+    label: 'Presenças',
+    group: 'Operação',
+    to: '/attendance',
+    icon: PeopleAltRounded,
+    permission: 'ATTENDANCE_READ',
+  },
+  {
+    label: 'Notificações',
+    group: 'Comunicação',
+    to: '/notifications',
+    icon: NotificationsNoneRounded,
+    permission: 'NOTIFICATION_READ',
+  },
   {
     label: 'Biblioteca',
     to: '/library',
@@ -66,7 +148,7 @@ const navigation: NavigationItem[] = [
     label: 'Financeiro',
     to: '/finance',
     icon: AccountBalanceRounded,
-    permission: 'FINANCE_TRANSACTION_READ',
+    permissionPrefix: 'FINANCE_',
   },
   {
     label: 'Usuários',
@@ -78,11 +160,27 @@ const navigation: NavigationItem[] = [
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, hasPermission } = useAuth();
-  const items = navigation.filter(({ permissionPrefix, permission }) =>
-    permissionPrefix
-      ? user?.permissions.some((code) => code.startsWith(permissionPrefix))
-      : !permission || hasPermission(permission),
-  );
+  const items = [...navigation]
+    .sort(
+      (a, b) =>
+        ['', 'Pessoas', 'Grupos', 'Operação', 'Comunicação'].indexOf(
+          a.group ?? '',
+        ) -
+        ['', 'Pessoas', 'Grupos', 'Operação', 'Comunicação'].indexOf(
+          b.group ?? '',
+        ),
+    )
+    .filter(({ permissionPrefix, permission, permissions, anyPermissions }) =>
+      anyPermissions
+        ? anyPermissions.some(hasPermission)
+        : permissions
+          ? permissions.every(hasPermission)
+          : permissionPrefix
+            ? user?.permissions.some((code) =>
+                code.startsWith(permissionPrefix),
+              )
+            : !permission || hasPermission(permission),
+    );
 
   return (
     <Box className="sidebar">
@@ -105,27 +203,32 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <Typography className="sidebar-label">MENU PRINCIPAL</Typography>
       <List className="navigation-list" disablePadding>
-        {items.map(({ label, to, icon: Icon }) => (
-          <ListItemButton
-            key={to}
-            component={NavLink}
-            to={to}
-            end={to === '/'}
-            onClick={onNavigate}
-            className="navigation-link"
-            sx={{
-              '&.active': {
-                color: 'primary.main',
-                backgroundColor: 'rgba(36, 91, 74, 0.09)',
-                '& .MuiListItemIcon-root': { color: 'primary.main' },
-              },
-            }}
-          >
-            <ListItemIcon>
-              <Icon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText primary={label} />
-          </ListItemButton>
+        {items.map(({ label, to, icon: Icon, group }, index) => (
+          <Box key={to}>
+            {group && items[index - 1]?.group !== group && (
+              <Typography className="sidebar-label">{group}</Typography>
+            )}
+            <ListItemButton
+              key={to}
+              component={NavLink}
+              to={to}
+              end={to === '/'}
+              onClick={onNavigate}
+              className="navigation-link"
+              sx={{
+                '&.active': {
+                  color: 'primary.main',
+                  backgroundColor: 'rgba(36, 91, 74, 0.09)',
+                  '& .MuiListItemIcon-root': { color: 'primary.main' },
+                },
+              }}
+            >
+              <ListItemIcon>
+                <Icon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText primary={label} />
+            </ListItemButton>
+          </Box>
         ))}
       </List>
 
@@ -228,7 +331,11 @@ export function AppShell({ children }: { children?: ReactNode }) {
             Painel da comunidade
           </Typography>
           <Tooltip title="Notificações">
-            <IconButton aria-label="Notificações">
+            <IconButton
+              component={NavLink}
+              to="/inbox"
+              aria-label="Notificações"
+            >
               <NotificationsNoneRounded />
             </IconButton>
           </Tooltip>
@@ -263,7 +370,9 @@ export function AppShell({ children }: { children?: ReactNode }) {
       >
         <Toolbar className="header-spacer" />
         <Container maxWidth="xl" className="dashboard-content">
-          {children ?? <Outlet />}
+          <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
+            {children ?? <Outlet />}
+          </Suspense>
         </Container>
       </Box>
     </Box>

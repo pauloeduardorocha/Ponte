@@ -1,4 +1,29 @@
 export const PERMISSIONS = [
+  'OPERATION_SCOPE_ALL',
+  'VISITOR_CREATE',
+  'VISITOR_UPDATE',
+  'FOLLOWUP_READ',
+  'FOLLOWUP_CREATE',
+  'FOLLOWUP_UPDATE',
+  'SMALL_GROUP_READ',
+  'SMALL_GROUP_MANAGE',
+  'MINISTRY_READ',
+  'MINISTRY_MANAGE',
+  'EVENT_MANAGE',
+  'SCHEDULE_READ',
+  'SCHEDULE_MANAGE',
+  'ATTENDANCE_READ',
+  'ATTENDANCE_MANAGE',
+  'NOTIFICATION_READ',
+  'NOTIFICATION_SEND',
+  'VISITOR_READ',
+  'VISITOR_WRITE',
+  'EVENT_READ',
+  'EVENT_WRITE',
+  'AUDIT_READ',
+  'PERMISSION_MANAGE',
+  'PRIVACY_EXPORT',
+  'PRIVACY_MANAGE',
   'USER_READ',
   'USER_CREATE',
   'USER_UPDATE',
@@ -31,7 +56,20 @@ export const PERMISSIONS = [
   'FINANCE_TRANSACTION_READ',
   'FINANCE_TRANSACTION_CREATE',
   'FINANCE_TRANSACTION_UPDATE',
+  'FINANCE_CATEGORY_READ',
+  'FINANCE_CATEGORY_WRITE',
+  'FINANCE_ACCOUNT_READ',
+  'FINANCE_ACCOUNT_WRITE',
+  'FINANCE_SUPPLIER_READ',
+  'FINANCE_SUPPLIER_WRITE',
+  'FINANCE_CONTRIBUTION_WRITE',
+  'FINANCE_ATTACHMENT_READ',
+  'FINANCE_ATTACHMENT_WRITE',
+  'FINANCE_DASHBOARD_READ',
   'FINANCE_BANK_IMPORT',
+  'FINANCE_INVOICE_READ',
+  'FINANCE_INVOICE_IMPORT',
+  'FINANCE_INVOICE_ASSOCIATE',
   'FINANCE_RECONCILE',
   'FINANCE_CONTRIBUTION_READ',
   'FINANCE_CONTRIBUTION_EXPORT',
@@ -52,15 +90,51 @@ export const INITIAL_ROLES = [
 
 export type InitialRole = (typeof INITIAL_ROLES)[number];
 
+const OPERATIONAL_PERMISSIONS = PERMISSIONS.filter(
+  (code) =>
+    [
+      'VISITOR_',
+      'FOLLOWUP_',
+      'SMALL_GROUP_',
+      'MINISTRY_',
+      'EVENT_',
+      'SCHEDULE_',
+      'ATTENDANCE_',
+      'NOTIFICATION_',
+    ].some((prefix) => code.startsWith(prefix)) &&
+    !['VISITOR_WRITE', 'EVENT_WRITE'].includes(code),
+);
+
 export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
   SUPER_ADMIN: PERMISSIONS,
   ADMIN: PERMISSIONS.filter(
-    (code) => code.startsWith('USER_') || code.startsWith('MEMBER_'),
+    (code) =>
+      code.startsWith('USER_') ||
+      code.startsWith('MEMBER_') ||
+      code.startsWith('VISITOR_') ||
+      code.startsWith('EVENT_') ||
+      [
+        'OPERATION_',
+        'FOLLOWUP_',
+        'SMALL_GROUP_',
+        'MINISTRY_',
+        'SCHEDULE_',
+        'ATTENDANCE_',
+        'NOTIFICATION_',
+      ].some((prefix) => code.startsWith(prefix)) ||
+      (code.startsWith('LIBRARY_') && code.endsWith('_READ')) ||
+      [
+        'FINANCE_TRANSACTION_READ',
+        'FINANCE_CATEGORY_READ',
+        'FINANCE_ACCOUNT_READ',
+        'FINANCE_SUPPLIER_READ',
+        'FINANCE_DASHBOARD_READ',
+      ].includes(code),
   ),
   SECRETARY: ['MEMBER_READ', 'MEMBER_CREATE', 'MEMBER_UPDATE'],
-  PASTOR: ['MEMBER_READ'],
-  LEADER: [],
-  FINANCE: [],
+  PASTOR: ['MEMBER_READ', 'OPERATION_SCOPE_ALL', ...OPERATIONAL_PERMISSIONS],
+  LEADER: OPERATIONAL_PERMISSIONS,
+  FINANCE: PERMISSIONS.filter((code) => code.startsWith('FINANCE_')),
   LIBRARY: PERMISSIONS.filter((code) => code.startsWith('LIBRARY_')),
   MEMBER: [],
 };

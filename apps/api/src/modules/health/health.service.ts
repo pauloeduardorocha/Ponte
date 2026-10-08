@@ -15,11 +15,8 @@ export class HealthService {
         status: 'ok' as const,
         services: { api: 'up' as const, database: 'up' as const },
       };
-    } catch (error) {
-      this.logger.error(
-        'Database health check failed',
-        error instanceof Error ? error.stack : undefined,
-      );
+    } catch {
+      this.logger.error('Database health check failed');
 
       return {
         status: 'degraded' as const,

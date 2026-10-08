@@ -1,7 +1,7 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { PERMISSIONS } from '@church/shared';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
@@ -18,6 +18,12 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
   let normal: string;
   let reader: string;
   let actor: string;
+  let auditStart: Date;
+  const countAudits = (args: Prisma.AuditLogCountArgs) =>
+    db.auditLog.count({
+      ...args,
+      where: { ...args.where, createdAt: { gte: auditStart } },
+    });
   const defaults = {
     defaultLoanDays: 14,
     maxBooks: 3,
@@ -180,12 +186,13 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
     await db.bookCopy.deleteMany();
     await db.book.deleteMany();
     await db.member.deleteMany();
-    await db.auditLog.deleteMany();
+
     await db.librarySettings.upsert({
       where: { id: 1 },
       create: { id: 1, ...defaults },
       update: defaults,
     });
+    auditStart = new Date();
   });
 
   afterAll(async () => {
@@ -292,7 +299,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
       (await db.bookCopy.findUniqueOrThrow({ where: { id: copy.id } })).status,
     ).toBe('AVAILABLE');
     expect(
-      await db.auditLog.count({
+      await countAudits({
         where: { entityId: loan.id, action: 'LIBRARY_RETURN' },
       }),
     ).toBe(1);
@@ -326,7 +333,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
         ).paidAmount.toFixed(2),
       ).toBe('0.00');
       expect(
-        await db.auditLog.count({ where: { action: 'LIBRARY_FINE_PAYMENT' } }),
+        await countAudits({ where: { action: 'LIBRARY_FINE_PAYMENT' } }),
       ).toBe(0);
     } finally {
       await db.$executeRaw`ALTER TABLE audit_logs DROP CONSTRAINT library_test_audit_failure`;
@@ -383,7 +390,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
     expect(fine.amount.toFixed(2)).toBe('0.20');
     await get('/fines').expect(200);
     expect(
-      await db.auditLog.count({ where: { action: 'LIBRARY_FINE_ACCRUE' } }),
+      await countAudits({ where: { action: 'LIBRARY_FINE_ACCRUE' } }),
     ).toBe(1);
     const second = await bookCopy();
     await post('/loans', {
@@ -469,7 +476,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
     expect(paid.status).toBe('PAID');
     expect(paid.paidAmount.toFixed(2)).toBe('0.40');
     expect(
-      await db.auditLog.count({
+      await countAudits({
         where: { entityId: fine.id, action: 'LIBRARY_FINE_PAYMENT' },
       }),
     ).toBe(2);
@@ -524,7 +531,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
         .status,
     ).toBe('CANCELLED');
     expect(
-      await db.auditLog.count({ where: { action: 'LIBRARY_FINE_ADJUST' } }),
+      await countAudits({ where: { action: 'LIBRARY_FINE_ADJUST' } }),
     ).toBe(3);
   });
 
@@ -753,7 +760,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
     await patch('/settings', { ...defaults, dailyFine: '0.001' }).expect(400);
     await patch('/settings', { ...defaults, maxRenewals: 0 }).expect(200);
     expect(
-      await db.auditLog.count({ where: { action: 'LIBRARY_SETTINGS_UPDATE' } }),
+      await countAudits({ where: { action: 'LIBRARY_SETTINGS_UPDATE' } }),
     ).toBe(2);
   });
 
@@ -774,7 +781,7 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
       .expect(204);
     await get(`/books/${book.body.id}`).expect(404);
     expect(
-      await db.auditLog.count({ where: { action: 'LIBRARY_BOOK_DELETE' } }),
+      await countAudits({ where: { action: 'LIBRARY_BOOK_DELETE' } }),
     ).toBe(1);
     const { copy } = await bookCopy();
     await post('/loans', {
