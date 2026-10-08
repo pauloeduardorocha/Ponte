@@ -58,4 +58,61 @@ describe('Finance permissions and dashboard', () => {
       screen.queryByRole('button', { name: /Cadastrar/ }),
     ).not.toBeInTheDocument();
   });
+  it('confirms account deletion and refreshes the list', async () => {
+    let exists = true;
+    const account = {
+      id: 'account-1',
+      name: 'Conta de teste',
+      bank: 'Banco',
+      currency: 'EUR',
+      status: 'ACTIVE',
+      openingBalance: '0',
+    };
+    const requests = mockApi({
+      ...sessionRoutes(
+        makeUser(['FINANCE_ACCOUNT_READ', 'FINANCE_ACCOUNT_WRITE']),
+      ),
+      'GET /finance/accounts': () => ({
+        body: {
+          items: exists ? [account] : [],
+          total: exists ? 1 : 0,
+          page: 1,
+          pageSize: 20,
+        },
+      }),
+      'DELETE /finance/accounts/account-1': () => {
+        exists = false;
+        return { body: account };
+      },
+    });
+    renderApp('/finance?tab=accounts');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Excluir conta' }),
+    );
+    expect(requests.some((r) => r.method === 'DELETE')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
+    await screen.findByText('Conta bancária excluída.');
+    await screen.findByText('Nenhum registro.');
+    expect(requests.filter((r) => r.method === 'DELETE')).toHaveLength(1);
+  });
+  it('hides account deletion from read-only users', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['FINANCE_ACCOUNT_READ'])),
+      'GET /finance/accounts': {
+        body: {
+          items: [
+            { id: 'account-1', name: 'Conta de teste', status: 'ACTIVE' },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 20,
+        },
+      },
+    });
+    renderApp('/finance?tab=accounts');
+    await screen.findByText('Conta de teste');
+    expect(
+      screen.queryByRole('button', { name: 'Excluir conta' }),
+    ).not.toBeInTheDocument();
+  });
 });

@@ -23,7 +23,7 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
-  const { login, signOutNotice } = useAuth();
+  const { login, signOutNotice, sessionError } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state ?? {}) as LoginLocationState;
@@ -55,7 +55,7 @@ export function LoginPage() {
       title="Acesse sua conta"
       subtitle="Entre para continuar na plataforma da igreja."
       notice={state.notice ?? signOutNotice ?? undefined}
-      error={error}
+      error={error ?? sessionError}
       footer={
         <>
           <Link component={RouterLink} to="/forgot-password">

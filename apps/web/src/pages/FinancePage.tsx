@@ -229,6 +229,20 @@ export function FinancePage() {
   const [values, setValues] = useState<Record<string, string>>({});
   const [fileExpense, setFileExpense] = useState<string | null>(null);
   const [fileError, setFileError] = useState('');
+  const [deleteAccountTarget, setDeleteAccountTarget] =
+    useState<RecordData | null>(null);
+  const deleteAccount = useMutation({
+    mutationFn: () =>
+      apiRequest(`/finance/accounts/${deleteAccountTarget!.id}`, {
+        method: 'DELETE',
+      }),
+    onSuccess: () => {
+      setDeleteAccountTarget(null);
+      setNotice('Conta bancária excluída.');
+      void client.invalidateQueries({ queryKey: ['finance'] });
+      void client.invalidateQueries({ queryKey: ['entity-options'] });
+    },
+  });
   const data = useQuery({
     queryKey: ['finance', route, page, params.toString(), debouncedSearch],
     queryFn: () =>
@@ -607,6 +621,18 @@ export function FinancePage() {
                       </Button>
                     )}
                   <Stack direction="row" gap={1}>
+                    {route === 'accounts' &&
+                      hasPermission('FINANCE_ACCOUNT_WRITE') && (
+                        <Button
+                          color="error"
+                          onClick={() => {
+                            deleteAccount.reset();
+                            setDeleteAccountTarget(item);
+                          }}
+                        >
+                          Excluir conta
+                        </Button>
+                      )}
                     {'update' in current && hasPermission(current.update) && (
                       <Button onClick={() => open(item)}>Editar</Button>
                     )}
@@ -853,6 +879,44 @@ export function FinancePage() {
             ))}
           </Stack>
         </DialogContent>
+      </Dialog>
+      <Dialog
+        open={Boolean(deleteAccountTarget)}
+        onClose={() => {
+          if (!deleteAccount.isPending) setDeleteAccountTarget(null);
+        }}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Excluir conta bancária?</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2}>
+            <Typography>
+              A conta “{deleteAccountTarget?.name}” será excluída
+              permanentemente. Contas com receitas, despesas ou importações
+              devem ser desativadas.
+            </Typography>
+            {deleteAccount.error && (
+              <Alert severity="error">{deleteAccount.error.message}</Alert>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            disabled={deleteAccount.isPending}
+            onClick={() => setDeleteAccountTarget(null)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            disabled={deleteAccount.isPending}
+            onClick={() => deleteAccount.mutate()}
+          >
+            {deleteAccount.isPending ? 'Excluindo…' : 'Confirmar exclusão'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Stack>
   );

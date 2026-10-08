@@ -20,12 +20,14 @@ interface AuthState {
   status: AuthStatus;
   user: CurrentUser | null;
   signOutNotice: string | null;
+  sessionError: string | null;
 }
 
 const ANONYMOUS: AuthState = {
   status: 'anonymous',
   user: null,
   signOutNotice: null,
+  sessionError: null,
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     status: 'loading',
     user: null,
     signOutNotice: null,
+    sessionError: null,
   });
 
   const clearSession = useCallback(
@@ -56,12 +59,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         const user = await authApi.fetchCurrentUser();
-        if (active)
-          setState({ status: 'authenticated', user, signOutNotice: null });
+        if (active) setState({ ...ANONYMOUS, status: 'authenticated', user });
       } catch (error) {
         if (active) {
           setAccessToken(null);
-          setState({ ...ANONYMOUS, signOutNotice: errorMessage(error) });
+          setState({ ...ANONYMOUS, sessionError: errorMessage(error) });
         }
       }
     }
@@ -78,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.login(email, password);
     try {
       const user = await authApi.fetchCurrentUser();
-      setState({ status: 'authenticated', user, signOutNotice: null });
+      setState({ ...ANONYMOUS, status: 'authenticated', user });
     } catch (error) {
       setAccessToken(null);
       throw error;
@@ -90,9 +92,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await authApi.logout();
       clearSession();
     } catch (error) {
-      clearSession(
-        `A sessão local foi encerrada, mas não foi possível confirmar a revogação no servidor: ${errorMessage(error)}`,
-      );
+      clearSession();
+      setState({
+        ...ANONYMOUS,
+        sessionError: `A sessão local foi encerrada, mas não foi possível confirmar a revogação no servidor: ${errorMessage(error)}`,
+      });
     }
   }, [clearSession]);
 

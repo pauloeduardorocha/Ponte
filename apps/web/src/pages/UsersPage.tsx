@@ -15,6 +15,8 @@ import {
   Card,
   Chip,
   CircularProgress,
+  Checkbox,
+  FormControlLabel,
   Dialog,
   DialogActions,
   DialogContent,
@@ -37,6 +39,7 @@ import { PageHeader, QueryError } from '../components/PageParts';
 import { errorMessage } from '../lib/errors';
 import type { User, UserStatus } from '../lib/types';
 import { createUser, listUsers, updateUserStatus } from '../lib/users-api';
+import { getUserRoles, listRoles, updateUserRoles } from '../lib/users-api';
 import { emailSchema, nameSchema, passwordSchema } from '../lib/validation';
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
@@ -127,6 +130,121 @@ function CreateUserDialog({
   );
 }
 
+function RolesDialog({
+  user,
+  onClose,
+  onSaved,
+}: {
+  user: User;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [selection, setSelection] = useState<string[] | null>(null);
+  const roles = useQuery({ queryKey: ['available-roles'], queryFn: listRoles });
+  const current = useQuery({
+    queryKey: ['user-roles', user.id],
+    queryFn: () => getUserRoles(user.id),
+  });
+  const selected = selection ?? current.data?.map((role) => role.id) ?? [];
+  const mutation = useMutation({
+    mutationFn: () => updateUserRoles(user.id, selected),
+    onSuccess: onSaved,
+  });
+  const loaded = roles.isSuccess && current.isSuccess;
+  const hasRestrictedRoles = current.data?.some(
+    (role) =>
+      !roles.data?.some((option) => option.id === role.id && option.assignable),
+  );
+  return (
+    <Dialog
+      open
+      onClose={mutation.isPending ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Roles de {user.name}</DialogTitle>
+      <DialogContent>
+        <Stack spacing={1} sx={{ pt: 1 }}>
+          <Typography>
+            Selecione os perfis de acesso. As permissões dos perfis selecionados
+            acumulam-se.
+          </Typography>
+          {(roles.isPending || current.isPending) && (
+            <CircularProgress size={24} aria-label="Carregando roles" />
+          )}
+          {roles.isError && (
+            <QueryError
+              error={roles.error}
+              onRetry={() => void roles.refetch()}
+            />
+          )}
+          {current.isError && (
+            <QueryError
+              error={current.error}
+              onRetry={() => void current.refetch()}
+            />
+          )}
+          {mutation.isError && (
+            <Alert severity="error">{errorMessage(mutation.error)}</Alert>
+          )}
+          {hasRestrictedRoles && loaded && (
+            <Alert severity="warning">
+              Este usuário tem perfis com permissões superiores às suas. Outro
+              administrador com essas permissões deve alterar os perfis.
+            </Alert>
+          )}
+          {loaded &&
+            roles.data.map((role) => (
+              <FormControlLabel
+                key={role.id}
+                label={role.name}
+                control={
+                  <Checkbox
+                    checked={selected.includes(role.id)}
+                    disabled={
+                      !role.assignable ||
+                      hasRestrictedRoles ||
+                      mutation.isPending
+                    }
+                    onChange={(_, checked) =>
+                      setSelection(
+                        checked
+                          ? [...selected, role.id]
+                          : selected.filter((id) => id !== role.id),
+                      )
+                    }
+                  />
+                }
+              />
+            ))}
+          {loaded && selected.length === 0 && (
+            <Alert severity="info">
+              Sem roles, o usuário fica sem permissões administrativas.
+            </Alert>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={mutation.isPending}>
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          disabled={
+            !loaded ||
+            hasRestrictedRoles ||
+            mutation.isPending ||
+            selection === null
+          }
+          onClick={() => mutation.mutate()}
+        >
+          Salvar roles
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export function UsersPage() {
   const { user: currentUser, hasPermission } = useAuth();
   const queryClient = useQueryClient();
@@ -135,6 +253,8 @@ export function UsersPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const canUpdate = hasPermission('USER_UPDATE');
+  const canManageRoles = hasPermission('PERMISSION_MANAGE');
+  const [rolesUser, setRolesUser] = useState<User | null>(null);
 
   const users = useQuery({
     queryKey: ['users', { page, pageSize }],
@@ -193,7 +313,9 @@ export function UsersPage() {
                 <TableCell>Nome</TableCell>
                 <TableCell>E-mail</TableCell>
                 <TableCell>Status</TableCell>
-                {canUpdate && <TableCell align="right">Ações</TableCell>}
+                {(canUpdate || canManageRoles) && (
+                  <TableCell align="right">Ações</TableCell>
+                )}
               </TableRow>
             </TableHead>
             <TableBody>
@@ -226,9 +348,18 @@ export function UsersPage() {
                         label={isActive ? 'Ativo' : 'Desativado'}
                       />
                     </TableCell>
-                    {canUpdate && (
+                    {(canUpdate || canManageRoles) && (
                       <TableCell align="right">
-                        {user.id !== currentUser?.id && (
+                        {canManageRoles && user.id !== currentUser?.id && (
+                          <Button
+                            size="small"
+                            aria-label={`Gerir roles de ${user.name}`}
+                            onClick={() => setRolesUser(user)}
+                          >
+                            Gerir roles
+                          </Button>
+                        )}
+                        {canUpdate && user.id !== currentUser?.id && (
                           <Button
                             size="small"
                             color={isActive ? 'warning' : 'primary'}
@@ -269,6 +400,21 @@ export function UsersPage() {
           }
         />
       </Card>
+
+      {rolesUser && (
+        <RolesDialog
+          key={rolesUser.id}
+          user={rolesUser}
+          onClose={() => setRolesUser(null)}
+          onSaved={() => {
+            setNotice(`Roles de ${rolesUser.name} atualizadas.`);
+            void queryClient.invalidateQueries({
+              queryKey: ['user-roles', rolesUser.id],
+            });
+            setRolesUser(null);
+          }}
+        />
+      )}
 
       <CreateUserDialog
         open={dialogOpen}

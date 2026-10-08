@@ -52,6 +52,7 @@ export class FinanceService {
     entity: string,
     id: string | undefined,
     fn: (tx: Tx) => Promise<T>,
+    operation?: 'DELETE',
   ) {
     try {
       return await this.db.$transaction(async (tx) => {
@@ -62,11 +63,11 @@ export class FinanceService {
           data: {
             ...auditRequestFields(),
             userId: user.id,
-            action: `FINANCE_${entity}_${id ? 'UPDATE' : 'CREATE'}`,
+            action: `FINANCE_${entity}_${operation ?? (id ? 'UPDATE' : 'CREATE')}`,
             entity: entity,
             entityId: id ?? (result as { id?: string }).id,
             metadata: {
-              after: JSON.parse(
+              [operation === 'DELETE' ? 'before' : 'after']: JSON.parse(
                 JSON.stringify(result),
               ) as Prisma.InputJsonValue,
             },
@@ -203,6 +204,34 @@ export class FinanceService {
         ? tx.bankAccount.update({ where: { id }, data: dto })
         : tx.bankAccount.create({ data: dto as AccountDto });
     });
+  }
+  deleteAccount(id: string, user: CurrentUser) {
+    return this.mutation(
+      user,
+      'BankAccount',
+      id,
+      async (tx) => {
+        const account = await tx.bankAccount.findUniqueOrThrow({
+          where: { id },
+          include: {
+            _count: {
+              select: { incomes: true, expenses: true, imports: true },
+            },
+          },
+        });
+        if (
+          account._count.incomes ||
+          account._count.expenses ||
+          account._count.imports
+        ) {
+          throw new ConflictException(
+            'Esta conta possui receitas, despesas ou importações e não pode ser excluída. Você pode desativá-la para preservar o histórico.',
+          );
+        }
+        return tx.bankAccount.delete({ where: { id } });
+      },
+      'DELETE',
+    );
   }
   async suppliers(q: FinanceQuery) {
     const where = {

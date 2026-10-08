@@ -14,16 +14,14 @@ export function FullPageLoader() {
 
 /** Allows access only to authenticated users; otherwise redirects to login. */
 export function RequireAuth() {
-  const { status, signOutNotice } = useAuth();
+  const { status } = useAuth();
   const location = useLocation();
 
   if (status === 'loading') {
     return <FullPageLoader />;
   }
   if (status === 'anonymous') {
-    const state = signOutNotice
-      ? { notice: signOutNotice }
-      : { from: location };
+    const state = { from: location };
     return <Navigate to="/login" replace state={state} />;
   }
   return <Outlet />;

@@ -48,6 +48,11 @@ async function seed() {
         }
         const demos = [
           {
+            name: 'Super Administrador Demo',
+            email: 'superadmin@ponte.example',
+            role: 'SUPER_ADMIN',
+          },
+          {
             name: 'Administrador Demo',
             email: 'admin@ponte.example',
             role: 'ADMIN',

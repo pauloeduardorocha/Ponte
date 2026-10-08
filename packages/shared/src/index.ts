@@ -109,6 +109,7 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
   SUPER_ADMIN: PERMISSIONS,
   ADMIN: PERMISSIONS.filter(
     (code) =>
+      code === 'PERMISSION_MANAGE' ||
       code.startsWith('USER_') ||
       code.startsWith('MEMBER_') ||
       code.startsWith('VISITOR_') ||

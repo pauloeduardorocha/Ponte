@@ -8,6 +8,7 @@ import {
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -94,6 +95,14 @@ export class FinanceController {
     return this.finance.saveAccount(dto, req.user, id);
   }
 
+  @Delete('accounts/:id')
+  @Permission('FINANCE_ACCOUNT_WRITE')
+  deleteAccount(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.finance.deleteAccount(id, req.user);
+  }
   @Get('suppliers')
   @Permission('FINANCE_SUPPLIER_READ')
   suppliers(@Query() q: FinanceQuery) {

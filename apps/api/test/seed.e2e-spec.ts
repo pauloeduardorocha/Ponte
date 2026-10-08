@@ -57,7 +57,7 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
   it('is idempotent, preserves edited data/passwords and assigns least-privilege roles', async () => {
     seed();
     const first = await db.user.findMany({ orderBy: { email: 'asc' } });
-    expect(first).toHaveLength(5);
+    expect(first).toHaveLength(6);
     expect(await db.member.count()).toBe(3);
     expect(await db.loan.count()).toBe(2);
     expect(await db.smallGroup.count()).toBe(1);
@@ -101,6 +101,15 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
       where: { email: 'admin@ponte.example' },
     });
     expect(await argon2.verify(admin.passwordHash, password)).toBe(true);
+    const superAdmin = await db.user.findUniqueOrThrow({
+      where: { email: 'superadmin@ponte.example' },
+      include: { userRoles: { include: { role: true } } },
+    });
+    expect(superAdmin.status).toBe('ACTIVE');
+    expect(superAdmin.userRoles.map(({ role }) => role.name)).toEqual([
+      'SUPER_ADMIN',
+    ]);
+    expect(await argon2.verify(superAdmin.passwordHash, password)).toBe(true);
     const member = await db.member.findFirstOrThrow();
     await db.member.update({
       where: { id: member.id },

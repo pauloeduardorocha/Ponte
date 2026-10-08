@@ -27,20 +27,25 @@ describe('Authentication', () => {
       await screen.findByRole('heading', { name: 'Acesse sua conta' }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('surfaces restoration failures instead of silently treating them as logout', async () => {
-    mockApi({
-      'POST /auth/refresh': {
-        status: 503,
-        body: { message: 'Servidor indisponível' },
-      },
-    });
-    renderApp('/login');
-    expect(
-      await screen.findByText('Servidor indisponível'),
-    ).toBeInTheDocument();
-  });
+  it.each(['/login', '/members'])(
+    'surfaces restoration failures as errors on %s',
+    async (route) => {
+      mockApi({
+        'POST /auth/refresh': {
+          status: 503,
+          body: { message: 'Servidor indisponível' },
+        },
+      });
+      renderApp(route);
+      expect(
+        await screen.findByText('Servidor indisponível'),
+      ).toBeInTheDocument();
+      expect(screen.getByRole('alert')).toHaveClass('MuiAlert-colorError');
+    },
+  );
 
   it('warns when logout cannot confirm server revocation and still clears local data', async () => {
     mockApi({

@@ -8,6 +8,7 @@ export interface AuthContextValue {
   user: CurrentUser | null;
   /** Message to show on the login page after the session was ended on purpose. */
   signOutNotice: string | null;
+  sessionError: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   /** Drops the local session without calling the API (e.g. after revocation). */

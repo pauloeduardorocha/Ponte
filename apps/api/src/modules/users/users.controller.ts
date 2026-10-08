@@ -168,6 +168,35 @@ export class UsersController {
       return result;
     });
   }
+  @Get('roles')
+  @Permission('PERMISSION_MANAGE')
+  async availableRoles(@Req() req: AuthRequest) {
+    const roles = await this.db.role.findMany({
+      include: { permissions: { include: { permission: true } } },
+      orderBy: { name: 'asc' },
+    });
+    return roles.map((role) => ({
+      id: role.id,
+      name: role.name,
+      assignable: role.permissions.every(({ permission }) =>
+        req.user.permissions.some((code) => code === permission.code),
+      ),
+    }));
+  }
+
+  @Get(':id/roles')
+  @Permission('PERMISSION_MANAGE')
+  async currentRoles(@Param('id', ParseUUIDPipe) id: string) {
+    const user = await this.db.user.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        userRoles: { select: { role: { select: { id: true, name: true } } } },
+      },
+    });
+    if (!user) throw new NotFoundException('Usuário não encontrado');
+    return user.userRoles.map(({ role }) => role);
+  }
+
   @Patch(':id/roles')
   @Permission('PERMISSION_MANAGE')
   async roles(

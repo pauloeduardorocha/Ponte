@@ -466,4 +466,62 @@ describe('Finance HTTP with isolated PostgreSQL', () => {
     }
     expect(await db.income.count()).toBe(before);
   });
+  it('deletes unused accounts with authorization and a retained audit trail', async () => {
+    const f = await fixture();
+    const remove = (auth = token) =>
+      request(app.getHttpServer())
+        .delete('/api/v1/finance/accounts/' + f.accountId)
+        .auth(auth, { type: 'bearer' });
+    await remove(normal).expect(403);
+    expect(
+      await db.bankAccount.findUnique({ where: { id: f.accountId } }),
+    ).toBeTruthy();
+    await remove().expect(200);
+    expect(
+      await db.bankAccount.findUnique({ where: { id: f.accountId } }),
+    ).toBeNull();
+    expect(
+      await db.auditLog.findFirst({
+        where: {
+          entity: 'BankAccount',
+          entityId: f.accountId,
+          action: 'FINANCE_BankAccount_DELETE',
+        },
+      }),
+    ).toBeTruthy();
+    await remove().expect(404);
+  });
+  it('preserves accounts referenced by financial records or bank imports', async () => {
+    const f = await fixture();
+    await post('/incomes', {
+      amount: '10',
+      date: '2026-10-08',
+      categoryId: f.incomeCategoryId,
+      accountId: f.accountId,
+      description: 'Existing income',
+      origin: 'Manual',
+      status: 'CANCELLED',
+    }).expect(201);
+    const blocked = await request(app.getHttpServer())
+      .delete('/api/v1/finance/accounts/' + f.accountId)
+      .auth(token, { type: 'bearer' })
+      .expect(409);
+    expect(blocked.body.message).toContain('desativá-la');
+    expect(
+      await db.bankAccount.findUnique({ where: { id: f.accountId } }),
+    ).toBeTruthy();
+    const imported = await fixture();
+    await db.bankImport.create({
+      data: {
+        accountId: imported.accountId,
+        filename: 'failed.csv',
+        storageKey: 'delete-account-test-' + randomUUID(),
+        status: 'FAILED',
+      },
+    });
+    await request(app.getHttpServer())
+      .delete('/api/v1/finance/accounts/' + imported.accountId)
+      .auth(token, { type: 'bearer' })
+      .expect(409);
+  });
 });

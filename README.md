@@ -97,13 +97,14 @@ npm run build --workspace @church/shared
 npm run db:seed
 ```
 
-Cria `admin@ponte.example` (ADMIN), `secretaria@ponte.example` (SECRETARY),
+Cria `superadmin@ponte.example` (SUPER_ADMIN), `admin@ponte.example` (ADMIN),
+`secretaria@ponte.example` (SECRETARY),
 `membro@ponte.example` (MEMBER), `biblioteca@ponte.example` (LIBRARY) e
 `financeiro@ponte.example` (FINANCE), três membros fictícios, visitante, evento,
 livro, três exemplares, dois empréstimos (um atrasado), multa, categorias
 hierárquicas, conta EUR, fornecedor, quatro receitas, duas despesas,
 três contribuições e uma importação privada com **150 movimentos** em revisão.
-As cinco contas usam a
+As seis contas usam a
 senha configurada **na primeira execução**. Reexecutar não duplica registros,
 não troca senhas, não reativa contas e não sobrescreve membros editados.
 As permissões das roles iniciais são sincronizadas com `ROLE_PERMISSIONS`.
@@ -134,8 +135,12 @@ O seed preserva livros, exemplares e settings existentes nas reexecuções.
 - `AuthGuard` e `PermissionGuard` globais; `@Permission(...)` exige todas as
   permissões declaradas, consultadas no banco por requisição. MEMBER não lê
   usuários ou membros de outras pessoas. Não há endpoints de senha com userId
-  fornecido pelo cliente nem endpoints de atribuição de roles.
-- ADMIN gerencia usuários e membros; SECRETARY lê/cria/edita membros, mas não
+  fornecido pelo cliente. A atribuição de roles usa `PATCH /api/v1/users/{id}/roles`
+  e exige `PERMISSION_MANAGE`, disponível para ADMIN e SUPER_ADMIN. Não é permitido
+  alterar as próprias roles, delegar permissões superiores às suas ou remover o
+  último SUPER_ADMIN ativo. Na UI, use **Usuários → Gerir roles** para selecionar
+  múltiplos perfis e salvar. Perfis superiores às permissões do operador ficam bloqueados.
+- ADMIN gerencia usuários, roles e membros; SECRETARY lê/cria/edita membros, mas não
   exclui nem gerencia usuários; PASTOR lê membros; MEMBER usa apenas a própria
   conta. O frontend oculta navegação e ações e protege rotas, sem substituir a
   autorização backend.
