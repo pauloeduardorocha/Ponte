@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getAccessToken } from './lib/api';
 import {
@@ -299,6 +299,86 @@ describe('Permissions', () => {
     });
     expect(within(nav).getByText('Membros')).toBeInTheDocument();
     expect(within(nav).getByText('Usuários')).toBeInTheDocument();
+  });
+
+  it('keeps functional groups ordered for combined permissions without duplicate links', async () => {
+    mockApi(
+      sessionRoutes(
+        makeUser([
+          'MEMBER_READ',
+          'MINISTRY_READ',
+          'EVENT_READ',
+          'EVENT_REGISTRATION_READ',
+          'EVENT_CREATE',
+          'SCHEDULE_READ',
+          'LIBRARY_BOOK_READ',
+          'NOTIFICATION_READ',
+          'USER_READ',
+        ]),
+      ),
+    );
+    renderApp('/account');
+
+    const nav = await screen.findByRole('navigation', {
+      name: 'Navegação principal',
+    });
+    expect(
+      within(nav)
+        .getAllByRole('button')
+        .map((el) => el.textContent),
+    ).toEqual([
+      'Pessoas',
+      'Grupos e ministérios',
+      'Eventos',
+      'Operação',
+      'Recursos',
+      'Comunicação',
+      'Administração',
+    ]);
+    expect(within(nav).getAllByRole('link')).toHaveLength(1);
+    for (const button of within(nav).getAllByRole('button')) {
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+      fireEvent.click(button);
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+    }
+    const links = within(nav).getAllByRole('link');
+    expect(new Set(links.map((link) => link.getAttribute('href'))).size).toBe(
+      links.length,
+    );
+    expect(links[0]).toHaveTextContent('Visão geral');
+    for (const button of within(nav).getAllByRole('button')) {
+      fireEvent.click(button);
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+    }
+    await waitFor(() =>
+      expect(within(nav).getAllByRole('link')).toHaveLength(1),
+    );
+  });
+
+  it('omits empty groups for users without management permissions', async () => {
+    mockApi(sessionRoutes(makeUser([])));
+    renderApp('/account');
+    const nav = await screen.findByRole('navigation', {
+      name: 'Navegação principal',
+    });
+    expect(within(nav).queryAllByRole('button')).toHaveLength(0);
+  });
+
+  it.each([
+    ['/my-events', 'Meus eventos'],
+    ['/my-events?section=registrations', 'Inscrições'],
+    ['/my-events?create=true', 'Criar evento'],
+  ])('selects only the current event shortcut on %s', async (route, label) => {
+    mockApi(
+      sessionRoutes(makeUser(['EVENT_REGISTRATION_READ', 'EVENT_CREATE'])),
+    );
+    renderApp(route);
+    const nav = await screen.findByRole('navigation', {
+      name: 'Navegação principal',
+    });
+    const active = nav.querySelectorAll('[aria-current="page"]');
+    expect(active).toHaveLength(1);
+    expect(active[0]).toHaveTextContent(label);
   });
 
   it('blocks direct access to routes without permission', async () => {

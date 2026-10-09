@@ -458,8 +458,11 @@ describe('Library frontend', () => {
     expect(
       requests.filter((r) => r.path.startsWith('/library/')).map((r) => r.path),
     ).toEqual(['/library/fines']);
+    const resources = screen.getByRole('button', { name: 'Recursos' });
+    expect(resources).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(resources);
     expect(
-      screen.getByRole('link', { name: 'Biblioteca' }),
+      await screen.findByRole('link', { name: 'Biblioteca' }),
     ).toBeInTheDocument();
   });
   it('formats money using integer cents', () => {

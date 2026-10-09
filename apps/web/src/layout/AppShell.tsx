@@ -4,6 +4,7 @@ import {
   Avatar,
   Box,
   Container,
+  Collapse,
   Divider,
   Drawer,
   IconButton,
@@ -26,6 +27,8 @@ import {
   AdminPanelSettingsRounded,
   CalendarMonthRounded,
   DashboardRounded,
+  ExpandMoreRounded,
+  ExpandLessRounded,
   LogoutRounded,
   ManageAccountsRounded,
   MenuRounded,
@@ -33,7 +36,13 @@ import {
   PeopleAltRounded,
   MenuBookRounded,
 } from '@mui/icons-material';
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { initials } from '../lib/format';
 import type { Permission } from '../lib/types';
@@ -41,11 +50,23 @@ import { AUDIT_PERMISSIONS } from '../lib/audit-permissions';
 
 const sidebarWidth = 264;
 
+const navigationGroups = [
+  'Início',
+  'Pessoas',
+  'Grupos e ministérios',
+  'Eventos',
+  'Operação',
+  'Recursos',
+  'Comunicação',
+  'Administração',
+] as const;
+type NavigationGroup = (typeof navigationGroups)[number];
+
 interface NavigationItem {
   label: string;
   to: string;
   icon: typeof DashboardRounded;
-  group?: string;
+  group: NavigationGroup;
   permission?: Permission;
   permissions?: Permission[];
   anyPermissions?: Permission[];
@@ -126,11 +147,12 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Auditoria',
+    group: 'Administração',
     to: '/audit',
     icon: AdminPanelSettingsRounded,
     permissions: AUDIT_PERMISSIONS,
   },
-  { label: 'Visão geral', to: '/', icon: DashboardRounded },
+  { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
   {
     label: 'Membros',
     group: 'Pessoas',
@@ -140,7 +162,7 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Eventos',
-    group: 'Operação',
+    group: 'Eventos',
     to: '/events',
     icon: CalendarMonthRounded,
     permission: 'EVENT_READ',
@@ -161,14 +183,14 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Grupos familiares',
-    group: 'Grupos',
+    group: 'Grupos e ministérios',
     to: '/small-groups',
     icon: PeopleAltRounded,
     permission: 'SMALL_GROUP_READ',
   },
   {
     label: 'Ministérios',
-    group: 'Grupos',
+    group: 'Grupos e ministérios',
     to: '/ministries',
     icon: PeopleAltRounded,
     permission: 'MINISTRY_READ',
@@ -196,35 +218,63 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Biblioteca',
+    group: 'Recursos',
     to: '/library',
     icon: MenuBookRounded,
     permissionPrefix: 'LIBRARY_',
   },
   {
     label: 'Financeiro',
+    group: 'Recursos',
     to: '/finance',
     icon: AccountBalanceRounded,
     permissionPrefix: 'FINANCE_',
   },
   {
     label: 'Usuários',
+    group: 'Administração',
     to: '/users',
     icon: AdminPanelSettingsRounded,
     permission: 'USER_READ',
   },
 ];
 
+// Event workspace shortcuts share a path; select only the current task.
+function isNavigationActive(
+  to: string,
+  location: { pathname: string; search: string },
+) {
+  const [pathname, search = ''] = to.split('?');
+  if (pathname !== '/my-events') {
+    return (
+      location.pathname === pathname ||
+      (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
+    );
+  }
+  if (location.pathname !== pathname) return false;
+  const current = new URLSearchParams(location.search);
+  const target = new URLSearchParams(search);
+  if (current.get('create') === 'true') return target.get('create') === 'true';
+  return (
+    !target.has('create') && current.get('section') === target.get('section')
+  );
+}
+
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, hasPermission } = useAuth();
+  const location = useLocation();
+  const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>([]);
+  function toggleGroup(group: NavigationGroup) {
+    setExpandedGroups((current) =>
+      current.includes(group)
+        ? current.filter((item) => item !== group)
+        : [...current, group],
+    );
+  }
   const items = [...navigation]
     .sort(
       (a, b) =>
-        ['', 'Pessoas', 'Grupos', 'Operação', 'Comunicação'].indexOf(
-          a.group ?? '',
-        ) -
-        ['', 'Pessoas', 'Grupos', 'Operação', 'Comunicação'].indexOf(
-          b.group ?? '',
-        ),
+        navigationGroups.indexOf(a.group) - navigationGroups.indexOf(b.group),
     )
     .filter(({ permissionPrefix, permission, permissions, anyPermissions }) =>
       anyPermissions
@@ -257,35 +307,80 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </Box>
       </Stack>
 
-      <Typography className="sidebar-label">MENU PRINCIPAL</Typography>
       <List className="navigation-list" disablePadding>
-        {items.map(({ label, to, icon: Icon, group }, index) => (
-          <Box key={to}>
-            {group && items[index - 1]?.group !== group && (
-              <Typography className="sidebar-label">{group}</Typography>
-            )}
-            <ListItemButton
-              key={to}
-              component={NavLink}
-              to={to}
-              end={to === '/'}
-              onClick={onNavigate}
-              className="navigation-link"
-              sx={{
-                '&.active': {
-                  color: 'primary.main',
-                  backgroundColor: 'rgba(36, 91, 74, 0.09)',
-                  '& .MuiListItemIcon-root': { color: 'primary.main' },
-                },
-              }}
-            >
-              <ListItemIcon>
-                <Icon fontSize="small" />
-              </ListItemIcon>
-              <ListItemText primary={label} />
-            </ListItemButton>
-          </Box>
-        ))}
+        {navigationGroups.map((group) => {
+          const groupItems = items.filter((item) => item.group === group);
+          if (!groupItems.length) return null;
+          const expanded = group === 'Início' || expandedGroups.includes(group);
+          const groupId = `navigation-group-${navigationGroups.indexOf(group)}`;
+          return (
+            <Box key={group}>
+              {group !== 'Início' && (
+                <ListItemButton
+                  onClick={() => toggleGroup(group)}
+                  aria-expanded={expanded}
+                  aria-controls={groupId}
+                  className="navigation-group-toggle"
+                  sx={{
+                    borderRadius: 2,
+                    mt: 0.5,
+                    fontWeight: 700,
+                    color: groupItems.some((item) =>
+                      isNavigationActive(item.to, location),
+                    )
+                      ? 'primary.main'
+                      : 'text.secondary',
+                  }}
+                >
+                  <ListItemText
+                    primary={group}
+                    primaryTypographyProps={{
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                    }}
+                  />
+                  {expanded ? (
+                    <ExpandLessRounded fontSize="small" />
+                  ) : (
+                    <ExpandMoreRounded fontSize="small" />
+                  )}
+                </ListItemButton>
+              )}
+              <Collapse in={expanded} id={groupId}>
+                <List
+                  disablePadding
+                  aria-label={group}
+                  sx={{ pl: group === 'Início' ? 0 : 1 }}
+                >
+                  {groupItems.map(({ label, to, icon: Icon }) => (
+                    <ListItemButton
+                      key={to}
+                      component={Link}
+                      to={to}
+                      aria-current={
+                        isNavigationActive(to, location) ? 'page' : undefined
+                      }
+                      onClick={onNavigate}
+                      className={`navigation-link${isNavigationActive(to, location) ? ' active' : ''}`}
+                      sx={{
+                        '&.active': {
+                          color: 'primary.main',
+                          backgroundColor: 'rgba(36, 91, 74, 0.09)',
+                          '& .MuiListItemIcon-root': { color: 'primary.main' },
+                        },
+                      }}
+                    >
+                      <ListItemIcon>
+                        <Icon fontSize="small" />
+                      </ListItemIcon>
+                      <ListItemText primary={label} />
+                    </ListItemButton>
+                  ))}
+                </List>
+              </Collapse>
+            </Box>
+          );
+        })}
       </List>
 
       <Box className="sidebar-footer">
