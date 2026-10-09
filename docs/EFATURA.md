@@ -8,35 +8,32 @@ não é armazenada: passa por IPC privado ao scraper, fora de arquivos, argument
 de comando e logs. Se o portal exigir MFA/CAPTCHA, a consulta pode falhar; a tela
 informa o problema e as receitas/despesas do extrato continuam cadastradas.
 
-A API inclui o scraper e Chromium na imagem Docker. Para desenvolvimento local:
+O scraper pertence à API em `apps/api/src/modules/banking/efatura`.
+O build Nest copia os módulos do processo isolado para `dist`; a API resolve
+esse processo em relação ao próprio módulo, sem depender do diretório de execução.
+Não existe mais um aplicativo ou exportador independente.
 
-`npm ci --prefix apps/scrapper`
+As dependências `puppeteer-core` e `@sparticuz/chromium` são instaladas com
+`npm ci` na raiz. Na Vercel/Linux, o Chromium empacotado é extraído em
+`/tmp`. A configuração do deploy inclui os módulos e binários e permite
+180 segundos de execução; a consulta tem timeout interno de 120 segundos.
+Na imagem Docker, utiliza-se o Chromium instalado pelo sistema.
 
-Use PUPPETEER_EXECUTABLE_PATH para apontar a um Chromium já instalado. Ajuste
-EFATURA_FILTER_SUBMIT/EFATURA_COLUMNS quando os seletores/cabeçalhos do portal
-mudarem. Em modo integrado, a ausência de um botão para aplicar os filtros
-interrompe a consulta, em vez de aguardar uma intervenção no terminal.
+No desenvolvimento em Windows/macOS ou para usar outro Chromium, configure
+`PUPPETEER_EXECUTABLE_PATH` com o caminho do executável. O navegador roda
+sem interface. MFA/CAPTCHA ainda podem impedir a autenticação automática.
 
-## Exportação independente (opcional)
+O período vem das datas mínima e máxima do extrato. O scraper preenche
+`#dataInicioFilter` e `#dataFimFilter`, aplica a pesquisa e valida as datas
+em todas as páginas. Configure `EFATURA_FILTER_SUBMIT` se o portal exigir
+um seletor específico. A ausência de botão de pesquisa interrompe a consulta.
 
-O comando local continua disponível com login manual em navegador visível,
-incluindo MFA/CAPTCHA. Um arquivo de configuração pode conter
-`{"period":{"start":"2026-08-01","end":"2026-10-07"}}`.
-
-```powershell
-cd apps/scrapper
-npm ci
-$env:EFATURA_RECIPIENT_NIF = 'NIF_DO_TITULAR'
-npm start -- --config 'C:\caminho\efatura-config.json'
-```
-
-Também pode definir `$env:EFATURA_START = '2026-08-01'` e `$env:EFATURA_END = '2026-10-07'`. Essas datas substituem as do arquivo de configuração, permitindo ampliar o período para pagamentos posteriores à emissão. Datas ausentes, inválidas ou invertidas interrompem a execução antes de abrir o navegador.
-
-O scraper preenche `#dataInicioFilter` e `#dataFimFilter`, dispara eventos de alteração e aplica o formulário. Se o portal usar um botão específico, configure `$env:EFATURA_FILTER_SUBMIT` com o seletor CSS desse botão. Sem botão de submissão identificável, aplique a pesquisa no navegador e pressione Enter no terminal. O exportador espera a rede ficar ociosa e verifica as datas extraídas; não grava um arquivo contendo faturas fora do intervalo.
+Os logs registram somente o código de falha e a etapa (inicialização, login,
+filtros ou extração), sem senha, NIF, dados das faturas ou URLs de sessão.
 
 ## Colunas e links
 
-A demo original tinha `campo1` a `campo6`, sem identificação semântica. O exportador identifica cabeçalhos conhecidos; se não conseguir mapear algum campo, interrompe a exportação e mostra os cabeçalhos para configuração explícita. **Não pressupõe a ordem das colunas.** Exemplo ilustrativo, ajuste aos cabeçalhos reais:
+O scraper identifica cabeçalhos conhecidos; se não conseguir mapear algum campo, interrompe a consulta. Configure EFATURA_COLUMNS para adaptar o mapeamento aos cabeçalhos reais. **Não pressupõe a ordem das colunas.** Exemplo ilustrativo, ajuste aos cabeçalhos reais:
 
 ```powershell
 $env:EFATURA_COLUMNS = '{"issuerName":0,"issuerTaxId":1,"number":2,"date":3,"amount":4,"documentUrl":2}'
@@ -44,7 +41,7 @@ $env:EFATURA_COLUMNS = '{"issuerName":0,"issuerTaxId":1,"number":2,"date":3,"amo
 
 Os índices começam em zero. O campo `documentUrl` identifica a coluna do link quando houver vários links numa linha. Links relativos são resolvidos pelo navegador. São aceitos links HTTPS dos hosts `faturas.portaldasfinancas.gov.pt` e `www.portaldasfinancas.gov.pt`; links com credenciais ou identificadores de sessão são excluídos. Links `javascript:` não são executados nem convertidos em URLs presumidas. Nesses casos, a associação continua disponível sem link até adaptar o extrator ao mecanismo real do portal.
 
-Valores portugueses como `1.234,56 €` são normalizados para strings decimais `1234.56`. As datas são exportadas como `YYYY-MM-DD`. Notas de crédito usam valor negativo. Os arquivos não são sobrescritos: para outra execução, remova/mova o arquivo anterior ou configure `EFATURA_OUTPUT`.
+Valores portugueses como `1.234,56 €` são normalizados para strings decimais `1234.56`. As datas são exportadas como `YYYY-MM-DD`. Notas de crédito usam valor negativo. O resultado é enviado por IPC e importado pela API, sem gravar arquivos locais.
 
 ## Importação e associação
 
@@ -70,7 +67,7 @@ A migration atribui essas permissões a `FINANCE` e `SUPER_ADMIN`. Após aplicar
 npm run lint
 npm run test
 npm run build
-node --test apps/scrapper/normalize.test.js
+npm run test:efatura --workspace @church/api
 ```
 
 Os testes locais cobrem normalização, filtros, segurança de links/uploads, IPC e descarte de credenciais, duplicidades, RBAC, cadastro automático, categorização posterior e rastreabilidade. A autenticação e os seletores atuais do portal precisam ser verificados numa sessão real do titular; os testes não acessam a Autoridade Tributária.

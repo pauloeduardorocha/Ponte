@@ -1,7 +1,7 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeInvoices } = require('./normalize');
-const { validatePeriod, applyDateFilters } = require('./filters');
+const { normalizeInvoices } = require('./normalize.cjs');
+const { validatePeriod, applyDateFilters } = require('./filters.cjs');
 const headers = ['Emitente', 'NIF', 'Documento', 'Data', 'Total'];
 const row = {
   cells: ['Energia', '123456789', 'FT/99', '07/10/2026', '1.234,56 €'],
@@ -78,4 +78,16 @@ test('sets both provided portal filters before submitting and waiting', async ()
     '#search',
     'idle',
   ]);
+});
+
+test('fails without a filter submit button instead of waiting for terminal input', async () => {
+  const page = {
+    waitForSelector: async () => {},
+    evaluate: async () => false,
+    waitForNetworkIdle: async () => assert.fail('must stop before extracting'),
+  };
+  await assert.rejects(
+    applyDateFilters(page, { start: '2026-08-01', end: '2026-10-07' }),
+    /aplicar automaticamente os filtros/,
+  );
 });

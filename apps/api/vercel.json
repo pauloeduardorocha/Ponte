@@ -3,5 +3,11 @@
   "framework": "nestjs",
   "installCommand": "cd ../.. && npm ci",
   "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run db:generate && npm run build --workspace @church/api",
-  "regions": ["fra1"]
+  "regions": ["fra1"],
+  "functions": {
+    "src/main.ts": {
+      "maxDuration": 180,
+      "includeFiles": "{src/modules/banking/efatura/*.cjs,../../node_modules/@sparticuz/chromium/bin/**}"
+    }
+  }
 }

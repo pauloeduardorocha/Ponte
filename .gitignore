@@ -10,6 +10,4 @@ apps/api/generated/
 apps/api/prisma/*.db
 
 private-storage/
-apps/scrapper/faturas*.json
-apps/scrapper/efatura-config.json
 .neon

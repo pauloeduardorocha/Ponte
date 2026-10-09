@@ -1,51 +1,20 @@
-const puppeteer = require('puppeteer');
-
-const { writeFile } = require('node:fs/promises');
-const { readFileSync } = require('node:fs');
-const { validatePeriod, applyDateFilters } = require('./filters');
-const { normalizeInvoices, safePortalLink } = require('./normalize');
-const integrated = Boolean(process.send);
+const { launchBrowser } = require('./browser.cjs');
+const { validatePeriod, applyDateFilters } = require('./filters.cjs');
+const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
 
 (async () => {
-  const configArgument = process.argv.indexOf('--config');
-  let config = integrated
-    ? await new Promise((resolve) => process.once('message', resolve))
-    : configArgument < 0
-      ? {}
-      : JSON.parse(
-          readFileSync(process.argv[configArgument + 1], 'utf8').replace(
-            /^\uFEFF/,
-            '',
-          ),
-        );
-  const period = validatePeriod(
-    integrated
-      ? config.period
-      : {
-          start: process.env.EFATURA_START || config.period?.start,
-          end: process.env.EFATURA_END || config.period?.end,
-        },
-  );
-  const recipientNif = config.nif || process.env.EFATURA_RECIPIENT_NIF;
-  // headless: false permite ver o processo e intervir se houver um CAPTCHA inicial
-  const browser = await puppeteer.launch({
-    headless: integrated,
-    ...(process.env.EFATURA_CHROMIUM_NO_SANDBOX === 'true'
-      ? { args: ['--no-sandbox', '--disable-setuid-sandbox'] }
-      : {}),
-    ...(process.env.PUPPETEER_EXECUTABLE_PATH
-      ? { executablePath: process.env.PUPPETEER_EXECUTABLE_PATH }
-      : {}),
+  let stage = 'launch';
+  let config = await new Promise((resolve) => process.once('message', resolve));
+  const period = validatePeriod(config.period);
+  const recipientNif = config.nif;
+  const browser = await launchBrowser();
+  process.once('SIGTERM', async () => {
+    await browser.close();
+    process.exit(1);
   });
-  if (integrated)
-    process.once('SIGTERM', async () => {
-      await browser.close();
-      process.exit(1);
-    });
-  const page = await browser.newPage();
-
   try {
-    console.log('A aceder à página de autenticação oficial...');
+    const page = await browser.newPage();
+    stage = 'login';
     // Aceder diretamente ao URL de login que forneceu
     await page.goto(
       'https://www.acesso.gov.pt/jsp/loginRedirectForm.jsp?path=consultarDocumentosAdquirente.action&partID=EFPF',
@@ -61,11 +30,10 @@ const integrated = Boolean(process.send);
     await page.click(botaoTipoLogin);
 
     // 1. Aguardar os campos com base no atributo 'name' (evitando IDs dinâmicos)
-    console.log('A aguardar formulário de login...');
     await page.waitForSelector('input[name="username"]');
     await page.waitForSelector('input[name="password"]');
 
-    if (integrated) {
+    {
       await page.type('input[name="username"]', config.nif);
       await page.type('input[name="password"]', config.password);
       config = { period, bankImportId: config.bankImportId };
@@ -74,17 +42,13 @@ const integrated = Boolean(process.send);
       );
     }
 
-    console.log(
-      'Conclua o login manualmente no navegador (incluindo MFA/CAPTCHA).',
-    );
     await page.waitForFunction(
       () => location.hostname === 'faturas.portaldasfinancas.gov.pt',
-      { timeout: integrated ? 30000 : 300000 },
+      { timeout: 30000 },
     );
     await page.waitForNetworkIdle();
 
     // 4. Garantir que estamos na página correta da tabela de faturas
-    console.log('A navegar para a tabela de faturas...');
     await page.goto(
       'https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action',
       {
@@ -92,9 +56,10 @@ const integrated = Boolean(process.send);
       },
     );
 
+    stage = 'filters';
     await applyDateFilters(page, period, process.env.EFATURA_FILTER_SUBMIT);
-    console.log(`Extraindo apenas faturas de ${period.start} a ${period.end}`);
     // 5. Extração de dados da tabela (#documentos)
+    stage = 'extraction';
     const seletorLinhas = 'table#documentos tbody tr';
     const seletorProxima = '#documentos_paginate li.next:not(.disabled) a';
     await page.waitForSelector(seletorLinhas);
@@ -283,7 +248,6 @@ const integrated = Boolean(process.send);
       throw new Error(
         'O portal retornou faturas fora do intervalo. Verifique a aplicacao dos filtros; arquivo nao exportado.',
       );
-    const output = process.env.EFATURA_OUTPUT || 'faturas.json';
     const result = {
       schemaVersion: 1,
       source: 'E_FATURA',
@@ -297,34 +261,19 @@ const integrated = Boolean(process.send);
         links: row.links.filter((link) => safePortalLink(link.url)),
       })),
     };
-    if (integrated) {
-      await new Promise((resolve, reject) =>
-        process.send({ result }, (error) =>
-          error ? reject(error) : resolve(),
-        ),
-      );
-    } else {
-      await writeFile(output, JSON.stringify(result, null, 2), {
-        mode: 0o600,
-        flag: 'wx',
-      });
-    }
-    console.log(
-      `${invoices.length} faturas exportadas para ${output}. Importe o JSON na Ponte.`,
+    await new Promise((resolve, reject) =>
+      process.send({ result }, (error) => (error ? reject(error) : resolve())),
     );
-  } catch (erro) {
-    if (integrated) process.send({ error: 'CONSULTATION_FAILED' });
-    else console.error('Falha na exportacao:', erro.message);
+  } catch {
+    process.send({ error: 'CONSULTATION_FAILED', stage });
     process.exitCode = 1;
   } finally {
-    // Fechar o navegador. Pode comentar esta linha para analisar o estado final do browser.
     await browser.close();
-    if (integrated) process.disconnect();
-  }
-})().catch((error) => {
-  if (integrated) {
-    process.send({ error: 'BROWSER_UNAVAILABLE' });
     process.disconnect();
-  } else console.error(error.message);
+  }
+})().catch(() => {
+  process.send({ error: 'BROWSER_UNAVAILABLE', stage: 'launch' }, () =>
+    process.disconnect(),
+  );
   process.exitCode = 1;
 });

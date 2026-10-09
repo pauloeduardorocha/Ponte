@@ -1,4 +1,3 @@
-const { createInterface } = require('node:readline/promises');
 function validatePeriod(period) {
   if (
     !period ||
@@ -12,7 +11,7 @@ function validatePeriod(period) {
     period.start > period.end
   )
     throw new Error(
-      'Defina datas ISO validas e inicio <= fim no arquivo --config ou EFATURA_START/EFATURA_END',
+      'Defina datas ISO válidas e início <= fim para a consulta.',
     );
   return period;
 }
@@ -31,7 +30,7 @@ async function applyDateFilters(page, period, submitSelector) {
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
   }, period);
-  // The supplied demo does not identify the filter button. Prefer an explicit selector.
+  // Allow an explicit selector when the portal changes its filter form.
   if (submitSelector) {
     await page.waitForSelector(submitSelector, { visible: true });
     await page.click(submitSelector);
@@ -45,23 +44,10 @@ async function applyDateFilters(page, period, submitSelector) {
       submit.click();
       return true;
     });
-    if (!submitted) {
-      if (process.send)
-        throw new Error(
-          'Não foi possível aplicar automaticamente os filtros de data no portal.',
-        );
-      const prompt = createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-      try {
-        await prompt.question(
-          'Datas preenchidas. Aplique a pesquisa no portal e pressione Enter aqui para continuar. ',
-        );
-      } finally {
-        prompt.close();
-      }
-    }
+    if (!submitted)
+      throw new Error(
+        'Não foi possível aplicar automaticamente os filtros de data no portal.',
+      );
   }
   await page.waitForNetworkIdle();
 }

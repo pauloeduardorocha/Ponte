@@ -29,9 +29,6 @@ ENV EFATURA_CHROMIUM_NO_SANDBOX=true
 WORKDIR /app
 
 RUN apk add --no-cache chromium
-COPY apps/scrapper/package.json apps/scrapper/package-lock.json ./apps/scrapper/
-RUN npm ci --omit=dev --prefix apps/scrapper
-COPY --chown=node:node apps/scrapper/*.js ./apps/scrapper/
 
 COPY --from=build --chown=node:node /app/package.json ./package.json
 COPY --from=build --chown=node:node /app/package-lock.json ./package-lock.json

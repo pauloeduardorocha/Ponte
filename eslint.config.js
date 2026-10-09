@@ -22,7 +22,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/scrapper/**/*.js'],
+    files: ['apps/api/src/modules/banking/efatura/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {

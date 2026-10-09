@@ -4,7 +4,13 @@
     "api": {
       "root": "apps/api",
       "framework": "nestjs",
-      "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run db:generate && npm run build --workspace @church/api"
+      "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run db:generate && npm run build --workspace @church/api",
+      "functions": {
+        "src/main.ts": {
+          "maxDuration": 180,
+          "includeFiles": "{src/modules/banking/efatura/*.cjs,../../node_modules/@sparticuz/chromium/bin/**}"
+        }
+      }
     },
     "web": {
       "root": "apps/web",

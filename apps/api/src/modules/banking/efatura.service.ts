@@ -2,12 +2,12 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { fork } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
 import type { CurrentUser } from '@church/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { InvoicesService } from './invoices.service';
@@ -15,6 +15,7 @@ import { FetchInvoicesDto } from './invoices.dto';
 
 @Injectable()
 export class EfaturaService {
+  private readonly logger = new Logger(EfaturaService.name);
   private running = false;
   constructor(
     private readonly db: PrismaService,
@@ -43,11 +44,8 @@ export class EfaturaService {
     });
     if (!dates._min.date || !dates._max.date)
       throw new BadRequestException('O extrato não contém movimentos.');
-    const script = [
-      resolve(process.cwd(), '../scrapper/teste.js'),
-      resolve(process.cwd(), 'apps/scrapper/teste.js'),
-    ].find(existsSync);
-    if (!script)
+    const script = require.resolve('./efatura/worker.cjs');
+    if (!existsSync(script))
       throw new ServiceUnavailableException(
         'O serviço de consulta ao e-Fatura não está instalado.',
       );
@@ -123,15 +121,29 @@ export class EfaturaService {
           ),
         ),
       );
-      worker.on('message', (message: { result?: unknown; error?: string }) => {
-        if (message.error)
-          consultationError = new ServiceUnavailableException(
-            message.error === 'BROWSER_UNAVAILABLE'
-              ? 'O navegador de consulta não está disponível. Verifique a instalação do serviço.'
-              : 'Não foi possível consultar as faturas. Confira o NIF e a senha. O portal pode exigir MFA ou CAPTCHA.',
-          );
-        else if (message.result) result = message.result;
-      });
+      worker.on(
+        'message',
+        (message: { result?: unknown; error?: string; stage?: string }) => {
+          if (message.error) {
+            // Never log portal errors, URLs, invoice data or credentials.
+            const code =
+              message.error === 'BROWSER_UNAVAILABLE'
+                ? 'BROWSER_UNAVAILABLE'
+                : 'CONSULTATION_FAILED';
+            const stage = ['launch', 'login', 'filters', 'extraction'].includes(
+              message.stage ?? '',
+            )
+              ? message.stage
+              : 'unknown';
+            this.logger.warn(`e-Fatura ${code} at ${stage}`);
+            consultationError = new ServiceUnavailableException(
+              message.error === 'BROWSER_UNAVAILABLE'
+                ? 'O navegador de consulta não está disponível. Verifique a instalação do serviço.'
+                : 'Não foi possível consultar as faturas. Confira o NIF e a senha. O portal pode exigir MFA ou CAPTCHA.',
+            );
+          } else if (message.result) result = message.result;
+        },
+      );
       worker.on('exit', (code) =>
         finish(
           consultationError ??

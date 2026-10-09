@@ -57,7 +57,7 @@ describe('e-Fatura integration', () => {
     const pending = service.fetch(dto, user);
     await new Promise(setImmediate);
     expect(fork).toHaveBeenCalledWith(
-      expect.stringContaining('teste.js'),
+      expect.stringContaining('worker.cjs'),
       [],
       expect.objectContaining({
         windowsHide: true,

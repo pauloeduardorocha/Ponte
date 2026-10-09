@@ -10,7 +10,7 @@ A infraestrutura, health check e proxy Nginx/Vite são preservados.
 Para publicar frontend, API e PostgreSQL nos planos gratuitos Vercel/Neon,
 consulte [o guia de deployment](docs/vercel-deployment.md).
 
-- Node.js 22.13 ou superior e npm 10 ou superior
+- Node.js 22.17 ou superior e npm 10 ou superior
 - Docker Engine e Docker Compose v2 para executar a stack completa
 - Para desenvolvimento local: PostgreSQL 17 ou Docker para iniciá-lo
 
@@ -695,9 +695,10 @@ pendentes, sem simular envio.
 
 ## Faturas do e-fatura
 
-A busca está integrada à importação bancária. A imagem Docker da API inclui
-Chromium e o scraper. No desenvolvimento local, instale as dependências com
-`npm ci --prefix apps/scrapper`; Puppeteer instala o navegador necessário.
-Para usar Chromium já instalado, configure PUPPETEER_EXECUTABLE_PATH.
+A busca está integrada à importação bancária e o scraper faz parte da API.
+As dependências são instaladas pelo `npm ci` da raiz. O deploy Vercel inclui
+Chromium para Linux; a imagem Docker usa o Chromium do sistema.
+No desenvolvimento local, configure PUPPETEER_EXECUTABLE_PATH para o Chrome
+ou Chromium instalado.
 
-Consulte [configuração, filtros, permissões e exportação independente](docs/EFATURA.md).
+Consulte [configuração, filtros e permissões](docs/EFATURA.md).

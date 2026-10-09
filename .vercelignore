@@ -4,6 +4,5 @@
 .git
 tmp
 private-storage
-apps/scrapper
 **/coverage
 **/*.tsbuildinfo

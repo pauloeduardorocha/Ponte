@@ -33,6 +33,13 @@ outside the root directory. The checked-in `vercel.json` configures NestJS,
 workspace installation, Prisma client generation, builds, and Frankfurt hosting.
 Use Node.js 22.x.
 
+The e-Fatura scraper is part of the API. Production dependencies include
+`puppeteer-core` and a matching `@sparticuz/chromium` binary for Linux.
+`apps/api/vercel.json` includes its worker modules and Chromium assets and
+sets the function duration to 180 seconds (the consultation times out at
+120 seconds). No separate scraper installation is required. See
+[e-Fatura configuration](EFATURA.md) for local Chrome configuration and portal filters.
+
 Set these environment variables for Production:
 
 | Variable                 | Value                                                      |
