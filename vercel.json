@@ -16,7 +16,13 @@
       "root": "apps/web",
       "framework": "vite",
       "buildCommand": "cd ../.. && npm run build --workspace @church/shared && npm run build --workspace @church/web",
-      "outputDirectory": "dist"
+      "outputDirectory": "dist",
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
     }
   },
   "rewrites": [
