@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import { bindAudit } from '../audit/audit-context';
 import { occupiedRegistrations } from './registration-capacity';
 @Injectable()
 export class EventSignupService {
+  private readonly logger = new Logger(EventSignupService.name);
   constructor(
     private readonly db: PrismaService,
     private readonly config: ConfigService,
@@ -319,7 +321,47 @@ export class EventSignupService {
         status: 'PENDING_PAYMENT',
         checkoutUrl: session.url,
       };
-    } catch {
+    } catch (error) {
+      const stripeError =
+        error instanceof Stripe.errors.StripeError ? error : undefined;
+      const safeToken = (value: string | undefined) =>
+        value?.replace(/[^a-zA-Z0-9_.-]/g, '').slice(0, 120) ?? 'unknown';
+      this.logger.warn(
+        `Checkout failed; type=${safeToken(stripeError?.type)} code=${safeToken(stripeError?.code)} param=${safeToken(stripeError?.param)} request=${safeToken(stripeError?.requestId)}`,
+      );
+      const rejected =
+        error instanceof Stripe.errors.StripeInvalidRequestError ||
+        error instanceof Stripe.errors.StripeAuthenticationError ||
+        error instanceof Stripe.errors.StripePermissionError;
+      if (rejected) {
+        await this.db.$transaction(async (tx) => {
+          await bindAudit(tx);
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${id}))`;
+          const registration = await tx.eventRegistration.findUniqueOrThrow({
+            where: { id: result.registration.id },
+          });
+          await tx.eventPayment.update({
+            where: { id: result.payment!.id },
+            data: { status: 'FAILED' },
+          });
+          if (
+            registration.status === 'PENDING_PAYMENT' &&
+            registration.expiresAt?.getTime() ===
+              result.registration.expiresAt?.getTime()
+          )
+            await tx.eventRegistration.update({
+              where: { id: registration.id },
+              data: { status: 'CANCELLED', expiresAt: null },
+            });
+        });
+        throw new ServiceUnavailableException({
+          message:
+            'A Stripe recusou a criação do pagamento. A organização precisa verificar a configuração; a vaga foi liberada.',
+          ...(stripeError?.requestId
+            ? { reference: safeToken(stripeError.requestId) }
+            : {}),
+        });
+      }
       // Preserve the reservation on an ambiguous network failure; the signed webhook can still fulfil it.
       throw new ServiceUnavailableException(
         'Não foi possível abrir o pagamento. Aguarde 35 minutos para tentar novamente.',

@@ -241,6 +241,63 @@ describe('Public event registration', () => {
     ).rejects.toBeInstanceOf(ConflictException);
     expect(tx.visitor.create).not.toHaveBeenCalled();
   });
+
+  it('releases the reservation when Stripe definitively rejects Checkout creation', async () => {
+    service = new EventSignupService(
+      db as unknown as PrismaService,
+      new ConfigService({
+        STRIPE_SECRET_KEY: 'sk_test_example',
+        STRIPE_WEBHOOK_SECRET: secret,
+        PUBLIC_WEB_URL: 'https://ponte.example',
+      }),
+      {} as OperationsService,
+    );
+    tx.communityEvent.findFirst.mockResolvedValue({
+      id: eventId,
+      name: 'Retiro',
+      isPaid: true,
+      startsAt: new Date('2030-01-01'),
+      capacity: 5,
+    });
+    tx.eventTicket.findFirst.mockResolvedValue({
+      id: 'ticket',
+      name: 'Lote',
+      capacity: 5,
+      price: new Prisma.Decimal(20),
+    });
+    tx.eventRegistration.create.mockResolvedValue({
+      id: registrationId,
+      expiresAt,
+    });
+    const stripe = new Stripe('sk_test_example');
+    jest
+      .spyOn(stripe.checkout.sessions, 'create')
+      .mockRejectedValue(
+        new Stripe.errors.StripeInvalidRequestError({
+          message: 'No payment methods',
+          requestId: 'req_example',
+        }),
+      );
+    jest
+      .spyOn(service as unknown as { stripe(): Stripe }, 'stripe')
+      .mockReturnValue(stripe);
+    await expect(
+      service.signup(eventId, {
+        ticketId: 'ticket',
+        name: 'Maria',
+        email: 'maria@example.org',
+        phone: '912345678',
+      }),
+    ).rejects.toThrow('vaga foi liberada');
+    expect(tx.eventPayment.update).toHaveBeenCalledWith({
+      where: { id: paymentId },
+      data: { status: 'FAILED' },
+    });
+    expect(tx.eventRegistration.update).toHaveBeenCalledWith({
+      where: { id: registrationId },
+      data: { status: 'CANCELLED', expiresAt: null },
+    });
+  });
   function payload(amount = 2000) {
     return JSON.stringify({
       id: 'evt_example',
