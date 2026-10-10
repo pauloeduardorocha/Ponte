@@ -130,6 +130,7 @@ export class OperationalEventDto {
   @IsDateString({ strict: true }) startDateTime!: string;
   @IsDateString({ strict: true }) endDateTime!: string;
   @IsOptional() @IsInt() @Min(1) capacity?: number;
+  @IsOptional() @IsBoolean() isPaid?: boolean;
   @IsOptional() @IsBoolean() registrationRequired?: boolean;
   @IsOptional() @IsBoolean() active?: boolean;
   @IsOptional() @IsUUID() ministryId?: string;

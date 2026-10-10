@@ -56,6 +56,7 @@ model CommunityEvent {
   type                 String              @default("OTHER") @db.VarChar(30)
   endsAt               DateTime?           @db.Timestamptz(6)
   capacity             Int?
+  isPaid               Boolean             @default(false)
   registrationRequired Boolean             @default(false)
   active               Boolean             @default(true)
   createdByUserId      String?             @db.Uuid
@@ -903,6 +904,10 @@ model MinistryMember {
 }
 
 model EventRegistration {
+  ticketId String? @db.Uuid
+  ticket EventTicket? @relation(fields: [ticketId], references: [id], onDelete: Restrict, map: "event_registration_ticket_fk")
+  expiresAt DateTime?
+  communicationConsent Boolean @default(false)
   qrToken     String                @unique @default(uuid()) @db.Uuid
   checkedInAt DateTime?
   checkins    EventSessionCheckin[]
@@ -918,6 +923,7 @@ model EventRegistration {
   status    String         @default("REGISTERED") @db.VarChar(20)
   createdAt DateTime       @default(now())
 
+  @@index([ticketId], map: "event_registrations_ticket_idx")
   @@unique([eventId, memberId])
   @@unique([eventId, visitorId])
   @@map("event_registrations")
@@ -1080,6 +1086,7 @@ model EventManagerAssignment {
 }
 
 model EventTicket {
+  registrations EventRegistration[]
   id        String         @id @default(uuid()) @db.Uuid
   eventId   String         @db.Uuid
   event     CommunityEvent @relation(fields: [eventId], references: [id], onDelete: Restrict)
@@ -1108,6 +1115,8 @@ model EventCoupon {
 }
 
 model EventPayment {
+  stripeSessionId String? @unique(map: "event_payments_stripe_session_key")
+  stripePaymentIntentId String?
   id             String            @id @default(uuid()) @db.Uuid
   eventId        String            @db.Uuid
   event          CommunityEvent    @relation(fields: [eventId], references: [id], onDelete: Restrict)

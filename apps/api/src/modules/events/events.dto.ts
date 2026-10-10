@@ -1,6 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsDateString,
+  IsEmail,
+  IsBoolean,
   IsInt,
   IsString,
   IsUUID,
@@ -71,4 +73,14 @@ export class EventPaymentPageDto {
   @ApiProperty() total!: number;
   @ApiProperty() page!: number;
   @ApiProperty() pageSize!: number;
+}
+
+export class EventSignupDto {
+  @IsOptional() @IsUUID() memberId?: string;
+  @IsOptional() @IsUUID() visitorId?: string;
+  @IsOptional() @IsUUID() ticketId?: string;
+  @IsOptional() @IsString() @Matches(/\S/) @MaxLength(120) name?: string;
+  @IsOptional() @IsEmail() @MaxLength(320) email?: string;
+  @IsOptional() @IsString() @Matches(/^[+0-9 ()-]{6,32}$/) phone?: string;
+  @IsOptional() @IsBoolean() communicationConsent?: boolean;
 }

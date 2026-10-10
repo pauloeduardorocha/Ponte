@@ -123,7 +123,7 @@ export function OperationForm({
   fields: Field[];
   initial?: Entry;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (result?: unknown) => void;
 }) {
   const defaults: Values = {};
   for (const f of fields) {
@@ -139,7 +139,7 @@ export function OperationForm({
     else
       defaults[f.key] = String(
         value ??
-          (f.key === 'gender' ? '' : f.options?.[0]) ??
+          (f.key === 'gender' || f.key === 'ticketId' ? '' : f.options?.[0]) ??
           (f.type === 'date' ? new Date().toISOString().slice(0, 10) : ''),
       );
   }
@@ -177,10 +177,10 @@ export function OperationForm({
       }
       return apiRequest(path, { method, body });
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
       void client.invalidateQueries({ queryKey: ['operations'] });
       void client.invalidateQueries({ queryKey: ['community'] });
-      onSaved();
+      onSaved(result);
     },
   });
   return (
@@ -276,7 +276,7 @@ export function OperationForm({
                       <MenuItem key={o} value={o}>
                         {f.key === 'meetingDay'
                           ? dayLabels[Number(o)]
-                          : (operationLabels[o] ?? o)}
+                          : (f.optionLabels?.[o] ?? operationLabels[o] ?? o)}
                       </MenuItem>
                     ))}
                   </TextField>

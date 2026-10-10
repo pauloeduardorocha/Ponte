@@ -11,6 +11,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import * as D from './operations.dto';
+import { occupiedRegistrations } from '../events/registration-capacity';
 import {
   NOTIFICATION_PROVIDERS,
   type NotificationProvider,
@@ -957,10 +958,29 @@ export class OperationsService {
         id &&
         dto.capacity &&
         (await tx.eventRegistration.count({
-          where: { eventId: id, status: { in: ['REGISTERED', 'APPROVED'] } },
+          where: { eventId: id, ...occupiedRegistrations() },
         })) > dto.capacity
       )
         throw new ConflictException('Capacidade inferior às inscrições.');
+      if (
+        id &&
+        dto.isPaid !== undefined &&
+        dto.isPaid !== old?.isPaid &&
+        (await tx.eventRegistration.count({
+          where: { eventId: id, ...occupiedRegistrations() },
+        }))
+      )
+        throw new ConflictException(
+          'Não é possível alterar a cobrança com inscrições ativas.',
+        );
+      if (
+        id &&
+        dto.isPaid === false &&
+        (await tx.eventTicket.count({
+          where: { eventId: id, price: { gt: 0 } },
+        }))
+      )
+        throw new ConflictException('Altere os lotes para gratuitos primeiro.');
       const data = {
         ...rest,
         name: title,
@@ -1022,6 +1042,10 @@ export class OperationsService {
       await this.lockEvent(tx, id, user);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
       const e = await tx.communityEvent.findUniqueOrThrow({ where: { id } });
+      if (e.isPaid)
+        throw new BadRequestException(
+          'Use o fluxo de inscrições do módulo de eventos para selecionar o ingresso.',
+        );
       if (!e.active || e.status !== 'SCHEDULED')
         throw new ConflictException('Evento não aceita inscrições.');
       if (user.permissions.includes('EVENT_REGISTRATION_MANAGE')) {
@@ -1057,7 +1081,7 @@ export class OperationsService {
       if (
         e.capacity &&
         (await tx.eventRegistration.count({
-          where: { eventId: id, status: { in: ['REGISTERED', 'APPROVED'] } },
+          where: { eventId: id, ...occupiedRegistrations() },
         })) >= e.capacity
       )
         throw new ConflictException('Capacidade do evento atingida.');

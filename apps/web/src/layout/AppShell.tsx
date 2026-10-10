@@ -96,13 +96,6 @@ const navigation: NavigationItem[] = [
     permission: 'EVENT_REGISTRATION_READ',
   },
   {
-    label: 'Participantes',
-    group: 'Eventos',
-    to: '/my-events?section=attendees',
-    icon: PeopleAltRounded,
-    permission: 'EVENT_ATTENDEE_READ',
-  },
-  {
     label: 'Ingressos',
     group: 'Eventos',
     to: '/my-events?section=tickets',

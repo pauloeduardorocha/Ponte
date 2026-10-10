@@ -8,6 +8,7 @@ const AccountPage = lazy(() =>
   import('./pages/AccountPage').then((m) => ({ default: m.AccountPage })),
 );
 import { DashboardPage } from './pages/DashboardPage';
+import { PublicEventRegistration } from './pages/events/PublicEventRegistration';
 import { EventWorkspace } from './pages/events/EventWorkspace';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { LoginPage } from './pages/LoginPage';
@@ -55,6 +56,10 @@ export function App() {
     <AuthProvider>
       <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
         <Routes>
+          <Route
+            path="/events/:id/register"
+            element={<PublicEventRegistration />}
+          />
           <Route element={<PublicOnly />}>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />

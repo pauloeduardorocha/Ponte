@@ -22,6 +22,7 @@ export type Field = {
     | 'textarea'
     | 'boolean';
   options?: string[];
+  optionLabels?: Record<string, string>;
   lookup?: Resource | 'people' | 'assignees';
 };
 export type Config = {
@@ -156,6 +157,7 @@ export const configs: Record<Resource, Config> = {
       },
       { key: 'meetingTime', label: 'Horário', type: 'time', required: true },
       { key: 'capacity', label: 'Capacidade', type: 'number' },
+      { key: 'isPaid', label: 'Evento pago', type: 'boolean' },
       active,
     ],
   },
@@ -204,6 +206,7 @@ export const configs: Record<Resource, Config> = {
         required: true,
       },
       { key: 'capacity', label: 'Capacidade', type: 'number' },
+      { key: 'isPaid', label: 'Evento pago', type: 'boolean' },
       {
         key: 'registrationRequired',
         label: 'Inscrição obrigatória',

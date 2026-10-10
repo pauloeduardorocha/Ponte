@@ -30,11 +30,6 @@ const sections: { key: string; label: string; permission: Permission }[] = [
     permission: 'EVENT_REGISTRATION_READ',
   },
   {
-    key: 'attendees',
-    label: 'Participantes',
-    permission: 'EVENT_ATTENDEE_READ',
-  },
-  {
     key: 'tickets',
     label: 'Ingressos e lotes',
     permission: 'EVENT_TICKET_MANAGE',
@@ -59,7 +54,15 @@ const sections: { key: string; label: string; permission: Permission }[] = [
 const fields: Record<string, Field[]> = {
   registrations: [
     { key: 'memberId', label: 'Membro', lookup: 'people' },
-    { key: 'visitorId', label: 'ID do visitante' },
+    { key: 'visitorId', label: 'ID de visitante existente (opcional)' },
+    { key: 'name', label: 'Nome do novo visitante' },
+    { key: 'email', label: 'Email do novo visitante' },
+    { key: 'phone', label: 'Telefone do novo visitante' },
+    {
+      key: 'communicationConsent',
+      label: 'Receber comunicações do evento',
+      type: 'boolean',
+    },
   ],
   tickets: [
     { key: 'name', label: 'Nome do ingresso / lote', required: true },
@@ -116,7 +119,10 @@ export function EventWorkspace() {
   const { hasPermission } = useAuth();
   const [params, setParams] = useSearchParams();
   const id = params.get('event') ?? '',
-    section = params.get('section') ?? 'registrations';
+    section =
+      params.get('section') === 'attendees'
+        ? 'registrations'
+        : (params.get('section') ?? 'registrations');
   const [page, setPage] = useState(1);
   const [form, setForm] = useState<{
     path: string;
@@ -126,6 +132,7 @@ export function EventWorkspace() {
     initial?: Entry;
   }>();
   const [notice, setNotice] = useState('');
+  const [checkoutUrl, setCheckoutUrl] = useState('');
   useEffect(() => {
     if (params.get('create') === 'true' && hasPermission('EVENT_CREATE')) {
       setForm({
@@ -148,6 +155,11 @@ export function EventWorkspace() {
         query: { pageSize: 100 },
       }),
     enabled: hasPermission('EVENT_READ'),
+  });
+  const lots = useQuery({
+    queryKey: ['registration-lots', id],
+    queryFn: () => apiRequest<Entry[]>(`/events/${id}/registration-lots`),
+    enabled: !!id && hasPermission('EVENT_REGISTRATION_MANAGE'),
   });
   const active = sections.find((s) => s.key === section);
   const allowed = !!active && hasPermission(active.permission);
@@ -176,7 +188,23 @@ export function EventWorkspace() {
   ) {
     setForm({
       path: `/events/${id}/${suffix}`,
-      fields: fields[key] ?? [],
+      fields:
+        key === 'registrations'
+          ? [
+              ...fields.registrations!,
+              {
+                key: 'ticketId',
+                label: 'Lote de ingresso',
+                options: lots.data?.map((t) => String(t.id)),
+                optionLabels: Object.fromEntries(
+                  (lots.data ?? []).map((t) => [
+                    String(t.id),
+                    `${String(t.name)} · €${String(t.price)}`,
+                  ]),
+                ),
+              },
+            ]
+          : (fields[key] ?? []),
       title: active?.label ?? key,
       initial,
       method,
@@ -200,6 +228,22 @@ export function EventWorkspace() {
     <Stack spacing={2}>
       <Typography variant="h4">Meus eventos</Typography>
       {notice && <Alert onClose={() => setNotice('')}>{notice}</Alert>}
+      {checkoutUrl && (
+        <Alert severity="info">
+          <Typography>
+            Encaminhe este link à pessoa para concluir o pagamento:
+          </Typography>
+          <Button href={checkoutUrl} target="_blank">
+            Abrir pagamento
+          </Button>
+          <TextField
+            fullWidth
+            label="Link de pagamento"
+            value={checkoutUrl}
+            slotProps={{ input: { readOnly: true } }}
+          />
+        </Alert>
+      )}
       {events.isError && <Alert severity="error">{events.error.message}</Alert>}
       <Stack direction="row" spacing={1}>
         {hasPermission('EVENT_CREATE') && (
@@ -241,6 +285,40 @@ export function EventWorkspace() {
           </Button>
         )}
       </Stack>
+      {id && (
+        <Alert severity="info">
+          <Stack spacing={1}>
+            <Typography>
+              URL pública de inscrição (disponível após publicar o evento)
+            </Typography>
+            <Button
+              href={`/events/${id}/register`}
+              target="_blank"
+            >{`${window.location.origin}/events/${id}/register`}</Button>
+            <Button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(
+                    `${window.location.origin}/events/${id}/register`,
+                  );
+                  setNotice('Link copiado.');
+                } catch {
+                  setNotice('Copie o link acima.');
+                }
+              }}
+            >
+              Copiar link
+            </Button>
+          </Stack>
+        </Alert>
+      )}
+      {section === 'registrations' && id && (
+        <Alert severity="info">
+          Selecione um membro ou visitante existente, ou preencha nome, telefone
+          e email para cadastrar um novo visitante. Para evento pago, selecione
+          o lote e encaminhe o link de pagamento.
+        </Alert>
+      )}
       <TextField
         select
         label="Evento"
@@ -386,21 +464,6 @@ export function EventWorkspace() {
                         Cancelar inscrição
                       </Button>
                     )}
-                  {section === 'attendees' &&
-                    hasPermission('EVENT_ATTENDEE_MANAGE') && (
-                      <Button
-                        onClick={() =>
-                          setForm({
-                            title: 'Cancelar participante',
-                            path: `/events/${id}/attendees/${row.id}/cancel`,
-                            method: 'PATCH',
-                            fields: [],
-                          })
-                        }
-                      >
-                        Cancelar participante
-                      </Button>
-                    )}
                   {section === 'tickets' && (
                     <Button
                       onClick={() =>
@@ -486,7 +549,11 @@ export function EventWorkspace() {
         <OperationForm
           {...form}
           onClose={() => setForm(undefined)}
-          onSaved={() => {
+          onSaved={(result) => {
+            setCheckoutUrl(
+              (result as { checkoutUrl?: string } | undefined)?.checkoutUrl ??
+                '',
+            );
             setForm(undefined);
             setNotice('Operação concluída.');
             void client.invalidateQueries({ queryKey: ['event-workspace'] });

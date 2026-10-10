@@ -320,6 +320,10 @@ describe('EVENT_MANAGER RBAC and event scope (isolated PostgreSQL)', () => {
     await call('post', `/events/${ownId}/checkin/reverse`, {
       qrToken: row.qrToken,
     }).expect(201);
+    await db.eventRegistration.update({
+      where: { id: registrationId },
+      data: { communicationConsent: true },
+    });
     await call('post', `/events/${ownId}/notifications`, {
       subject: 'Evento',
       content: 'Bem-vindo',
@@ -343,6 +347,75 @@ describe('EVENT_MANAGER RBAC and event scope (isolated PostgreSQL)', () => {
         'EVENT_REFUND_REQUESTED',
       ]),
     );
+  });
+  it('creates visitors inside registrations without visitor management permission', async () => {
+    const registered = await call('post', `/events/${ownId}/registrations`, {
+      name: 'Visitante de inscrição',
+      email: 'visitor@example.org',
+      phone: '+351912345678',
+    }).expect(201);
+    const row = await db.eventRegistration.findUniqueOrThrow({
+      where: { id: registered.body.id },
+      include: { visitor: true },
+    });
+    expect(row.visitor?.name).toBe('Visitante de inscrição');
+    expect(row.visitor?.createdByUserId).toBe(manager.id);
+    await call('post', `/events/${otherId}/registrations`, {
+      name: 'Não autorizado',
+      email: 'no@example.org',
+      phone: '912345678',
+    }).expect(404);
+  });
+  it('serializes concurrent public registrations for the last event and ticket seat', async () => {
+    const publicEvent = await db.communityEvent.create({
+      data: {
+        name: 'Última vaga',
+        startsAt: new Date('2030-01-01'),
+        location: 'Igreja',
+        capacity: 1,
+        publishedAt: new Date(),
+      },
+    });
+    const lot = await db.eventTicket.create({
+      data: {
+        eventId: publicEvent.id,
+        name: 'Gratuito',
+        price: 0,
+        capacity: 1,
+        startsAt: new Date('2020-01-01'),
+        endsAt: new Date('2030-01-01'),
+      },
+    });
+    const responses = await Promise.all(
+      [1, 2].map((n) =>
+        request(app.getHttpServer())
+          .post(`/api/v1/public/events/${publicEvent.id}/registrations`)
+          .send({
+            name: `Visitante ${n}`,
+            email: `visitor${n}@example.org`,
+            phone: '912345678',
+            ticketId: lot.id,
+          }),
+      ),
+    );
+    expect(responses.map((r) => r.status).sort()).toEqual([201, 409]);
+    expect(
+      await db.eventRegistration.count({ where: { eventId: publicEvent.id } }),
+    ).toBe(1);
+    const detail = await request(app.getHttpServer())
+      .get(`/api/v1/public/events/${publicEvent.id}`)
+      .expect(200);
+    expect(detail.body.available).toBe(0);
+    expect(detail.body.tickets[0].available).toBe(0);
+  });
+  it('keeps drafts private and rejects public identity injection', async () => {
+    await request(app.getHttpServer())
+      .get(`/api/v1/public/events/${otherId}`)
+      .expect(404);
+    await request(app.getHttpServer())
+      .post(`/api/v1/public/events/${ownId}/registrations`)
+      .send({ memberId: otherRegistrationId })
+      .expect(400);
   });
   it('revocation immediately removes creator access with the same session; admins retain access', async () => {
     await call(

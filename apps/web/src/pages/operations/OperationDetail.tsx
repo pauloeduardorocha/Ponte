@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -243,17 +244,23 @@ export function OperationDetail({
               </Button>
             )}
             {resource === 'events' && canManage && (
-              <Button
-                onClick={() =>
-                  setForm({
-                    title: 'Inscrever participante',
-                    path,
-                    fields: person,
-                  })
-                }
-              >
-                Inscrever participante
-              </Button>
+              <Stack direction="row" spacing={1}>
+                <Button
+                  component={Link}
+                  to={`/my-events?event=${entry.id}&section=registrations`}
+                >
+                  Gerir inscrições
+                </Button>
+                <Button
+                  component={Link}
+                  to={`/my-events?event=${entry.id}&section=tickets`}
+                >
+                  Ingressos e lotes
+                </Button>
+                <Button href={`/events/${entry.id}/register`} target="_blank">
+                  Página pública
+                </Button>
+              </Stack>
             )}
             {resource === 'schedules' && canManage && (
               <Button

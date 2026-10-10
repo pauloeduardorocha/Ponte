@@ -22,6 +22,11 @@ import { OperationsModule } from '../operations/operations.controller';
 import { OperationsService } from '../operations/operations.service';
 import * as O from '../operations/operations.dto';
 import * as D from './events.dto';
+import {
+  EventSignupController,
+  StripeWebhookController,
+} from './event-signup.controller';
+import { EventSignupService } from './event-signup.service';
 import { EventsService } from './events.service';
 
 @ApiTags('Eventos — gestão por atribuição')
@@ -31,6 +36,7 @@ export class EventsController {
   constructor(
     private readonly service: EventsService,
     private readonly operations: OperationsService,
+    private readonly signup: EventSignupService,
   ) {}
   @Get()
   @Permission('EVENT_READ')
@@ -99,10 +105,10 @@ export class EventsController {
   @Permission('EVENT_REGISTRATION_MANAGE')
   register(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: O.PersonDto,
+    @Body() dto: D.EventSignupDto,
     @Req() r: AuthRequest,
   ) {
-    return this.operations.register(id, dto, r.user);
+    return this.signup.signup(id, dto, r.user, true);
   }
   @Post(':id/registrations/:registrationId/approve')
   @Permission('EVENT_REGISTRATION_APPROVE')
@@ -139,6 +145,19 @@ export class EventsController {
     @Req() r: AuthRequest,
   ) {
     return this.service.registration(id, registrationId, r.user, false);
+  }
+  @Get(':id/registration-lots')
+  @Permission('EVENT_REGISTRATION_MANAGE')
+  registrationLots(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.resources(
+      id,
+      'tickets',
+      { page: 1, pageSize: 100 } as O.OperationQuery,
+      r.user,
+    );
   }
   @Get(':id/tickets')
   @Permission('EVENT_TICKET_MANAGE')
@@ -295,7 +314,11 @@ export class EventsController {
 }
 @Module({
   imports: [OperationsModule],
-  controllers: [EventsController],
-  providers: [EventsService],
+  controllers: [
+    EventsController,
+    EventSignupController,
+    StripeWebhookController,
+  ],
+  providers: [EventsService, EventSignupService],
 })
 export class EventsModule {}

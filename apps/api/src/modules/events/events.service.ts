@@ -11,6 +11,7 @@ import { OperationsService } from '../operations/operations.service';
 import { auditRequestFields, bindAudit } from '../audit/audit-context';
 import { OperationQuery } from '../operations/operations.dto';
 import * as D from './events.dto';
+import { occupiedRegistrations } from './registration-capacity';
 
 const paymentSelect = {
   id: true,
@@ -170,7 +171,21 @@ export class EventsService {
       take: q.pageSize,
       orderBy: { id: 'asc' as const },
     };
-    if (kind === 'tickets') return this.db.eventTicket.findMany(args);
+    if (kind === 'tickets') {
+      const tickets = await this.db.eventTicket.findMany(args);
+      return Promise.all(
+        tickets.map(async (t) => {
+          const registered = await this.db.eventRegistration.count({
+            where: { ticketId: t.id, ...occupiedRegistrations() },
+          });
+          return {
+            ...t,
+            registered,
+            available: Math.max(0, t.capacity - registered),
+          };
+        }),
+      );
+    }
     if (kind === 'coupons') return this.db.eventCoupon.findMany(args);
     return this.db.eventSession.findMany(args);
   }
@@ -178,6 +193,27 @@ export class EventsService {
     if (new Date(dto.endsAt) <= new Date(dto.startsAt))
       throw new BadRequestException('Período inválido');
     return this.write(id, user, 'EVENT_TICKET_PRICE_CHANGED', async (tx) => {
+      if (
+        ticketId &&
+        !(await tx.eventTicket.findFirst({
+          where: { id: ticketId, eventId: id },
+        }))
+      )
+        throw new NotFoundException();
+      const event = await tx.communityEvent.findUniqueOrThrow({
+        where: { id },
+      });
+      if (!event.isPaid && dto.price > 0)
+        throw new BadRequestException(
+          'Evento gratuito só aceita lotes gratuitos.',
+        );
+      if (
+        ticketId &&
+        (await tx.eventRegistration.count({
+          where: { ticketId, ...occupiedRegistrations() },
+        })) > dto.capacity
+      )
+        throw new ConflictException('Quantidade inferior às vagas ocupadas.');
       const data = {
         ...dto,
         startsAt: new Date(dto.startsAt),
@@ -185,12 +221,6 @@ export class EventsService {
       };
       if (!ticketId)
         return tx.eventTicket.create({ data: { ...data, eventId: id } });
-      if (
-        !(await tx.eventTicket.findFirst({
-          where: { id: ticketId, eventId: id },
-        }))
-      )
-        throw new NotFoundException();
       return tx.eventTicket.update({ where: { id: ticketId }, data });
     });
   }
@@ -382,7 +412,11 @@ export class EventsService {
   notify(id: string, dto: D.EventMessageDto, user: CurrentUser) {
     return this.write(id, user, 'EVENT_NOTIFICATION_SENT', async (tx) => {
       const recipients = await tx.eventRegistration.findMany({
-        where: { eventId: id, status: { in: ['REGISTERED', 'APPROVED'] } },
+        where: {
+          eventId: id,
+          status: { in: ['REGISTERED', 'APPROVED'] },
+          communicationConsent: true,
+        },
       });
       return tx.notification.createMany({
         data: recipients.map((r) => ({
