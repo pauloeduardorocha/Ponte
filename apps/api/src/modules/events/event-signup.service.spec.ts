@@ -207,6 +207,7 @@ describe('Public event registration', () => {
     expect(checkout).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: 'payment',
+        managed_payments: { enabled: false },
         metadata: { paymentId },
         line_items: [
           expect.objectContaining({
@@ -270,14 +271,12 @@ describe('Public event registration', () => {
       expiresAt,
     });
     const stripe = new Stripe('sk_test_example');
-    jest
-      .spyOn(stripe.checkout.sessions, 'create')
-      .mockRejectedValue(
-        new Stripe.errors.StripeInvalidRequestError({
-          message: 'No payment methods',
-          requestId: 'req_example',
-        }),
-      );
+    jest.spyOn(stripe.checkout.sessions, 'create').mockRejectedValue(
+      new Stripe.errors.StripeInvalidRequestError({
+        message: 'No payment methods',
+        requestId: 'req_example',
+      }),
+    );
     jest
       .spyOn(service as unknown as { stripe(): Stripe }, 'stripe')
       .mockReturnValue(stripe);

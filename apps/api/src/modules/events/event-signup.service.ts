@@ -288,6 +288,7 @@ export class EventSignupService {
       const session = await this.stripe().checkout.sessions.create(
         {
           mode: 'payment',
+          managed_payments: { enabled: false },
           customer_email: result.email ?? undefined,
           client_reference_id: result.registration.id,
           metadata: { paymentId: result.payment.id },
