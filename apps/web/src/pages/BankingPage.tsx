@@ -16,6 +16,9 @@ import {
   DialogTitle,
   FormControlLabel,
   MenuItem,
+  LinearProgress,
+  Slide,
+  useMediaQuery,
   Stack,
   TextField,
   Typography,
@@ -128,17 +131,12 @@ export function BankingPage() {
   const [accountId, setAccountId] = useState(''),
     [file, setFile] = useState<File | null>(null),
     [importId, setImportId] = useState(params.get('importId') ?? ''),
-    [page, setPage] = useState(1),
-    [selected, setSelected] = useState<string[]>([]),
-    [filterStatus, setFilterStatus] = useState('');
-  const [search, setSearch] = useState('');
-  const [direction, setDirection] = useState('');
-  const [pageSize, setPageSize] = useState(20);
-  const debouncedSearch = useDebouncedValue(search);
-  const [inlineId, setInlineId] = useState<string | null>(null);
-  const [classificationTargets, setClassificationTargets] = useState<string[]>(
-    [],
-  );
+    [reviewRows, setReviewRows] = useState<Movement[]>([]);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [sliding, setSliding] = useState(false);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const currentMovement = reviewRows[reviewIndex];
+  const classificationTargets = currentMovement ? [currentMovement.id] : [];
   const [classificationOpen, setClassificationOpen] = useState(false),
     [classification, setClassification] = useState('INCOME'),
     [categoryId, setCategoryId] = useState(''),
@@ -165,33 +163,6 @@ export function BankingPage() {
     queryKey: ['finance', 'banking', 'import', importId],
     queryFn: () => apiRequest<Import>(`/finance/banking/imports/${importId}`),
     enabled: authorized && Boolean(importId),
-  });
-  const movements = useQuery({
-    queryKey: [
-      'finance',
-      'banking',
-      'movements',
-      importId,
-      page,
-      filterStatus,
-      debouncedSearch,
-      direction,
-      pageSize,
-      params.get('transactionId'),
-    ],
-    queryFn: () =>
-      apiRequest<Page<Movement>>('/finance/banking/transactions', {
-        query: {
-          transactionId: params.get('transactionId'),
-          importId: importId || undefined,
-          page,
-          pageSize,
-          search: debouncedSearch || undefined,
-          direction: direction || undefined,
-          transactionStatus: filterStatus || undefined,
-        },
-      }),
-    enabled: authorized,
   });
   const accounts = useQuery({
     queryKey: ['finance', 'banking', 'accounts'],
@@ -243,7 +214,6 @@ export function BankingPage() {
   });
   const invalidate = () => {
     void client.invalidateQueries({ queryKey: ['finance'] });
-    setSelected([]);
   };
   const upload = useMutation({
     mutationFn: async () => {
@@ -257,13 +227,17 @@ export function BankingPage() {
     },
     onSuccess: (i) => {
       setImportId(i.id);
-      setPage(1);
+
       setFile(null);
-      setSelected([]);
-      setFilterStatus('');
-      setSearch('');
-      setDirection('');
-      if (i.status !== 'FAILED') setFetchInvoicesOpen(true);
+
+      if (i.status !== 'FAILED') {
+        if (
+          hasPermission('FINANCE_INVOICE_READ') &&
+          hasPermission('FINANCE_INVOICE_IMPORT')
+        )
+          setFetchInvoicesOpen(true);
+        else startReview.mutate(i.id);
+      }
       invalidate();
       setNotice(
         i.status === 'FAILED'
@@ -293,52 +267,76 @@ export function BankingPage() {
         },
       }),
     onSuccess: () => {
-      setClassificationOpen(false);
-      setInlineId(null);
-      setNotice('Categoria e associações salvas no registro financeiro.');
       invalidate();
+      setSliding(true);
     },
   });
-  const quickClassify = useMutation({
-    mutationFn: ({ row, category }: { row: Movement; category: string }) =>
-      apiRequest('/finance/banking/classify', {
-        method: 'POST',
-        body: {
-          ids: [row.id],
-          classification: row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE',
-          categoryId: category,
-          ...(row.memberId
-            ? {
-                memberId: row.memberId,
-                contributionType: row.contributionType || undefined,
-              }
-            : {}),
-          ...(row.supplierId ? { supplierId: row.supplierId } : {}),
-          acceptDuplicate: false,
-        },
-      }),
-    onSuccess: () => {
-      setNotice('Categoria salva. Continue com o próximo movimento.');
-      void client.invalidateQueries({ queryKey: ['finance'] });
-    },
-  });
-  function openClassify(row?: Movement, choice?: string) {
+  function prepareMovement(row: Movement) {
     classify.reset();
-    setClassificationOpen(true);
-    setInlineId(row?.id ?? null);
-    setClassificationTargets(row ? [row.id] : [...selected]);
-    row ??= movements.data?.items.find((r) => r.id === selected[0]);
     setClassification(
-      choice ??
-        row?.classification ??
-        (row?.direction === 'DEBIT' ? 'EXPENSE' : 'INCOME'),
+      row.classification ?? (row.direction === 'DEBIT' ? 'EXPENSE' : 'INCOME'),
     );
-    setCategoryId(row?.categoryId ?? '');
-    setCostCenterId(row?.costCenterId ?? '');
-    setMemberId(row?.memberId ?? '');
-    setSupplierId(row?.supplierId ?? '');
-    setContributionType(row?.contributionType ?? '');
+    setCategoryId(row.categoryId ?? '');
+    setCostCenterId(row.costCenterId ?? '');
+    setMemberId(row.memberId ?? '');
+    setSupplierId(row.supplierId ?? '');
+    setContributionType(row.contributionType ?? '');
+    setMemberSearch('');
     setAcceptDuplicate(false);
+  }
+  const startReview = useMutation({
+    mutationFn: async (id: string) => {
+      const rows: Movement[] = [];
+      let page = 1;
+      while (true) {
+        const result = await apiRequest<Page<Movement>>(
+          '/finance/banking/transactions',
+          {
+            query: { importId: id, page, pageSize: 100 },
+          },
+        );
+        rows.push(...result.items);
+        if (!result.items.length || rows.length >= result.total) break;
+        page++;
+      }
+      return rows.filter(
+        (row) =>
+          row.status !== 'REJECTED' &&
+          (!row.categoryId ||
+            !row.costCenterId ||
+            row.status === 'POSSIBLE_DUPLICATE'),
+      );
+    },
+    onSuccess: (rows) => {
+      setReviewRows(rows);
+      setReviewIndex(0);
+      setSliding(false);
+      if (rows.length) {
+        prepareMovement(rows[0]!);
+        setClassificationOpen(true);
+      } else
+        setNotice('Todos os movimentos deste extrato já foram categorizados.');
+    },
+  });
+  function stopReview() {
+    if (classify.isPending || sliding) return;
+    setClassificationOpen(false);
+    setNotice(
+      'Progresso salvo. Continue pelo menu Receitas ou Despesas, editando os itens normalmente.',
+    );
+  }
+  function advanceReview() {
+    const next = reviewIndex + 1;
+    if (next < reviewRows.length) {
+      setReviewIndex(next);
+      prepareMovement(reviewRows[next]!);
+    } else {
+      setClassificationOpen(false);
+      setNotice(
+        'Classificação concluída. Todas as movimentações foram percorridas.',
+      );
+    }
+    setSliding(false);
   }
   const classificationForm = (
     <Stack spacing={2} sx={{ mt: 1 }}>
@@ -367,13 +365,7 @@ export function BankingPage() {
             value={v}
             disabled={
               v === 'IGNORE' &&
-              Boolean(
-                movements.data?.items.some(
-                  (row) =>
-                    classificationTargets.includes(row.id) &&
-                    row.status === 'RECONCILED',
-                ),
-              )
+              Boolean(currentMovement?.status === 'RECONCILED')
             }
           >
             {l}
@@ -384,6 +376,7 @@ export function BankingPage() {
         <TextField
           select
           label="Categoria"
+          required
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
         >
@@ -401,6 +394,7 @@ export function BankingPage() {
         <EntitySelect
           endpoint="/finance/cost-centers"
           label="Centro de custo"
+          required
           value={costCenterId}
           onChange={(e) => setCostCenterId(e.target.value)}
         />
@@ -476,11 +470,7 @@ export function BankingPage() {
           ))}
         </TextField>
       )}
-      {movements.data?.items.some(
-        (row) =>
-          classificationTargets.includes(row.id) &&
-          row.status === 'POSSIBLE_DUPLICATE',
-      ) && (
+      {currentMovement?.status === 'POSSIBLE_DUPLICATE' && (
         <FormControlLabel
           label="Revisei e aceito importar as possíveis duplicidades selecionadas"
           control={
@@ -493,23 +483,8 @@ export function BankingPage() {
       )}
     </Stack>
   );
-  const classificationActions = (
-    <Stack direction="row" gap={1}>
-      <Button
-        onClick={() => {
-          setClassificationOpen(false);
-          setInlineId(null);
-        }}
-      >
-        Cancelar
-      </Button>
-      <Button disabled={classify.isPending} onClick={() => classify.mutate()}>
-        Salvar
-      </Button>
-    </Stack>
-  );
   const error =
-    imports.error ?? detail.error ?? movements.error ?? upload.error;
+    imports.error ?? detail.error ?? upload.error ?? startReview.error;
   if (!authorized)
     return (
       <Alert severity="warning">
@@ -575,17 +550,6 @@ export function BankingPage() {
         <Button onClick={() => setHistoryOpen(true)}>
           Histórico de importações
         </Button>
-        {importId && (
-          <Button
-            onClick={() => {
-              setImportId('');
-              setPage(1);
-              setSelected([]);
-            }}
-          >
-            Ver todos os movimentos
-          </Button>
-        )}
       </Stack>
       <Dialog
         open={historyOpen}
@@ -606,11 +570,7 @@ export function BankingPage() {
                 key={i.id}
                 onClick={() => {
                   setImportId(i.id);
-                  setPage(1);
-                  setSelected([]);
-                  setFilterStatus('');
-                  setSearch('');
-                  setDirection('');
+
                   setHistoryOpen(false);
                 }}
               >
@@ -631,7 +591,10 @@ export function BankingPage() {
           importId={importId}
           period={detail.data?.period}
           open={fetchInvoicesOpen}
-          onOpenChange={setFetchInvoicesOpen}
+          onOpenChange={(open) => {
+            setFetchInvoicesOpen(open);
+            if (!open) startReview.mutate(importId);
+          }}
         />
       )}
       {detail.data && (
@@ -644,7 +607,17 @@ export function BankingPage() {
               {detail.data.error && (
                 <Alert severity="error">{detail.data.error}</Alert>
               )}
-              <Stack direction="row" gap={1}>
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                {detail.data.status !== 'FAILED' && (
+                  <Button
+                    disabled={startReview.isPending}
+                    onClick={() => startReview.mutate(importId)}
+                  >
+                    {startReview.isPending
+                      ? 'Carregando…'
+                      : 'Categorizar movimentos'}
+                  </Button>
+                )}
                 <Button
                   onClick={async () => {
                     try {
@@ -669,397 +642,140 @@ export function BankingPage() {
           </CardContent>
         </Card>
       )}
-      <Stack direction="row" gap={2} flexWrap="wrap">
-        <TextField
-          label="Pesquisar movimentos"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-            setSelected([]);
-          }}
-          helperText="Descrição ou referência"
-          sx={{ flex: 1, minWidth: 200 }}
-        />
-        <TextField
-          select
-          label="Crédito / débito"
-          value={direction}
-          onChange={(e) => {
-            setDirection(e.target.value);
-            setPage(1);
-            setSelected([]);
-          }}
-          sx={{ minWidth: 180 }}
-        >
-          <MenuItem value="">Todos os movimentos</MenuItem>
-          <MenuItem value="CREDIT">Créditos (receitas)</MenuItem>
-          <MenuItem value="DEBIT">Débitos (despesas)</MenuItem>
-        </TextField>
-        <TextField
-          select
-          label="Itens por página"
-          value={pageSize}
-          onChange={(e) => {
-            setPageSize(Number(e.target.value));
-            setPage(1);
-            setSelected([]);
-          }}
-        >
-          {[20, 50, 100].map((n) => (
-            <MenuItem key={n} value={n}>
-              {n}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Status do movimento"
-          value={filterStatus}
-          onChange={(e) => {
-            setFilterStatus(e.target.value);
-            setPage(1);
-            setSelected([]);
-          }}
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">Todos</MenuItem>
-          {[
-            'PENDING_REVIEW',
-            'CLASSIFIED',
-            'RECONCILED',
-            'REJECTED',
-            'POSSIBLE_DUPLICATE',
-          ].map((s) => (
-            <MenuItem key={s} value={s}>
-              {statusNames[s]}
-            </MenuItem>
-          ))}
-        </TextField>
-      </Stack>
-      <Stack
-        direction="row"
-        gap={1}
-        flexWrap="wrap"
-        alignItems="center"
-        sx={{
-          position: { xs: 'static', md: 'sticky' },
-          top: 64,
-          zIndex: 2,
-          bgcolor: 'background.paper',
-          p: 1.5,
-          borderRadius: 2,
-          boxShadow: 1,
-        }}
-      >
-        <Typography>{selected.length} selecionados</Typography>
-        <Button
-          onClick={() =>
-            setSelected(
-              movements.data?.items
-                .filter((r) => r.status !== 'REJECTED')
-                .map((r) => r.id) ?? [],
-            )
-          }
-        >
-          Selecionar página
+      <Stack direction="row" gap={1}>
+        <Button component={Link} to="?tab=incomes">
+          Ir para Receitas
         </Button>
-        {['CREDIT', 'DEBIT'].map((d) => (
-          <Button
-            key={d}
-            onClick={() =>
-              setSelected(
-                movements.data?.items
-                  .filter((r) => r.direction === d && r.status !== 'REJECTED')
-                  .map((r) => r.id) ?? [],
-              )
-            }
-          >
-            {d === 'CREDIT' ? 'Selecionar créditos' : 'Selecionar débitos'}
-          </Button>
-        ))}
-        <Button onClick={() => setSelected([])}>Limpar</Button>
-        <Button disabled={!selected.length} onClick={() => openClassify()}>
-          Categorizar selecionados
+        <Button component={Link} to="?tab=expenses">
+          Ir para Despesas
         </Button>
       </Stack>
-      {movements.isFetching && <Typography>Carregando movimentos…</Typography>}
-      {quickClassify.error && (
-        <Alert severity="error" onClose={() => quickClassify.reset()}>
-          {quickClassify.error.message}
-        </Alert>
+      {startReview.isPending && (
+        <LinearProgress aria-label="Carregando movimentos" />
       )}
-      <Typography variant="body2" color="text.secondary">
-        Verde: créditos · Vermelho: débitos · Amarelo: pendências e
-        duplicidades. A categoria rápida salva imediatamente; use a
-        classificação detalhada para associar membros ou fornecedores.
-        Duplicidades exigem revisão explícita.
-      </Typography>
-      {movements.data?.items.length === 0 && (
-        <Alert severity="info">Nenhum movimento neste filtro.</Alert>
-      )}
-      {movements.data?.items.map((t) => (
-        <Card
-          key={t.id}
-          sx={{
-            borderLeft: 4,
-            borderColor:
-              t.direction === 'CREDIT' ? 'success.main' : 'error.main',
-          }}
-        >
-          <CardContent>
-            <Stack spacing={1}>
-              <Stack
-                direction="row"
-                justifyContent="space-between"
-                alignItems="flex-start"
-                gap={2}
-              >
-                <Typography
-                  variant="h6"
-                  component="h3"
-                  sx={{ overflowWrap: 'anywhere', minWidth: 0 }}
-                >
-                  {t.description}
-                </Typography>
-                <Chip
-                  label={`${t.direction === 'CREDIT' ? 'Crédito +' : 'Débito −'}${t.amount} ${t.import.account.currency}`}
-                  color={t.direction === 'CREDIT' ? 'success' : 'error'}
-                  sx={{ flexShrink: 0 }}
-                />
-              </Stack>
-              <Chip
-                size="small"
-                label={statusNames[t.status]}
-                color={t.status === 'RECONCILED' ? 'success' : 'default'}
-              />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                Categoria:{' '}
-                {t.status === 'REJECTED'
-                  ? 'Não se aplica (movimento ignorado)'
-                  : (t.category?.name ?? 'Ainda não classificado')}
-              </Typography>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    disabled={t.status === 'REJECTED'}
-                    slotProps={{
-                      input: { 'aria-label': `Selecionar ${t.description}` },
-                    }}
-                    checked={selected.includes(t.id)}
-                    onChange={(_, v) =>
-                      setSelected((s) =>
-                        v ? [...s, t.id] : s.filter((id) => id !== t.id),
-                      )
-                    }
-                  />
-                }
-                label={`${t.date.slice(0, 10)} · ${statusNames[t.status]}`}
-                slotProps={{ typography: { variant: 'body2' } }}
-              />
-              <Stack direction="row" gap={1} flexWrap="wrap">
-                {hasPermission('FINANCE_CATEGORY_READ') &&
-                  !['REJECTED', 'POSSIBLE_DUPLICATE'].includes(t.status) &&
-                  !(
-                    t.memberId && !hasPermission('FINANCE_CONTRIBUTION_WRITE')
-                  ) && (
-                    <TextField
-                      select
-                      size="small"
-                      label={`Categoria rápida — ${t.description}`}
-                      value={t.categoryId ?? ''}
-                      disabled={quickClassify.isPending || classify.isPending}
-                      sx={{ minWidth: 200, maxWidth: '100%' }}
-                      onChange={(e) =>
-                        quickClassify.mutate({
-                          row: t,
-                          category: e.target.value,
-                        })
-                      }
-                    >
-                      <MenuItem value="" disabled>
-                        Escolher categoria
-                      </MenuItem>
-                      {categories.data?.items
-                        .filter(
-                          (c) =>
-                            c.kind ===
-                            (t.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE'),
-                        )
-                        .map((c) => (
-                          <MenuItem key={c.id} value={c.id}>
-                            {c.name}
-                          </MenuItem>
-                        ))}
-                    </TextField>
-                  )}
-                <Button
-                  color={t.direction === 'CREDIT' ? 'success' : 'error'}
-                  disabled={t.status === 'REJECTED' || classify.isPending}
-                  onClick={() =>
-                    openClassify(
-                      t,
-                      t.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE',
-                    )
-                  }
-                >
-                  {t.direction === 'CREDIT'
-                    ? 'Editar receita'
-                    : 'Editar despesa'}
-                </Button>
-                <Button
-                  disabled={t.status === 'RECONCILED' || classify.isPending}
-                  onClick={() => openClassify(t, 'IGNORE')}
-                >
-                  Ignorar movimento
-                </Button>
-              </Stack>
-              {t.costCenterRecord && (
-                <Typography>
-                  Centro de custo: {t.costCenterRecord.name}
-                </Typography>
-              )}
-              {classificationOpen && inlineId === t.id && (
-                <Box aria-label="Classificação do movimento">
-                  {classificationForm}
-                  {classificationActions}
-                </Box>
-              )}
-              <Typography variant="body2">
-                Referência: {t.reference || 'Não informada'} · Linha{' '}
-                {t.rowNumber}
-              </Typography>
-              {t.duplicateReason && (
-                <Alert severity="warning">{t.duplicateReason}</Alert>
-              )}
-              {['PENDING_REVIEW', 'POSSIBLE_DUPLICATE', 'CLASSIFIED'].includes(
-                t.status,
-              ) && (
-                <LinkBankMovement
-                  id={t.id}
-                  direction={t.direction}
-                  accountId={t.import.accountId}
-                  date={t.date}
-                  amount={t.amount}
-                />
-              )}
-              <MovementInvoices
-                canAssociate={t.status !== 'REJECTED'}
-                transactionId={t.id}
-                invoices={t.invoices ?? []}
-                description={t.description}
-                amount={t.amount}
-                currency={t.import.account.currency}
-              />
-              <Box component="details">
-                <Typography
-                  component="summary"
-                  variant="body2"
-                  sx={{ cursor: 'pointer', fontWeight: 600 }}
-                >
-                  Origem e registros financeiros
-                </Typography>
-                <Button
-                  onClick={() => {
-                    setImportId(t.import.id);
-                    setPage(1);
-                    setSelected([]);
-                  }}
-                >
-                  Arquivo original: {t.import.filename}
-                </Button>
-                <Typography variant="caption">
-                  Transação bancária {t.id}
-                </Typography>
-                {t.reconciliations.map((r) => (
-                  <Box
-                    key={r.id}
-                    sx={{
-                      pl: 2,
-                      borderLeft: 2,
-                      borderColor: r.active ? 'success.main' : 'grey.400',
-                    }}
-                  >
-                    <Typography>
-                      ↓ {r.active ? 'Registro vinculado' : 'Vínculo anterior'} ·
-                      Operador {r.reconciledBy}
-                    </Typography>
-                    <Typography>
-                      {r.income ? 'Receita' : 'Despesa'}{' '}
-                      {r.income?.id ?? r.expense?.id} ·{' '}
-                      {r.income?.amount ?? r.expense?.amount} ·{' '}
-                      {r.income?.status ?? r.expense?.status}
-                    </Typography>
-                    {hasPermission('FINANCE_TRANSACTION_READ') && (
-                      <Button
-                        component={Link}
-                        to={`?tab=${r.income ? 'incomes' : 'expenses'}&record=${r.income?.id ?? r.expense?.id}`}
-                      >
-                        Abrir lançamento financeiro
-                      </Button>
-                    )}
-                    {r.income?.contribution && (
-                      <Typography>
-                        ↓ Contribuição {r.income.contribution.type} ·{' '}
-                        {r.income.contribution.id}
-                      </Typography>
-                    )}
-                    {r.income?.contribution && (
-                      <Button
-                        component={Link}
-                        to={`?tab=contributions&record=${r.income.contribution.id}`}
-                      >
-                        Abrir contribuição
-                      </Button>
-                    )}
-                    {r.undoReason && (
-                      <Typography>
-                        Desfeita por {r.undoneBy}: {r.undoReason}
-                      </Typography>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      ))}
-      <Stack direction="row" gap={2}>
-        <Button
-          disabled={page === 1}
-          onClick={() => {
-            setPage((p) => p - 1);
-            setSelected([]);
-          }}
-        >
-          Anterior
-        </Button>
-        <Typography>
-          Página {page} · {movements.data?.total ?? 0} movimentos
-        </Typography>
-        <Button
-          disabled={
-            !movements.data ||
-            page * movements.data.pageSize >= movements.data.total
-          }
-          onClick={() => {
-            setPage((p) => p + 1);
-            setSelected([]);
-          }}
-        >
-          Próxima
-        </Button>
-      </Stack>
       <Dialog
-        open={classificationOpen && !inlineId}
-        onClose={() => setClassificationOpen(false)}
+        open={classificationOpen}
+        onClose={stopReview}
         fullWidth
+        maxWidth="sm"
+        aria-labelledby="movement-review-title"
       >
-        <DialogTitle>
-          Categorizar {classificationTargets.length} movimento(s)
+        <DialogTitle id="movement-review-title">
+          Categorizar movimentação
         </DialogTitle>
-        <DialogContent>{classificationForm}</DialogContent>
-        <DialogActions>{classificationActions}</DialogActions>
+        <DialogContent sx={{ overflowX: 'hidden' }}>
+          <Stack spacing={2}>
+            <Typography aria-live="polite">
+              Movimento {reviewIndex + 1} de {reviewRows.length}
+            </Typography>
+            <LinearProgress
+              variant="determinate"
+              value={
+                reviewRows.length ? (reviewIndex / reviewRows.length) * 100 : 0
+              }
+              aria-label="Progresso da classificação"
+            />
+            <Typography variant="body2" color="text.secondary">
+              Cada etapa é salva. Você pode parar e continuar depois em Receitas
+              ou Despesas.
+            </Typography>
+            {currentMovement && (
+              <Slide
+                key={currentMovement.id}
+                direction={sliding ? 'right' : 'left'}
+                in={!sliding}
+                timeout={reducedMotion ? 0 : 240}
+                onExited={advanceReview}
+                mountOnEnter
+                unmountOnExit
+              >
+                <Box>
+                  <Stack spacing={1} sx={{ mb: 2 }}>
+                    <Chip
+                      label={
+                        currentMovement.direction === 'CREDIT'
+                          ? 'Receita'
+                          : 'Despesa'
+                      }
+                      color={
+                        currentMovement.direction === 'CREDIT'
+                          ? 'success'
+                          : 'error'
+                      }
+                      sx={{ alignSelf: 'flex-start' }}
+                    />
+                    <Typography variant="h5" component="h3">
+                      {currentMovement.description}
+                    </Typography>
+                    <Typography variant="h4">
+                      {currentMovement.direction === 'CREDIT' ? '+' : '−'}
+                      {currentMovement.amount}{' '}
+                      {currentMovement.import.account.currency}
+                    </Typography>
+                    <Typography variant="body2">
+                      {currentMovement.date.slice(0, 10)} · Referência:{' '}
+                      {currentMovement.reference || 'Não informada'}
+                    </Typography>
+                    {currentMovement.duplicateReason && (
+                      <Alert severity="warning">
+                        {currentMovement.duplicateReason}
+                      </Alert>
+                    )}
+                  </Stack>
+                  <Box
+                    component="fieldset"
+                    disabled={classify.isPending || sliding}
+                    sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+                  >
+                    {classificationForm}
+                  </Box>
+                  <MovementInvoices
+                    canAssociate={currentMovement.status !== 'REJECTED'}
+                    transactionId={currentMovement.id}
+                    invoices={currentMovement.invoices ?? []}
+                    description={currentMovement.description}
+                    amount={currentMovement.amount}
+                    currency={currentMovement.import.account.currency}
+                  />
+                  {[
+                    'PENDING_REVIEW',
+                    'POSSIBLE_DUPLICATE',
+                    'CLASSIFIED',
+                  ].includes(currentMovement.status) && (
+                    <LinkBankMovement
+                      onLinked={() => setSliding(true)}
+                      id={currentMovement.id}
+                      direction={currentMovement.direction}
+                      accountId={currentMovement.import.accountId}
+                      date={currentMovement.date}
+                      amount={currentMovement.amount}
+                    />
+                  )}
+                </Box>
+              </Slide>
+            )}
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={classify.isPending || sliding} onClick={stopReview}>
+            Continuar depois
+          </Button>
+          <Button
+            variant="contained"
+            disabled={
+              !currentMovement ||
+              classify.isPending ||
+              sliding ||
+              (classification !== 'IGNORE' && (!categoryId || !costCenterId)) ||
+              (classification !== 'IGNORE' &&
+                currentMovement.status === 'POSSIBLE_DUPLICATE' &&
+                !acceptDuplicate)
+            }
+            onClick={() => classify.mutate()}
+          >
+            {classify.isPending ? 'Salvando…' : 'Próxima'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Stack>
   );

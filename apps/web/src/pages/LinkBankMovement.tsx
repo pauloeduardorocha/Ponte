@@ -20,12 +20,14 @@ export function LinkBankMovement({
   accountId,
   date,
   amount,
+  onLinked,
 }: {
   id: string;
   direction: string;
   accountId?: string;
   date: string;
   amount: string;
+  onLinked?: () => void;
 }) {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -40,6 +42,7 @@ export function LinkBankMovement({
       }),
     onSuccess: () => {
       setOpen(false);
+      onLinked?.();
       void client.invalidateQueries({ queryKey: ['finance'] });
     },
   });
