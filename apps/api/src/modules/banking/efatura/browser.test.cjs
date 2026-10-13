@@ -44,3 +44,45 @@ test('bundled Chromium matches the Puppeteer supported major version', () => {
     manifest.version.split('.')[0],
   );
 });
+
+test('both Vercel configurations include the worker runtime dependency tree', () => {
+  const { readFileSync, existsSync } = require('node:fs');
+  const { resolve, join } = require('node:path');
+  const { createRequire } = require('node:module');
+  const apiRoot = resolve(__dirname, '../../../..');
+  const repoRoot = resolve(apiRoot, '../..');
+  const configurations = [
+    JSON.parse(readFileSync(join(repoRoot, 'vercel.json'))).services.api,
+    JSON.parse(readFileSync(join(apiRoot, 'vercel.json'))),
+  ];
+  const packages = new Set();
+  const visited = new Set();
+  function visit(name, base) {
+    const localRequire = createRequire(join(base, 'package.json'));
+    const directory = localRequire.resolve
+      .paths(name)
+      .map((path) => join(path, name))
+      .find((path) => existsSync(join(path, 'package.json')));
+    assert.ok(directory, `Missing installed dependency: ${name}`);
+    packages.add(name);
+    if (visited.has(directory)) return;
+    visited.add(directory);
+    const manifest = JSON.parse(readFileSync(join(directory, 'package.json')));
+    for (const dependency of Object.keys(manifest.dependencies || {})) {
+      visit(dependency, directory);
+    }
+  }
+  visit('puppeteer-core', apiRoot);
+  visit('@sparticuz/chromium', apiRoot);
+  for (const configuration of configurations) {
+    const include = configuration.functions['src/main.ts'].includeFiles;
+    assert.ok(include.includes('{node_modules,../../node_modules}'));
+    const declaredPackages = include.split('/{')[1].split('}')[0].split(',');
+    for (const name of packages) {
+      assert.ok(
+        declaredPackages.includes(name),
+        `Worker dependency omitted: ${name}`,
+      );
+    }
+  }
+});
