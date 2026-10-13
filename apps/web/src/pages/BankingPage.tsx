@@ -57,6 +57,7 @@ type Movement = {
   amount: string;
   direction: string;
   description: string;
+  customDescription?: string | null;
   reference: string;
   status: string;
   classification?: string | null;
@@ -150,6 +151,7 @@ export function BankingPage({
     [classification, setClassification] = useState('INCOME'),
     [categoryId, setCategoryId] = useState(''),
     [costCenterId, setCostCenterId] = useState(''),
+    [movementDescription, setMovementDescription] = useState(''),
     [memberId, setMemberId] = useState(''),
     [supplierId, setSupplierId] = useState(''),
     [contributionType, setContributionType] = useState(''),
@@ -275,6 +277,7 @@ export function BankingPage({
         body: {
           ids: classificationTargets,
           classification: kind,
+          customDescription: movementDescription.trim() || null,
           ...(kind !== 'IGNORE' ? { costCenterId: costCenterId || null } : {}),
           ...(kind !== 'IGNORE' && categoryId ? { categoryId } : {}),
           ...(kind === 'INCOME' && memberId
@@ -301,6 +304,7 @@ export function BankingPage({
         : '',
     );
     setCostCenterId(row.costCenterId ?? '');
+    setMovementDescription(row.customDescription ?? row.description);
     setMemberId(row.memberId ?? '');
     setSupplierId(row.supplierId ?? '');
     setContributionType(row.contributionType ?? '');
@@ -400,6 +404,15 @@ export function BankingPage({
           </MenuItem>
         ))}
       </TextField>
+      <TextField
+        label="Descrição"
+        multiline
+        minRows={2}
+        value={movementDescription}
+        onChange={(e) => setMovementDescription(e.target.value)}
+        slotProps={{ htmlInput: { maxLength: 2000 } }}
+        helperText="Descrição usada na receita ou despesa. A descrição original do extrato é preservada."
+      />
       {classification !== 'IGNORE' && (
         <TextField
           select

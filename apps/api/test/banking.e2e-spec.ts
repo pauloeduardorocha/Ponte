@@ -196,6 +196,20 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       costCenterId: center.id,
     }).expect(201);
     expect(
+      await db.bankTransaction.findUniqueOrThrow({ where: { id: credit.id } }),
+    ).toMatchObject({ costCenterId: center.id });
+    expect(
+      await db.income.findFirstOrThrow({
+        where: { bankTransactionId: credit.id },
+      }),
+    ).toMatchObject({ costCenterId: center.id });
+    await expect(
+      db.bankTransaction.update({
+        where: { id: credit.id },
+        data: { description: 'Alteração do extrato original' },
+      }),
+    ).rejects.toThrow();
+    expect(
       (await get('/banking/pending-classification').expect(200)).body.total,
     ).toBe(1);
     await post('/banking/classify', {

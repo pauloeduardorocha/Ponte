@@ -669,6 +669,7 @@ model BankTransaction {
   reference           String                @db.VarChar(200)
   direction           BankDirection         @default(CREDIT)
   description         String                @default("") @db.VarChar(2000)
+  customDescription   String?               @db.VarChar(2000)
   bankIdentifier      String?               @db.VarChar(200)
   fingerprint         String?               @db.VarChar(64)
   rowNumber           Int                   @default(0)

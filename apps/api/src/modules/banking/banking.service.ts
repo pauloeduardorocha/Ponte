@@ -574,7 +574,7 @@ export class BankingService {
       accountId,
       categoryId: row.categoryId!,
       costCenterId: row.costCenterId,
-      description: row.description,
+      description: row.customDescription ?? row.description,
       status: 'COMPLETED' as const,
       bankTransactionId: row.id,
     };
@@ -719,6 +719,12 @@ export class BankingService {
             OR: [
               {
                 description: {
+                  contains: q.search,
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                customDescription: {
                   contains: q.search,
                   mode: 'insensitive' as const,
                 },
@@ -967,6 +973,10 @@ export class BankingService {
         const updated = await tx.bankTransaction.update({
           where: { id: row.id },
           data: {
+            customDescription:
+              dto.customDescription === undefined
+                ? row.customDescription
+                : dto.customDescription?.trim() || null,
             classification: dto.classification,
             status:
               row.status === 'RECONCILED'
@@ -1013,6 +1023,7 @@ export class BankingService {
             await tx.income.update({
               where: { id: income.id },
               data: {
+                description: updated.customDescription ?? row.description,
                 categoryId: updated.categoryId!,
                 costCenterId: updated.costCenterId,
                 costCenter: null,
@@ -1036,6 +1047,7 @@ export class BankingService {
             await tx.expense.updateMany({
               where: { bankTransactionId: row.id, status: 'COMPLETED' },
               data: {
+                description: updated.customDescription ?? row.description,
                 categoryId: updated.categoryId!,
                 costCenterId: updated.costCenterId,
                 costCenter: null,
@@ -1047,7 +1059,12 @@ export class BankingService {
           await this.registerMovement(tx, updated, row.import.accountId, user);
         }
         await this.audit(tx, user, 'CLASSIFY', row.id, {
-          before: { status: row.status, memberId: row.memberId },
+          before: {
+            status: row.status,
+            memberId: row.memberId,
+            customDescription: row.customDescription,
+          },
+          customDescription: updated.customDescription,
           classification: dto.classification,
           memberId: dto.memberId ?? null,
           acceptDuplicate: dto.acceptDuplicate ?? false,
@@ -1260,7 +1277,7 @@ export class BankingService {
                 accountId: row.import.accountId,
                 categoryId: row.categoryId!,
                 costCenterId: row.costCenterId,
-                description: row.description,
+                description: row.customDescription ?? row.description,
                 origin: 'BANK_IMPORT',
                 reference: row.reference,
                 status: 'COMPLETED',
@@ -1317,7 +1334,7 @@ export class BankingService {
                 categoryId: row.categoryId!,
                 costCenterId: row.costCenterId,
                 accountId: row.import.accountId,
-                description: row.description,
+                description: row.customDescription ?? row.description,
                 status: 'COMPLETED',
                 supplierId: row.supplierId,
                 bankTransactionId: row.id,

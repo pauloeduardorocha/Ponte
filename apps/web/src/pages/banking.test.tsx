@@ -132,12 +132,13 @@ describe('Bank statement review', () => {
       { target: { value: 'center-1' } },
     );
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
-    await screen.findByText('Segunda receita');
+    await screen.findByRole('heading', { name: 'Segunda receita' });
     expect(
       requests.find((r) => r.path === '/finance/banking/classify')?.body,
     ).toEqual({
       ids: ['transaction-1'],
       classification: 'INCOME',
+      customDescription: row.description,
       categoryId: 'category-1',
       costCenterId: 'center-1',
       acceptDuplicate: false,
@@ -223,12 +224,13 @@ describe('Bank statement review', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Descartar movimento' }),
     );
-    await screen.findByText('Próximo movimento');
+    await screen.findByRole('heading', { name: 'Próximo movimento' });
     expect(
       requests.find((r) => r.path === '/finance/banking/classify')?.body,
     ).toEqual({
       ids: ['transaction-1'],
       classification: 'IGNORE',
+      customDescription: row.description,
       acceptDuplicate: false,
     });
     expect(
@@ -306,8 +308,20 @@ describe('Bank statement review', () => {
       screen.getByRole('combobox', { name: /Centro de custo/ }),
       { target: { value: 'center-1' } },
     );
+    expect(screen.getByRole('textbox', { name: 'Descrição' })).toHaveValue(
+      row.description,
+    );
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), {
+      target: { value: '  Oferta da comunidade  ' },
+    });
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
-    await screen.findByText('Outro extrato');
+    await screen.findByRole('heading', { name: 'Outro extrato' });
+    expect(screen.getByRole('textbox', { name: 'Descrição' })).toHaveValue(
+      'Outro extrato',
+    );
+    expect(
+      requests.find((r) => r.path === '/finance/banking/classify')?.body,
+    ).toMatchObject({ customDescription: 'Oferta da comunidade' });
     await screen.findByText('1 movimento aguarda categorização');
     fireEvent.click(screen.getByRole('button', { name: 'Continuar depois' }));
     await screen.findByRole('button', { name: 'Categorizar movimentos' });
