@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import {
   Alert,
@@ -219,58 +220,77 @@ export function MovementAttachments({
           </Button>
         )}
       </Stack>
-      {attachments.data?.map((attachment) => (
-        <Stack
-          key={attachment.id}
-          direction={{ xs: 'column', sm: 'row' }}
-          spacing={1}
-        >
-          <Button
-            disabled={busy}
-            sx={{ justifyContent: 'flex-start', overflowWrap: 'anywhere' }}
-            onClick={() => {
-              setError('');
-              download.mutate(attachment);
-            }}
+      <RecordTable primaryLabel="Arquivo" label={'Anexos'}>
+        {attachments.data?.map((attachment) => (
+          <RecordRow
+            key={attachment.id}
+            primary={
+              <>
+                <Typography>{attachment.filename}</Typography>
+              </>
+            }
+            actions={
+              <>
+                <Button
+                  disabled={busy}
+                  sx={{
+                    justifyContent: 'flex-start',
+                    overflowWrap: 'anywhere',
+                  }}
+                  onClick={() => {
+                    setError('');
+                    download.mutate(attachment);
+                  }}
+                >
+                  {download.isPending &&
+                    download.variables?.id === attachment.id && (
+                      <CircularProgress
+                        size={16}
+                        aria-label="Baixando anexo"
+                        sx={{ mr: 1 }}
+                      />
+                    )}
+                  {attachment.filename}
+                </Button>
+                <Button
+                  disabled={busy || !canWrite}
+                  aria-label={`Renomear ${attachment.filename}`}
+                  onClick={() => {
+                    setError('');
+                    setEditing(attachment);
+                    setName(
+                      attachment.filename.slice(
+                        0,
+                        attachment.filename.lastIndexOf('.'),
+                      ),
+                    );
+                  }}
+                >
+                  Renomear
+                </Button>
+                <Button
+                  disabled={busy || !canWrite}
+                  color="error"
+                  aria-label={`Excluir ${attachment.filename}`}
+                  onClick={() => {
+                    setError('');
+                    setDeleting(attachment);
+                  }}
+                >
+                  Excluir
+                </Button>
+              </>
+            }
           >
-            {download.isPending && download.variables?.id === attachment.id && (
-              <CircularProgress
-                size={16}
-                aria-label="Baixando anexo"
-                sx={{ mr: 1 }}
-              />
-            )}
-            {attachment.filename}
-          </Button>
-          <Button
-            disabled={busy || !canWrite}
-            aria-label={`Renomear ${attachment.filename}`}
-            onClick={() => {
-              setError('');
-              setEditing(attachment);
-              setName(
-                attachment.filename.slice(
-                  0,
-                  attachment.filename.lastIndexOf('.'),
-                ),
-              );
-            }}
-          >
-            Renomear
-          </Button>
-          <Button
-            disabled={busy || !canWrite}
-            color="error"
-            aria-label={`Excluir ${attachment.filename}`}
-            onClick={() => {
-              setError('');
-              setDeleting(attachment);
-            }}
-          >
-            Excluir
-          </Button>
-        </Stack>
-      ))}
+            <Typography>
+              {new Intl.NumberFormat('pt-PT', {
+                maximumFractionDigits: 1,
+              }).format(attachment.size / 1024)}{' '}
+              KB
+            </Typography>
+          </RecordRow>
+        ))}
+      </RecordTable>
       <Dialog
         open={!!editing}
         onClose={() => {

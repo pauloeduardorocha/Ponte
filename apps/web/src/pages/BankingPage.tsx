@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -836,20 +837,32 @@ export function BankingPage({
             {imports.data?.items.length === 0 && (
               <Typography>Nenhum arquivo importado.</Typography>
             )}
-            {imports.data?.items.map((i) => (
-              <Button
-                key={i.id}
-                onClick={() => {
-                  setImportId(i.id);
-
-                  setHistoryOpen(false);
-                }}
-              >
-                {i.filename} · {i.account?.name && `${i.account.name} · `}
-                {i.createdAt && `${i.createdAt.slice(0, 10)} · `}
-                {statusNames[i.status]} · {i._count.transactions} movimentos
-              </Button>
-            ))}
+            <RecordTable
+              label="Histórico de importações"
+              primaryLabel="Arquivo"
+            >
+              {imports.data?.items.map((i) => (
+                <RecordRow
+                  key={i.id}
+                  primary={<Typography>{i.filename}</Typography>}
+                  actions={
+                    <Button
+                      onClick={() => {
+                        setImportId(i.id);
+                        setHistoryOpen(false);
+                      }}
+                    >
+                      Abrir importação
+                    </Button>
+                  }
+                >
+                  <Typography>
+                    {i.account?.name} · {i.createdAt?.slice(0, 10)} ·{' '}
+                    {statusNames[i.status]} · {i._count.transactions} movimentos
+                  </Typography>
+                </RecordRow>
+              ))}
+            </RecordTable>
           </Stack>
         </DialogContent>
         <DialogActions>

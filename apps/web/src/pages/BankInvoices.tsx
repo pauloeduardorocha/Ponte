@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -136,32 +137,45 @@ export function MovementInvoices({
   const rows = debounced ? (list.data?.items ?? []) : (suggestions.data ?? []);
   return (
     <Box>
-      {invoices.map((invoice) => (
-        <Box
-          key={invoice.id}
-          sx={{ p: 1, borderLeft: 3, borderColor: 'info.main', mb: 1 }}
-        >
-          <Chip color="info" size="small" label="Fatura associada" />
-          <Typography>
-            {invoice.issuerName} · {invoice.number} · {invoice.amount}{' '}
-            {invoice.currency}
-          </Typography>
-          <Typography variant="caption">
-            NIF {invoice.issuerTaxId} · {invoice.date.slice(0, 10)} · Associada
-            por {invoice.associatedBy}
-          </Typography>
-          <InvoiceLink invoice={invoice} />
-          {editable && (
-            <Button
-              color="warning"
-              disabled={change.isPending}
-              onClick={() => change.mutate({ id: invoice.id, remove: true })}
-            >
-              Remover associação
-            </Button>
-          )}
-        </Box>
-      ))}
+      <RecordTable>
+        {invoices.map((invoice) => (
+          <RecordRow
+            key={invoice.id}
+            primary={
+              <>
+                <Typography fontWeight={600}>
+                  {invoice.issuerName} · {invoice.number}
+                </Typography>
+              </>
+            }
+            actions={
+              <>
+                {editable && (
+                  <Button
+                    color="warning"
+                    disabled={change.isPending}
+                    onClick={() =>
+                      change.mutate({ id: invoice.id, remove: true })
+                    }
+                  >
+                    Remover associação
+                  </Button>
+                )}
+                <InvoiceLink invoice={invoice} />
+              </>
+            }
+          >
+            <Chip color="info" size="small" label="Fatura associada" />
+            <Typography>
+              {invoice.amount} {invoice.currency}
+            </Typography>
+            <Typography variant="caption">
+              NIF {invoice.issuerTaxId} · {invoice.date.slice(0, 10)} ·
+              Associada por {invoice.associatedBy}
+            </Typography>
+          </RecordRow>
+        ))}
+      </RecordTable>
       {editable && (
         <Button onClick={() => setOpen(true)}>Associar fatura</Button>
       )}
@@ -207,44 +221,53 @@ export function MovementInvoices({
                 documento.
               </Typography>
             )}
-            {rows.map((invoice) => (
-              <Box
-                key={invoice.id}
-                sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}
-              >
-                <Typography fontWeight={600}>
-                  {invoice.issuerName} · {invoice.number}
-                </Typography>
-                <Typography>
-                  {invoice.date.slice(0, 10)} · {invoice.amount}{' '}
-                  {invoice.currency} · NIF {invoice.issuerTaxId}
-                </Typography>
-                {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
-                  invoice.currency !== currency) && (
-                  <Alert severity="warning">
-                    Valor ou moeda diferente do movimento. Confira se faz parte
-                    de um pagamento agrupado.
-                  </Alert>
-                )}
-                {invoice.score && (
-                  <Chip
-                    color={invoice.score >= 85 ? 'success' : 'warning'}
-                    label={`Compatibilidade ${invoice.score}% · confirmar manualmente`}
-                  />
-                )}
-                <Typography variant="caption">
-                  {invoice.reasons?.join(' · ')}
-                </Typography>
-                <InvoiceLink invoice={invoice} />
-                <Button
-                  variant="contained"
-                  disabled={change.isPending}
-                  onClick={() => change.mutate({ id: invoice.id })}
+            <RecordTable>
+              {rows.map((invoice) => (
+                <RecordRow
+                  key={invoice.id}
+                  primary={
+                    <>
+                      <Typography fontWeight={600}>
+                        {invoice.issuerName} · {invoice.number}
+                      </Typography>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <Button
+                        variant="contained"
+                        disabled={change.isPending}
+                        onClick={() => change.mutate({ id: invoice.id })}
+                      >
+                        Associar {invoice.number}
+                      </Button>
+                      <InvoiceLink invoice={invoice} />
+                    </>
+                  }
                 >
-                  Associar {invoice.number}
-                </Button>
-              </Box>
-            ))}
+                  <Typography>
+                    {invoice.date.slice(0, 10)} · {invoice.amount}{' '}
+                    {invoice.currency} · NIF {invoice.issuerTaxId}
+                  </Typography>
+                  {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
+                    invoice.currency !== currency) && (
+                    <Alert severity="warning">
+                      Valor ou moeda diferente do movimento. Confira se faz
+                      parte de um pagamento agrupado.
+                    </Alert>
+                  )}
+                  {invoice.score && (
+                    <Chip
+                      color={invoice.score >= 85 ? 'success' : 'warning'}
+                      label={`Compatibilidade ${invoice.score}% · confirmar manualmente`}
+                    />
+                  )}
+                  <Typography variant="caption">
+                    {invoice.reasons?.join(' · ')}
+                  </Typography>
+                </RecordRow>
+              ))}
+            </RecordTable>
             {debounced && (
               <Stack direction="row" gap={1}>
                 <Button disabled={page === 1} onClick={() => setPage(page - 1)}>

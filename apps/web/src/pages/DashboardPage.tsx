@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -185,26 +186,30 @@ export function DashboardPage() {
                     </Button>
                   </Typography>
                 )}
-                {d.upcomingEvents.map((e) => (
-                  <Stack
-                    key={e.id}
-                    direction="row"
-                    justifyContent="space-between"
-                    gap={2}
-                    sx={{ py: 1 }}
-                  >
-                    <Box>
-                      <Typography fontWeight={600}>{e.name}</Typography>
+                <RecordTable>
+                  {d.upcomingEvents.map((e) => (
+                    <RecordRow
+                      key={e.id}
+                      primary={
+                        <>
+                          <Typography fontWeight={600}>{e.name}</Typography>
+                        </>
+                      }
+                      actions={
+                        <>
+                          <Button component={Link} to="/events">
+                            Ver agenda
+                          </Button>
+                        </>
+                      }
+                    >
                       <Typography variant="body2" color="text.secondary">
                         {new Date(e.startsAt).toLocaleString('pt-PT')} ·{' '}
                         {e.location}
                       </Typography>
-                    </Box>
-                    <Button component={Link} to="/events">
-                      Ver agenda
-                    </Button>
-                  </Stack>
-                ))}
+                    </RecordRow>
+                  ))}
+                </RecordTable>
               </CardContent>
             </Card>
           )}

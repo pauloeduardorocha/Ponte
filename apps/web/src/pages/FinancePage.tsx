@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useDebouncedValue } from '../lib/use-debounced-value';
 import { FinancialDashboardPanel } from './FinancialDashboardPanel';
@@ -12,8 +13,6 @@ import {
   Alert,
   Box,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -505,133 +504,61 @@ export function FinancePage() {
           {data.data?.items.length === 0 && (
             <Alert severity="info">Nenhum registro.</Alert>
           )}
-          {data.data?.items.map((item) => (
-            <Card
-              key={item.id}
-              sx={{
-                borderLeft: 4,
-                borderColor:
-                  route === 'incomes'
-                    ? 'success.main'
-                    : route === 'expenses'
-                      ? 'error.main'
-                      : 'primary.main',
-              }}
-            >
-              <CardContent>
-                <Stack spacing={1}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="flex-start"
-                    gap={2}
-                  >
+          <RecordTable
+            primaryLabel="Registo"
+            label={current.label}
+            summaryLabel={
+              ['incomes', 'expenses', 'contributions'].includes(route)
+                ? 'Valor'
+                : undefined
+            }
+          >
+            {data.data?.items.map((item) => (
+              <RecordRow
+                key={item.id}
+                primary={
+                  <>
                     <Typography fontWeight={600}>
                       {item.name ??
                         item.description ??
                         item.member?.name ??
                         item.type}
                     </Typography>
-                    {item.amount && (
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          whiteSpace: 'nowrap',
-                          fontVariantNumeric: 'tabular-nums',
-                        }}
-                        color={
-                          route === 'incomes' ? 'success.main' : 'error.main'
-                        }
-                      >
-                        {item.amount} {item.account?.currency ?? item.currency}
-                      </Typography>
-                    )}
-                  </Stack>
-                  {item.costCenterRecord && (
-                    <Typography>
-                      Centro de custo: {item.costCenterRecord.name}
-                    </Typography>
-                  )}
-                  {item.category && (
-                    <Typography variant="body2">
-                      Categoria: {item.category.name}
-                    </Typography>
-                  )}
-                  <Typography>
-                    {item.currency} {item.date?.slice(0, 10)}{' '}
-                    {item.status && <StatusChip status={item.status} />}{' '}
-                    {item.kind && labels[item.kind]}
-                  </Typography>
-                  {item.parentId && (
-                    <Typography>
-                      Categoria pai: {item.parent?.name ?? item.parentId}
-                    </Typography>
-                  )}
-                  {route === 'contributions' && (
-                    <Typography>
-                      {labels[item.type!]} · Receita {item.income?.id} ·{' '}
-                      {item.income?.amount} · Origem{' '}
-                      {String(item.income?.origin ?? '')}{' '}
-                      {item.income?.bankTransaction?.import.filename}
-                    </Typography>
-                  )}
-                  {route === 'accounts' && (
-                    <Typography variant="body2">
-                      Banco: {String(item.bank ?? '')} · Conta:{' '}
-                      {String(item.account ?? '—')} · Agência:{' '}
-                      {String(item.branch ?? '—')} · IBAN:{' '}
-                      {String(item.iban ?? '—')} · Saldo inicial:{' '}
-                      {String(item.openingBalance ?? '0')} {item.currency}
-                    </Typography>
-                  )}
-                  {route === 'suppliers' && (
-                    <Typography variant="body2">
-                      {String(item.email ?? '')} {String(item.phone ?? '')}{' '}
-                      {String(item.taxId ?? '')}
-                    </Typography>
-                  )}
-                  {route === 'expenses' && (
-                    <Typography variant="body2">
-                      Vencimento: {String(item.dueDate ?? '').slice(0, 10)} ·
-                      Pagamento:{' '}
-                      {item.paidAt
-                        ? String(item.paidAt).slice(0, 10)
-                        : 'Pendente'}
-                    </Typography>
-                  )}
-                  <Typography variant="caption">ID: {item.id}</Typography>
-                  {typeof item.income?.bankTransactionId === 'string' &&
-                    hasPermission('FINANCE_BANK_IMPORT') &&
-                    hasPermission('FINANCE_CONTRIBUTION_READ') && (
-                      <Button
-                        component={Link}
-                        to={`?tab=banking&transactionId=${item.income.bankTransactionId}`}
-                      >
-                        Ver origem da contribuição
-                      </Button>
-                    )}
-                  {typeof item.bankTransactionId === 'string' &&
-                    hasPermission('FINANCE_BANK_IMPORT') &&
-                    hasPermission('FINANCE_CONTRIBUTION_READ') && (
-                      <Button
-                        component={Link}
-                        to={`?tab=banking&transactionId=${item.bankTransactionId}`}
-                      >
-                        Ver origem bancária
-                      </Button>
-                    )}
-                  {typeof item.bankTransactionId === 'string' &&
-                    hasPermission('FINANCE_BANK_IMPORT') &&
-                    hasPermission('FINANCE_CONTRIBUTION_READ') && (
-                      <Button
-                        onClick={() =>
-                          setFileMovement(item.bankTransactionId as string)
-                        }
-                      >
-                        Anexos bancários
-                      </Button>
-                    )}
-                  <Stack direction="row" gap={1}>
+                  </>
+                }
+                actions={
+                  <>
+                    {typeof item.income?.bankTransactionId === 'string' &&
+                      hasPermission('FINANCE_BANK_IMPORT') &&
+                      hasPermission('FINANCE_CONTRIBUTION_READ') && (
+                        <Button
+                          component={Link}
+                          to={`?tab=banking&transactionId=${item.income.bankTransactionId}`}
+                        >
+                          Ver origem da contribuição
+                        </Button>
+                      )}
+                    {typeof item.bankTransactionId === 'string' &&
+                      hasPermission('FINANCE_BANK_IMPORT') &&
+                      hasPermission('FINANCE_CONTRIBUTION_READ') && (
+                        <Button
+                          component={Link}
+                          to={`?tab=banking&transactionId=${item.bankTransactionId}`}
+                        >
+                          Ver origem bancária
+                        </Button>
+                      )}
+                    {typeof item.bankTransactionId === 'string' &&
+                      hasPermission('FINANCE_BANK_IMPORT') &&
+                      hasPermission('FINANCE_CONTRIBUTION_READ') && (
+                        <Button
+                          onClick={() =>
+                            setFileMovement(item.bankTransactionId as string)
+                          }
+                        >
+                          Anexos bancários
+                        </Button>
+                      )}
                     {route === 'accounts' &&
                       hasPermission('FINANCE_ACCOUNT_WRITE') && (
                         <Button
@@ -658,11 +585,86 @@ export function FinancePage() {
                           Documentos
                         </Button>
                       )}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
+                  </>
+                }
+                summary={
+                  ['incomes', 'expenses', 'contributions'].includes(route) ? (
+                    <>
+                      {item.amount && (
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            whiteSpace: 'nowrap',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                          color={
+                            route === 'incomes' ? 'success.main' : 'error.main'
+                          }
+                        >
+                          {item.amount}{' '}
+                          {item.account?.currency ?? item.currency}
+                        </Typography>
+                      )}
+                    </>
+                  ) : undefined
+                }
+              >
+                {item.costCenterRecord && (
+                  <Typography>
+                    Centro de custo: {item.costCenterRecord.name}
+                  </Typography>
+                )}
+                {item.category && (
+                  <Typography variant="body2">
+                    Categoria: {item.category.name}
+                  </Typography>
+                )}
+                <Typography>
+                  {item.currency} {item.date?.slice(0, 10)}{' '}
+                  {item.status && <StatusChip status={item.status} />}{' '}
+                  {item.kind && labels[item.kind]}
+                </Typography>
+                {item.parentId && (
+                  <Typography>
+                    Categoria pai: {item.parent?.name ?? item.parentId}
+                  </Typography>
+                )}
+                {route === 'contributions' && (
+                  <Typography>
+                    {labels[item.type!]} · Receita {item.income?.id} ·{' '}
+                    {item.income?.amount} · Origem{' '}
+                    {String(item.income?.origin ?? '')}{' '}
+                    {item.income?.bankTransaction?.import.filename}
+                  </Typography>
+                )}
+                {route === 'accounts' && (
+                  <Typography variant="body2">
+                    Banco: {String(item.bank ?? '')} · Conta:{' '}
+                    {String(item.account ?? '—')} · Agência:{' '}
+                    {String(item.branch ?? '—')} · IBAN:{' '}
+                    {String(item.iban ?? '—')} · Saldo inicial:{' '}
+                    {String(item.openingBalance ?? '0')} {item.currency}
+                  </Typography>
+                )}
+                {route === 'suppliers' && (
+                  <Typography variant="body2">
+                    {String(item.email ?? '')} {String(item.phone ?? '')}{' '}
+                    {String(item.taxId ?? '')}
+                  </Typography>
+                )}
+                {route === 'expenses' && (
+                  <Typography variant="body2">
+                    Vencimento: {String(item.dueDate ?? '').slice(0, 10)} ·
+                    Pagamento:{' '}
+                    {item.paidAt
+                      ? String(item.paidAt).slice(0, 10)
+                      : 'Pendente'}
+                  </Typography>
+                )}
+                <Typography variant="caption">ID: {item.id}</Typography>
+              </RecordRow>
+            ))}
+          </RecordTable>
           <Stack direction="row" gap={2}>
             <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
               Anterior

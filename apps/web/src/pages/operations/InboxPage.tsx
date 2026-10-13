@@ -1,10 +1,9 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   Skeleton,
   Stack,
   TablePagination,
@@ -60,23 +59,40 @@ export function InboxPage() {
       {data.data?.items.length === 0 && (
         <Alert severity="info">Você ainda não tem mensagens internas.</Alert>
       )}
-      {data.data?.items.map((m) => (
-        <Card key={m.id} variant="outlined">
-          <CardContent>
-            <Typography variant="h6">
-              {m.subject ?? 'Mensagem da comunidade'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {new Date(m.sentAt).toLocaleString('pt-PT')}
-            </Typography>
+      <RecordTable
+        hasActions={false}
+        primaryLabel="Assunto"
+        label={'Minhas notificações'}
+        summaryLabel="Enviado em"
+      >
+        {data.data?.items.map((m) => (
+          <RecordRow
+            key={m.id}
+            primary={
+              <>
+                <Typography variant="h6">
+                  {m.subject ?? 'Mensagem da comunidade'}
+                </Typography>
+              </>
+            }
+            hasActions={false}
+            actions={<></>}
+            summary={
+              <>
+                <Typography variant="caption" color="text.secondary">
+                  {new Date(m.sentAt).toLocaleString('pt-PT')}
+                </Typography>
+              </>
+            }
+          >
             <Typography
               sx={{ mt: 1, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
             >
               {m.content}
             </Typography>
-          </CardContent>
-        </Card>
-      ))}
+          </RecordRow>
+        ))}
+      </RecordTable>
       {data.data && (
         <TablePagination
           component="div"

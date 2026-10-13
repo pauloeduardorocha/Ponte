@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { PERMISSIONS } from '@church/shared';
 import {
@@ -107,7 +107,16 @@ describe('Bank statement review', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Histórico de importações' }),
     );
-    await screen.findByRole('button', { name: /millennium.xlsx · Importado/ });
+    const importRow = await screen.findByRole('row', {
+      name: /millennium.xlsx/,
+    });
+    expect(within(importRow).getByText(/Importado/)).toBeVisible();
+    const cells = within(importRow).getAllByRole('cell');
+    expect(
+      within(cells[cells.length - 1]).getByRole('button', {
+        name: 'Abrir importação',
+      }),
+    ).toBeVisible();
   });
   it('saves category and cost center per movement, advances, and completes the queue', async () => {
     const requests = mockApi({

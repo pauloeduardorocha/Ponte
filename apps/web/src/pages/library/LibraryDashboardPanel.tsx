@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useAuth } from '../../auth/auth-context';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -104,27 +105,32 @@ export function LibraryDashboardPanel() {
                 Nenhum empréstimo registrado.
               </Typography>
             )}
-            {d.mostBorrowed.map((book) => (
-              <Stack
-                key={book.bookId}
-                direction="row"
-                justifyContent="space-between"
-                gap={1}
-                sx={{ my: 1 }}
-              >
-                <Typography>
-                  {book.title} — {book.count}
-                </Typography>
-                {hasPermission('LIBRARY_BOOK_READ') && (
-                  <Button
-                    component={Link}
-                    to={`/library?tab=catalog&search=${encodeURIComponent(book.title)}`}
-                  >
-                    Ver livro
-                  </Button>
-                )}
-              </Stack>
-            ))}
+            <RecordTable primaryLabel="Livro" label={'Mais emprestados'}>
+              {d.mostBorrowed.map((book) => (
+                <RecordRow
+                  key={book.bookId}
+                  primary={
+                    <>
+                      <Typography>{book.title}</Typography>
+                    </>
+                  }
+                  actions={
+                    <>
+                      {hasPermission('LIBRARY_BOOK_READ') && (
+                        <Button
+                          component={Link}
+                          to={`/library?tab=catalog&search=${encodeURIComponent(book.title)}`}
+                        >
+                          Ver livro
+                        </Button>
+                      )}
+                    </>
+                  }
+                >
+                  <Typography>{book.count} empréstimos</Typography>
+                </RecordRow>
+              ))}
+            </RecordTable>
           </CardContent>
         </Card>
       </Box>

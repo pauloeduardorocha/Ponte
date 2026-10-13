@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -308,38 +309,39 @@ export function FinancialDashboardPanel() {
                 Nenhum lançamento neste período.
               </Typography>
             )}
-            {data.data.latestTransactions.map((t) => (
-              <Stack
-                key={t.id}
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                gap={1}
-                sx={{ py: 1, borderBottom: 1, borderColor: 'divider' }}
-              >
-                <Box>
-                  <Typography>{t.description}</Typography>
+            <RecordTable>
+              {data.data.latestTransactions.map((t) => (
+                <RecordRow
+                  key={t.id}
+                  primary={
+                    <>
+                      <Typography>{t.description}</Typography>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <Button
+                        component={Link}
+                        to={`/finance?tab=${t.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${t.id}`}
+                      >
+                        Abrir
+                      </Button>
+                    </>
+                  }
+                >
                   <Typography variant="caption" color="text.secondary">
                     {t.date.slice(0, 10)} ·{' '}
                     {t.kind === 'INCOME' ? 'Receita' : 'Despesa'}
                   </Typography>
-                </Box>
-                <Stack direction="row" alignItems="center" gap={1}>
                   <Typography
                     fontWeight={700}
                     color={t.kind === 'INCOME' ? 'success.main' : 'error.main'}
                   >
                     {t.currency ? money(t.amount, t.currency) : t.amount}
                   </Typography>
-                  <Button
-                    component={Link}
-                    to={`/finance?tab=${t.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${t.id}`}
-                  >
-                    Abrir
-                  </Button>
-                </Stack>
-              </Stack>
-            ))}
+                </RecordRow>
+              ))}
+            </RecordTable>
           </CardContent>
         </Card>
       )}

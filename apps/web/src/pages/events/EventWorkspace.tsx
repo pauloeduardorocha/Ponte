@@ -1,10 +1,9 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   MenuItem,
   Stack,
   TextField,
@@ -410,122 +409,129 @@ export function EventWorkspace() {
             section !== 'reports' &&
             rows.length === 0 &&
             !data.isPending && <Typography>Sem registos.</Typography>}
-          {rows.map((row) => (
-            <Card key={row.id}>
-              <CardContent>
-                <Stack spacing={1}>
-                  <Typography>
-                    {String(
-                      row.name ??
-                        row.code ??
-                        (row.member as { name?: string } | undefined)?.name ??
-                        (row.visitor as { name?: string } | undefined)?.name ??
-                        row.id,
-                    )}
-                  </Typography>
-                  <Typography variant="body2">
-                    {Object.entries(row)
-                      .filter(
-                        ([key, v]) =>
-                          !['id', 'qrToken', 'member', 'visitor'].includes(
-                            key,
-                          ) &&
-                          v !== null &&
-                          typeof v !== 'object',
-                      )
-                      .map(([key, v]) => `${key}: ${String(v)}`)
-                      .join(' · ')}
-                  </Typography>
-                  {row.qrToken != null && hasPermission('EVENT_CHECKIN') && (
-                    <RegistrationQr token={String(row.qrToken)} />
-                  )}
-                  {section === 'registrations' &&
-                    hasPermission('EVENT_REGISTRATION_APPROVE') &&
-                    row.status === 'REGISTERED' && (
+          <RecordTable>
+            {rows.map((row) => (
+              <RecordRow
+                key={row.id}
+                primary={
+                  <>
+                    <Typography>
+                      {String(
+                        row.name ??
+                          row.code ??
+                          (row.member as { name?: string } | undefined)?.name ??
+                          (row.visitor as { name?: string } | undefined)
+                            ?.name ??
+                          row.id,
+                      )}
+                    </Typography>
+                  </>
+                }
+                actions={
+                  <>
+                    {section === 'registrations' &&
+                      hasPermission('EVENT_REGISTRATION_APPROVE') &&
+                      row.status === 'REGISTERED' && (
+                        <Button
+                          onClick={() =>
+                            action.mutate(
+                              `/events/${id}/registrations/${row.id}/approve`,
+                            )
+                          }
+                        >
+                          Aprovar inscrição
+                        </Button>
+                      )}
+                    {section === 'registrations' &&
+                      hasPermission('EVENT_REGISTRATION_MANAGE') && (
+                        <Button
+                          onClick={() =>
+                            action.mutate(
+                              `/events/${id}/registrations/${row.id}/cancel`,
+                            )
+                          }
+                        >
+                          Cancelar inscrição
+                        </Button>
+                      )}
+                    {section === 'tickets' && (
                       <Button
                         onClick={() =>
-                          action.mutate(
-                            `/events/${id}/registrations/${row.id}/approve`,
-                          )
+                          open('tickets', `tickets/${row.id}`, row, 'PATCH')
                         }
                       >
-                        Aprovar inscrição
+                        Editar lote e preço
                       </Button>
                     )}
-                  {section === 'registrations' &&
-                    hasPermission('EVENT_REGISTRATION_MANAGE') && (
-                      <Button
-                        onClick={() =>
-                          action.mutate(
-                            `/events/${id}/registrations/${row.id}/cancel`,
-                          )
-                        }
-                      >
-                        Cancelar inscrição
-                      </Button>
-                    )}
-                  {section === 'tickets' && (
-                    <Button
-                      onClick={() =>
-                        open('tickets', `tickets/${row.id}`, row, 'PATCH')
-                      }
-                    >
-                      Editar lote e preço
-                    </Button>
-                  )}
-                  {section === 'refunds' &&
-                    row.status === 'REQUESTED' &&
-                    hasPermission('EVENT_REFUND_APPROVE') && (
-                      <Button
-                        onClick={() =>
-                          action.mutate(
-                            `/events/${id}/refunds/${row.id}/approve`,
-                          )
-                        }
-                      >
-                        Aprovar reembolso
-                      </Button>
-                    )}
-                  {section === 'payments' &&
-                    row.status === 'CONFIRMED' &&
-                    hasPermission('EVENT_REGISTRATION_MANAGE') && (
+                    {section === 'refunds' &&
+                      row.status === 'REQUESTED' &&
+                      hasPermission('EVENT_REFUND_APPROVE') && (
+                        <Button
+                          onClick={() =>
+                            action.mutate(
+                              `/events/${id}/refunds/${row.id}/approve`,
+                            )
+                          }
+                        >
+                          Aprovar reembolso
+                        </Button>
+                      )}
+                    {section === 'payments' &&
+                      row.status === 'CONFIRMED' &&
+                      hasPermission('EVENT_REGISTRATION_MANAGE') && (
+                        <Button
+                          onClick={() =>
+                            setForm({
+                              title: 'Solicitar reembolso',
+                              path: `/events/${id}/payments/${row.id}/refunds`,
+                              fields: [
+                                {
+                                  key: 'reason',
+                                  label: 'Motivo',
+                                  type: 'textarea',
+                                  required: true,
+                                },
+                              ],
+                            })
+                          }
+                        >
+                          Solicitar reembolso
+                        </Button>
+                      )}
+                    {section === 'managers' && row.revokedAt == null && (
                       <Button
                         onClick={() =>
                           setForm({
-                            title: 'Solicitar reembolso',
-                            path: `/events/${id}/payments/${row.id}/refunds`,
-                            fields: [
-                              {
-                                key: 'reason',
-                                label: 'Motivo',
-                                type: 'textarea',
-                                required: true,
-                              },
-                            ],
+                            title: 'Revogar gestor',
+                            path: `/events/${id}/managers/revoke`,
+                            fields: fields.managers!,
+                            initial: row,
                           })
                         }
                       >
-                        Solicitar reembolso
+                        Revogar atribuição
                       </Button>
                     )}
-                  {section === 'managers' && row.revokedAt == null && (
-                    <Button
-                      onClick={() =>
-                        setForm({
-                          title: 'Revogar gestor',
-                          path: `/events/${id}/managers/revoke`,
-                          fields: fields.managers!,
-                          initial: row,
-                        })
-                      }
-                    >
-                      Revogar atribuição
-                    </Button>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
+                  </>
+                }
+              >
+                <Typography variant="body2">
+                  {Object.entries(row)
+                    .filter(
+                      ([key, v]) =>
+                        !['id', 'qrToken', 'member', 'visitor'].includes(key) &&
+                        v !== null &&
+                        typeof v !== 'object',
+                    )
+                    .map(([key, v]) => `${key}: ${String(v)}`)
+                    .join(' · ')}
+                </Typography>
+                {row.qrToken != null && hasPermission('EVENT_CHECKIN') && (
+                  <RegistrationQr token={String(row.qrToken)} />
+                )}
+              </RecordRow>
+            ))}
+          </RecordTable>
           {listable && !['reports', 'managers'].includes(section) && (
             <Stack direction="row">
               <Button

@@ -1,11 +1,10 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -369,120 +368,17 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           ))}
         </Stack>
       )}
-      {data.data?.items.map((e) => (
-        <Card
-          key={e.id}
-          variant="outlined"
-          sx={{
-            borderLeft: 4,
-            borderLeftColor:
-              e.active === false || e.status === 'CANCELLED'
-                ? 'text.disabled'
-                : e.status === 'ABSENT'
-                  ? 'error.main'
-                  : 'primary.main',
-          }}
-        >
-          <CardContent>
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              justifyContent="space-between"
-              gap={2}
-            >
-              <Stack spacing={1}>
+      <RecordTable primaryLabel="Nome" label={c.title} summaryLabel="Situação">
+        {data.data?.items.map((e) => (
+          <RecordRow
+            key={e.id}
+            primary={
+              <>
                 <Typography variant="h6">{entryName(e)}</Typography>
-                <Stack direction="row" gap={1} flexWrap="wrap">
-                  {typeof e.status === 'string' && (
-                    <StatusChip status={e.status} />
-                  )}
-                  <Typography variant="body2">
-                    {e.active === true
-                      ? 'Ativo'
-                      : e.active === false
-                        ? 'Inativo'
-                        : ''}
-                  </Typography>
-                </Stack>
-                {[
-                  'visitedAt',
-                  'nextContactAt',
-                  'startsAt',
-                  'date',
-                  'attendanceDate',
-                  'scheduledAt',
-                ].map((k) =>
-                  e[k] ? (
-                    <Typography key={k} variant="body2">
-                      {
-                        (
-                          {
-                            visitedAt: 'Primeira visita',
-                            nextContactAt: 'Próximo contato',
-                            startsAt: 'Início',
-                            date: 'Data',
-                            attendanceDate: 'Presença',
-                            scheduledAt: 'Agendamento',
-                          } as Record<string, string>
-                        )[k]
-                      }
-                      : {new Date(String(e[k])).toLocaleString('pt-PT')}
-                    </Typography>
-                  ) : null,
-                )}
-                {[
-                  'leader',
-                  'assignedTo',
-                  'event',
-                  'ministry',
-                  'smallGroup',
-                  'recipientMember',
-                  'recipientVisitor',
-                ].map((k) =>
-                  e[k] ? (
-                    <Typography key={k} variant="body2" color="text.secondary">
-                      {
-                        (
-                          {
-                            leader: 'Líder',
-                            assignedTo: 'Responsável',
-                            event: 'Evento',
-                            ministry: 'Ministério',
-                            smallGroup: 'Grupo familiar',
-                            recipientMember: 'Membro',
-                            recipientVisitor: 'Visitante',
-                          } as Record<string, string>
-                        )[k]
-                      }
-                      : {entryName(e[k] as Entry)}
-                    </Typography>
-                  ) : null,
-                )}
-                {typeof e.meetingDay === 'number' && (
-                  <Typography>
-                    {dayLabels[e.meetingDay]} · {String(e.meetingTime)}
-                  </Typography>
-                )}
-                {[
-                  'location',
-                  'address',
-                  'email',
-                  'phone',
-                  'description',
-                  'notes',
-                  'content',
-                ].map((k) =>
-                  e[k] ? (
-                    <Typography
-                      variant="body2"
-                      key={k}
-                      sx={{ overflowWrap: 'anywhere' }}
-                    >
-                      {String(e[k])}
-                    </Typography>
-                  ) : null,
-                )}
-              </Stack>
-              <Stack direction="row" gap={1} flexWrap="wrap" alignItems="start">
+              </>
+            }
+            actions={
+              <>
                 {![
                   'attendance',
                   'notifications',
@@ -520,11 +416,104 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                       </Button>
                     </>
                   )}
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-      ))}
+              </>
+            }
+            summary={
+              <>
+                {typeof e.status === 'string' && (
+                  <StatusChip status={e.status} />
+                )}
+              </>
+            }
+          >
+            <Typography variant="body2">
+              {e.active === true
+                ? 'Ativo'
+                : e.active === false
+                  ? 'Inativo'
+                  : ''}
+            </Typography>
+            {[
+              'visitedAt',
+              'nextContactAt',
+              'startsAt',
+              'date',
+              'attendanceDate',
+              'scheduledAt',
+            ].map((k) =>
+              e[k] ? (
+                <Typography key={k} variant="body2">
+                  {
+                    (
+                      {
+                        visitedAt: 'Primeira visita',
+                        nextContactAt: 'Próximo contato',
+                        startsAt: 'Início',
+                        date: 'Data',
+                        attendanceDate: 'Presença',
+                        scheduledAt: 'Agendamento',
+                      } as Record<string, string>
+                    )[k]
+                  }
+                  : {new Date(String(e[k])).toLocaleString('pt-PT')}
+                </Typography>
+              ) : null,
+            )}
+            {[
+              'leader',
+              'assignedTo',
+              'event',
+              'ministry',
+              'smallGroup',
+              'recipientMember',
+              'recipientVisitor',
+            ].map((k) =>
+              e[k] ? (
+                <Typography key={k} variant="body2" color="text.secondary">
+                  {
+                    (
+                      {
+                        leader: 'Líder',
+                        assignedTo: 'Responsável',
+                        event: 'Evento',
+                        ministry: 'Ministério',
+                        smallGroup: 'Grupo familiar',
+                        recipientMember: 'Membro',
+                        recipientVisitor: 'Visitante',
+                      } as Record<string, string>
+                    )[k]
+                  }
+                  : {entryName(e[k] as Entry)}
+                </Typography>
+              ) : null,
+            )}
+            {typeof e.meetingDay === 'number' && (
+              <Typography>
+                {dayLabels[e.meetingDay]} · {String(e.meetingTime)}
+              </Typography>
+            )}
+            {[
+              'location',
+              'address',
+              'email',
+              'phone',
+              'description',
+              'notes',
+              'content',
+            ].map((k) =>
+              e[k] ? (
+                <Typography
+                  variant="body2"
+                  key={k}
+                  sx={{ overflowWrap: 'anywhere' }}
+                >
+                  {String(e[k])}
+                </Typography>
+              ) : null,
+            )}
+          </RecordRow>
+        ))}
+      </RecordTable>
       {data.data && (
         <TablePagination
           component="div"

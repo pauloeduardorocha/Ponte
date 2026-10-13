@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -293,211 +294,214 @@ export function OperationDetail({
             {data.data?.items.length === 0 && (
               <Alert severity="info">Nenhum registro neste histórico.</Alert>
             )}
-            {data.data?.items.map((row) => (
-              <Stack
-                key={row.id}
-                spacing={1}
-                sx={{
-                  p: 2,
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 2,
-                }}
-              >
-                <Typography fontWeight={600}>{entryName(row)}</Typography>
-                {typeof row.status === 'string' && (
-                  <StatusChip status={row.status} />
-                )}
-                {[
-                  'interactionDate',
-                  'startedAt',
-                  'joinedAt',
-                  'leftAt',
-                  'confirmedAt',
-                ].map((k) =>
-                  row[k] ? (
-                    <Typography key={k} variant="body2">
-                      {
-                        (
-                          {
-                            interactionDate: 'Contato',
-                            startedAt: 'Início',
-                            joinedAt: 'Entrada',
-                            leftAt: 'Saída',
-                            confirmedAt: 'Confirmação',
-                          } as Record<string, string>
-                        )[k]
-                      }
-                      : {new Date(String(row[k])).toLocaleString('pt-PT')}
-                    </Typography>
-                  ) : null,
-                )}
-                {typeof row.role === 'string' && (
-                  <StatusChip status={row.role} />
-                )}
-                {!!row.function && (
-                  <Typography>Função: {String(row.function)}</Typography>
-                )}
-                {!!row.notes && (
-                  <Typography sx={{ overflowWrap: 'anywhere' }}>
-                    {String(row.notes)}
-                  </Typography>
-                )}
-                {!!row.performedBy && (
-                  <Typography variant="body2">
-                    Registrado por: {entryName(row.performedBy as Entry)}
-                  </Typography>
-                )}
-                <Stack direction="row" flexWrap="wrap" gap={1}>
-                  {resource === 'schedules' &&
-                    row.memberId === identity.data?.memberId &&
-                    ['INVITED', 'CONFIRMED', 'DECLINED'].includes(
-                      String(row.status),
-                    ) && (
-                      <Button
-                        onClick={() =>
-                          setForm({
-                            title: 'Responder à convocação',
-                            path: path + '/' + row.id + '/respond',
-                            fields: [
-                              {
-                                key: 'status',
-                                label: 'Minha resposta',
-                                options: ['CONFIRMED', 'DECLINED'],
-                                required: true,
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        Minha resposta
-                      </Button>
-                    )}
-                  {resource === 'visitors' && (
-                    <Button onClick={() => setNested(row)}>Ver contatos</Button>
-                  )}
-                  {canManage &&
-                    ['small-groups', 'ministries'].includes(resource) &&
-                    row.active === true && (
-                      <Button
-                        color="warning"
-                        onClick={() =>
-                          setConfirm({
-                            path: path + '/' + row.id + '/leave',
-                            label: 'Registrar saída do participante?',
-                          })
-                        }
-                      >
-                        Registrar saída
-                      </Button>
-                    )}
-                  {canManage &&
-                    resource === 'events' &&
-                    row.status === 'REGISTERED' && (
-                      <Button
-                        color="error"
-                        onClick={() =>
-                          setConfirm({
-                            path: path + '/' + row.id + '/cancel',
-                            label: 'Cancelar inscrição?',
-                          })
-                        }
-                      >
-                        Cancelar inscrição
-                      </Button>
-                    )}
-                  {resource === 'events' &&
-                    hasPermission('ATTENDANCE_MANAGE') && (
-                      <Button
-                        onClick={() =>
-                          setForm({
-                            title: 'Registrar presença no evento',
-                            path: '/operations/attendance',
-                            fields: [
-                              ...person,
-                              {
-                                key: 'eventId',
-                                label: 'Evento',
-                                lookup: 'events',
-                                required: true,
-                              },
-                              {
-                                key: 'attendanceDate',
-                                label: 'Data',
-                                type: 'date',
-                                required: true,
-                              },
-                              {
-                                key: 'status',
-                                label: 'Presença',
-                                options: ['PRESENT', 'ABSENT', 'EXCUSED'],
-                                required: true,
-                              },
-                            ],
-                            initial: {
-                              id: row.id,
-                              memberId: row.memberId,
-                              visitorId: row.visitorId,
-                              eventId: entry.id,
-                              event: entry,
-                              member: row.member,
-                              visitor: row.visitor,
-                              attendanceDate: String(entry.startsAt).slice(
-                                0,
-                                10,
-                              ),
-                            },
-                          })
-                        }
-                      >
-                        Registrar presença
-                      </Button>
-                    )}
-                  {resource === 'schedules' &&
-                    canManage &&
-                    row.status !== 'REPLACED' && (
-                      <>
-                        <Button
-                          onClick={() =>
-                            setForm({
-                              title: 'Atualizar participação',
-                              path: path + '/' + row.id,
-                              method: 'PATCH',
-                              fields: [
-                                {
-                                  key: 'status',
-                                  label: 'Participação',
-                                  options: [
-                                    'CONFIRMED',
-                                    'DECLINED',
-                                    'COMPLETED',
-                                    'ABSENT',
-                                  ],
-                                  required: true,
+            <RecordTable>
+              {data.data?.items.map((row) => (
+                <RecordRow
+                  key={row.id}
+                  primary={
+                    <>
+                      <Typography fontWeight={600}>{entryName(row)}</Typography>
+                    </>
+                  }
+                  actions={
+                    <>
+                      {resource === 'schedules' &&
+                        row.memberId === identity.data?.memberId &&
+                        ['INVITED', 'CONFIRMED', 'DECLINED'].includes(
+                          String(row.status),
+                        ) && (
+                          <Button
+                            onClick={() =>
+                              setForm({
+                                title: 'Responder à convocação',
+                                path: path + '/' + row.id + '/respond',
+                                fields: [
+                                  {
+                                    key: 'status',
+                                    label: 'Minha resposta',
+                                    options: ['CONFIRMED', 'DECLINED'],
+                                    required: true,
+                                  },
+                                ],
+                              })
+                            }
+                          >
+                            Minha resposta
+                          </Button>
+                        )}
+                      {resource === 'visitors' && (
+                        <Button onClick={() => setNested(row)}>
+                          Ver contatos
+                        </Button>
+                      )}
+                      {canManage &&
+                        ['small-groups', 'ministries'].includes(resource) &&
+                        row.active === true && (
+                          <Button
+                            color="warning"
+                            onClick={() =>
+                              setConfirm({
+                                path: path + '/' + row.id + '/leave',
+                                label: 'Registrar saída do participante?',
+                              })
+                            }
+                          >
+                            Registrar saída
+                          </Button>
+                        )}
+                      {canManage &&
+                        resource === 'events' &&
+                        row.status === 'REGISTERED' && (
+                          <Button
+                            color="error"
+                            onClick={() =>
+                              setConfirm({
+                                path: path + '/' + row.id + '/cancel',
+                                label: 'Cancelar inscrição?',
+                              })
+                            }
+                          >
+                            Cancelar inscrição
+                          </Button>
+                        )}
+                      {resource === 'events' &&
+                        hasPermission('ATTENDANCE_MANAGE') && (
+                          <Button
+                            onClick={() =>
+                              setForm({
+                                title: 'Registrar presença no evento',
+                                path: '/operations/attendance',
+                                fields: [
+                                  ...person,
+                                  {
+                                    key: 'eventId',
+                                    label: 'Evento',
+                                    lookup: 'events',
+                                    required: true,
+                                  },
+                                  {
+                                    key: 'attendanceDate',
+                                    label: 'Data',
+                                    type: 'date',
+                                    required: true,
+                                  },
+                                  {
+                                    key: 'status',
+                                    label: 'Presença',
+                                    options: ['PRESENT', 'ABSENT', 'EXCUSED'],
+                                    required: true,
+                                  },
+                                ],
+                                initial: {
+                                  id: row.id,
+                                  memberId: row.memberId,
+                                  visitorId: row.visitorId,
+                                  eventId: entry.id,
+                                  event: entry,
+                                  member: row.member,
+                                  visitor: row.visitor,
+                                  attendanceDate: String(entry.startsAt).slice(
+                                    0,
+                                    10,
+                                  ),
                                 },
-                              ],
-                            })
-                          }
-                        >
-                          Confirmar / recusar
-                        </Button>
-                        <Button
-                          color="warning"
-                          onClick={() =>
-                            setForm({
-                              title: 'Substituir voluntário',
-                              path: path + '/' + row.id + '/replace',
-                              fields: assignmentFields,
-                            })
-                          }
-                        >
-                          Substituir
-                        </Button>
-                      </>
-                    )}
-                </Stack>
-              </Stack>
-            ))}
+                              })
+                            }
+                          >
+                            Registrar presença
+                          </Button>
+                        )}
+                      {resource === 'schedules' &&
+                        canManage &&
+                        row.status !== 'REPLACED' && (
+                          <>
+                            <Button
+                              onClick={() =>
+                                setForm({
+                                  title: 'Atualizar participação',
+                                  path: path + '/' + row.id,
+                                  method: 'PATCH',
+                                  fields: [
+                                    {
+                                      key: 'status',
+                                      label: 'Participação',
+                                      options: [
+                                        'CONFIRMED',
+                                        'DECLINED',
+                                        'COMPLETED',
+                                        'ABSENT',
+                                      ],
+                                      required: true,
+                                    },
+                                  ],
+                                })
+                              }
+                            >
+                              Confirmar / recusar
+                            </Button>
+                            <Button
+                              color="warning"
+                              onClick={() =>
+                                setForm({
+                                  title: 'Substituir voluntário',
+                                  path: path + '/' + row.id + '/replace',
+                                  fields: assignmentFields,
+                                })
+                              }
+                            >
+                              Substituir
+                            </Button>
+                          </>
+                        )}
+                    </>
+                  }
+                >
+                  {typeof row.status === 'string' && (
+                    <StatusChip status={row.status} />
+                  )}
+                  {[
+                    'interactionDate',
+                    'startedAt',
+                    'joinedAt',
+                    'leftAt',
+                    'confirmedAt',
+                  ].map((k) =>
+                    row[k] ? (
+                      <Typography key={k} variant="body2">
+                        {
+                          (
+                            {
+                              interactionDate: 'Contato',
+                              startedAt: 'Início',
+                              joinedAt: 'Entrada',
+                              leftAt: 'Saída',
+                              confirmedAt: 'Confirmação',
+                            } as Record<string, string>
+                          )[k]
+                        }
+                        : {new Date(String(row[k])).toLocaleString('pt-PT')}
+                      </Typography>
+                    ) : null,
+                  )}
+                  {typeof row.role === 'string' && (
+                    <StatusChip status={row.role} />
+                  )}
+                  {!!row.function && (
+                    <Typography>Função: {String(row.function)}</Typography>
+                  )}
+                  {!!row.notes && (
+                    <Typography sx={{ overflowWrap: 'anywhere' }}>
+                      {String(row.notes)}
+                    </Typography>
+                  )}
+                  {!!row.performedBy && (
+                    <Typography variant="body2">
+                      Registrado por: {entryName(row.performedBy as Entry)}
+                    </Typography>
+                  )}
+                </RecordRow>
+              ))}
+            </RecordTable>
             {data.data && (
               <TablePagination
                 component="div"

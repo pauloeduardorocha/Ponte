@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -76,7 +77,11 @@ export function OperationalDashboard() {
     ['integrating', 'Pessoas em integração', '/visitors?status=INTEGRATING'],
     ['scheduleConflicts', 'Conflitos de escala', '/schedules'],
     ['activeGroups', 'Grupos familiares ativas', '/small-groups'],
-    ['groupParticipants', 'Participantes em grupos familiares', '/small-groups'],
+    [
+      'groupParticipants',
+      'Participantes em grupos familiares',
+      '/small-groups',
+    ],
     ['activeMinistries', 'Ministérios ativos', '/ministries'],
     ['activeVolunteers', 'Voluntários ativos', '/ministries'],
   ];
@@ -173,20 +178,27 @@ export function OperationalDashboard() {
                         }
                       </Typography>
                       {data.data[k]!.length ? (
-                        data.data[k]!.map((e) => (
-                          <Typography key={e.id}>
-                            {entryName(e)} ·{' '}
-                            {String(
-                              e.nextContactAt ??
-                                e.startsAt ??
-                                e.date ??
-                                e.attendanceDate ??
-                                'Sem data',
-                            )
-                              .slice(0, 16)
-                              .replace('T', ' ')}
-                          </Typography>
-                        ))
+                        <RecordTable hasActions={false}>
+                          {data.data[k]!.map((e) => (
+                            <RecordRow
+                              key={e.id}
+                              hasActions={false}
+                              primary={<Typography>{entryName(e)}</Typography>}
+                            >
+                              <Typography variant="body2">
+                                {String(
+                                  e.nextContactAt ??
+                                    e.startsAt ??
+                                    e.date ??
+                                    e.attendanceDate ??
+                                    'Sem data',
+                                )
+                                  .slice(0, 16)
+                                  .replace('T', ' ')}
+                              </Typography>
+                            </RecordRow>
+                          ))}
+                        </RecordTable>
                       ) : (
                         <Typography color="text.secondary">
                           Nenhum registro.

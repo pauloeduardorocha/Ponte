@@ -1,11 +1,10 @@
+import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
-  Card,
-  CardContent,
   Dialog,
   DialogActions,
   DialogContent,
@@ -209,41 +208,48 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
           registro.
         </Alert>
       )}
-      {data.data?.items.map((item) => (
-        <Card variant="outlined" key={item.id}>
-          <CardContent>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="start"
-              gap={2}
-            >
-              <Stack spacing={1}>
+      <RecordTable
+        primaryLabel="Nome"
+        label={kind === 'events' ? 'Eventos' : 'Visitantes'}
+        summaryLabel="Estado / Data"
+      >
+        {data.data?.items.map((item) => (
+          <RecordRow
+            key={item.id}
+            primary={
+              <>
                 <Typography variant="h6">{item.name}</Typography>
-                <Stack direction="row" gap={1} flexWrap="wrap">
-                  <StatusChip status={item.status} />
-                  <Typography variant="body2">
-                    {kind === 'events'
-                      ? new Date(item.startsAt!).toLocaleString('pt-PT')
-                      : item.visitedAt?.slice(0, 10)}
-                  </Typography>
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  {kind === 'events'
-                    ? item.location
-                    : [item.email, item.phone].filter(Boolean).join(' · ')}
-                </Typography>
-                {(item.notes || item.description) && (
-                  <Typography variant="body2">
-                    {item.notes ?? item.description}
-                  </Typography>
-                )}
-              </Stack>
-              {canWrite && <Button onClick={() => open(item)}>Editar</Button>}
-            </Stack>
-          </CardContent>
-        </Card>
-      ))}
+              </>
+            }
+            actions={
+              <>
+                {canWrite && <Button onClick={() => open(item)}>Editar</Button>}
+              </>
+            }
+            summary={
+              <>
+                <StatusChip status={item.status} />
+              </>
+            }
+          >
+            <Typography variant="body2">
+              {kind === 'events'
+                ? new Date(item.startsAt!).toLocaleString('pt-PT')
+                : item.visitedAt?.slice(0, 10)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {kind === 'events'
+                ? item.location
+                : [item.email, item.phone].filter(Boolean).join(' · ')}
+            </Typography>
+            {(item.notes || item.description) && (
+              <Typography variant="body2">
+                {item.notes ?? item.description}
+              </Typography>
+            )}
+          </RecordRow>
+        ))}
+      </RecordTable>
       {data.data && (
         <TablePagination
           component="div"

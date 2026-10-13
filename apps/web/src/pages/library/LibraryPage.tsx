@@ -1,3 +1,4 @@
+import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
 import { STATUS_LABELS } from '../../lib/status-labels';
 import { LibraryDashboardPanel } from './LibraryDashboardPanel';
@@ -304,13 +305,21 @@ function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
             <Typography variant="h6">
               Auditoria / manutenção / mudanças de status
             </Typography>
-            {history.data.events.map((event) => (
-              <Typography key={event.id} variant="body2">
-                {formatDate(event.createdAt)} · {event.action} ·{' '}
-                {event.actorId ?? 'automático'} ·{' '}
-                {JSON.stringify(event.metadata)}
-              </Typography>
-            ))}
+            <RecordTable hasActions={false} primaryLabel="Ação">
+              {history.data.events.map((event) => (
+                <RecordRow
+                  key={event.id}
+                  hasActions={false}
+                  primary={<Typography>{event.action}</Typography>}
+                >
+                  <Typography variant="body2">
+                    {formatDate(event.createdAt)} ·{' '}
+                    {event.actorId ?? 'automático'} ·{' '}
+                    {JSON.stringify(event.metadata)}
+                  </Typography>
+                </RecordRow>
+              ))}
+            </RecordTable>
           </Stack>
         )}
       </DialogContent>
@@ -515,20 +524,20 @@ export function LibraryPage() {
                         <MenuItem value="">Todos</MenuItem>
                         {(tab === 'copies'
                           ? [
-                            'AVAILABLE',
-                            'LOANED',
-                            'RESERVED',
-                            'MAINTENANCE',
-                            'LOST',
-                            'DISPOSED',
-                          ]
+                              'AVAILABLE',
+                              'LOANED',
+                              'RESERVED',
+                              'MAINTENANCE',
+                              'LOST',
+                              'DISPOSED',
+                            ]
                           : [
-                            'ACTIVE',
-                            'OVERDUE',
-                            'RETURNED',
-                            'LOST',
-                            'CANCELLED',
-                          ]
+                              'ACTIVE',
+                              'OVERDUE',
+                              'RETURNED',
+                              'LOST',
+                              'CANCELLED',
+                            ]
                         ).map((s) => (
                           <MenuItem key={s} value={s}>
                             {s}
@@ -629,150 +638,172 @@ export function LibraryPage() {
           )}
           {tab === 'members' && members.data && (
             <Paged total={members.data.total} page={page} setPage={setPage}>
-              {members.data.items.map((member) => (
-                <Card key={member.id} variant="outlined">
-                  <CardContent>
-                    <Typography>
-                      {member.name} · {member.status}
-                    </Typography>
+              <RecordTable
+                primaryLabel="Membro"
+                label={'Membros da biblioteca'}
+              >
+                {members.data.items.map((member) => (
+                  <RecordRow
+                    key={member.id}
+                    primary={
+                      <>
+                        <Typography>
+                          {member.name} · {member.status}
+                        </Typography>
+                      </>
+                    }
+                    actions={
+                      <>
+                        <Button onClick={() => setHistoryMember(member.id)}>
+                          Histórico da biblioteca
+                        </Button>
+                      </>
+                    }
+                  >
                     <Typography variant="caption">
                       ID do membro: {member.id}
                     </Typography>
-                    <Button onClick={() => setHistoryMember(member.id)}>
-                      Histórico da biblioteca
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                  </RecordRow>
+                ))}
+              </RecordTable>
             </Paged>
           )}
           {tab === 'catalog' && books.data && (
             <Paged total={books.data.total} page={page} setPage={setPage}>
-              <Box className="detail-grid">
-                {books.data.items.map((book) => (
-                  <Card key={book.id} variant="outlined">
-                    <CardContent>
-                      <Stack direction="row">
-
-                        <Stack spacing={1} >
+              <Box>
+                <RecordTable
+                  primaryLabel="Livro"
+                  label={'Catálogo da biblioteca'}
+                  summaryLabel="Autor / Categoria"
+                >
+                  {books.data.items.map((book) => (
+                    <RecordRow
+                      key={book.id}
+                      primary={
+                        <>
                           <Typography variant="h6">{book.title}</Typography>
+                        </>
+                      }
+                      actions={
+                        <>
+                          <Can permission="LIBRARY_BOOK_UPDATE">
+                            <Button
+                              onClick={() =>
+                                open(
+                                  'Editar livro',
+                                  (v) =>
+                                    api.updateBook(book.id, bookInput(v, true)),
+                                  bookFields,
+                                  valuesOf(book),
+                                )
+                              }
+                            >
+                              Editar
+                            </Button>
+                          </Can>
+                          <Can permission="LIBRARY_BOOK_DELETE">
+                            <Button
+                              color="error"
+                              onClick={() =>
+                                open('Excluir livro sem histórico', () =>
+                                  api.deleteBook(book.id),
+                                )
+                              }
+                            >
+                              Excluir
+                            </Button>
+                          </Can>
+                          <Can permission="LIBRARY_COPY_CREATE">
+                            <Button
+                              onClick={() =>
+                                open(
+                                  'Novo exemplar',
+                                  (v) => api.createCopy(book.id, copyInput(v)),
+                                  copyFields,
+                                )
+                              }
+                            >
+                              Novo exemplar
+                            </Button>
+                          </Can>
+                          <Can permission="LIBRARY_RESERVATION_CREATE">
+                            <Button
+                              onClick={() =>
+                                open(
+                                  `Reservar ${book.title}`,
+                                  (v) =>
+                                    api.reserve({
+                                      bookId: book.id,
+                                      memberId: v.memberId ?? '',
+                                    }),
+                                  [memberField],
+                                )
+                              }
+                            >
+                              Reservar
+                            </Button>
+                          </Can>
+                        </>
+                      }
+                      summary={
+                        <>
                           <Typography>
                             {book.subtitle} · {book.author} ·{' '}
                             {book.category ?? 'Sem categoria'}
                           </Typography>
-                          <Typography>
-                            {book.publisher} · {book.edition} · {book.year} ·{' '}
-                            {book.language} · {book.pages} páginas
-                          </Typography>
-                          <Typography>{book.description}</Typography>
-                          <Typography>{book.keywords?.join(', ')}</Typography>
-                          <Typography>
-                            Exemplares: {book.quantity} · Disponíveis:{' '}
-                            {book.available}
-                          </Typography>
-                          <Typography variant="caption">
-                            ID: {book.id} · ISBN: {book.isbn}
-                          </Typography>
-                          <Stack direction="row" flexWrap="wrap">
-                            <Can permission="LIBRARY_BOOK_UPDATE">
-                              <Button
-                                onClick={() =>
-                                  open(
-                                    'Editar livro',
-                                    (v) =>
-                                      api.updateBook(book.id, bookInput(v, true)),
-                                    bookFields,
-                                    valuesOf(book),
-                                  )
-                                }
-                              >
-                                Editar
-                              </Button>
-                            </Can>
-                            <Can permission="LIBRARY_BOOK_DELETE">
-                              <Button
-                                color="error"
-                                onClick={() =>
-                                  open('Excluir livro sem histórico', () =>
-                                    api.deleteBook(book.id),
-                                  )
-                                }
-                              >
-                                Excluir
-                              </Button>
-                            </Can>
-                            <Can permission="LIBRARY_COPY_CREATE">
-                              <Button
-                                onClick={() =>
-                                  open(
-                                    'Novo exemplar',
-                                    (v) => api.createCopy(book.id, copyInput(v)),
-                                    copyFields,
-                                  )
-                                }
-                              >
-                                Novo exemplar
-                              </Button>
-                            </Can>
-                            <Can permission="LIBRARY_RESERVATION_CREATE">
-                              <Button
-                                onClick={() =>
-                                  open(
-                                    `Reservar ${book.title}`,
-                                    (v) =>
-                                      api.reserve({
-                                        bookId: book.id,
-                                        memberId: v.memberId ?? '',
-                                      }),
-                                    [memberField],
-                                  )
-                                }
-                              >
-                                Reservar
-                              </Button>
-                            </Can>
-                          </Stack>
-                        </Stack>
-                        <Stack>
-                          {book.cover && (
-                            <Box
-                              component="img"
-                              src={book.cover}
-                              alt={`Capa de ${book.title}`}
-                              sx={{
-                                width: 100,
-                                height: 140,
-                                objectFit: 'contain',
-                              }}
-                            />
-                          )}
-                        </Stack>
-                      </Stack>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </>
+                      }
+                    >
+                      <Typography>
+                        {book.publisher} · {book.edition} · {book.year} ·{' '}
+                        {book.language} · {book.pages} páginas
+                      </Typography>
+                      <Typography>{book.description}</Typography>
+                      <Typography>{book.keywords?.join(', ')}</Typography>
+                      <Typography>
+                        Exemplares: {book.quantity} · Disponíveis:{' '}
+                        {book.available}
+                      </Typography>
+                      <Typography variant="caption">
+                        ID: {book.id} · ISBN: {book.isbn}
+                      </Typography>
+                      {book.cover && (
+                        <Box
+                          component="img"
+                          src={book.cover}
+                          alt={`Capa de ${book.title}`}
+                          sx={{
+                            width: 100,
+                            height: 140,
+                            objectFit: 'contain',
+                          }}
+                        />
+                      )}
+                    </RecordRow>
+                  ))}
+                </RecordTable>
               </Box>
             </Paged>
           )}
           {tab === 'copies' && copies.data && (
             <Paged total={copies.data.total} page={page} setPage={setPage}>
-              {copies.data.items.map((copy) => (
-                <Card key={copy.id} variant="outlined">
-                  <CardContent>
-                    <Stack spacing={1}>
-                      <Typography variant="h6">
-                        {copy.book.title} · {copy.assetCode}
-                      </Typography>
-                      <Typography>
-                        {<StatusChip status={copy.status} />} · {copy.condition}{' '}
-                        · {copy.location} · {copy.notes}
-                      </Typography>
-                      <Typography variant="caption">
-                        ID: {copy.id} · Livro: {copy.bookId} · Barcode:{' '}
-                        {copy.barcode} · QR: {copy.qrCode} · Aquisição:{' '}
-                        {copy.acquiredAt ? formatDate(copy.acquiredAt) : '—'}
-                      </Typography>
-                      <Stack direction="row" flexWrap="wrap">
+              <RecordTable
+                primaryLabel="Livro / Exemplar"
+                label={'Exemplares'}
+                summaryLabel="Situação"
+              >
+                {copies.data.items.map((copy) => (
+                  <RecordRow
+                    key={copy.id}
+                    primary={
+                      <>
+                        <Typography variant="h6">
+                          {copy.book.title} · {copy.assetCode}
+                        </Typography>
+                      </>
+                    }
+                    actions={
+                      <>
                         <Can permission="LIBRARY_HISTORY_READ">
                           <Button onClick={() => setCopyHistory(copy.id)}>
                             Histórico
@@ -787,9 +818,9 @@ export function LibraryPage() {
                                   api.updateCopy(copy.id, {
                                     ...copyInput(v, true),
                                     ...(v.status === 'AVAILABLE' ||
-                                      v.status === 'MAINTENANCE' ||
-                                      v.status === 'LOST' ||
-                                      v.status === 'DISPOSED'
+                                    v.status === 'MAINTENANCE' ||
+                                    v.status === 'LOST' ||
+                                    v.status === 'DISPOSED'
                                       ? { status: v.status }
                                       : {}),
                                     justification: v.justification ?? '',
@@ -823,235 +854,281 @@ export function LibraryPage() {
                         </Can>
                         {(copy.status === 'AVAILABLE' ||
                           copy.status === 'RESERVED') && (
-                            <Can permission="LIBRARY_LOAN_CREATE">
-                              <Button
-                                onClick={() =>
-                                  open(
-                                    `Emprestar ${copy.assetCode}`,
-                                    (v) =>
-                                      api.borrow({
-                                        memberId: v.memberId ?? '',
-                                        bookCopyId: copy.id,
-                                        observations: v.observations || undefined,
-                                      }),
-                                    [
-                                      memberField,
-                                      {
-                                        name: 'observations',
-                                        label: 'Observações',
-                                      },
-                                    ],
-                                  )
-                                }
-                              >
-                                Emprestar
-                              </Button>
-                            </Can>
-                          )}
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
+                          <Can permission="LIBRARY_LOAN_CREATE">
+                            <Button
+                              onClick={() =>
+                                open(
+                                  `Emprestar ${copy.assetCode}`,
+                                  (v) =>
+                                    api.borrow({
+                                      memberId: v.memberId ?? '',
+                                      bookCopyId: copy.id,
+                                      observations: v.observations || undefined,
+                                    }),
+                                  [
+                                    memberField,
+                                    {
+                                      name: 'observations',
+                                      label: 'Observações',
+                                    },
+                                  ],
+                                )
+                              }
+                            >
+                              Emprestar
+                            </Button>
+                          </Can>
+                        )}
+                      </>
+                    }
+                    summary={
+                      <>
+                        <Typography>
+                          {<StatusChip status={copy.status} />} ·{' '}
+                          {copy.condition} · {copy.location} · {copy.notes}
+                        </Typography>
+                      </>
+                    }
+                  >
+                    <Typography variant="caption">
+                      ID: {copy.id} · Livro: {copy.bookId} · Barcode:{' '}
+                      {copy.barcode} · QR: {copy.qrCode} · Aquisição:{' '}
+                      {copy.acquiredAt ? formatDate(copy.acquiredAt) : '—'}
+                    </Typography>
+                  </RecordRow>
+                ))}
+              </RecordTable>
             </Paged>
           )}
           {tab === 'loans' && loans.data && (
             <Paged total={loans.data.total} page={page} setPage={setPage}>
-              {loans.data.items.map((loan) => (
-                <Card key={loan.id} variant="outlined">
-                  <CardContent>
-                    <Stack spacing={1}>
-                      <Typography variant="h6">
-                        {loan.bookCopy.book.title} · {loan.bookCopy.assetCode} ·{' '}
-                        {loan.member.name}
-                      </Typography>
-                      <Typography>
-                        {<StatusChip status={loan.status} />} · Emprestado{' '}
-                        {formatDate(loan.borrowedAt)} · Vence{' '}
-                        {formatDate(loan.dueAt)} · Devolvido{' '}
-                        {loan.returnedAt ? formatDate(loan.returnedAt) : '—'} ·
-                        Renovações {loan.renewedCount}
-                      </Typography>
-                      <Typography variant="caption">
-                        ID: {loan.id} · Membro: {loan.memberId} ·{' '}
-                        {loan.observations}
-                      </Typography>
-                      {['ACTIVE', 'OVERDUE'].includes(loan.status) && (
-                        <Stack direction="row">
-                          <Can permission="LIBRARY_LOAN_RETURN">
-                            <Button
-                              onClick={() =>
-                                open('Devolver exemplar', () =>
-                                  api.returnLoan(loan.id),
-                                )
-                              }
-                            >
-                              Devolver
-                            </Button>
-                            <Button
-                              color="error"
-                              onClick={() =>
-                                open(
-                                  'Encerrar empréstimo',
-                                  (v) =>
-                                    api.closeLoan(loan.id, {
-                                      status:
-                                        v.status === 'LOST'
-                                          ? 'LOST'
-                                          : 'CANCELLED',
-                                      justification: v.justification ?? '',
-                                    }),
-                                  [
-                                    {
-                                      name: 'status',
-                                      label: 'Motivo',
-                                      required: true,
-                                      options: ['LOST', 'CANCELLED'],
-                                    },
-                                    justification,
-                                  ],
-                                )
-                              }
-                            >
-                              Perda / cancelamento
-                            </Button>
-                          </Can>
-                          {loan.status === 'ACTIVE' && (
-                            <Can permission="LIBRARY_LOAN_RENEW">
+              <RecordTable
+                primaryLabel="Livro / Membro"
+                label={'Empréstimos'}
+                summaryLabel="Estado / Prazos"
+              >
+                {loans.data.items.map((loan) => (
+                  <RecordRow
+                    key={loan.id}
+                    primary={
+                      <>
+                        <Typography variant="h6">
+                          {loan.bookCopy.book.title} · {loan.bookCopy.assetCode}{' '}
+                          · {loan.member.name}
+                        </Typography>
+                      </>
+                    }
+                    actions={
+                      <>
+                        {['ACTIVE', 'OVERDUE'].includes(loan.status) && (
+                          <Stack direction="row">
+                            <Can permission="LIBRARY_LOAN_RETURN">
                               <Button
                                 onClick={() =>
-                                  open('Renovar empréstimo', () =>
-                                    api.renewLoan(loan.id),
+                                  open('Devolver exemplar', () =>
+                                    api.returnLoan(loan.id),
                                   )
                                 }
                               >
-                                Renovar
+                                Devolver
+                              </Button>
+                              <Button
+                                color="error"
+                                onClick={() =>
+                                  open(
+                                    'Encerrar empréstimo',
+                                    (v) =>
+                                      api.closeLoan(loan.id, {
+                                        status:
+                                          v.status === 'LOST'
+                                            ? 'LOST'
+                                            : 'CANCELLED',
+                                        justification: v.justification ?? '',
+                                      }),
+                                    [
+                                      {
+                                        name: 'status',
+                                        label: 'Motivo',
+                                        required: true,
+                                        options: ['LOST', 'CANCELLED'],
+                                      },
+                                      justification,
+                                    ],
+                                  )
+                                }
+                              >
+                                Perda / cancelamento
                               </Button>
                             </Can>
-                          )}
-                        </Stack>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
+                            {loan.status === 'ACTIVE' && (
+                              <Can permission="LIBRARY_LOAN_RENEW">
+                                <Button
+                                  onClick={() =>
+                                    open('Renovar empréstimo', () =>
+                                      api.renewLoan(loan.id),
+                                    )
+                                  }
+                                >
+                                  Renovar
+                                </Button>
+                              </Can>
+                            )}
+                          </Stack>
+                        )}
+                      </>
+                    }
+                    summary={
+                      <>
+                        <Typography>
+                          {<StatusChip status={loan.status} />} · Emprestado{' '}
+                          {formatDate(loan.borrowedAt)} · Vence{' '}
+                          {formatDate(loan.dueAt)} · Devolvido{' '}
+                          {loan.returnedAt ? formatDate(loan.returnedAt) : '—'}{' '}
+                          · Renovações {loan.renewedCount}
+                        </Typography>
+                      </>
+                    }
+                  >
+                    <Typography variant="caption">
+                      ID: {loan.id} · Membro: {loan.memberId} ·{' '}
+                      {loan.observations}
+                    </Typography>
+                  </RecordRow>
+                ))}
+              </RecordTable>
             </Paged>
           )}
           {tab === 'fines' && fines.data && (
             <Paged total={fines.data.total} page={page} setPage={setPage}>
-              {fines.data.items.map((fine) => (
-                <Card key={fine.id} variant="outlined">
-                  <CardContent>
-                    <Stack spacing={1}>
-                      <Typography variant="h6">
-                        {fine.loan?.member.name} ·{' '}
-                        {fine.loan?.bookCopy.book.title}
-                      </Typography>
-                      <Typography>
-                        {<StatusChip status={fine.status} />} · Total{' '}
-                        {fine.amount} · Pago {fine.paidAmount} · Ajustado{' '}
-                        {fine.discount} · Saldo {api.fineBalance(fine)}
-                      </Typography>
-                      {fine.payments.map((p) => (
-                        <Typography key={p.id} variant="body2">
-                          Pagamento {p.amount} · {formatDate(p.createdAt)} ·{' '}
-                          {p.createdBy}
+              <RecordTable
+                primaryLabel="Livro / Membro"
+                label={'Multas'}
+                summaryLabel="Valores"
+              >
+                {fines.data.items.map((fine) => (
+                  <RecordRow
+                    key={fine.id}
+                    primary={
+                      <>
+                        <Typography variant="h6">
+                          {fine.loan?.member.name} ·{' '}
+                          {fine.loan?.bookCopy.book.title}
                         </Typography>
-                      ))}
-                      {fine.adjustments.map((a) => (
-                        <Typography key={a.id} variant="body2">
-                          {a.kind} {a.amount} · {a.justification} ·{' '}
-                          {formatDate(a.createdAt)} · {a.createdBy}
+                      </>
+                    }
+                    actions={
+                      <>
+                        {fine.status === 'OPEN' && (
+                          <Stack direction="row">
+                            <Can permission="LIBRARY_FINE_PAY">
+                              <Button
+                                onClick={() => {
+                                  const idempotencyKey = crypto.randomUUID();
+                                  open(
+                                    'Pagamento (total ou parcial)',
+                                    (v) =>
+                                      api.payFine(fine.id, {
+                                        amount: v.amount ?? '',
+                                        idempotencyKey,
+                                      }),
+                                    [
+                                      {
+                                        name: 'amount',
+                                        label: 'Valor decimal (ex.: 1.50)',
+                                        required: true,
+                                      },
+                                    ],
+                                  );
+                                }}
+                              >
+                                Pagar
+                              </Button>
+                            </Can>
+                            <Can permission="LIBRARY_FINE_ADJUST">
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    'Desconto',
+                                    (v) =>
+                                      api.adjustFine(fine.id, {
+                                        kind: 'DISCOUNT',
+                                        amount: v.amount ?? '',
+                                        justification: v.justification ?? '',
+                                      }),
+                                    [
+                                      {
+                                        name: 'amount',
+                                        label: 'Valor do desconto',
+                                        required: true,
+                                      },
+                                      justification,
+                                    ],
+                                  )
+                                }
+                              >
+                                Desconto
+                              </Button>
+                              <Button
+                                onClick={() =>
+                                  open(
+                                    'Perdoar saldo da multa',
+                                    (v) =>
+                                      api.adjustFine(fine.id, {
+                                        kind: 'FORGIVE',
+                                        justification: v.justification ?? '',
+                                      }),
+                                    [justification],
+                                  )
+                                }
+                              >
+                                Perdoar
+                              </Button>
+                              <Button
+                                color="error"
+                                onClick={() =>
+                                  open(
+                                    'Cancelar saldo da multa',
+                                    (v) =>
+                                      api.adjustFine(fine.id, {
+                                        kind: 'CANCEL',
+                                        justification: v.justification ?? '',
+                                      }),
+                                    [justification],
+                                  )
+                                }
+                              >
+                                Cancelar multa
+                              </Button>
+                            </Can>
+                          </Stack>
+                        )}
+                      </>
+                    }
+                    summary={
+                      <>
+                        <Typography>
+                          {<StatusChip status={fine.status} />} · Total{' '}
+                          {fine.amount} · Pago {fine.paidAmount} · Ajustado{' '}
+                          {fine.discount} · Saldo {api.fineBalance(fine)}
                         </Typography>
-                      ))}
-                      {fine.status === 'OPEN' && (
-                        <Stack direction="row">
-                          <Can permission="LIBRARY_FINE_PAY">
-                            <Button
-                              onClick={() => {
-                                const idempotencyKey = crypto.randomUUID();
-                                open(
-                                  'Pagamento (total ou parcial)',
-                                  (v) =>
-                                    api.payFine(fine.id, {
-                                      amount: v.amount ?? '',
-                                      idempotencyKey,
-                                    }),
-                                  [
-                                    {
-                                      name: 'amount',
-                                      label: 'Valor decimal (ex.: 1.50)',
-                                      required: true,
-                                    },
-                                  ],
-                                );
-                              }}
-                            >
-                              Pagar
-                            </Button>
-                          </Can>
-                          <Can permission="LIBRARY_FINE_ADJUST">
-                            <Button
-                              onClick={() =>
-                                open(
-                                  'Desconto',
-                                  (v) =>
-                                    api.adjustFine(fine.id, {
-                                      kind: 'DISCOUNT',
-                                      amount: v.amount ?? '',
-                                      justification: v.justification ?? '',
-                                    }),
-                                  [
-                                    {
-                                      name: 'amount',
-                                      label: 'Valor do desconto',
-                                      required: true,
-                                    },
-                                    justification,
-                                  ],
-                                )
-                              }
-                            >
-                              Desconto
-                            </Button>
-                            <Button
-                              onClick={() =>
-                                open(
-                                  'Perdoar saldo da multa',
-                                  (v) =>
-                                    api.adjustFine(fine.id, {
-                                      kind: 'FORGIVE',
-                                      justification: v.justification ?? '',
-                                    }),
-                                  [justification],
-                                )
-                              }
-                            >
-                              Perdoar
-                            </Button>
-                            <Button
-                              color="error"
-                              onClick={() =>
-                                open(
-                                  'Cancelar saldo da multa',
-                                  (v) =>
-                                    api.adjustFine(fine.id, {
-                                      kind: 'CANCEL',
-                                      justification: v.justification ?? '',
-                                    }),
-                                  [justification],
-                                )
-                              }
-                            >
-                              Cancelar multa
-                            </Button>
-                          </Can>
-                        </Stack>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
+                      </>
+                    }
+                  >
+                    {fine.payments.map((p) => (
+                      <Typography key={p.id} variant="body2">
+                        Pagamento {p.amount} · {formatDate(p.createdAt)} ·{' '}
+                        {p.createdBy}
+                      </Typography>
+                    ))}
+                    {fine.adjustments.map((a) => (
+                      <Typography key={a.id} variant="body2">
+                        {a.kind} {a.amount} · {a.justification} ·{' '}
+                        {formatDate(a.createdAt)} · {a.createdBy}
+                      </Typography>
+                    ))}
+                  </RecordRow>
+                ))}
+              </RecordTable>
             </Paged>
           )}
           {tab === 'reservations' && reservations.data && (
@@ -1060,53 +1137,68 @@ export function LibraryPage() {
               page={page}
               setPage={setPage}
             >
-              {reservations.data.items.map((r) => (
-                <Card key={r.id} variant="outlined">
-                  <CardContent>
-                    <Stack spacing={1}>
-                      <Typography variant="h6">
-                        {r.book.title} · {r.member.name} ·{' '}
-                        <StatusChip status={r.status} />
-                      </Typography>
-                      <Typography>
-                        Fila criada {formatDate(r.createdAt)} · Expira{' '}
-                        {formatDate(r.holdUntil ?? r.expiresAt)} · Exemplar{' '}
-                        {r.bookCopy?.assetCode ?? 'aguardando'}
-                      </Typography>
-                      {['WAITING', 'READY'].includes(r.status) && (
-                        <Can permission="LIBRARY_RESERVATION_CANCEL">
-                          <Button
-                            onClick={() =>
-                              open(
-                                'Cancelar reserva e promover próximo membro',
-                                () => api.cancelReservation(r.id),
-                              )
-                            }
-                          >
-                            Cancelar reserva
-                          </Button>
-                        </Can>
-                      )}
-                      {r.status === 'READY' && r.bookCopyId && (
-                        <Can permission="LIBRARY_LOAN_CREATE">
-                          <Button
-                            onClick={() =>
-                              open('Emprestar exemplar reservado', () =>
-                                api.borrow({
-                                  memberId: r.memberId,
-                                  bookCopyId: r.bookCopyId!,
-                                }),
-                              )
-                            }
-                          >
-                            Emprestar reserva
-                          </Button>
-                        </Can>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              ))}
+              <RecordTable
+                primaryLabel="Livro / Membro"
+                label={'Reservas'}
+                summaryLabel="Prazos"
+              >
+                {reservations.data.items.map((r) => (
+                  <RecordRow
+                    key={r.id}
+                    primary={
+                      <>
+                        <Typography variant="h6">
+                          {r.book.title} · {r.member.name} ·{' '}
+                          <StatusChip status={r.status} />
+                        </Typography>
+                      </>
+                    }
+                    actions={
+                      <>
+                        {['WAITING', 'READY'].includes(r.status) && (
+                          <Can permission="LIBRARY_RESERVATION_CANCEL">
+                            <Button
+                              onClick={() =>
+                                open(
+                                  'Cancelar reserva e promover próximo membro',
+                                  () => api.cancelReservation(r.id),
+                                )
+                              }
+                            >
+                              Cancelar reserva
+                            </Button>
+                          </Can>
+                        )}
+                        {r.status === 'READY' && r.bookCopyId && (
+                          <Can permission="LIBRARY_LOAN_CREATE">
+                            <Button
+                              onClick={() =>
+                                open('Emprestar exemplar reservado', () =>
+                                  api.borrow({
+                                    memberId: r.memberId,
+                                    bookCopyId: r.bookCopyId!,
+                                  }),
+                                )
+                              }
+                            >
+                              Emprestar reserva
+                            </Button>
+                          </Can>
+                        )}
+                      </>
+                    }
+                    summary={
+                      <>
+                        <Typography>
+                          Fila criada {formatDate(r.createdAt)} · Expira{' '}
+                          {formatDate(r.holdUntil ?? r.expiresAt)} · Exemplar{' '}
+                          {r.bookCopy?.assetCode ?? 'aguardando'}
+                        </Typography>
+                      </>
+                    }
+                  ></RecordRow>
+                ))}
+              </RecordTable>
             </Paged>
           )}
           {tab === 'settings' && settings.data && (
