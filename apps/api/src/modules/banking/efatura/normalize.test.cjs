@@ -26,6 +26,22 @@ test('normalizes Portuguese values and retains invoice links', () => {
     row.links[0].url,
   );
 });
+
+test('canonicalizes zero and leading zeros while preserving credit notes', () => {
+  for (const [input, expected] of [
+    ['0,00 €', '0.00'],
+    ['-0,00 €', '0.00'],
+    ['0001,20 €', '1.20'],
+    ['-0001,20 €', '-1.20'],
+  ]) {
+    const cells = [...row.cells];
+    cells[4] = input;
+    assert.equal(
+      normalizeInvoices([{ ...row, cells }], headers, '987654321')[0].amount,
+      expected,
+    );
+  }
+});
 test('requires explicit mapping for unknown columns and ambiguous links', () => {
   assert.throws(() => normalizeInvoices([row], ['campo1'], '987654321'));
   assert.throws(() =>

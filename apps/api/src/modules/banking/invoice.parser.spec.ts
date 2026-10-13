@@ -67,7 +67,8 @@ describe('Private e-fatura import validation', () => {
   it.each([
     { date: '2026-02-30' },
     { amount: '1,10' },
-    { amount: '0.00' },
+    { amount: '1.000' },
+    { amount: '1000000000000.00' },
     { currency: 'eur' },
     { issuerTaxId: 'abc' },
   ])('rejects malformed invoice %j', (fields) => {
@@ -92,5 +93,15 @@ describe('Private e-fatura import validation', () => {
       ).invoices[0].amount,
     ).toBe('-20.10');
     expect(parseInvoices(upload(batch([]))).invoices).toEqual([]);
+  });
+  it('keeps zero-value invoices without rejecting the entire batch', () => {
+    const items = Array.from({ length: 45 }, (_, index) => ({
+      ...invoice,
+      number: `FT 2026/${index + 1}`,
+      amount: index === 44 ? '0.00' : invoice.amount,
+    }));
+    const parsed = parseInvoices(upload(batch(items)));
+    expect(parsed.invoices).toHaveLength(45);
+    expect(parsed.invoices[44].amount).toBe('0.00');
   });
 });

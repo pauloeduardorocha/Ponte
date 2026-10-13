@@ -1,6 +1,5 @@
 /* eslint-disable no-control-regex -- reject control characters in uploaded names and invoice fields */
 import { BadRequestException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
 import { createHash } from 'node:crypto';
 import { PrivateUpload } from '../finance/storage.service';
 
@@ -100,10 +99,7 @@ export function parseInvoices(file: PrivateUpload) {
           )
             throw new Error('Data inválida');
           const amount = text(row, 'amount', 16);
-          if (
-            !/^-?(?:0|[1-9]\d{0,11})\.\d{2}$/.test(amount) ||
-            new Prisma.Decimal(amount).isZero()
-          )
+          if (!/^-?(?:0|[1-9]\d{0,11})\.\d{2}$/.test(amount))
             throw new Error(
               'Valor inválido; use decimal com ponto e duas casas',
             );

@@ -83,6 +83,8 @@ function normalizeInvoices(rows, headers, recipientTaxId, mapping = {}) {
       amount = amount.replace(/\./g, '').replace(',', '.');
     if (!/^-?\d+\.\d{2}$/.test(amount))
       throw extractionError('INVOICE_AMOUNT_INVALID', 'amount');
+    amount = amount.replace(/^(-?)0+(?=\d)/, '$1');
+    if (amount === '-0.00') amount = '0.00';
     result.amount = amount;
     result.issuerTaxId = result.issuerTaxId.replace(/\s/g, '');
     result.recipientTaxId = recipientTaxId;
