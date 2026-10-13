@@ -7,6 +7,7 @@ import { ReportsPage } from './ReportsPage';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
+import { InvoicesPage } from './InvoicesPage';
 import { MovementAttachments } from './MovementAttachments';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -54,6 +55,7 @@ const modules = [
     read: 'FINANCE_BANK_IMPORT',
   },
   { route: 'dashboard', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
+  { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
   {
     route: 'incomes',
     label: 'Receitas',
@@ -254,7 +256,8 @@ export function FinancePage() {
         },
       }),
     enabled:
-      Boolean(current) && !['dashboard', 'banking', 'reports'].includes(route),
+      Boolean(current) &&
+      !['dashboard', 'banking', 'reports', 'invoices'].includes(route),
   });
   const useLookup = (name: string, permission: Permission) =>
     useQuery({
@@ -352,6 +355,7 @@ export function FinancePage() {
       </Tabs>
       {route === 'banking' && <BankingPage />}
       {route === 'reports' && <ReportsPage />}
+      {route === 'invoices' && <InvoicesPage />}
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
           {notice}
@@ -376,7 +380,7 @@ export function FinancePage() {
           Cadastrar {current.label.toLowerCase()}
         </Button>
       )}
-      {!['dashboard', 'banking', 'reports'].includes(route) && (
+      {!['dashboard', 'banking', 'reports', 'invoices'].includes(route) && (
         <>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}

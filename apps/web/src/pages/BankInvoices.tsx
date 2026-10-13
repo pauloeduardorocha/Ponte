@@ -47,7 +47,7 @@ async function invoiceFile(path: string, options?: RequestInit) {
   }
   return response;
 }
-function InvoiceLink({ invoice }: { invoice: Invoice }) {
+export function InvoiceLink({ invoice }: { invoice: Invoice }) {
   const [error, setError] = useState('');
   return (
     <Stack direction="row" flexWrap="wrap" gap={1}>

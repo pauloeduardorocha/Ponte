@@ -19,11 +19,15 @@ export function EfaturaFetch({
   period,
   open,
   onOpenChange,
+  disabled = false,
+  standalone = false,
 }: {
   importId: string;
   period?: { start: string | null; end: string | null };
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  disabled?: boolean;
+  standalone?: boolean;
 }) {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -57,13 +61,15 @@ export function EfaturaFetch({
   return (
     <>
       <Button
-        disabled={fetchInvoices.isPending}
+        disabled={disabled || fetchInvoices.isPending}
         onClick={() => {
           fetchInvoices.reset();
           onOpenChange(true);
         }}
       >
-        Buscar faturas no e-Fatura
+        {standalone
+          ? 'Executar scraper do e-Fatura'
+          : 'Buscar faturas no e-Fatura'}
       </Button>
       {fetchInvoices.isPending && (
         <Alert severity="info">
@@ -82,7 +88,11 @@ export function EfaturaFetch({
         <Alert severity="error">{fetchInvoices.error.message}</Alert>
       )}
       <Dialog open={open} onClose={close} fullWidth maxWidth="sm">
-        <DialogTitle>Buscar faturas deste extrato?</DialogTitle>
+        <DialogTitle>
+          {standalone
+            ? 'Executar scraper do e-Fatura'
+            : 'Buscar faturas deste extrato?'}
+        </DialogTitle>
         <DialogContent>
           <Stack
             spacing={2}
@@ -149,7 +159,9 @@ export function EfaturaFetch({
         <DialogActions>
           <Button onClick={close}>
             {fetchInvoices.isPending || fetchInvoices.data
-              ? 'Continuar nos movimentos'
+              ? standalone
+                ? 'Fechar'
+                : 'Continuar nos movimentos'
               : 'Agora não'}
           </Button>
           {!fetchInvoices.data && (
