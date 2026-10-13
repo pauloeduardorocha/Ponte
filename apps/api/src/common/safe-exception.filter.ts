@@ -8,6 +8,7 @@ import {
 import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
 import { requestTrace, safeErrorFields } from './request-trace';
+import { BankImportTimeoutException } from './bank-import-timeout.exception';
 
 @Catch()
 export class SafeExceptionFilter implements ExceptionFilter {
@@ -43,7 +44,10 @@ export class SafeExceptionFilter implements ExceptionFilter {
     );
     response.status(statusCode).json({
       statusCode,
-      message: 'Erro interno no servidor',
+      message:
+        error instanceof BankImportTimeoutException
+          ? error.message
+          : 'Erro interno no servidor',
       requestId,
     });
   }

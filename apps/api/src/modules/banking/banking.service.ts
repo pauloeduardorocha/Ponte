@@ -9,9 +9,10 @@ import {
 } from '@nestjs/common';
 import { BankTransaction, BankReconciliation, Prisma } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { requestTrace, safeErrorFields } from '../../common/request-trace';
+import { BankImportTimeoutException } from '../../common/bank-import-timeout.exception';
 import { StorageService, PrivateUpload } from '../finance/storage.service';
 import {
   BankQuery,
@@ -299,6 +300,11 @@ export class BankingService {
             id: { not: imported.id },
           },
         });
+        const movements: Prisma.BankTransactionCreateManyInput[] = [];
+        const incomes: Prisma.IncomeCreateManyInput[] = [];
+        const expenses: Prisma.ExpenseCreateManyInput[] = [];
+        const reconciliations: Prisma.BankReconciliationCreateManyInput[] = [];
+        const audits: Prisma.AuditLogCreateManyInput[] = [];
         for (const row of parsed) {
           const fingerprint = transactionFingerprint(accountId, row);
           const dup = existing.find(
@@ -328,38 +334,107 @@ export class BankingService {
               entry.date.toISOString().slice(0, 10) === row.date &&
               entry.amount.equals(row.amount),
           );
-          const created = await tx.bankTransaction.create({
-            data: {
-              importId: imported.id,
+          const id = randomUUID();
+          const register = !dup && !manualMatch;
+          const created: Prisma.BankTransactionCreateManyInput = {
+            id,
+            importId: imported.id,
+            amount: row.amount,
+            date: new Date(row.date),
+            direction: row.direction,
+            description: row.description,
+            reference: row.reference,
+            bankIdentifier: row.bankIdentifier,
+            fingerprint,
+            rowNumber: row.rowNumber,
+            status: confirmedDuplicate
+              ? 'REJECTED'
+              : dup || manualMatch
+                ? 'POSSIBLE_DUPLICATE'
+                : 'RECONCILED',
+            classification: row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE',
+            categoryId:
+              defaultCategories[
+                row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE'
+              ].id,
+            duplicateReason: dup
+              ? `${confirmedDuplicate ? 'Duplicado ignorado' : 'Possível correspondência'} com movimento ${dup.id}`
+              : manualMatch
+                ? `Possível correspondência com ${row.direction === 'CREDIT' ? 'receita' : 'despesa'} já cadastrada ${manualMatch.id}`
+                : null,
+          };
+          movements.push(created);
+          existing.push({
+            id,
+            date: new Date(row.date),
+            amount: new Prisma.Decimal(row.amount),
+            direction: row.direction,
+            reference: row.reference,
+            bankIdentifier: row.bankIdentifier,
+            fingerprint,
+          });
+          if (register) {
+            const ledgerId = randomUUID();
+            const common = {
+              id: ledgerId,
               amount: row.amount,
               date: new Date(row.date),
-              direction: row.direction,
+              accountId,
+              categoryId: created.categoryId!,
               description: row.description,
-              reference: row.reference,
-              bankIdentifier: row.bankIdentifier,
-              fingerprint,
-              rowNumber: row.rowNumber,
-              status: confirmedDuplicate
-                ? 'REJECTED'
-                : dup || manualMatch
-                  ? 'POSSIBLE_DUPLICATE'
-                  : 'CLASSIFIED',
-              classification: row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE',
-              categoryId:
-                defaultCategories[
-                  row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE'
-                ].id,
-              duplicateReason: dup
-                ? `${confirmedDuplicate ? 'Duplicado ignorado' : 'Possível correspondência'} com movimento ${dup.id}`
-                : manualMatch
-                  ? `Possível correspondência com ${row.direction === 'CREDIT' ? 'receita' : 'despesa'} já cadastrada ${manualMatch.id}`
-                  : null,
-            },
-          });
-          existing.push(created);
-          if (!dup && !manualMatch)
-            await this.registerMovement(tx, created, accountId, user);
+              status: 'COMPLETED' as const,
+              bankTransactionId: id,
+            };
+            if (row.direction === 'CREDIT')
+              incomes.push({
+                ...common,
+                origin: 'BANK_IMPORT',
+                reference: row.reference,
+              });
+            else
+              expenses.push({
+                ...common,
+                dueDate: new Date(row.date),
+                paidAt: new Date(row.date),
+              });
+            reconciliations.push({
+              bankTransactionId: id,
+              incomeId: row.direction === 'CREDIT' ? ledgerId : null,
+              expenseId: row.direction === 'DEBIT' ? ledgerId : null,
+              createdLedger: true,
+              reconciledBy: user.id,
+            });
+            audits.push({
+              ...auditRequestFields(),
+              userId: user.id,
+              action: 'FINANCE_BANK_REGISTER',
+              entity: 'BankTransaction',
+              entityId: id,
+              metadata: {
+                incomeId: row.direction === 'CREDIT' ? ledgerId : null,
+                expenseId: row.direction === 'DEBIT' ? ledgerId : null,
+                requestId: requestTrace.getStore()?.requestId ?? null,
+              },
+            });
+          }
         }
+        // Bound statement sizes while retaining one atomic transaction and audit context.
+        const batch = async <T>(
+          items: T[],
+          write: (data: T[]) => Promise<unknown>,
+        ) => {
+          for (let offset = 0; offset < items.length; offset += 500)
+            await write(items.slice(offset, offset + 500));
+        };
+        await batch(movements, (data) =>
+          tx.bankTransaction.createMany({ data }),
+        );
+        await batch(incomes, (data) => tx.income.createMany({ data }));
+        await batch(expenses, (data) => tx.expense.createMany({ data }));
+        await batch(reconciliations, (data) =>
+          tx.bankReconciliation.createMany({ data }),
+        );
+        await batch(audits, (data) => tx.auditLog.createMany({ data }));
         await tx.bankImport.update({
           where: { id: imported.id },
           data: {
@@ -390,7 +465,9 @@ export class BankingService {
           data: {
             status: 'FAILED',
             error:
-              'Falha ao persistir movimentos. Envie novamente após verificar a conta.',
+              safeErrorFields(e).errorCode === 'P2028'
+                ? new BankImportTimeoutException().message
+                : 'Falha ao persistir movimentos. Envie novamente após verificar a conta.',
           },
         });
         await this.audit(tx, user, 'FAILED', imported.id, {
@@ -400,6 +477,8 @@ export class BankingService {
           transactionTimeoutMs: 30000,
         });
       });
+      if (safeErrorFields(e).errorCode === 'P2028')
+        throw new BankImportTimeoutException();
       throw e;
     }
     setStage('load_result');

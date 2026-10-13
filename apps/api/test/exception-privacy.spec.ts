@@ -3,7 +3,30 @@ import { SafeExceptionFilter } from '../src/common/safe-exception.filter';
 import { requestTrace, traceMiddleware } from '../src/common/request-trace';
 import { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
+import { BankImportTimeoutException } from '../src/common/bank-import-timeout.exception';
 describe('Exception privacy', () => {
+  it('returns the safe import timeout message with a reference', () => {
+    const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const json = jest.fn();
+    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const host = {
+      switchToHttp: () => ({ getResponse: () => response }),
+    } as unknown as ArgumentsHost;
+    try {
+      new SafeExceptionFilter().catch(new BankImportTimeoutException(), host);
+      expect(response.status).toHaveBeenCalledWith(503);
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message: expect.stringContaining(
+            'Nenhum movimento desta tentativa foi gravado',
+          ),
+          requestId: expect.any(String),
+        }),
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
   it('correlates a database timeout with the response without leaking SQL or metadata', () => {
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const json = jest.fn();
