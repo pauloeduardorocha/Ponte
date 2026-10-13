@@ -176,8 +176,6 @@ const labels: Record<string, string> = {
   income: 'Receitas do mês',
   expenses: 'Despesas do mês',
   balance: 'Saldo',
-  pendingIncome: 'Receitas pendentes',
-  pendingExpenses: 'Despesas pendentes',
   tithes: 'Dízimos',
   offerings: 'Ofertas',
   PENDING: 'Pendente',

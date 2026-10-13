@@ -26,8 +26,6 @@ type Balance = {
   income: string;
   expenses: string;
   balance: string;
-  pendingIncome: string;
-  pendingExpenses: string;
   tithes?: string;
   offerings?: string;
 };
@@ -105,7 +103,7 @@ export function FinancialDashboardPanel() {
         <Box>
           <Typography variant="h5">Financeiro — visão geral</Typography>
           <Typography variant="body2" color="text.secondary">
-            Resultados do mês; saldo até o fim do período e pendências gerais.
+            Resultados do mês e saldo até o fim do período.
           </Typography>
         </Box>
         <Stack direction="row" gap={1}>
@@ -194,18 +192,6 @@ export function FinancialDashboardPanel() {
                 href: hasPermission('FINANCE_ACCOUNT_READ')
                   ? '/finance?tab=accounts'
                   : undefined,
-              },
-              {
-                label: 'Receitas pendentes',
-                value: b.pendingIncome,
-                color: 'warning.dark',
-                href: list ? '/finance?tab=incomes&status=PENDING' : undefined,
-              },
-              {
-                label: 'Despesas pendentes',
-                value: b.pendingExpenses,
-                color: 'warning.dark',
-                href: list ? '/finance?tab=expenses&status=PENDING' : undefined,
               },
               ...(contribution
                 ? [

@@ -747,8 +747,6 @@ export class FinanceService {
             income: Prisma.Decimal;
             expenses: Prisma.Decimal;
             balance: Prisma.Decimal;
-            pendingIncome: Prisma.Decimal;
-            pendingExpenses: Prisma.Decimal;
             tithes: Prisma.Decimal;
             offerings: Prisma.Decimal;
           }>
@@ -756,18 +754,15 @@ export class FinanceService {
         WITH i AS (SELECT i."accountId",
           SUM(CASE WHEN i.status='COMPLETED' AND i.date>=${start} AND i.date<${end} THEN i.amount ELSE 0 END) AS monthly,
           SUM(CASE WHEN i.status='COMPLETED' AND i.date<=${cutoff} THEN i.amount ELSE 0 END) AS settled,
-          SUM(CASE WHEN i.status='PENDING' THEN i.amount ELSE 0 END) AS pending,
           SUM(CASE WHEN i.status='COMPLETED' AND i.date>=${start} AND i.date<${end} AND c.type='TITHE' THEN i.amount ELSE 0 END) AS tithes,
           SUM(CASE WHEN i.status='COMPLETED' AND i.date>=${start} AND i.date<${end} AND c.type='OFFERING' THEN i.amount ELSE 0 END) AS offerings
           FROM incomes i LEFT JOIN contributions c ON c."incomeId"=i.id WHERE (${account}::uuid IS NULL OR i."accountId"=${account}::uuid) GROUP BY i."accountId"),
         e AS (SELECT "accountId",
           SUM(CASE WHEN status='COMPLETED' AND date>=${start} AND date<${end} THEN amount ELSE 0 END) AS monthly,
-          SUM(CASE WHEN status='COMPLETED' AND "paidAt"<=${cutoff} THEN amount ELSE 0 END) AS settled,
-          SUM(CASE WHEN status='PENDING' THEN amount ELSE 0 END) AS pending
+          SUM(CASE WHEN status='COMPLETED' AND "paidAt"<=${cutoff} THEN amount ELSE 0 END) AS settled
           FROM expenses WHERE (${account}::uuid IS NULL OR "accountId"=${account}::uuid) GROUP BY "accountId")
         SELECT a.currency, SUM(COALESCE(i.monthly,0)) AS income,SUM(COALESCE(e.monthly,0)) AS expenses,
           SUM(a."openingBalance"+COALESCE(i.settled,0)-COALESCE(e.settled,0)) AS balance,
-          SUM(COALESCE(i.pending,0)) AS "pendingIncome",SUM(COALESCE(e.pending,0)) AS "pendingExpenses",
           SUM(COALESCE(i.tithes,0)) AS tithes,SUM(COALESCE(i.offerings,0)) AS offerings
         FROM bank_accounts a LEFT JOIN i ON i."accountId"=a.id LEFT JOIN e ON e."accountId"=a.id
         WHERE (${account}::uuid IS NULL OR a.id=${account}::uuid) GROUP BY a.currency ORDER BY a.currency`;
@@ -776,8 +771,6 @@ export class FinanceService {
           income: b.income,
           expenses: b.expenses,
           balance: b.balance,
-          pendingIncome: b.pendingIncome,
-          pendingExpenses: b.pendingExpenses,
           ...(user.permissions.includes('FINANCE_CONTRIBUTION_READ')
             ? { tithes: b.tithes, offerings: b.offerings }
             : {}),

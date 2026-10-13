@@ -133,8 +133,6 @@ describe('Finance permissions and dashboard', () => {
               income: '100',
               expenses: '20',
               balance: '80',
-              pendingIncome: '3',
-              pendingExpenses: '5',
             },
           ],
           latestTransactions: [],
@@ -146,6 +144,8 @@ describe('Finance permissions and dashboard', () => {
     });
     renderApp('/finance');
     expect(await screen.findByText(/80,00/)).toBeInTheDocument();
+    expect(screen.queryByText('Receitas pendentes')).not.toBeInTheDocument();
+    expect(screen.queryByText('Despesas pendentes')).not.toBeInTheDocument();
     expect(
       screen.queryByRole('tab', { name: 'Contribuições' }),
     ).not.toBeInTheDocument();
