@@ -10,8 +10,10 @@ import {
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
+  Patch,
   ParseUUIDPipe,
   Post,
   Query,
@@ -32,6 +34,7 @@ import {
   ImportUploadDto,
   LinkBankDto,
   ReconcileBankDto,
+  RenameBankAttachmentDto,
   UndoBankDto,
 } from './banking.dto';
 import { BankingService } from './banking.service';
@@ -41,6 +44,29 @@ import { BankingService } from './banking.service';
 @Permission('FINANCE_BANK_IMPORT', 'FINANCE_CONTRIBUTION_READ')
 export class BankingController {
   constructor(private readonly banking: BankingService) {}
+  @Patch('transactions/:id/attachments/:attachmentId')
+  renameAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Body() dto: RenameBankAttachmentDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.banking.renameAttachment(
+      id,
+      attachmentId,
+      dto.filename,
+      req.user,
+    );
+  }
+
+  @Delete('transactions/:id/attachments/:attachmentId')
+  deleteAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.banking.deleteAttachment(id, attachmentId, req.user);
+  }
   @Get('transactions/:id/attachments')
   attachments(@Param('id', ParseUUIDPipe) id: string) {
     return this.banking.attachments(id);

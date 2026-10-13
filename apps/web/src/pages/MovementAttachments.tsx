@@ -1,5 +1,18 @@
 import { useState } from 'react';
-import { Alert, Button, Stack, Typography, useMediaQuery } from '@mui/material';
+import {
+  Alert,
+  Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  LinearProgress,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest, getAccessToken } from '../lib/api';
 
@@ -35,6 +48,10 @@ export function MovementAttachments({
   const client = useQueryClient();
   const mobile = useMediaQuery('(pointer: coarse)');
   const [error, setError] = useState('');
+  const [editing, setEditing] = useState<Attachment | null>(null);
+  const [deleting, setDeleting] = useState<Attachment | null>(null);
+  const [name, setName] = useState('');
+  const [progress, setProgress] = useState({ completed: 0, total: 0 });
   const key = ['banking', 'attachments', transactionId];
   const attachments = useQuery({
     queryKey: key,
@@ -45,6 +62,7 @@ export function MovementAttachments({
   });
   const upload = useMutation({
     mutationFn: async (files: File[]) => {
+      setProgress({ completed: 0, total: files.length });
       for (const file of files) {
         const body = new FormData();
         body.append('file', file);
@@ -52,11 +70,62 @@ export function MovementAttachments({
           method: 'POST',
           body,
         });
+        setProgress((previous) => ({
+          ...previous,
+          completed: previous.completed + 1,
+        }));
       }
     },
     onError: (e: Error) => setError(e.message),
     onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
+  const rename = useMutation({
+    mutationFn: ({
+      attachment,
+      filename,
+    }: {
+      attachment: Attachment;
+      filename: string;
+    }) =>
+      apiRequest(
+        `/finance/banking/transactions/${transactionId}/attachments/${attachment.id}`,
+        { method: 'PATCH', body: { filename } },
+      ),
+    onSuccess: () => setEditing(null),
+    onError: (e: Error) => setError(e.message),
+    onSettled: () => client.invalidateQueries({ queryKey: key }),
+  });
+  const remove = useMutation({
+    mutationFn: (attachment: Attachment) =>
+      apiRequest(
+        `/finance/banking/transactions/${transactionId}/attachments/${attachment.id}`,
+        { method: 'DELETE' },
+      ),
+    onSuccess: () => setDeleting(null),
+    onError: (e: Error) => setError(e.message),
+    onSettled: () => client.invalidateQueries({ queryKey: key }),
+  });
+  const download = useMutation({
+    mutationFn: async (attachment: Attachment) => {
+      const response = await requestFile(
+        `/transactions/${transactionId}/attachments/${attachment.id}/download`,
+      );
+      const url = URL.createObjectURL(await response.blob());
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = attachment.filename;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    },
+    onError: (e: Error) => setError(e.message),
+  });
+  const busy =
+    upload.isPending ||
+    rename.isPending ||
+    remove.isPending ||
+    download.isPending;
+  const extension =
+    editing?.filename.slice(editing.filename.lastIndexOf('.')) ?? '';
   function select(files: FileList | null) {
     if (!files?.length) return;
     setError('');
@@ -83,7 +152,7 @@ export function MovementAttachments({
   const disabled =
     attachments.isPending ||
     !!attachments.error ||
-    upload.isPending ||
+    busy ||
     (attachments.data?.length ?? 0) >= 5;
   return (
     <Stack spacing={1}>
@@ -93,14 +162,28 @@ export function MovementAttachments({
       <Typography variant="caption">
         PDF ou imagem JPEG/PNG · até 1 MB por arquivo
       </Typography>
+      {attachments.isFetching && (
+        <LinearProgress aria-label="Carregando anexos" />
+      )}
+      {upload.isPending && (
+        <Stack spacing={1} role="status">
+          <Typography variant="caption">
+            Enviando arquivos: {progress.completed} de {progress.total}{' '}
+            concluídos
+          </Typography>
+          <LinearProgress aria-label="Enviando anexos" />
+        </Stack>
+      )}
       {(error || attachments.error) && (
         <Alert severity="error">{error || attachments.error?.message}</Alert>
       )}
       <Stack direction="row" spacing={1}>
         <Button component="label" disabled={disabled}>
+          {upload.isPending && <CircularProgress size={16} sx={{ mr: 1 }} />}
           {upload.isPending ? 'Enviando…' : 'Adicionar arquivos'}
           <input
             hidden
+            aria-label="Selecionar anexos"
             type="file"
             multiple
             accept="application/pdf,image/jpeg,image/png"
@@ -127,28 +210,146 @@ export function MovementAttachments({
         )}
       </Stack>
       {attachments.data?.map((attachment) => (
-        <Button
+        <Stack
           key={attachment.id}
-          sx={{ justifyContent: 'flex-start', overflowWrap: 'anywhere' }}
-          onClick={async () => {
-            try {
-              const response = await requestFile(
-                `/transactions/${transactionId}/attachments/${attachment.id}/download`,
-              );
-              const url = URL.createObjectURL(await response.blob());
-              const link = document.createElement('a');
-              link.href = url;
-              link.download = attachment.filename;
-              link.click();
-              setTimeout(() => URL.revokeObjectURL(url), 1000);
-            } catch (e) {
-              setError((e as Error).message);
-            }
-          }}
+          direction={{ xs: 'column', sm: 'row' }}
+          spacing={1}
         >
-          {attachment.filename}
-        </Button>
+          <Button
+            disabled={busy}
+            sx={{ justifyContent: 'flex-start', overflowWrap: 'anywhere' }}
+            onClick={() => {
+              setError('');
+              download.mutate(attachment);
+            }}
+          >
+            {download.isPending && download.variables?.id === attachment.id && (
+              <CircularProgress
+                size={16}
+                aria-label="Baixando anexo"
+                sx={{ mr: 1 }}
+              />
+            )}
+            {attachment.filename}
+          </Button>
+          <Button
+            disabled={busy}
+            aria-label={`Renomear ${attachment.filename}`}
+            onClick={() => {
+              setError('');
+              setEditing(attachment);
+              setName(
+                attachment.filename.slice(
+                  0,
+                  attachment.filename.lastIndexOf('.'),
+                ),
+              );
+            }}
+          >
+            Renomear
+          </Button>
+          <Button
+            disabled={busy}
+            color="error"
+            aria-label={`Excluir ${attachment.filename}`}
+            onClick={() => {
+              setError('');
+              setDeleting(attachment);
+            }}
+          >
+            Excluir
+          </Button>
+        </Stack>
       ))}
+      <Dialog
+        open={!!editing}
+        onClose={() => {
+          if (!rename.isPending) setEditing(null);
+        }}
+        fullWidth
+        maxWidth="xs"
+        aria-labelledby="rename-attachment-title"
+      >
+        <DialogTitle id="rename-attachment-title">Renomear anexo</DialogTitle>
+        <DialogContent>
+          {error && <Alert severity="error">{error}</Alert>}
+          <TextField
+            autoFocus
+            fullWidth
+            margin="dense"
+            label="Nome do arquivo"
+            value={name}
+            disabled={rename.isPending}
+            onChange={(e) => setName(e.target.value)}
+            helperText={`A extensão ${extension} será mantida.`}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={rename.isPending} onClick={() => setEditing(null)}>
+            Cancelar
+          </Button>
+          <Button
+            disabled={rename.isPending || !name.trim()}
+            onClick={() => {
+              if (editing) {
+                setError('');
+                rename.mutate({
+                  attachment: editing,
+                  filename: name.trim() + extension,
+                });
+              }
+            }}
+          >
+            {rename.isPending && (
+              <CircularProgress
+                size={16}
+                aria-label="Renomeando anexo"
+                sx={{ mr: 1 }}
+              />
+            )}
+            {rename.isPending ? 'Salvando…' : 'Salvar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={!!deleting}
+        onClose={() => {
+          if (!remove.isPending) setDeleting(null);
+        }}
+        aria-labelledby="delete-attachment-title"
+      >
+        <DialogTitle id="delete-attachment-title">Excluir anexo?</DialogTitle>
+        <DialogContent>
+          {error && <Alert severity="error">{error}</Alert>}
+          <Typography>
+            O arquivo {deleting?.filename} será excluído deste movimento.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={remove.isPending} onClick={() => setDeleting(null)}>
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            disabled={remove.isPending}
+            onClick={() => {
+              if (deleting) {
+                setError('');
+                remove.mutate(deleting);
+              }
+            }}
+          >
+            {remove.isPending && (
+              <CircularProgress
+                size={16}
+                aria-label="Excluindo anexo"
+                sx={{ mr: 1 }}
+              />
+            )}
+            {remove.isPending ? 'Excluindo…' : 'Excluir anexo'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

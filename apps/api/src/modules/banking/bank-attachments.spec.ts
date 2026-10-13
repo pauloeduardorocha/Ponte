@@ -18,6 +18,17 @@ describe('Bank movement attachments', () => {
         .fn()
         .mockResolvedValue(exists ? [{ id: 'movement' }] : []),
       bankAttachment: {
+        findFirst: jest
+          .fn()
+          .mockResolvedValue(
+            exists
+              ? { id: 'attachment', filename: 'receipt.pdf', storageKey: 'key' }
+              : null,
+          ),
+        update: jest
+          .fn()
+          .mockResolvedValue({ id: 'attachment', filename: 'new.pdf' }),
+        delete: jest.fn(),
         count: jest.fn().mockResolvedValue(count),
         create: jest
           .fn()
@@ -44,6 +55,57 @@ describe('Bank movement attachments', () => {
       service.attach('movement', { ...file, size: 1048577 }, user),
     ).rejects.toThrow('1 MB');
     expect(storage.put).not.toHaveBeenCalled();
+  });
+  it('renames within the movement and audits the old and new names', async () => {
+    const { service, tx } = setup();
+    await service.renameAttachment('movement', 'attachment', 'new.pdf', user);
+    expect(tx.bankAttachment.findFirst).toHaveBeenCalledWith({
+      where: { id: 'attachment', transactionId: 'movement' },
+    });
+    expect(tx.bankAttachment.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { filename: 'new.pdf' } }),
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'FINANCE_BANK_ATTACHMENT_RENAME',
+          metadata: expect.objectContaining({
+            previousFilename: 'receipt.pdf',
+            filename: 'new.pdf',
+          }),
+        }),
+      }),
+    );
+  });
+  it.each(['../new.pdf', 'new.png', '   ', 'new\u0000.pdf'])(
+    'rejects invalid rename %s',
+    async (filename) => {
+      const { service, tx } = setup();
+      await expect(
+        service.renameAttachment('movement', 'attachment', filename, user),
+      ).rejects.toThrow();
+      expect(tx.bankAttachment.update).not.toHaveBeenCalled();
+    },
+  );
+  it('deletes the attachment and its private file', async () => {
+    const { service, tx, storage } = setup();
+    await service.deleteAttachment('movement', 'attachment', user);
+    expect(tx.bankAttachment.delete).toHaveBeenCalledWith({
+      where: { id: 'attachment' },
+    });
+    expect(storage.remove).toHaveBeenCalledWith('key');
+  });
+  it('does not rename or delete an attachment outside the movement', async () => {
+    const { service, tx, storage } = setup(0, false);
+    await expect(
+      service.renameAttachment('other', 'attachment', 'new.pdf', user),
+    ).rejects.toThrow();
+    await expect(
+      service.deleteAttachment('other', 'attachment', user),
+    ).rejects.toThrow();
+    expect(tx.bankAttachment.update).not.toHaveBeenCalled();
+    expect(tx.bankAttachment.delete).not.toHaveBeenCalled();
+    expect(storage.remove).not.toHaveBeenCalled();
   });
   it('locks the movement and accepts its fifth attachment', async () => {
     const { service, tx } = setup(4);

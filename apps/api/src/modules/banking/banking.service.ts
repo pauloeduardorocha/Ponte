@@ -10,6 +10,7 @@ import {
 import { BankTransaction, BankReconciliation, Prisma } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
 import { createHash, randomUUID } from 'node:crypto';
+import { extname } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
 import { requestTrace, safeErrorFields } from '../../common/request-trace';
 import { BankImportTimeoutException } from '../../common/bank-import-timeout.exception';
@@ -31,6 +32,73 @@ type Tx = Prisma.TransactionClient;
 @Injectable()
 export class BankingService {
   private readonly logger = new Logger(BankingService.name);
+  async renameAttachment(
+    transactionId: string,
+    id: string,
+    filename: string,
+    user: CurrentUser,
+  ) {
+    const name = filename.trim();
+    if (
+      !name ||
+      name.length > 255 ||
+      /[\\/:]/.test(name) ||
+      [...name].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)
+    )
+      throw new BadRequestException('Nome de arquivo inválido');
+    return this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      await tx.$queryRaw`SELECT id FROM bank_transactions WHERE id = ${transactionId}::uuid FOR UPDATE`;
+      const attachment = await tx.bankAttachment.findFirst({
+        where: { id, transactionId },
+      });
+      if (!attachment) throw new NotFoundException();
+      if (
+        extname(name).toLowerCase() !==
+        extname(attachment.filename).toLowerCase()
+      )
+        throw new BadRequestException(
+          'Mantenha a extensão original do arquivo',
+        );
+      const updated = await tx.bankAttachment.update({
+        where: { id },
+        data: { filename: name },
+        select: { id: true, filename: true, mime: true, size: true },
+      });
+      await this.audit(tx, user, 'ATTACHMENT_RENAME', transactionId, {
+        attachmentId: id,
+        previousFilename: attachment.filename,
+        filename: name,
+      });
+      return updated;
+    });
+  }
+
+  async deleteAttachment(transactionId: string, id: string, user: CurrentUser) {
+    const attachment = await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      await tx.$queryRaw`SELECT id FROM bank_transactions WHERE id = ${transactionId}::uuid FOR UPDATE`;
+      const existing = await tx.bankAttachment.findFirst({
+        where: { id, transactionId },
+      });
+      if (!existing) throw new NotFoundException();
+      await tx.bankAttachment.delete({ where: { id } });
+      await this.audit(tx, user, 'ATTACHMENT_DELETE', transactionId, {
+        attachmentId: id,
+        filename: existing.filename,
+      });
+      return existing;
+    });
+    try {
+      await this.storage.remove(attachment.storageKey);
+    } catch (error) {
+      this.logger.error(
+        'Failed to clean up deleted bank attachment',
+        safeErrorFields(error),
+      );
+    }
+    return { id };
+  }
   async attachments(transactionId: string) {
     if (
       !(await this.db.bankTransaction.findUnique({
