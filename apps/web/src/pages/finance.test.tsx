@@ -9,6 +9,77 @@ import {
 } from '../test/utils';
 describe('Finance permissions and dashboard', () => {
   beforeEach(resetTestState);
+  it('exposes bank attachment controls after categorization from expenses', async () => {
+    mockApi({
+      ...sessionRoutes(
+        makeUser([
+          'FINANCE_TRANSACTION_READ',
+          'FINANCE_BANK_IMPORT',
+          'FINANCE_CONTRIBUTION_READ',
+          'FINANCE_ATTACHMENT_READ',
+          'FINANCE_ATTACHMENT_WRITE',
+        ]),
+      ),
+      'GET /finance/banking/pending-classification': { body: { total: 0 } },
+      'GET /finance/expenses': {
+        body: {
+          items: [
+            {
+              id: 'expense-1',
+              description: 'Despesa importada',
+              bankTransactionId: 'movement-1',
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 20,
+        },
+      },
+      'GET /finance/expenses/expense-1/attachments': {
+        body: [{ id: 'legacy-1', filename: 'expense.pdf', size: 8 }],
+      },
+      'GET /finance/banking/transactions/movement-1/attachments': {
+        body: [{ id: 'bank-1', filename: 'bank.pdf', size: 8 }],
+      },
+    });
+    renderApp('/finance?tab=expenses');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Anexos bancários' }),
+    );
+    expect(
+      await screen.findByRole('button', { name: 'Renomear bank.pdf' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Excluir bank.pdf' }),
+    ).toBeVisible();
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Documentos' }));
+    expect(
+      await screen.findByRole('button', { name: 'Renomear expense.pdf' }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: 'Excluir expense.pdf' }),
+    ).toBeVisible();
+  });
+  it('opens a bank attachment deep link even after classification is complete', async () => {
+    mockApi({
+      ...sessionRoutes(
+        makeUser(['FINANCE_BANK_IMPORT', 'FINANCE_CONTRIBUTION_READ']),
+      ),
+      'GET /finance/banking/pending-classification': { body: { total: 0 } },
+      'GET /finance/banking/transactions/movement-1/attachments': {
+        body: [{ id: 'bank-1', filename: 'bank.pdf', size: 8 }],
+      },
+    });
+    renderApp('/finance?tab=banking&transactionId=movement-1');
+    expect(
+      await screen.findByRole('button', { name: 'Renomear bank.pdf' }),
+    ).toBeVisible();
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+  });
   it('denies users without financial access and does not query finance', async () => {
     const requests = mockApi(sessionRoutes(makeUser(['MEMBER_READ'])));
     renderApp('/finance');

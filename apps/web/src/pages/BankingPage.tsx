@@ -132,7 +132,8 @@ export function BankingPage({
 }: {
   pendingOnly?: boolean;
 }) {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
+  const viewedTransactionId = params.get('transactionId');
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const authorized =
@@ -675,6 +676,28 @@ export function BankingPage({
       </DialogActions>
     </Dialog>
   );
+  const attachmentDialog = (
+    <Dialog
+      open={!pendingOnly && Boolean(viewedTransactionId)}
+      onClose={() => {
+        const next = new URLSearchParams(params);
+        next.delete('transactionId');
+        setParams(next);
+      }}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>Anexos do movimento bancário</DialogTitle>
+      <DialogContent>
+        {viewedTransactionId && (
+          <MovementAttachments
+            key={viewedTransactionId}
+            transactionId={viewedTransactionId}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
   if (pendingOnly) {
     if (!authorized) return null;
     const total = pendingSummary.data?.total ?? 0;
@@ -902,6 +925,7 @@ export function BankingPage({
         <LinearProgress aria-label="Carregando movimentos" />
       )}
       {reviewDialog}
+      {attachmentDialog}
     </Stack>
   );
 }

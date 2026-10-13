@@ -8,8 +8,12 @@ import {
   IsUUID,
   Matches,
   MaxLength,
+  MinLength,
 } from 'class-validator';
 import { PageQuery } from '../members/member.dto';
+export class RenameFinancialAttachmentDto {
+  @IsString() @MinLength(1) @MaxLength(255) filename!: string;
+}
 export class FinanceQuery extends PageQuery {
   @IsOptional() @IsIn(['TITHE', 'OFFERING', 'DONATION', 'OTHER']) type?:
     'TITHE' | 'OFFERING' | 'DONATION' | 'OTHER';

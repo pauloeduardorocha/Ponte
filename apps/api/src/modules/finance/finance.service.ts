@@ -11,6 +11,7 @@ import { Prisma, FinancialKind, Income } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { StorageService, PrivateUpload } from './storage.service';
+import { extname } from 'node:path';
 import {
   AccountDto,
   AccountPatch,
@@ -643,6 +644,53 @@ export class FinanceService {
       await this.storage.remove(storageKey);
       throw e;
     }
+  }
+  async renameAttachment(id: string, filename: string, user: CurrentUser) {
+    const name = filename.trim();
+    if (
+      !name ||
+      name.length > 255 ||
+      /[\\/:]/.test(name) ||
+      [...name].some((c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127)
+    )
+      throw new BadRequestException('Nome de arquivo inválido');
+    return this.mutation(user, 'FinancialAttachment', id, async (tx) => {
+      const attachment = await tx.financialAttachment.findUnique({
+        where: { id },
+      });
+      if (!attachment) throw new NotFoundException();
+      if (
+        extname(name).toLowerCase() !==
+        extname(attachment.filename).toLowerCase()
+      )
+        throw new BadRequestException(
+          'Mantenha a extensão original do arquivo',
+        );
+      return tx.financialAttachment.update({
+        where: { id },
+        data: { filename: name },
+        select: { id: true, filename: true, mime: true, size: true },
+      });
+    });
+  }
+  async deleteAttachment(id: string, user: CurrentUser) {
+    const attachment = await this.db.financialAttachment.findUnique({
+      where: { id },
+    });
+    if (!attachment) throw new NotFoundException();
+    await this.mutation(
+      user,
+      'FinancialAttachment',
+      id,
+      (tx) =>
+        tx.financialAttachment.delete({
+          where: { id },
+          select: { id: true, filename: true },
+        }),
+      'DELETE',
+    );
+    await this.storage.remove(attachment.storageKey);
+    return { id };
   }
   async attachments(expenseId: string) {
     return this.db.financialAttachment.findMany({

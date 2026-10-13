@@ -44,6 +44,7 @@ import {
   ContributionDto,
   ContributionPatch,
   FinanceQuery,
+  RenameFinancialAttachmentDto,
 } from './finance.dto';
 @ApiTags('Financeiro')
 @ApiBearerAuth()
@@ -214,6 +215,23 @@ export class FinanceController {
   @Permission('FINANCE_ATTACHMENT_READ')
   attachments(@Param('id', ParseUUIDPipe) id: string) {
     return this.finance.attachments(id);
+  }
+  @Patch('attachments/:id')
+  @Permission('FINANCE_ATTACHMENT_WRITE')
+  renameAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RenameFinancialAttachmentDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.finance.renameAttachment(id, dto.filename, req.user);
+  }
+  @Delete('attachments/:id')
+  @Permission('FINANCE_ATTACHMENT_WRITE')
+  deleteAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.finance.deleteAttachment(id, req.user);
   }
   @ApiConsumes('multipart/form-data')
   @ApiBody({

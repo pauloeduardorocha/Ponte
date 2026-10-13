@@ -19,7 +19,7 @@ import { apiRequest, getAccessToken } from '../lib/api';
 type Attachment = { id: string; filename: string; size: number };
 async function requestFile(path: string, options?: RequestInit) {
   const response = await fetch(
-    `${import.meta.env.VITE_API_URL ?? '/api/v1'}/finance/banking${path}`,
+    `${import.meta.env.VITE_API_URL ?? '/api/v1'}${path}`,
     {
       ...options,
       headers: { Authorization: `Bearer ${getAccessToken()}` },
@@ -42,8 +42,14 @@ async function requestFile(path: string, options?: RequestInit) {
 
 export function MovementAttachments({
   transactionId,
+  expenseId,
+  canWrite = true,
+  canRead = true,
 }: {
-  transactionId: string;
+  transactionId?: string;
+  expenseId?: string;
+  canWrite?: boolean;
+  canRead?: boolean;
 }) {
   const client = useQueryClient();
   const mobile = useMediaQuery('(pointer: coarse)');
@@ -52,13 +58,18 @@ export function MovementAttachments({
   const [deleting, setDeleting] = useState<Attachment | null>(null);
   const [name, setName] = useState('');
   const [progress, setProgress] = useState({ completed: 0, total: 0 });
-  const key = ['banking', 'attachments', transactionId];
+  const listPath = expenseId
+    ? `/finance/expenses/${expenseId}/attachments`
+    : `/finance/banking/transactions/${transactionId}/attachments`;
+  const filePath = (id: string) =>
+    expenseId ? `/finance/attachments/${id}` : `${listPath}/${id}`;
+  const maxMb = expenseId ? 10 : 1;
+  const maxFiles = expenseId ? Infinity : 5;
+  const key = ['finance', 'attachments', listPath];
   const attachments = useQuery({
+    enabled: canRead,
     queryKey: key,
-    queryFn: () =>
-      apiRequest<Attachment[]>(
-        `/finance/banking/transactions/${transactionId}/attachments`,
-      ),
+    queryFn: () => apiRequest<Attachment[]>(listPath),
   });
   const upload = useMutation({
     mutationFn: async (files: File[]) => {
@@ -66,7 +77,7 @@ export function MovementAttachments({
       for (const file of files) {
         const body = new FormData();
         body.append('file', file);
-        await requestFile(`/transactions/${transactionId}/attachments`, {
+        await requestFile(listPath, {
           method: 'POST',
           body,
         });
@@ -87,29 +98,24 @@ export function MovementAttachments({
       attachment: Attachment;
       filename: string;
     }) =>
-      apiRequest(
-        `/finance/banking/transactions/${transactionId}/attachments/${attachment.id}`,
-        { method: 'PATCH', body: { filename } },
-      ),
+      apiRequest(filePath(attachment.id), {
+        method: 'PATCH',
+        body: { filename },
+      }),
     onSuccess: () => setEditing(null),
     onError: (e: Error) => setError(e.message),
     onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
   const remove = useMutation({
     mutationFn: (attachment: Attachment) =>
-      apiRequest(
-        `/finance/banking/transactions/${transactionId}/attachments/${attachment.id}`,
-        { method: 'DELETE' },
-      ),
+      apiRequest(filePath(attachment.id), { method: 'DELETE' }),
     onSuccess: () => setDeleting(null),
     onError: (e: Error) => setError(e.message),
     onSettled: () => client.invalidateQueries({ queryKey: key }),
   });
   const download = useMutation({
     mutationFn: async (attachment: Attachment) => {
-      const response = await requestFile(
-        `/transactions/${transactionId}/attachments/${attachment.id}/download`,
-      );
+      const response = await requestFile(`${filePath(attachment.id)}/download`);
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
       link.href = url;
@@ -130,12 +136,14 @@ export function MovementAttachments({
     if (!files?.length) return;
     setError('');
     const selected = Array.from(files);
-    if (selected.length + (attachments.data?.length ?? 0) > 5) {
+    if (selected.length + (attachments.data?.length ?? 0) > maxFiles) {
       setError('Cada movimento permite até 5 anexos.');
       return;
     }
-    if (selected.some((file) => file.size < 1 || file.size > 1024 * 1024)) {
-      setError('Cada arquivo deve ter entre 1 byte e 1 MB.');
+    if (
+      selected.some((file) => file.size < 1 || file.size > maxMb * 1024 * 1024)
+    ) {
+      setError(`Cada arquivo deve ter entre 1 byte e ${maxMb} MB.`);
       return;
     }
     if (
@@ -150,17 +158,19 @@ export function MovementAttachments({
     upload.mutate(selected);
   }
   const disabled =
-    attachments.isPending ||
+    (canRead && attachments.isPending) ||
     !!attachments.error ||
     busy ||
-    (attachments.data?.length ?? 0) >= 5;
+    !canWrite ||
+    (attachments.data?.length ?? 0) >= maxFiles;
   return (
     <Stack spacing={1}>
       <Typography variant="subtitle2">
-        Anexos ({attachments.data?.length ?? 0}/5)
+        Anexos ({attachments.data?.length ?? 0}
+        {expenseId ? '' : '/5'})
       </Typography>
       <Typography variant="caption">
-        PDF ou imagem JPEG/PNG · até 1 MB por arquivo
+        PDF ou imagem JPEG/PNG · até {maxMb} MB por arquivo
       </Typography>
       {attachments.isFetching && (
         <LinearProgress aria-label="Carregando anexos" />
@@ -233,7 +243,7 @@ export function MovementAttachments({
             {attachment.filename}
           </Button>
           <Button
-            disabled={busy}
+            disabled={busy || !canWrite}
             aria-label={`Renomear ${attachment.filename}`}
             onClick={() => {
               setError('');
@@ -249,7 +259,7 @@ export function MovementAttachments({
             Renomear
           </Button>
           <Button
-            disabled={busy}
+            disabled={busy || !canWrite}
             color="error"
             aria-label={`Excluir ${attachment.filename}`}
             onClick={() => {

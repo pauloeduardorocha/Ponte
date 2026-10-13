@@ -6,6 +6,7 @@ import { ReportsPage } from './ReportsPage';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
+import { MovementAttachments } from './MovementAttachments';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
@@ -25,7 +26,7 @@ import {
   Typography,
 } from '@mui/material';
 import type { Page, Permission } from '@church/shared';
-import { apiRequest, getAccessToken } from '../lib/api';
+import { apiRequest } from '../lib/api';
 import { useAuth } from '../auth/auth-context';
 type RecordData = {
   id: string;
@@ -197,17 +198,6 @@ const labels: Record<string, string> = {
   DONATION: 'Doação',
   OTHER: 'Outro',
 };
-async function privateFile(path: string, options?: RequestInit) {
-  const response = await fetch(
-    `${import.meta.env.VITE_API_URL ?? '/api/v1'}/finance${path}`,
-    { ...options, headers: { Authorization: `Bearer ${getAccessToken()}` } },
-  );
-  if (!response.ok)
-    throw new Error(
-      'Não foi possível acessar o documento. Verifique a sessão, permissão e formato.',
-    );
-  return response;
-}
 export function FinancePage() {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -236,8 +226,8 @@ export function FinancePage() {
   }
   const [edit, setEdit] = useState<RecordData | null | undefined>();
   const [values, setValues] = useState<Record<string, string>>({});
-  const [fileExpense, setFileExpense] = useState<string | null>(null);
-  const [fileError, setFileError] = useState('');
+  const [fileExpense, setFileExpense] = useState<RecordData | null>(null);
+  const [fileMovement, setFileMovement] = useState<string | null>(null);
   const [deleteAccountTarget, setDeleteAccountTarget] =
     useState<RecordData | null>(null);
   const deleteAccount = useMutation({
@@ -288,12 +278,7 @@ export function FinancePage() {
     });
   const categories = useLookup('categories', 'FINANCE_CATEGORY_READ'),
     accounts = useLookup('accounts', 'FINANCE_ACCOUNT_READ');
-  const attachments = useQuery({
-    queryKey: ['finance', 'attachments', fileExpense],
-    queryFn: () =>
-      apiRequest<RecordData[]>(`/finance/expenses/${fileExpense}/attachments`),
-    enabled: Boolean(fileExpense) && hasPermission('FINANCE_ATTACHMENT_READ'),
-  });
+
   const save = useMutation({
     mutationFn: () => {
       const body: Record<string, string | null> = {};
@@ -635,6 +620,17 @@ export function FinancePage() {
                         Ver origem bancária
                       </Button>
                     )}
+                  {typeof item.bankTransactionId === 'string' &&
+                    hasPermission('FINANCE_BANK_IMPORT') &&
+                    hasPermission('FINANCE_CONTRIBUTION_READ') && (
+                      <Button
+                        onClick={() =>
+                          setFileMovement(item.bankTransactionId as string)
+                        }
+                      >
+                        Anexos bancários
+                      </Button>
+                    )}
                   <Stack direction="row" gap={1}>
                     {route === 'accounts' &&
                       hasPermission('FINANCE_ACCOUNT_WRITE') && (
@@ -656,8 +652,7 @@ export function FinancePage() {
                         hasPermission('FINANCE_ATTACHMENT_WRITE')) && (
                         <Button
                           onClick={() => {
-                            setFileExpense(item.id);
-                            setFileError('');
+                            setFileExpense(item);
                           }}
                         >
                           Documentos
@@ -832,69 +827,54 @@ export function FinancePage() {
         </Box>
       </Dialog>
       <Dialog
+        open={Boolean(fileMovement)}
+        onClose={() => setFileMovement(null)}
+        fullWidth
+      >
+        <DialogTitle>Anexos do movimento bancário</DialogTitle>
+        <DialogContent>
+          {fileMovement && (
+            <MovementAttachments
+              key={fileMovement}
+              transactionId={fileMovement}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog
         open={Boolean(fileExpense)}
         onClose={() => setFileExpense(null)}
         fullWidth
       >
         <DialogTitle>Documentos privados</DialogTitle>
         <DialogContent>
-          <Stack spacing={2}>
-            {fileError && <Alert severity="error">{fileError}</Alert>}
-            {attachments.error && (
-              <Alert severity="error">{attachments.error.message}</Alert>
-            )}
-            {hasPermission('FINANCE_ATTACHMENT_WRITE') && (
-              <Button component="label">
-                Enviar PDF, JPEG ou PNG (até 10 MB)
-                <input
-                  type="file"
-                  hidden
-                  accept=".pdf,.jpg,.jpeg,.png"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    try {
-                      const form = new FormData();
-                      form.append('file', file);
-                      await privateFile(
-                        `/expenses/${fileExpense}/attachments`,
-                        { method: 'POST', body: form },
-                      );
-                      setFileError('');
-                      void client.invalidateQueries({
-                        queryKey: ['finance', 'attachments'],
-                      });
-                    } catch (err) {
-                      setFileError((err as Error).message);
-                    }
-                    e.target.value = '';
-                  }}
+          {fileExpense && (
+            <Stack spacing={2}>
+              {typeof fileExpense.bankTransactionId === 'string' &&
+                hasPermission('FINANCE_BANK_IMPORT') &&
+                hasPermission('FINANCE_CONTRIBUTION_READ') && (
+                  <>
+                    <Typography variant="subtitle2">
+                      Anexos do movimento bancário
+                    </Typography>
+                    <MovementAttachments
+                      key={fileExpense.bankTransactionId}
+                      transactionId={fileExpense.bankTransactionId}
+                    />
+                  </>
+                )}
+              <Typography variant="subtitle2">Documentos da despesa</Typography>
+              {(hasPermission('FINANCE_ATTACHMENT_READ') ||
+                hasPermission('FINANCE_ATTACHMENT_WRITE')) && (
+                <MovementAttachments
+                  key={fileExpense.id}
+                  expenseId={fileExpense.id}
+                  canWrite={hasPermission('FINANCE_ATTACHMENT_WRITE')}
+                  canRead={hasPermission('FINANCE_ATTACHMENT_READ')}
                 />
-              </Button>
-            )}
-            {attachments.data?.map((a) => (
-              <Button
-                key={a.id}
-                onClick={async () => {
-                  try {
-                    const response = await privateFile(
-                      `/attachments/${a.id}/download`,
-                    );
-                    const url = URL.createObjectURL(await response.blob());
-                    const anchor = document.createElement('a');
-                    anchor.href = url;
-                    anchor.download = a.filename!;
-                    anchor.click();
-                    setTimeout(() => URL.revokeObjectURL(url), 1000);
-                  } catch (err) {
-                    setFileError((err as Error).message);
-                  }
-                }}
-              >
-                {a.filename}
-              </Button>
-            ))}
-          </Stack>
+              )}
+            </Stack>
+          )}
         </DialogContent>
       </Dialog>
       <Dialog
