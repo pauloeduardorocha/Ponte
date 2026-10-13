@@ -143,7 +143,13 @@ describe('Finance permissions and dashboard', () => {
       },
     });
     renderApp('/finance');
-    expect(await screen.findByText(/80,00/)).toBeInTheDocument();
+    const balance = await screen.findByText(/80,00/);
+    expect(balance).toBeInTheDocument();
+    const cards = balance.closest('.metric-grid')!;
+    expect(cards.children).toHaveLength(3);
+    expect(cards.children[0]).toHaveTextContent('Receitas');
+    expect(cards.children[1]).toHaveTextContent('Despesas');
+    expect(cards.children[2]).toHaveTextContent('Saldo');
     expect(screen.queryByText('Receitas pendentes')).not.toBeInTheDocument();
     expect(screen.queryByText('Despesas pendentes')).not.toBeInTheDocument();
     expect(
