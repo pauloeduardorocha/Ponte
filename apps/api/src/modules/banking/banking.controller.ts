@@ -41,6 +41,60 @@ import { BankingService } from './banking.service';
 @Permission('FINANCE_BANK_IMPORT', 'FINANCE_CONTRIBUTION_READ')
 export class BankingController {
   constructor(private readonly banking: BankingService) {}
+  @Get('transactions/:id/attachments')
+  attachments(@Param('id', ParseUUIDPipe) id: string) {
+    return this.banking.attachments(id);
+  }
+
+  @Post('transactions/:id/attachments')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description:
+            'PDF, JPEG ou PNG; até 1 MB. Máximo 5 anexos por movimento.',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 1024 * 1024, files: 1, fields: 0 },
+    }),
+  )
+  attach(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: PrivateUpload,
+    @Req() req: AuthRequest,
+  ) {
+    return this.banking.attach(id, file, req.user);
+  }
+
+  @Get('transactions/:id/attachments/:attachmentId/download')
+  async downloadAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Req() req: AuthRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const file = await this.banking.downloadAttachment(
+      id,
+      attachmentId,
+      req.user,
+    );
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    return new StreamableFile(file.buffer, {
+      type: 'application/octet-stream',
+      disposition:
+        "attachment; filename*=UTF-8''" + encodeURIComponent(file.filename),
+    });
+  }
   @ApiConsumes('multipart/form-data')
   @ApiExtraModels(ImportUploadDto)
   @ApiBody({

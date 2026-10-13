@@ -28,6 +28,7 @@ import { useAuth } from '../auth/auth-context';
 import { apiRequest, getAccessToken } from '../lib/api';
 import { useDebouncedValue } from '../lib/use-debounced-value';
 import { MovementInvoices, type Invoice } from './BankInvoices';
+import { MovementAttachments } from './MovementAttachments';
 import { EfaturaFetch } from './EfaturaFetch';
 import { LinkBankMovement } from './LinkBankMovement';
 type Lookup = { id: string; name: string; kind?: string; currency?: string };
@@ -599,6 +600,10 @@ export function BankingPage({
                 >
                   {classificationForm}
                 </Box>
+                <MovementAttachments
+                  key={currentMovement.id}
+                  transactionId={currentMovement.id}
+                />
                 <MovementInvoices
                   canAssociate={currentMovement.status !== 'REJECTED'}
                   transactionId={currentMovement.id}

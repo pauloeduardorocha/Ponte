@@ -31,6 +31,73 @@ type Tx = Prisma.TransactionClient;
 @Injectable()
 export class BankingService {
   private readonly logger = new Logger(BankingService.name);
+  async attachments(transactionId: string) {
+    if (
+      !(await this.db.bankTransaction.findUnique({
+        where: { id: transactionId },
+      }))
+    )
+      throw new NotFoundException();
+    return this.db.bankAttachment.findMany({
+      where: { transactionId },
+      select: { id: true, filename: true, mime: true, size: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+
+  async attach(transactionId: string, file: PrivateUpload, user: CurrentUser) {
+    if (!file || file.size > 1024 * 1024)
+      throw new BadRequestException('Cada arquivo deve ter até 1 MB');
+    this.storage.validate(file);
+    const storageKey = await this.storage.put(file);
+    try {
+      return await this.db.$transaction(async (tx) => {
+        await bindAudit(tx);
+        const rows = await tx.$queryRaw<
+          { id: string }[]
+        >`SELECT id FROM bank_transactions WHERE id = ${transactionId}::uuid FOR UPDATE`;
+        if (!rows.length) throw new NotFoundException();
+        if ((await tx.bankAttachment.count({ where: { transactionId } })) >= 5)
+          throw new BadRequestException('Cada movimento permite até 5 anexos');
+        const attachment = await tx.bankAttachment.create({
+          data: {
+            transactionId,
+            storageKey,
+            filename: file.originalname,
+            mime: file.mimetype,
+            size: file.size,
+          },
+          select: { id: true, filename: true, mime: true, size: true },
+        });
+        await this.audit(tx, user, 'ATTACHMENT_UPLOAD', transactionId, {
+          attachmentId: attachment.id,
+        });
+        return attachment;
+      });
+    } catch (error) {
+      await this.storage.remove(storageKey);
+      throw error;
+    }
+  }
+
+  async downloadAttachment(
+    transactionId: string,
+    id: string,
+    user: CurrentUser,
+  ) {
+    const attachment = await this.db.bankAttachment.findFirst({
+      where: { id, transactionId },
+    });
+    if (!attachment) throw new NotFoundException();
+    const buffer = await this.storage.get(attachment.storageKey);
+    await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      await this.audit(tx, user, 'ATTACHMENT_DOWNLOAD', transactionId, {
+        attachmentId: id,
+      });
+    });
+    return { buffer, filename: attachment.filename };
+  }
   constructor(
     private readonly db: PrismaService,
     private readonly storage: StorageService,

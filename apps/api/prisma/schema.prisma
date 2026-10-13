@@ -660,6 +660,7 @@ model BankImport {
 }
 
 model BankTransaction {
+  attachments         BankAttachment[]
   id                  String                @id @default(uuid()) @db.Uuid
   importId            String                @db.Uuid
   import              BankImport            @relation(fields: [importId], references: [id], onDelete: Restrict)
@@ -705,6 +706,20 @@ model BankTransaction {
   @@index([categoryId])
   @@index([supplierId])
   @@map("bank_transactions")
+}
+
+model BankAttachment {
+  id            String          @id @default(uuid()) @db.Uuid
+  transactionId String          @db.Uuid
+  transaction   BankTransaction @relation(fields: [transactionId], references: [id], onDelete: Restrict)
+  storageKey    String          @unique @db.VarChar(100)
+  filename      String          @db.VarChar(255)
+  mime          String          @db.VarChar(100)
+  size          Int
+  createdAt     DateTime        @default(now())
+
+  @@index([transactionId])
+  @@map("bank_attachments")
 }
 
 enum BankImportStatus {
