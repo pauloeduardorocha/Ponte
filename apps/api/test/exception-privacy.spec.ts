@@ -1,3 +1,4 @@
+import { EfaturaUnavailableException } from '../src/common/efatura-unavailable.exception';
 import { ArgumentsHost, BadRequestException, Logger } from '@nestjs/common';
 import { SafeExceptionFilter } from '../src/common/safe-exception.filter';
 import { requestTrace, traceMiddleware } from '../src/common/request-trace';
@@ -20,6 +21,30 @@ describe('Exception privacy', () => {
           message: expect.stringContaining(
             'Nenhum movimento desta tentativa foi gravado',
           ),
+          requestId: expect.any(String),
+        }),
+      );
+    } finally {
+      log.mockRestore();
+    }
+  });
+  it('exposes only the fixed e-Fatura failure message with a reference', () => {
+    const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    const json = jest.fn();
+    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const host = {
+      switchToHttp: () => ({ getResponse: () => response }),
+    } as unknown as ArgumentsHost;
+    try {
+      new SafeExceptionFilter().catch(
+        new EfaturaUnavailableException('browser'),
+        host,
+      );
+      expect(response.status).toHaveBeenCalledWith(503);
+      expect(json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          message:
+            'O navegador de consulta não está disponível. Verifique a instalação do serviço.',
           requestId: expect.any(String),
         }),
       );

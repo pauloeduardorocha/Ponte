@@ -4,10 +4,12 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { fork } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { EfaturaUnavailableException } from '../../common/efatura-unavailable.exception';
+import { requestTrace } from '../../common/request-trace';
 import type { CurrentUser } from '@church/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { InvoicesService } from './invoices.service';
@@ -27,6 +29,11 @@ export class EfaturaService {
       throw new ConflictException(
         'Uma consulta ao e-Fatura está em andamento. Tente novamente em instantes.',
       );
+    const stage = (name: string) => {
+      const trace = requestTrace.getStore();
+      if (trace) trace.stage = `efatura.${name}`;
+    };
+    stage('load_import');
     const imported = await this.db.bankImport.findUnique({
       where: { id: dto.bankImportId },
     });
@@ -37,6 +44,7 @@ export class EfaturaService {
     ) {
       throw new BadRequestException('Escolha um extrato processado.');
     }
+    stage('load_period');
     const dates = await this.db.bankTransaction.aggregate({
       where: { importId: imported.id },
       _min: { date: true },
@@ -44,17 +52,28 @@ export class EfaturaService {
     });
     if (!dates._min.date || !dates._max.date)
       throw new BadRequestException('O extrato não contém movimentos.');
-    const script = require.resolve('./efatura/worker.cjs');
-    if (!existsSync(script))
-      throw new ServiceUnavailableException(
-        'O serviço de consulta ao e-Fatura não está instalado.',
-      );
+    stage('resolve_worker');
+    // Serverless bundling may move this module; includeFiles retains source assets.
+    let script: string | undefined;
+    try {
+      script = require.resolve('./efatura/worker.cjs');
+    } catch {
+      // Resolve the included source asset when the bundled relative path is absent.
+    }
+    script = [
+      script,
+      resolve(__dirname, 'efatura/worker.cjs'),
+      resolve(process.cwd(), 'src/modules/banking/efatura/worker.cjs'),
+      resolve(process.cwd(), 'apps/api/src/modules/banking/efatura/worker.cjs'),
+    ].find((path): path is string => Boolean(path && existsSync(path)));
+    if (!script) throw new EfaturaUnavailableException('missing');
     if (this.running)
       throw new ConflictException(
         'Uma consulta ao e-Fatura está em andamento. Tente novamente em instantes.',
       );
     this.running = true;
     try {
+      stage('consultation');
       const consultation = this.run(script, {
         nif: dto.nif,
         password: dto.password,
@@ -71,7 +90,8 @@ export class EfaturaService {
         throw new BadRequestException(
           'Há demasiadas faturas. Use um extrato com período menor.',
         );
-      return this.invoices.upload(
+      stage('persist_invoices');
+      return await this.invoices.upload(
         {
           originalname: 'faturas-efatura.json',
           mimetype: 'application/json',
@@ -106,20 +126,11 @@ export class EfaturaService {
         } else resolveResult(result);
       };
       const timer = setTimeout(
-        () =>
-          finish(
-            new ServiceUnavailableException(
-              'A consulta demorou demasiado. Tente novamente. O extrato já foi importado.',
-            ),
-          ),
+        () => finish(new EfaturaUnavailableException('timeout')),
         120000,
       );
       worker.on('error', () =>
-        finish(
-          new ServiceUnavailableException(
-            'Não foi possível iniciar a consulta ao e-Fatura.',
-          ),
-        ),
+        finish(new EfaturaUnavailableException('launch')),
       );
       worker.on(
         'message',
@@ -136,10 +147,10 @@ export class EfaturaService {
               ? message.stage
               : 'unknown';
             this.logger.warn(`e-Fatura ${code} at ${stage}`);
-            consultationError = new ServiceUnavailableException(
-              message.error === 'BROWSER_UNAVAILABLE'
-                ? 'O navegador de consulta não está disponível. Verifique a instalação do serviço.'
-                : 'Não foi possível consultar as faturas. Confira o NIF e a senha. O portal pode exigir MFA ou CAPTCHA.',
+            const trace = requestTrace.getStore();
+            if (trace) trace.stage = `efatura.${stage}`;
+            consultationError = new EfaturaUnavailableException(
+              message.error === 'BROWSER_UNAVAILABLE' ? 'browser' : 'portal',
             );
           } else if (message.result) result = message.result;
         },
@@ -149,20 +160,13 @@ export class EfaturaService {
           consultationError ??
             (code === 0 && result
               ? undefined
-              : new ServiceUnavailableException(
-                  'A consulta ao e-Fatura não foi concluída.',
-                )),
+              : new EfaturaUnavailableException('incomplete')),
         ),
       );
       // Credentials travel only over the private IPC channel, never as CLI arguments or files.
       worker.send(config, (error) => {
         config = {};
-        if (error)
-          finish(
-            new ServiceUnavailableException(
-              'Não foi possível iniciar a consulta.',
-            ),
-          );
+        if (error) finish(new EfaturaUnavailableException('launch'));
       });
     });
   }

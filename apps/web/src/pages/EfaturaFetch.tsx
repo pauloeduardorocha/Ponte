@@ -135,8 +135,8 @@ export function EfaturaFetch({
             />
             {fetchInvoices.error && (
               <Alert severity="error">
-                {fetchInvoices.error.message} As receitas e despesas do extrato
-                já estão cadastradas.
+                {fetchInvoices.error.message} A busca de faturas não foi
+                concluída. Você pode continuar a revisão dos movimentos.
               </Alert>
             )}
             {fetchInvoices.data && (

@@ -9,6 +9,7 @@ import { randomUUID } from 'node:crypto';
 import type { Response } from 'express';
 import { requestTrace, safeErrorFields } from './request-trace';
 import { BankImportTimeoutException } from './bank-import-timeout.exception';
+import { EfaturaUnavailableException } from './efatura-unavailable.exception';
 
 @Catch()
 export class SafeExceptionFilter implements ExceptionFilter {
@@ -45,7 +46,8 @@ export class SafeExceptionFilter implements ExceptionFilter {
     response.status(statusCode).json({
       statusCode,
       message:
-        error instanceof BankImportTimeoutException
+        error instanceof BankImportTimeoutException ||
+        error instanceof EfaturaUnavailableException
           ? error.message
           : 'Erro interno no servidor',
       requestId,

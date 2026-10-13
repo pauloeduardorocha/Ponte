@@ -99,6 +99,38 @@ describe('e-Fatura integration', () => {
     expect(invoices.upload).not.toHaveBeenCalled();
     expect(db.bankImport.findUnique).toHaveBeenCalledTimes(1);
   });
+  it('returns a specific unavailable error when worker assets are missing', async () => {
+    const { service, invoices } = fixture();
+    (existsSync as jest.Mock).mockReturnValue(false);
+    await expect(
+      service.fetch(
+        { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
+        user,
+      ),
+    ).rejects.toThrow('O serviço de consulta ao e-Fatura não está instalado.');
+    expect(fork).not.toHaveBeenCalled();
+    expect(invoices.upload).not.toHaveBeenCalled();
+  });
+  it('uses the included source worker when the first resolved asset is absent', async () => {
+    const { service, worker } = fixture();
+    (existsSync as jest.Mock)
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(false)
+      .mockReturnValue(true);
+    const pending = service.fetch(
+      { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
+      user,
+    );
+    await new Promise(setImmediate);
+    expect(fork).toHaveBeenCalledWith(
+      expect.stringContaining('src'),
+      [],
+      expect.any(Object),
+    );
+    worker.emit('message', { result: { invoices: [] } });
+    worker.emit('exit', 0);
+    await pending;
+  });
   it('times out a stalled browser and blocks overlapping consultations', async () => {
     const { service, worker } = fixture();
     jest.useFakeTimers();
