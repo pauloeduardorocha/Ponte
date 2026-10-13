@@ -5,6 +5,8 @@ import { EfaturaService } from './efatura.service';
 import { PrismaService } from '../../database/prisma.service';
 import { InvoicesService } from './invoices.service';
 import type { CurrentUser } from '@church/shared';
+import { Logger } from '@nestjs/common';
+import { requestTrace } from '../../common/request-trace';
 
 jest.mock('node:child_process', () => ({
   ...jest.requireActual('node:child_process'),
@@ -37,6 +39,7 @@ describe('e-Fatura integration', () => {
     const worker = Object.assign(new EventEmitter(), {
       kill: jest.fn(),
       send: jest.fn((_config, callback) => callback()),
+      stderr: new EventEmitter(),
     });
     (fork as jest.Mock).mockReturnValue(worker);
     (existsSync as jest.Mock).mockReturnValue(true);
@@ -61,7 +64,7 @@ describe('e-Fatura integration', () => {
       [],
       expect.objectContaining({
         windowsHide: true,
-        stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+        stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
       }),
     );
     expect(worker.send).toHaveBeenCalledWith(
@@ -99,6 +102,67 @@ describe('e-Fatura integration', () => {
     expect(invoices.upload).not.toHaveBeenCalled();
     expect(db.bankImport.findUnique).toHaveBeenCalledTimes(1);
   });
+  it.each([
+    [1, null, 'MODULE_NOT_FOUND'],
+    [null, 'SIGKILL', 'NONE'],
+    [0, null, 'NONE'],
+  ])(
+    'diagnoses incomplete exit %s/%s without logging private stderr',
+    async (code, signal, stderrCode) => {
+      const { service, worker, invoices } = fixture();
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => {});
+      try {
+        const pending = requestTrace.run(
+          { requestId: 'test-reference', startedAt: performance.now() },
+          () =>
+            service.fetch(
+              {
+                bankImportId: 'import-1',
+                nif: '123456789',
+                password: 'temporary-secret',
+              },
+              user,
+            ),
+        );
+        const rejected = expect(pending).rejects.toThrow('não foi concluída');
+        await new Promise(setImmediate);
+        worker.emit('message', { stage: 'extraction' });
+        worker.emit('message', { stage: 'temporary-secret' });
+        if (stderrCode === 'MODULE_NOT_FOUND') {
+          worker.stderr.emit(
+            'data',
+            Buffer.from(
+              "Error: private invoice temporary-secret 123456789\ncode: 'MODULE_NOT_",
+            ),
+          );
+          worker.stderr.emit('data', Buffer.from("FOUND'"));
+        }
+        worker.emit('exit', code, signal);
+        await rejected;
+        const logs = warn.mock.calls.map(([message]) => String(message));
+        expect(logs.map((message) => JSON.parse(message))).toContainEqual(
+          expect.objectContaining({
+            event: 'efatura.worker.failed',
+            requestId: 'test-reference',
+            reason: 'incomplete',
+            stage: 'extraction',
+            exitCode: code,
+            signal,
+            stderrCode,
+            receivedResult: false,
+          }),
+        );
+        expect(logs.join('')).not.toMatch(
+          /temporary-secret|123456789|private invoice/,
+        );
+        expect(invoices.upload).not.toHaveBeenCalled();
+      } finally {
+        warn.mockRestore();
+      }
+    },
+  );
   it('returns a specific unavailable error when worker assets are missing', async () => {
     const { service, invoices } = fixture();
     (existsSync as jest.Mock).mockReturnValue(false);

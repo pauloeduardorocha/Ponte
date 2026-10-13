@@ -107,15 +107,50 @@ export class EfaturaService {
   }
 
   private run(script: string, config: object): Promise<unknown> {
+    const trace = requestTrace.getStore();
     return new Promise((resolveResult, reject) => {
       const worker = fork(script, [], {
-        stdio: ['ignore', 'ignore', 'ignore', 'ipc'],
+        stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
         windowsHide: true,
         execArgv: [],
       });
       let result: unknown;
       let consultationError: Error | undefined;
       let settled = false;
+      let stderrPrefix = '';
+      let workerStage = 'launch';
+      // Retain only a bounded prefix in memory; never log stderr itself.
+      worker.stderr?.on('data', (chunk: Buffer) => {
+        stderrPrefix = (stderrPrefix + chunk.toString()).slice(0, 8192);
+      });
+      const diagnostic = (
+        reason: string,
+        code?: number | null,
+        signal?: string | null,
+      ) => {
+        const stderrCode = /\bMODULE_NOT_FOUND\b/.test(stderrPrefix)
+          ? 'MODULE_NOT_FOUND'
+          : /\bERR_REQUIRE_ESM\b/.test(stderrPrefix)
+            ? 'ERR_REQUIRE_ESM'
+            : /\bSyntaxError:/.test(stderrPrefix)
+              ? 'SYNTAX_ERROR'
+              : stderrPrefix
+                ? 'UNCLASSIFIED'
+                : 'NONE';
+        this.logger.warn(
+          JSON.stringify({
+            event: 'efatura.worker.failed',
+            requestId: trace?.requestId,
+            stage: workerStage,
+            reason,
+            exitCode: typeof code === 'number' ? code : null,
+            signal: signal && /^SIG[A-Z0-9]+$/.test(signal) ? signal : null,
+            stderrCode,
+            receivedResult: result !== undefined,
+          }),
+        );
+        stderrPrefix = '';
+      };
       const finish = (error?: Error) => {
         if (settled) return;
         settled = true;
@@ -125,16 +160,26 @@ export class EfaturaService {
           reject(error);
         } else resolveResult(result);
       };
-      const timer = setTimeout(
-        () => finish(new EfaturaUnavailableException('timeout')),
-        120000,
-      );
-      worker.on('error', () =>
-        finish(new EfaturaUnavailableException('launch')),
-      );
+      const timer = setTimeout(() => {
+        diagnostic('timeout');
+        finish(new EfaturaUnavailableException('timeout'));
+      }, 120000);
+      worker.on('error', () => {
+        if (settled) return;
+        diagnostic('launch');
+        finish(new EfaturaUnavailableException('launch'));
+      });
       worker.on(
         'message',
         (message: { result?: unknown; error?: string; stage?: string }) => {
+          if (
+            ['launch', 'login', 'filters', 'extraction'].includes(
+              message.stage ?? '',
+            )
+          ) {
+            workerStage = message.stage!;
+            if (trace) trace.stage = `efatura.${workerStage}`;
+          }
           if (message.error) {
             // Never log portal errors, URLs, invoice data or credentials.
             const code =
@@ -146,8 +191,15 @@ export class EfaturaService {
             )
               ? message.stage
               : 'unknown';
-            this.logger.warn(`e-Fatura ${code} at ${stage}`);
-            const trace = requestTrace.getStore();
+            workerStage = stage ?? 'unknown';
+            this.logger.warn(
+              JSON.stringify({
+                event: 'efatura.consultation.failed',
+                requestId: trace?.requestId,
+                code,
+                stage: workerStage,
+              }),
+            );
             if (trace) trace.stage = `efatura.${stage}`;
             consultationError = new EfaturaUnavailableException(
               message.error === 'BROWSER_UNAVAILABLE' ? 'browser' : 'portal',
@@ -155,14 +207,22 @@ export class EfaturaService {
           } else if (message.result) result = message.result;
         },
       );
-      worker.on('exit', (code) =>
+      worker.on('exit', (code, signal) => {
+        if (settled) return;
+        if (consultationError || code !== 0 || !result) {
+          diagnostic(
+            consultationError ? 'consultation' : 'incomplete',
+            code,
+            signal,
+          );
+        }
         finish(
           consultationError ??
             (code === 0 && result
               ? undefined
               : new EfaturaUnavailableException('incomplete')),
-        ),
-      );
+        );
+      });
       // Credentials travel only over the private IPC channel, never as CLI arguments or files.
       worker.send(config, (error) => {
         config = {};

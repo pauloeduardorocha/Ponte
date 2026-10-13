@@ -15,6 +15,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
   try {
     const page = await browser.newPage();
     stage = 'login';
+    process.send({ stage });
     // Aceder diretamente ao URL de login que forneceu
     await page.goto(
       'https://www.acesso.gov.pt/jsp/loginRedirectForm.jsp?path=consultarDocumentosAdquirente.action&partID=EFPF',
@@ -57,9 +58,11 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     );
 
     stage = 'filters';
+    process.send({ stage });
     await applyDateFilters(page, period, process.env.EFATURA_FILTER_SUBMIT);
     // 5. Extração de dados da tabela (#documentos)
     stage = 'extraction';
+    process.send({ stage });
     const seletorLinhas = 'table#documentos tbody tr';
     const seletorProxima = '#documentos_paginate li.next:not(.disabled) a';
     await page.waitForSelector(seletorLinhas);
