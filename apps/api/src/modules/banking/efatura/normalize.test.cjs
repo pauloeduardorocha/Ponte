@@ -52,6 +52,94 @@ test('requires explicit mapping for unknown columns and ambiguous links', () => 
     'FT/99',
   );
 });
+
+test('classifies extraction failures without including invoice contents', () => {
+  assert.throws(() => normalizeInvoices([], ['private-header'], '987654321'), {
+    code: 'INVOICE_COLUMN_UNKNOWN',
+    field: 'issuerName',
+    message: 'INVOICE_COLUMN_UNKNOWN',
+  });
+  const invalidDate = { ...row, cells: [...row.cells] };
+  invalidDate.cells[3] = 'private-invalid-date';
+  assert.throws(() => normalizeInvoices([invalidDate], headers, '987654321'), {
+    code: 'INVOICE_DATE_INVALID',
+    field: 'date',
+    message: 'INVOICE_DATE_INVALID',
+  });
+  const invalidAmount = { ...row, cells: [...row.cells] };
+  invalidAmount.cells[4] = 'private-invalid-amount';
+  assert.throws(
+    () => normalizeInvoices([invalidAmount], headers, '987654321'),
+    {
+      code: 'INVOICE_AMOUNT_INVALID',
+      field: 'amount',
+      message: 'INVOICE_AMOUNT_INVALID',
+    },
+  );
+});
+
+test('reads current portal columns with combined issuer and invoice/ATCUD', () => {
+  const portalHeaders = [
+    'Setor',
+    'Emitente',
+    'Nº Fatura / ATCUD',
+    'Tipo',
+    'Data Emissão',
+    'Total',
+    'IVA',
+    'Base Tributável',
+    'Situação',
+    'Comunicação Emitente',
+    'Comunicação Adquirente',
+  ];
+  const portalRow = {
+    cells: [
+      'Outros',
+      '123456789 - Fornecedor - Exemplo, S.A.',
+      'FT TEST/1032 / ABCD1234-1032',
+      'Fatura',
+      '2026-09-15',
+      '300,00 €',
+      '56,10 €',
+      '243,90 €',
+      'Pendente',
+      '',
+      '',
+    ],
+    links: [
+      {
+        column: 2,
+        url: 'https://faturas.portaldasfinancas.gov.pt/detalheDocumentoAdquirente.action?idDocumento=1&dataEmissaoDocumento=2026-09-15',
+      },
+    ],
+  };
+  const original = JSON.stringify(portalRow);
+  const [invoice] = normalizeInvoices([portalRow], portalHeaders, '987654321');
+  assert.equal(invoice.issuerTaxId, '123456789');
+  assert.equal(invoice.issuerName, 'Fornecedor - Exemplo, S.A.');
+  assert.equal(invoice.number, 'FT TEST/1032');
+  assert.equal(invoice.date, '2026-09-15');
+  assert.equal(invoice.amount, '300.00');
+  assert.equal(invoice.documentUrl, portalRow.links[0].url);
+  assert.equal(JSON.stringify(portalRow), original);
+  assert.deepEqual(normalizeInvoices([], portalHeaders, '987654321'), []);
+  assert.throws(
+    () =>
+      normalizeInvoices(
+        [
+          {
+            ...portalRow,
+            cells: portalRow.cells.map((value, index) =>
+              index === 1 ? 'Fornecedor sem NIF' : value,
+            ),
+          },
+        ],
+        portalHeaders,
+        '987654321',
+      ),
+    { code: 'INVOICE_IDENTITY_INVALID' },
+  );
+});
 test('rejects invalid periods before launching the browser', () => {
   for (const period of [
     {},

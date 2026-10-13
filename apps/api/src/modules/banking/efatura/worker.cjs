@@ -268,13 +268,31 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       process.send({ result }, (error) => (error ? reject(error) : resolve())),
     );
   } catch (error) {
-    const failureCode =
-      error.code === 'FILTER_SUBMIT_NOT_FOUND'
+    const extractionCodes = [
+      'INVOICE_COLUMN_UNKNOWN',
+      'INVOICE_DATE_INVALID',
+      'INVOICE_AMOUNT_INVALID',
+      'INVOICE_LINK_AMBIGUOUS',
+      'INVOICE_IDENTITY_INVALID',
+    ];
+    const failureCode = extractionCodes.includes(error.code)
+      ? error.code
+      : error.code === 'FILTER_SUBMIT_NOT_FOUND'
         ? 'FILTER_SUBMIT_NOT_FOUND'
         : error.name === 'TimeoutError'
           ? 'PORTAL_TIMEOUT'
           : 'PORTAL_ERROR';
-    process.send({ error: 'CONSULTATION_FAILED', stage, failureCode });
+    const field = [
+      'issuerName',
+      'issuerTaxId',
+      'number',
+      'date',
+      'amount',
+      'documentUrl',
+    ].includes(error.field)
+      ? error.field
+      : undefined;
+    process.send({ error: 'CONSULTATION_FAILED', stage, failureCode, field });
     process.exitCode = 1;
   } finally {
     await browser.close();

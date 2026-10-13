@@ -188,6 +188,7 @@ export class EfaturaService {
           error?: string;
           stage?: string;
           failureCode?: string;
+          field?: string;
         }) => {
           if (
             ['launch', 'login', 'filters', 'extraction'].includes(
@@ -219,9 +220,24 @@ export class EfaturaService {
                   'FILTER_SUBMIT_NOT_FOUND',
                   'PORTAL_TIMEOUT',
                   'PORTAL_ERROR',
+                  'INVOICE_COLUMN_UNKNOWN',
+                  'INVOICE_DATE_INVALID',
+                  'INVOICE_AMOUNT_INVALID',
+                  'INVOICE_LINK_AMBIGUOUS',
+                  'INVOICE_IDENTITY_INVALID',
                 ].includes(message.failureCode ?? '')
                   ? message.failureCode
                   : 'UNKNOWN',
+                field: [
+                  'issuerName',
+                  'issuerTaxId',
+                  'number',
+                  'date',
+                  'amount',
+                  'documentUrl',
+                ].includes(message.field ?? '')
+                  ? message.field
+                  : undefined,
               }),
             );
             if (trace) trace.stage = `efatura.${stage}`;
