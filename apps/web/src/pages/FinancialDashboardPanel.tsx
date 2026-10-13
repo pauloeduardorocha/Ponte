@@ -38,6 +38,8 @@ export interface FinancialDashboard {
     currency: string;
     income: string;
     expenses: string;
+    incomeCategories?: { id: string; name: string; amount: string }[];
+    expenseCategories?: { id: string; name: string; amount: string }[];
   }[];
   unreconciled?: number;
   latestImport?: {

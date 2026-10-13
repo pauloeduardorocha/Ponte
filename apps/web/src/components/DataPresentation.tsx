@@ -6,6 +6,7 @@ import {
   LinearProgress,
   Stack,
   Typography,
+  Tooltip,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { STATUS_LABELS } from '../lib/status-labels';
@@ -182,11 +183,25 @@ export function BreakdownChart({
     </Card>
   );
 }
+function categoryColor(id: string, kind: 'income' | 'expenses') {
+  const hash = Array.from(id).reduce(
+    (value, char) => (value * 31 + char.charCodeAt(0)) >>> 0,
+    0,
+  );
+  return `hsl(${kind === 'income' ? 135 + (hash % 40) : hash % 30}, ${50 + (hash % 25)}%, ${30 + ((hash >>> 8) % 30)}%)`;
+}
+
 export function MoneyTrend({
   rows,
   currency,
 }: {
-  rows: { month: string; income: string; expenses: string }[];
+  rows: {
+    month: string;
+    income: string;
+    expenses: string;
+    incomeCategories?: { id: string; name: string; amount: string }[];
+    expenseCategories?: { id: string; name: string; amount: string }[];
+  }[];
   currency: string;
 }) {
   const max = Math.max(
@@ -208,6 +223,47 @@ export function MoneyTrend({
           <Chip label="Receitas" color="success" size="small" />
           <Chip label="Despesas" color="error" size="small" />
         </Stack>
+        <Stack
+          direction="row"
+          useFlexGap
+          flexWrap="wrap"
+          gap={1}
+          sx={{ mb: 2 }}
+        >
+          {(['income', 'expenses'] as const).flatMap((kind) => {
+            const categories = new Map(
+              rows
+                .flatMap(
+                  (row) =>
+                    (kind === 'income'
+                      ? row.incomeCategories
+                      : row.expenseCategories) ?? [],
+                )
+                .map((category) => [category.id, category]),
+            );
+            return Array.from(categories.values()).map((category) => (
+              <Stack
+                key={`${kind}-${category.id}`}
+                direction="row"
+                alignItems="center"
+                gap={0.5}
+              >
+                <Box
+                  sx={{
+                    width: 10,
+                    height: 10,
+                    bgcolor: categoryColor(category.id, kind),
+                    borderRadius: 0.5,
+                  }}
+                />
+                <Typography variant="caption">
+                  {kind === 'income' ? 'Receitas' : 'Despesas'} ï¿½{' '}
+                  {category.name}
+                </Typography>
+              </Stack>
+            ));
+          })}
+        </Stack>
         <Box
           sx={{
             height: 210,
@@ -227,28 +283,71 @@ export function MoneyTrend({
                   height: 160,
                 }}
               >
-                <Box
-                  title={`Receitas: ${format(r.income)}`}
-                  aria-label={`${r.month}, receitas: ${format(r.income)}`}
-                  sx={{
-                    width: '30%',
-                    height: `${(100 * Number(r.income)) / max}%`,
-                    minHeight: 2,
-                    bgcolor: 'success.main',
-                    borderRadius: '5px 5px 0 0',
-                  }}
-                />
-                <Box
-                  title={`Despesas: ${format(r.expenses)}`}
-                  aria-label={`${r.month}, despesas: ${format(r.expenses)}`}
-                  sx={{
-                    width: '30%',
-                    height: `${(100 * Number(r.expenses)) / max}%`,
-                    minHeight: 2,
-                    bgcolor: 'error.main',
-                    borderRadius: '5px 5px 0 0',
-                  }}
-                />
+                {(['income', 'expenses'] as const).map((kind) => {
+                  const label = kind === 'income' ? 'Receitas' : 'Despesas';
+                  const categories = (kind === 'income'
+                    ? r.incomeCategories
+                    : r.expenseCategories) ?? [
+                    { id: 'total', name: label, amount: r[kind] },
+                  ];
+                  return (
+                    <Tooltip
+                      key={kind}
+                      disableHoverListener={categories.some(
+                        (category) => Number(category.amount) > 0,
+                      )}
+                      disableFocusListener={categories.some(
+                        (category) => Number(category.amount) > 0,
+                      )}
+                      disableTouchListener={categories.some(
+                        (category) => Number(category.amount) > 0,
+                      )}
+                      title={`${r.month} ï¿½ ${label}: ${format(r[kind])}`}
+                      arrow
+                    >
+                      <Box
+                        tabIndex={0}
+                        aria-label={`${r.month}, ${label}: ${format(r[kind])}`}
+                        sx={{
+                          width: '30%',
+                          height: `${(100 * Number(r[kind])) / max}%`,
+                          minHeight: 2,
+                          display: 'flex',
+                          flexDirection: 'column-reverse',
+                          borderRadius: '5px 5px 0 0',
+                          bgcolor:
+                            kind === 'income' ? 'success.main' : 'error.main',
+                        }}
+                      >
+                        {categories
+                          .filter((category) => Number(category.amount) > 0)
+                          .map((category) => (
+                            <Tooltip
+                              key={category.id}
+                              arrow
+                              title={`${r.month} ï¿½ ${label} ï¿½ ${category.name}: ${format(category.amount)} ï¿½ Total: ${format(r[kind])}`}
+                            >
+                              <Box
+                                tabIndex={0}
+                                aria-label={`${r.month}, ${label}, ${category.name}: ${format(category.amount)}`}
+                                sx={{
+                                  height: `${(100 * Number(category.amount)) / Number(r[kind])}%`,
+                                  flexShrink: 0,
+                                  bgcolor: categoryColor(category.id, kind),
+                                  '&:hover, &:focus-visible': {
+                                    filter: 'brightness(1.2)',
+                                    outline: '2px solid',
+                                    outlineColor: 'text.primary',
+                                    zIndex: 1,
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                          ))}
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
               </Box>
               <Typography variant="caption" textAlign="center" sx={{ mt: 1 }}>
                 {r.month.slice(5)}/{r.month.slice(2, 4)}
@@ -264,6 +363,18 @@ export function MoneyTrend({
             <Typography key={r.month} variant="body2">
               {r.month} · Receitas {format(r.income)} · Despesas{' '}
               {format(r.expenses)}
+              {[
+                ...(r.incomeCategories ?? []),
+                ...(r.expenseCategories ?? []),
+              ].map((category) => (
+                <Box
+                  component="span"
+                  key={category.id}
+                  sx={{ display: 'block', pl: 2 }}
+                >
+                  {category.name}: {format(category.amount)}
+                </Box>
+              ))}
             </Typography>
           ))}
         </Box>

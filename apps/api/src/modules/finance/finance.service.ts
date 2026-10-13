@@ -737,12 +737,21 @@ export class FinanceService {
             currency: string;
             income: Prisma.Decimal;
             expenses: Prisma.Decimal;
+            incomeCategories: { id: string; name: string; amount: string }[];
+            expenseCategories: { id: string; name: string; amount: string }[];
           }>
         >`
-        SELECT to_char(date,'YYYY-MM') AS month,currency,SUM(income) AS income,SUM(expenses) AS expenses FROM (
-          SELECT i.date,a.currency,i.amount AS income,0::numeric AS expenses FROM incomes i JOIN bank_accounts a ON a.id=i."accountId" WHERE i.status='COMPLETED' AND i.date>=${trendStart} AND i.date<${end} AND (${account}::uuid IS NULL OR a.id=${account}::uuid)
-          UNION ALL SELECT e.date,a.currency,0::numeric,e.amount FROM expenses e JOIN bank_accounts a ON a.id=e."accountId" WHERE e.status='COMPLETED' AND e.date>=${trendStart} AND e.date<${end} AND (${account}::uuid IS NULL OR a.id=${account}::uuid)
-        ) movements GROUP BY to_char(date,'YYYY-MM'),currency ORDER BY month,currency`;
+        WITH movements AS (
+          SELECT i.date,a.currency,i.amount AS income,0::numeric AS expenses,c.id AS category_id,c.name AS category_name,'INCOME' AS kind FROM incomes i JOIN bank_accounts a ON a.id=i."accountId" JOIN financial_categories c ON c.id=i."categoryId" WHERE i.status='COMPLETED' AND i.date>=${trendStart} AND i.date<${end} AND (${account}::uuid IS NULL OR a.id=${account}::uuid)
+          UNION ALL SELECT e.date,a.currency,0::numeric,e.amount,c.id,c.name,'EXPENSE' FROM expenses e JOIN bank_accounts a ON a.id=e."accountId" JOIN financial_categories c ON c.id=e."categoryId" WHERE e.status='COMPLETED' AND e.date>=${trendStart} AND e.date<${end} AND (${account}::uuid IS NULL OR a.id=${account}::uuid)
+        ), categories AS (
+          SELECT to_char(date,'YYYY-MM') AS month,currency,category_id,category_name,kind,SUM(income) AS income,SUM(expenses) AS expenses
+          FROM movements GROUP BY to_char(date,'YYYY-MM'),currency,category_id,category_name,kind
+        )
+        SELECT month,currency,SUM(income) AS income,SUM(expenses) AS expenses,
+          COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',income::text) ORDER BY category_name,category_id) FILTER (WHERE kind='INCOME'),'[]'::jsonb) AS "incomeCategories",
+          COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',expenses::text) ORDER BY category_name,category_id) FILTER (WHERE kind='EXPENSE'),'[]'::jsonb) AS "expenseCategories"
+        FROM categories GROUP BY month,currency ORDER BY month,currency`;
         const latestIncome = await tx.income.findMany({
           where: { accountId: q.accountId, date: { gte: start, lt: end } },
           include: { account: { select: { currency: true } } },
