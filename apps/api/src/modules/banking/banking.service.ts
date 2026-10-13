@@ -324,6 +324,7 @@ export class BankingService {
       date: row.date,
       accountId,
       categoryId: row.categoryId!,
+      costCenterId: row.costCenterId,
       description: row.description,
       status: 'COMPLETED' as const,
       bankTransactionId: row.id,
@@ -494,6 +495,7 @@ export class BankingService {
             account: { select: { currency: true } },
           },
         },
+        costCenterRecord: { select: { name: true } },
         invoices: user.permissions.includes('FINANCE_INVOICE_READ'),
         reconciliations: {
           orderBy: { reconciledAt: 'desc' },
@@ -620,6 +622,11 @@ export class BankingService {
         include: { import: true },
       });
       if (rows.length !== dto.ids.length) throw new NotFoundException();
+      if (
+        dto.costCenterId &&
+        !(await tx.costCenter.findUnique({ where: { id: dto.costCenterId } }))
+      )
+        throw new BadRequestException('Centro de custo inválido');
       if (dto.classification !== 'IGNORE' && !dto.categoryId) {
         dto.categoryId = (await this.uncategorized(tx, dto.classification)).id;
       }
@@ -690,6 +697,12 @@ export class BankingService {
                   ? 'REJECTED'
                   : 'CLASSIFIED',
             categoryId: dto.categoryId ?? null,
+            costCenterId:
+              dto.classification === 'IGNORE'
+                ? null
+                : dto.costCenterId === undefined
+                  ? row.costCenterId
+                  : dto.costCenterId,
             memberId: dto.memberId ?? null,
             supplierId: dto.supplierId ?? null,
             contributionType: dto.contributionType ?? null,
@@ -723,6 +736,8 @@ export class BankingService {
               where: { id: income.id },
               data: {
                 categoryId: updated.categoryId!,
+                costCenterId: updated.costCenterId,
+                costCenter: null,
                 memberId: updated.memberId,
               },
             });
@@ -744,6 +759,8 @@ export class BankingService {
               where: { bankTransactionId: row.id, status: 'COMPLETED' },
               data: {
                 categoryId: updated.categoryId!,
+                costCenterId: updated.costCenterId,
+                costCenter: null,
                 supplierId: updated.supplierId,
               },
             });
@@ -829,6 +846,7 @@ export class BankingService {
           status: 'RECONCILED',
           classification: income ? 'INCOME' : 'EXPENSE',
           categoryId: ledger.categoryId,
+          costCenterId: ledger.costCenterId,
           memberId: income?.memberId ?? null,
           supplierId: expense?.supplierId ?? null,
           contributionType: income?.contribution?.type ?? null,
@@ -937,6 +955,7 @@ export class BankingService {
             if (
               income.memberId !== row.memberId ||
               income.categoryId !== row.categoryId ||
+              income.costCenterId !== row.costCenterId ||
               income.contribution?.type !== (row.contributionType ?? undefined)
             )
               throw new BadRequestException(
@@ -962,6 +981,7 @@ export class BankingService {
                 date: row.date,
                 accountId: row.import.accountId,
                 categoryId: row.categoryId!,
+                costCenterId: row.costCenterId,
                 description: row.description,
                 origin: 'BANK_IMPORT',
                 reference: row.reference,
@@ -990,6 +1010,7 @@ export class BankingService {
             this.match(row, expense, row.import.accountId);
             if (
               expense.categoryId !== row.categoryId ||
+              expense.costCenterId !== row.costCenterId ||
               expense.supplierId !== row.supplierId
             )
               throw new BadRequestException(
@@ -1016,6 +1037,7 @@ export class BankingService {
                 dueDate: row.date,
                 paidAt: row.date,
                 categoryId: row.categoryId!,
+                costCenterId: row.costCenterId,
                 accountId: row.import.accountId,
                 description: row.description,
                 status: 'COMPLETED',

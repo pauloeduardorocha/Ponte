@@ -44,6 +44,7 @@ export class BankIdsDto {
   ids!: string[];
 }
 export class ClassifyBankDto extends BankIdsDto {
+  @IsOptional() @IsUUID() costCenterId?: string | null;
   @IsIn(['INCOME', 'EXPENSE', 'IGNORE']) classification!:
     'INCOME' | 'EXPENSE' | 'IGNORE';
   @IsOptional() @IsUUID() categoryId?: string;

@@ -1,0 +1,13 @@
+CREATE TABLE "cost_centers" ("id" UUID NOT NULL, "name" VARCHAR(120) NOT NULL, "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP, "updatedAt" TIMESTAMP(3) NOT NULL, CONSTRAINT "cost_centers_pkey" PRIMARY KEY ("id"));
+CREATE UNIQUE INDEX "cost_centers_name_key" ON "cost_centers"("name");
+INSERT INTO "cost_centers" ("id", "name", "updatedAt") SELECT gen_random_uuid(), name, CURRENT_TIMESTAMP FROM (SELECT DISTINCT "costCenter" AS name FROM incomes WHERE "costCenter" IS NOT NULL AND trim("costCenter") <> '' UNION SELECT DISTINCT "costCenter" FROM expenses WHERE "costCenter" IS NOT NULL AND trim("costCenter") <> '') legacy;
+ALTER TABLE "incomes" ADD COLUMN "costCenterId" UUID;
+ALTER TABLE "incomes" ADD CONSTRAINT "incomes_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "cost_centers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "expenses" ADD COLUMN "costCenterId" UUID;
+ALTER TABLE "expenses" ADD CONSTRAINT "expenses_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "cost_centers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "bank_transactions" ADD COLUMN "costCenterId" UUID;
+ALTER TABLE "bank_transactions" ADD CONSTRAINT "bank_transactions_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "cost_centers"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+UPDATE "incomes" m SET "costCenterId" = c.id FROM cost_centers c WHERE m."costCenter" = c.name;
+UPDATE "expenses" m SET "costCenterId" = c.id FROM cost_centers c WHERE m."costCenter" = c.name;
+UPDATE bank_transactions b SET "costCenterId" = m."costCenterId" FROM incomes m WHERE m."bankTransactionId" = b.id AND m."costCenterId" IS NOT NULL;
+UPDATE bank_transactions b SET "costCenterId" = m."costCenterId" FROM expenses m WHERE m."bankTransactionId" = b.id AND m."costCenterId" IS NOT NULL;

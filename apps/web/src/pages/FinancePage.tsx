@@ -36,6 +36,7 @@ type RecordData = {
   currency?: string;
   account?: { currency: string };
   category?: { name: string };
+  costCenterRecord?: { name: string };
   description?: string;
   date?: string;
   amount?: string;
@@ -66,6 +67,13 @@ const modules = [
     read: 'FINANCE_TRANSACTION_READ',
     write: 'FINANCE_TRANSACTION_CREATE',
     update: 'FINANCE_TRANSACTION_UPDATE',
+  },
+  {
+    route: 'cost-centers',
+    label: 'Centros de custos',
+    read: 'FINANCE_CATEGORY_READ',
+    write: 'FINANCE_CATEGORY_WRITE',
+    update: 'FINANCE_CATEGORY_WRITE',
   },
   {
     route: 'categories',
@@ -110,7 +118,7 @@ const transaction: Field[] = [
   { key: 'categoryId', label: 'Categoria', required: true },
   { key: 'accountId', label: 'Conta', required: true },
   { key: 'description', label: 'Descrição', required: true },
-  { key: 'costCenter', label: 'Centro de custo' },
+  { key: 'costCenterId', label: 'Centro de custo' },
   {
     key: 'status',
     label: 'Status',
@@ -118,6 +126,7 @@ const transaction: Field[] = [
   },
 ];
 const fields: Record<string, Field[]> = {
+  'cost-centers': [{ key: 'name', label: 'Nome', required: true }],
   categories: [
     { key: 'name', label: 'Nome', required: true },
     {
@@ -552,6 +561,11 @@ export function FinancePage() {
                       </Typography>
                     )}
                   </Stack>
+                  {item.costCenterRecord && (
+                    <Typography>
+                      Centro de custo: {item.costCenterRecord.name}
+                    </Typography>
+                  )}
                   {item.category && (
                     <Typography variant="body2">
                       Categoria: {item.category.name}
@@ -715,17 +729,19 @@ export function FinancePage() {
                 )
                 .map((f) => {
                   const endpoint =
-                    f.key === 'memberId'
-                      ? '/finance/members'
-                      : f.key === 'incomeId'
-                        ? '/finance/incomes'
-                        : f.key === 'categoryId' || f.key === 'parentId'
-                          ? '/finance/categories'
-                          : f.key === 'accountId'
-                            ? '/finance/accounts'
-                            : f.key === 'supplierId'
-                              ? '/finance/suppliers'
-                              : undefined;
+                    f.key === 'costCenterId'
+                      ? '/finance/cost-centers'
+                      : f.key === 'memberId'
+                        ? '/finance/members'
+                        : f.key === 'incomeId'
+                          ? '/finance/incomes'
+                          : f.key === 'categoryId' || f.key === 'parentId'
+                            ? '/finance/categories'
+                            : f.key === 'accountId'
+                              ? '/finance/accounts'
+                              : f.key === 'supplierId'
+                                ? '/finance/suppliers'
+                                : undefined;
                   if (endpoint)
                     return (
                       <EntitySelect

@@ -1,3 +1,4 @@
+import { EntitySelect } from '../components/EntitySelect';
 import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -57,6 +58,8 @@ type Movement = {
   classification?: string | null;
   memberId?: string | null;
   categoryId?: string | null;
+  costCenterId?: string | null;
+  costCenterRecord?: { name: string } | null;
   category?: { id: string; name: string } | null;
   supplierId?: string | null;
   contributionType?: string | null;
@@ -134,6 +137,7 @@ export function BankingPage() {
   const [classificationOpen, setClassificationOpen] = useState(false),
     [classification, setClassification] = useState('INCOME'),
     [categoryId, setCategoryId] = useState(''),
+    [costCenterId, setCostCenterId] = useState(''),
     [memberId, setMemberId] = useState(''),
     [supplierId, setSupplierId] = useState(''),
     [contributionType, setContributionType] = useState(''),
@@ -272,6 +276,9 @@ export function BankingPage() {
         body: {
           ids: classificationTargets,
           classification,
+          ...(classification !== 'IGNORE'
+            ? { costCenterId: costCenterId || null }
+            : {}),
           ...(classification !== 'IGNORE' && categoryId ? { categoryId } : {}),
           ...(classification === 'INCOME' && memberId
             ? { memberId, ...(contributionType ? { contributionType } : {}) }
@@ -322,6 +329,7 @@ export function BankingPage() {
         (row?.direction === 'DEBIT' ? 'EXPENSE' : 'INCOME'),
     );
     setCategoryId(row?.categoryId ?? '');
+    setCostCenterId(row?.costCenterId ?? '');
     setMemberId(row?.memberId ?? '');
     setSupplierId(row?.supplierId ?? '');
     setContributionType(row?.contributionType ?? '');
@@ -383,6 +391,14 @@ export function BankingPage() {
               </MenuItem>
             ))}
         </TextField>
+      )}
+      {classification !== 'IGNORE' && (
+        <EntitySelect
+          endpoint="/finance/cost-centers"
+          label="Centro de custo"
+          value={costCenterId}
+          onChange={(e) => setCostCenterId(e.target.value)}
+        />
       )}
       {classification === 'INCOME' && (
         <>
@@ -893,6 +909,11 @@ export function BankingPage() {
                   Ignorar movimento
                 </Button>
               </Stack>
+              {t.costCenterRecord && (
+                <Typography>
+                  Centro de custo: {t.costCenterRecord.name}
+                </Typography>
+              )}
               {classificationOpen && inlineId === t.id && (
                 <Box aria-label="Classificação do movimento">
                   {classificationForm}

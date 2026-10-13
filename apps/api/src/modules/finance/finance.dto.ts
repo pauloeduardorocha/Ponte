@@ -31,6 +31,12 @@ export class DashboardQuery {
   @IsOptional() @Matches(/^\d{4}-(0[1-9]|1[0-2])$/) month?: string;
   @IsOptional() @IsUUID() accountId?: string;
 }
+export class CostCenterDto {
+  @IsString() @Matches(/\S/) @MaxLength(120) name!: string;
+}
+export class CostCenterPatch extends PartialType(CostCenterDto, {
+  skipNullProperties: false,
+}) {}
 export class CategoryDto {
   @IsString() @Matches(/\S/) @MaxLength(120) name!: string;
   @IsIn(['INCOME', 'EXPENSE']) kind!: 'INCOME' | 'EXPENSE';
@@ -68,6 +74,7 @@ export class TransactionDto {
   @IsUUID() categoryId!: string;
   @IsUUID() accountId!: string;
   @IsString() @Matches(/\S/) @MaxLength(2000) description!: string;
+  @IsOptional() @IsUUID() costCenterId?: string | null;
   @IsOptional() @IsString() @MaxLength(120) costCenter?: string | null;
   @IsOptional() @IsIn(['PENDING', 'COMPLETED', 'CANCELLED']) status?:
     'PENDING' | 'COMPLETED' | 'CANCELLED';

@@ -31,6 +31,8 @@ import {
   AccountDto,
   DashboardQuery,
   AccountPatch,
+  CostCenterDto,
+  CostCenterPatch,
   CategoryDto,
   CategoryPatch,
   SupplierDto,
@@ -53,6 +55,26 @@ export class FinanceController {
   @Permission('FINANCE_CONTRIBUTION_READ')
   members(@Query() q: FinanceQuery) {
     return this.finance.members(q);
+  }
+
+  @Get('cost-centers')
+  @Permission('FINANCE_CATEGORY_READ')
+  costCenters(@Query() q: FinanceQuery) {
+    return this.finance.costCenters(q);
+  }
+  @Post('cost-centers')
+  @Permission('FINANCE_CATEGORY_WRITE')
+  createCostCenter(@Body() dto: CostCenterDto, @Req() req: AuthRequest) {
+    return this.finance.saveCostCenter(dto, req.user);
+  }
+  @Patch('cost-centers/:id')
+  @Permission('FINANCE_CATEGORY_WRITE')
+  updateCostCenter(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CostCenterPatch,
+    @Req() req: AuthRequest,
+  ) {
+    return this.finance.saveCostCenter(dto, req.user, id);
   }
 
   @Get('categories')

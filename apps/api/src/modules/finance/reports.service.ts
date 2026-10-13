@@ -186,7 +186,14 @@ export class ReportsService {
         const common = {
           accountId: q.accountId,
           categoryId: q.categoryId,
-          costCenter: q.costCenter,
+          ...(q.costCenter
+            ? {
+                OR: [
+                  { costCenterRecord: { name: q.costCenter } },
+                  { costCenterId: null, costCenter: q.costCenter },
+                ],
+              }
+            : {}),
           status,
         };
         const type =
@@ -318,6 +325,7 @@ export class ReportsService {
               include: {
                 account: true,
                 category: true,
+                costCenterRecord: true,
                 contribution: { include: { member: true } },
                 member: true,
                 bankTransaction: bankInclude,
@@ -347,7 +355,7 @@ export class ReportsService {
                   ? (i.contribution?.member.name ?? i.member?.name ?? '')
                   : '',
                 supplier: '',
-                costCenter: i.costCenter ?? '',
+                costCenter: i.costCenterRecord?.name ?? i.costCenter ?? '',
                 contributionType: showMemberDetails
                   ? (i.contribution?.type ?? '')
                   : '',
@@ -372,6 +380,7 @@ export class ReportsService {
               include: {
                 account: true,
                 category: true,
+                costCenterRecord: true,
                 supplier: true,
                 bankTransaction: bankInclude,
               },
@@ -396,7 +405,7 @@ export class ReportsService {
                 memberId: null,
                 member: '',
                 supplier: e.supplier?.name ?? '',
-                costCenter: e.costCenter ?? '',
+                costCenter: e.costCenterRecord?.name ?? e.costCenter ?? '',
                 contributionType: '',
                 contributionId: null,
                 origin: e.bankTransactionId

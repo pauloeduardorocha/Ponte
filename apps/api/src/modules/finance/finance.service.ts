@@ -14,6 +14,8 @@ import { StorageService, PrivateUpload } from './storage.service';
 import {
   AccountDto,
   AccountPatch,
+  CostCenterDto,
+  CostCenterPatch,
   CategoryDto,
   CategoryPatch,
   ContributionDto,
@@ -94,6 +96,7 @@ export class FinanceService {
     income: Income & {
       account?: { currency: string };
       category?: { name: string };
+      costCenterRecord?: { name: string } | null;
     },
     user: CurrentUser,
   ) {
@@ -103,12 +106,44 @@ export class FinanceService {
       amount: income.amount,
       date: income.date,
       categoryId: income.categoryId,
+      costCenterId: income.costCenterId,
       accountId: income.accountId,
       status: income.status,
       description: 'Receita restrita',
       account: income.account,
       category: income.category,
+      costCenterRecord: income.costCenterRecord,
     };
+  }
+  async costCenters(q: FinanceQuery) {
+    const where = {
+      name: q.search
+        ? { contains: q.search, mode: 'insensitive' as const }
+        : undefined,
+    };
+    return {
+      items: await this.db.costCenter.findMany({
+        where,
+        orderBy: [{ name: 'asc' }, { id: 'asc' }],
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+      }),
+      total: await this.db.costCenter.count({ where }),
+      page: q.page,
+      pageSize: q.pageSize,
+    };
+  }
+  saveCostCenter(
+    dto: CostCenterDto | CostCenterPatch,
+    user: CurrentUser,
+    id?: string,
+  ) {
+    const data = { ...dto, name: dto.name?.trim() };
+    return this.mutation(user, 'CostCenter', id, (tx) =>
+      id
+        ? tx.costCenter.update({ where: { id }, data })
+        : tx.costCenter.create({ data: data as CostCenterDto }),
+    );
   }
   async categories(q: FinanceQuery) {
     const where = {
@@ -286,6 +321,7 @@ export class FinanceService {
           where,
           include: {
             category: { select: { name: true } },
+            costCenterRecord: { select: { name: true } },
             account: { select: { currency: true } },
           },
           orderBy: [{ date: 'desc' }, { id: 'asc' }],
@@ -317,6 +353,7 @@ export class FinanceService {
         where,
         include: {
           category: { select: { name: true } },
+          costCenterRecord: { select: { name: true } },
           account: { select: { currency: true } },
         },
         orderBy: [{ date: 'desc' }, { id: 'asc' }],
@@ -334,6 +371,7 @@ export class FinanceService {
       amount: Prisma.Decimal | string;
       categoryId: string;
       accountId: string;
+      costCenterId?: string | null;
     },
     kind: FinancialKind,
   ) {
@@ -345,6 +383,11 @@ export class FinanceService {
     const account = await tx.bankAccount.findUnique({
       where: { id: data.accountId },
     });
+    if (
+      data.costCenterId &&
+      !(await tx.costCenter.findUnique({ where: { id: data.costCenterId } }))
+    )
+      throw new BadRequestException('Centro de custo inválido');
     if (category?.kind !== kind || account?.status !== 'ACTIVE')
       throw new BadRequestException('Categoria ou conta inválida');
   }
@@ -404,11 +447,16 @@ export class FinanceService {
           where: { id: old.bankTransactionId },
           data: {
             categoryId: dto.categoryId,
+            costCenterId: dto.costCenterId,
             memberId: dto.memberId,
           },
         });
       }
-      const input = { ...dto, date: dto.date ? new Date(dto.date) : undefined };
+      const input = {
+        ...dto,
+        ...(dto.costCenterId !== undefined ? { costCenter: null } : {}),
+        date: dto.date ? new Date(dto.date) : undefined,
+      };
       return id
         ? tx.income.update({ where: { id }, data: input })
         : tx.income.create({
@@ -443,12 +491,14 @@ export class FinanceService {
           where: { id: old.bankTransactionId },
           data: {
             categoryId: dto.categoryId,
+            costCenterId: dto.costCenterId,
             supplierId: dto.supplierId,
           },
         });
       }
       const input = {
         ...dto,
+        ...(dto.costCenterId !== undefined ? { costCenter: null } : {}),
         date: dto.date ? new Date(dto.date) : undefined,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
         paidAt:
