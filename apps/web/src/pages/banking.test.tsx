@@ -201,6 +201,39 @@ describe('Bank statement review', () => {
       screen.getByRole('dialog', { name: 'Categorizar movimentação' }),
     ).toBeInTheDocument();
   });
+  it('warns about a possible replica and discards it without category, cost center or duplicate acceptance', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/banking/transactions': {
+        body: page([
+          {
+            ...row,
+            status: 'POSSIBLE_DUPLICATE',
+            duplicateReason: 'Mesmo valor e referência',
+          },
+          { ...row, id: 'transaction-2', description: 'Próximo movimento' },
+        ]),
+      },
+    });
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    expect(screen.getByText('Possível réplica')).toBeInTheDocument();
+    expect(screen.getByText('Mesmo valor e referência')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Descartar movimento' }),
+    );
+    await screen.findByText('Próximo movimento');
+    expect(
+      requests.find((r) => r.path === '/finance/banking/classify')?.body,
+    ).toEqual({
+      ids: ['transaction-1'],
+      classification: 'IGNORE',
+      acceptDuplicate: false,
+    });
+    expect(
+      screen.queryByRole('button', { name: 'Descartar movimento' }),
+    ).not.toBeInTheDocument();
+  });
   it('fetches invoices with credentials and the selected import, without exporting JSON', async () => {
     const requests = mockApi({
       ...routes(),

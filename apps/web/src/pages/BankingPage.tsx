@@ -249,23 +249,23 @@ export function BankingPage() {
     },
   });
   const classify = useMutation({
-    mutationFn: () =>
-      apiRequest('/finance/banking/classify', {
+    mutationFn: (choice?: 'IGNORE') => {
+      const kind = choice ?? classification;
+      return apiRequest('/finance/banking/classify', {
         method: 'POST',
         body: {
           ids: classificationTargets,
-          classification,
-          ...(classification !== 'IGNORE'
-            ? { costCenterId: costCenterId || null }
-            : {}),
-          ...(classification !== 'IGNORE' && categoryId ? { categoryId } : {}),
-          ...(classification === 'INCOME' && memberId
+          classification: kind,
+          ...(kind !== 'IGNORE' ? { costCenterId: costCenterId || null } : {}),
+          ...(kind !== 'IGNORE' && categoryId ? { categoryId } : {}),
+          ...(kind === 'INCOME' && memberId
             ? { memberId, ...(contributionType ? { contributionType } : {}) }
             : {}),
-          ...(classification === 'EXPENSE' && supplierId ? { supplierId } : {}),
-          acceptDuplicate,
+          ...(kind === 'EXPENSE' && supplierId ? { supplierId } : {}),
+          acceptDuplicate: kind === 'IGNORE' ? false : acceptDuplicate,
         },
-      }),
+      });
+    },
     onSuccess: () => {
       invalidate();
       setSliding(true);
@@ -716,9 +716,18 @@ export function BankingPage() {
                       {currentMovement.date.slice(0, 10)} · Referência:{' '}
                       {currentMovement.reference || 'Não informada'}
                     </Typography>
-                    {currentMovement.duplicateReason && (
+                    {currentMovement.status === 'POSSIBLE_DUPLICATE' && (
                       <Alert severity="warning">
-                        {currentMovement.duplicateReason}
+                        <Typography sx={{ fontWeight: 600 }}>
+                          Possível réplica
+                        </Typography>
+                        Este movimento pode já ter sido importado. Confira os
+                        dados e descarte-o se for duplicado.
+                        {currentMovement.duplicateReason && (
+                          <Typography variant="body2">
+                            {currentMovement.duplicateReason}
+                          </Typography>
+                        )}
                       </Alert>
                     )}
                   </Stack>
@@ -756,7 +765,16 @@ export function BankingPage() {
             )}
           </Stack>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+          {currentMovement?.status === 'POSSIBLE_DUPLICATE' && (
+            <Button
+              color="warning"
+              disabled={classify.isPending || sliding}
+              onClick={() => classify.mutate('IGNORE')}
+            >
+              Descartar movimento
+            </Button>
+          )}
           <Button disabled={classify.isPending || sliding} onClick={stopReview}>
             Continuar depois
           </Button>
