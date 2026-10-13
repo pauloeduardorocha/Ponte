@@ -9,6 +9,37 @@ import {
 } from '../test/utils';
 describe('Finance permissions and dashboard', () => {
   beforeEach(resetTestState);
+  it.each(['incomes', 'expenses'])(
+    'removes status from %s lists and forms',
+    async (route) => {
+      mockApi({
+        ...sessionRoutes(
+          makeUser(['FINANCE_TRANSACTION_READ', 'FINANCE_TRANSACTION_CREATE']),
+        ),
+        [`GET /finance/${route}`]: {
+          body: {
+            items: [
+              {
+                id: 'movement-1',
+                description: 'Movimento de teste',
+                status: 'COMPLETED',
+              },
+            ],
+            total: 1,
+            page: 1,
+            pageSize: 20,
+          },
+        },
+      });
+      renderApp(`/finance?tab=${route}`);
+      await screen.findByText('Movimento de teste');
+      expect(screen.queryByText('Concluído')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: /^Cadastrar/ }));
+      await screen.findByRole('dialog');
+      expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
+    },
+  );
   it('exposes bank attachment controls after categorization from expenses', async () => {
     mockApi({
       ...sessionRoutes(

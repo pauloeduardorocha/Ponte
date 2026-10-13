@@ -119,11 +119,6 @@ const transaction: Field[] = [
   { key: 'accountId', label: 'Conta', required: true },
   { key: 'description', label: 'Descrição', required: true },
   { key: 'costCenterId', label: 'Centro de custo' },
-  {
-    key: 'status',
-    label: 'Status',
-    options: ['PENDING', 'COMPLETED', 'CANCELLED'],
-  },
 ];
 const fields: Record<string, Field[]> = {
   'cost-centers': [{ key: 'name', label: 'Nome', required: true }],
@@ -451,22 +446,6 @@ export function FinancePage() {
                   sx={{ flex: 1 }}
                 />
               )}
-            {['incomes', 'expenses'].includes(route) && (
-              <TextField
-                select
-                label="Status"
-                value={params.get('status') ?? ''}
-                onChange={(e) => filter('status', e.target.value)}
-                sx={{ minWidth: 160 }}
-              >
-                <MenuItem value="">Todos</MenuItem>
-                {['PENDING', 'COMPLETED', 'CANCELLED'].map((v) => (
-                  <MenuItem key={v} value={v}>
-                    {labels[v]}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
             {['incomes', 'expenses', 'contributions'].includes(route) && (
               <>
                 <TextField
@@ -621,7 +600,9 @@ export function FinancePage() {
                 )}
                 <Typography>
                   {item.currency} {item.date?.slice(0, 10)}{' '}
-                  {item.status && <StatusChip status={item.status} />}{' '}
+                  {route === 'accounts' && item.status && (
+                    <StatusChip status={item.status} />
+                  )}{' '}
                   {item.kind && labels[item.kind]}
                 </Typography>
                 {item.parentId && (

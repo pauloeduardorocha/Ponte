@@ -455,6 +455,7 @@ export class FinanceService {
       }
       const input = {
         ...dto,
+        status: dto.status ?? old?.status ?? 'COMPLETED',
         ...(dto.costCenterId !== undefined ? { costCenter: null } : {}),
         date: dto.date ? new Date(dto.date) : undefined,
       };
@@ -483,7 +484,8 @@ export class FinanceService {
         );
       const data = { ...old, ...dto };
       await this.validateTransaction(tx, data as ExpenseDto, 'EXPENSE');
-      if ((data.status === 'COMPLETED') !== Boolean(data.paidAt))
+      const status = dto.status ?? (data.paidAt ? 'COMPLETED' : 'PENDING');
+      if ((status === 'COMPLETED') !== Boolean(data.paidAt))
         throw new BadRequestException(
           'Despesa concluída exige pagamento; pendente/cancelada não pode ter pagamento',
         );
@@ -499,6 +501,7 @@ export class FinanceService {
       }
       const input = {
         ...dto,
+        status,
         ...(dto.costCenterId !== undefined ? { costCenter: null } : {}),
         date: dto.date ? new Date(dto.date) : undefined,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
