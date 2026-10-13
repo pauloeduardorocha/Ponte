@@ -17,7 +17,7 @@ async function launchBrowser() {
     );
   const { default: chromium } = await import('@sparticuz/chromium');
   return puppeteer.launch({
-    args: puppeteer.defaultArgs({ args: chromium.args, headless: 'shell' }),
+    args: await puppeteer.defaultArgs({ args: chromium.args, headless: 'shell' }),
     executablePath: await chromium.executablePath(),
     headless: 'shell',
   });
