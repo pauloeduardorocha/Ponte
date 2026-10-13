@@ -18,6 +18,7 @@ import { LibraryModule } from './modules/library/library.module';
 import { PrismaService } from './database/prisma.service';
 import { PostgresThrottlerStorage } from './modules/auth/postgres-throttler.storage';
 import { SafeExceptionFilter } from './common/safe-exception.filter';
+import { traceMiddleware } from './common/request-trace';
 import { CommunityModule } from './modules/community/community.controller';
 import { OperationsModule } from './modules/operations/operations.controller';
 import { EventsModule } from './modules/events/events.controller';
@@ -59,6 +60,6 @@ import { EventsModule } from './modules/events/events.controller';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(auditMiddleware).forRoutes('*');
+    consumer.apply(traceMiddleware, auditMiddleware).forRoutes('*');
   }
 }

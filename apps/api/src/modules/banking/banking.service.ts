@@ -4,12 +4,14 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { BankTransaction, BankReconciliation, Prisma } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
 import { createHash } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
+import { requestTrace, safeErrorFields } from '../../common/request-trace';
 import { StorageService, PrivateUpload } from '../finance/storage.service';
 import {
   BankQuery,
@@ -27,6 +29,7 @@ import {
 type Tx = Prisma.TransactionClient;
 @Injectable()
 export class BankingService {
+  private readonly logger = new Logger(BankingService.name);
   constructor(
     private readonly db: PrismaService,
     private readonly storage: StorageService,
@@ -55,7 +58,18 @@ export class BankingService {
           ? 'BankImport'
           : 'BankTransaction',
         entityId: id,
-        metadata,
+        metadata: {
+          ...(metadata as Prisma.InputJsonObject),
+          ...(requestTrace.getStore()
+            ? {
+                requestId: requestTrace.getStore()!.requestId,
+                stage: requestTrace.getStore()!.stage ?? 'bank_import',
+                durationMs: Math.round(
+                  performance.now() - requestTrace.getStore()!.startedAt,
+                ),
+              }
+            : {}),
+        },
       },
     });
   }
@@ -83,15 +97,64 @@ export class BankingService {
       throw new ForbiddenException('Permissão de contribuições necessária');
   }
   async upload(accountId: string, file: PrivateUpload, user: CurrentUser) {
+    const startedAt = performance.now();
+    let stage = 'validate';
+    const setStage = (next: string) => {
+      stage = next;
+      const trace = requestTrace.getStore();
+      if (trace) trace.stage = `bank_import.${next}`;
+      this.logger.log(
+        JSON.stringify({
+          event: 'bank_import.stage',
+          requestId: trace?.requestId,
+          stage,
+          durationMs: Math.round(performance.now() - startedAt),
+        }),
+      );
+    };
+    try {
+      setStage('validate');
+      const result = await this.processUpload(accountId, file, user, setStage);
+      this.logger.log(
+        JSON.stringify({
+          event: 'bank_import.completed',
+          requestId: requestTrace.getStore()?.requestId,
+          importId: result.id,
+          status: result.status,
+          durationMs: Math.round(performance.now() - startedAt),
+        }),
+      );
+      return result;
+    } catch (error) {
+      this.logger.error(
+        JSON.stringify({
+          event: 'bank_import.failed',
+          requestId: requestTrace.getStore()?.requestId,
+          stage,
+          durationMs: Math.round(performance.now() - startedAt),
+          ...safeErrorFields(error),
+        }),
+      );
+      throw error;
+    }
+  }
+  private async processUpload(
+    accountId: string,
+    file: PrivateUpload,
+    user: CurrentUser,
+    setStage: (stage: string) => void,
+  ) {
     const { parser, format } = this.registry.identify(file);
     const account = await this.db.bankAccount.findUnique({
       where: { id: accountId },
     });
     if (account?.status !== 'ACTIVE')
       throw new BadRequestException('Escolha uma conta ativa');
+    setStage('store_file');
     const storageKey = await this.storage.putValidated(file);
     let imported;
     try {
+      setStage('create_import');
       imported = await this.transaction(async (tx) => {
         await bindAudit(tx);
         const i = await tx.bankImport.create({
@@ -117,6 +180,7 @@ export class BankingService {
       await this.storage.remove(storageKey);
       throw e;
     }
+    setStage('mark_processing');
     await this.transaction(async (tx) => {
       await bindAudit(tx);
       await tx.bankImport.update({
@@ -127,7 +191,18 @@ export class BankingService {
     });
     let parsed: ParsedBankTransaction[];
     try {
+      setStage('parse');
       parsed = await parser.parse(file);
+      this.logger.log(
+        JSON.stringify({
+          event: 'bank_import.parsed',
+          requestId: requestTrace.getStore()?.requestId,
+          importId: imported.id,
+          format,
+          fileSize: file.size,
+          rowCount: parsed.length,
+        }),
+      );
       for (const row of parsed) {
         if (row.currency && row.currency !== account.currency)
           throw new Error(`Linha ${row.rowNumber}: moeda diferente da conta`);
@@ -142,6 +217,14 @@ export class BankingService {
           );
       }
     } catch (e) {
+      this.logger.warn(
+        JSON.stringify({
+          event: 'bank_import.validation_failed',
+          requestId: requestTrace.getStore()?.requestId,
+          importId: imported.id,
+          ...safeErrorFields(e),
+        }),
+      );
       await this.transaction(async (tx) => {
         await bindAudit(tx);
         await tx.bankImport.update({
@@ -151,11 +234,15 @@ export class BankingService {
             error: (e as Error).message.slice(0, 2000),
           },
         });
-        await this.audit(tx, user, 'FAILED', imported.id);
+        await this.audit(tx, user, 'FAILED', imported.id, {
+          errorType: safeErrorFields(e).errorType,
+          errorCode: safeErrorFields(e).errorCode ?? null,
+        });
       });
       return this.importDetail(imported.id);
     }
     try {
+      setStage('persist_movements');
       await this.transaction(async (tx) => {
         await bindAudit(tx);
         const currentAccount = await tx.bankAccount.findUniqueOrThrow({
@@ -286,6 +373,16 @@ export class BankingService {
         });
       });
     } catch (e) {
+      this.logger.error(
+        JSON.stringify({
+          event: 'bank_import.persistence_failed',
+          requestId: requestTrace.getStore()?.requestId,
+          importId: imported.id,
+          rowCount: parsed.length,
+          transactionTimeoutMs: 30000,
+          ...safeErrorFields(e),
+        }),
+      );
       await this.transaction(async (tx) => {
         await bindAudit(tx);
         await tx.bankImport.update({
@@ -296,10 +393,16 @@ export class BankingService {
               'Falha ao persistir movimentos. Envie novamente após verificar a conta.',
           },
         });
-        await this.audit(tx, user, 'FAILED', imported.id);
+        await this.audit(tx, user, 'FAILED', imported.id, {
+          errorType: safeErrorFields(e).errorType,
+          errorCode: safeErrorFields(e).errorCode ?? null,
+          rowCount: parsed.length,
+          transactionTimeoutMs: 30000,
+        });
       });
       throw e;
     }
+    setStage('load_result');
     return this.importDetail(imported.id);
   }
   private uncategorized(tx: Tx, kind: 'INCOME' | 'EXPENSE') {

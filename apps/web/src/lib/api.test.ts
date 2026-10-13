@@ -71,6 +71,19 @@ describe('apiRequest', () => {
     });
   });
 
+  it('shows the server reference with an internal error', async () => {
+    const requestId = '12345678-1234-4234-8234-123456789abc';
+    mockApi({
+      'GET /ping': {
+        status: 500,
+        body: { message: 'Erro interno no servidor', requestId },
+      },
+    });
+    await expect(apiRequest('/ping')).rejects.toMatchObject({
+      message: `Erro interno no servidor Referência: ${requestId}`,
+    });
+  });
+
   it('does not hide network or server errors during restoration', async () => {
     mockApi({
       'POST /auth/refresh': { status: 503, body: { message: 'Unavailable' } },

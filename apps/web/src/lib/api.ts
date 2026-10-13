@@ -12,6 +12,16 @@ const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
 };
 const GENERIC_ERROR_MESSAGE = 'Ocorreu um erro inesperado. Tente novamente.';
 
+export function withErrorReference(message: string, data: unknown): string {
+  const id =
+    data && typeof data === 'object' && 'requestId' in data
+      ? data.requestId
+      : undefined;
+  return typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)
+    ? `${message} Referência: ${id}`
+    : message;
+}
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -125,7 +135,7 @@ async function send<T>(
   if (!response.ok) {
     throw new ApiError(
       response.status,
-      extractMessage(data, response.status),
+      withErrorReference(extractMessage(data, response.status), data),
       data,
     );
   }

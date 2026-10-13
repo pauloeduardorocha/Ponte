@@ -102,10 +102,15 @@ async function bankFile(path: string, options?: RequestInit) {
   if (!response.ok) {
     let message = 'Não foi possível processar o arquivo. Verifique sua sessão.';
     try {
-      const data = (await response.json()) as { message: string | string[] };
+      const data = (await response.json()) as {
+        message: string | string[];
+        requestId?: string;
+      };
       message = Array.isArray(data.message)
         ? data.message.join(', ')
         : data.message;
+      if (data.requestId && /^[0-9a-f-]{36}$/i.test(data.requestId))
+        message += ` Referência: ${data.requestId}`;
     } catch {
       /* response may not be JSON */
     }
