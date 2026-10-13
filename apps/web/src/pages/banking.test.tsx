@@ -111,12 +111,11 @@ describe('Bank statement review', () => {
       name: /millennium.xlsx/,
     });
     expect(within(importRow).getByText(/Importado/)).toBeVisible();
-    const cells = within(importRow).getAllByRole('cell');
-    expect(
-      within(cells[cells.length - 1]).getByRole('button', {
-        name: 'Abrir importação',
-      }),
-    ).toBeVisible();
+    const openImport = within(importRow).getByRole('button', {
+      name: 'Abrir importação',
+    });
+    expect(openImport).toBeVisible();
+    expect(openImport.closest('td')).toBe(importRow.lastElementChild);
   });
   it('saves category and cost center per movement, advances, and completes the queue', async () => {
     const requests = mockApi({
