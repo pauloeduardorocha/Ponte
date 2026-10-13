@@ -4,7 +4,14 @@ import { ServiceUnavailableException } from '@nestjs/common';
 export class EfaturaUnavailableException extends ServiceUnavailableException {
   constructor(
     reason:
-      'missing' | 'launch' | 'browser' | 'portal' | 'timeout' | 'incomplete',
+      | 'missing'
+      | 'launch'
+      | 'browser'
+      | 'portal'
+      | 'filters'
+      | 'extraction'
+      | 'timeout'
+      | 'incomplete',
   ) {
     const messages = {
       missing: 'O serviço de consulta ao e-Fatura não está instalado.',
@@ -13,6 +20,8 @@ export class EfaturaUnavailableException extends ServiceUnavailableException {
         'O navegador de consulta não está disponível. Verifique a instalação do serviço.',
       portal:
         'Não foi possível consultar as faturas. Confira o NIF e a senha. O portal pode exigir MFA ou CAPTCHA.',
+      filters: 'Não foi possível aplicar os filtros de datas no e-Fatura.',
+      extraction: 'Não foi possível ler as faturas devolvidas pelo e-Fatura.',
       timeout: 'A consulta ao e-Fatura demorou demasiado. Tente novamente.',
       incomplete: 'A consulta ao e-Fatura não foi concluída.',
     };

@@ -91,3 +91,53 @@ test('fails without a filter submit button instead of waiting for terminal input
     /aplicar automaticamente os filtros/,
   );
 });
+
+test('applies filters through a visible search button outside a form', async () => {
+  const previousDocument = global.document;
+  const period = { start: '2026-08-01', end: '2026-10-07' };
+  let clicks = 0;
+  const inputs = Object.fromEntries(
+    ['dataInicioFilter', 'dataFimFilter'].map((id) => [
+      id,
+      { value: '', dispatchEvent() {}, closest: () => null },
+    ]),
+  );
+  const button = {
+    textContent: 'Pesquisar',
+    disabled: false,
+    getClientRects: () => [{}],
+    click: () => clicks++,
+  };
+  global.document = {
+    getElementById: (id) => inputs[id],
+    querySelectorAll: () => [button],
+  };
+  try {
+    await applyDateFilters(
+      {
+        waitForSelector: async () => {},
+        evaluate: async (fn, value) => fn(value),
+        waitForNetworkIdle: async () => {},
+      },
+      period,
+    );
+    assert.equal(clicks, 1);
+    assert.equal(inputs.dataInicioFilter.value, period.start);
+    assert.equal(inputs.dataFimFilter.value, period.end);
+    global.document.querySelectorAll = () => [button, { ...button }];
+    await assert.rejects(
+      applyDateFilters(
+        {
+          waitForSelector: async () => {},
+          evaluate: async (fn, value) => fn(value),
+        },
+        period,
+      ),
+      { code: 'FILTER_SUBMIT_NOT_FOUND' },
+    );
+    assert.equal(clicks, 1);
+  } finally {
+    if (previousDocument === undefined) delete global.document;
+    else global.document = previousDocument;
+  }
+});

@@ -175,6 +175,23 @@ describe('e-Fatura integration', () => {
     expect(fork).not.toHaveBeenCalled();
     expect(invoices.upload).not.toHaveBeenCalled();
   });
+  it('reports date filter failure without blaming credentials', async () => {
+    const { service, worker, invoices } = fixture();
+    const pending = service.fetch(
+      { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
+      user,
+    );
+    const rejected = expect(pending).rejects.toThrow('filtros de datas');
+    await new Promise(setImmediate);
+    worker.emit('message', {
+      error: 'CONSULTATION_FAILED',
+      stage: 'filters',
+      failureCode: 'FILTER_SUBMIT_NOT_FOUND',
+    });
+    worker.emit('exit', 1);
+    await rejected;
+    expect(invoices.upload).not.toHaveBeenCalled();
+  });
   it('uses the included source worker when the first resolved asset is absent', async () => {
     const { service, worker } = fixture();
     (existsSync as jest.Mock)

@@ -267,8 +267,14 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     await new Promise((resolve, reject) =>
       process.send({ result }, (error) => (error ? reject(error) : resolve())),
     );
-  } catch {
-    process.send({ error: 'CONSULTATION_FAILED', stage });
+  } catch (error) {
+    const failureCode =
+      error.code === 'FILTER_SUBMIT_NOT_FOUND'
+        ? 'FILTER_SUBMIT_NOT_FOUND'
+        : error.name === 'TimeoutError'
+          ? 'PORTAL_TIMEOUT'
+          : 'PORTAL_ERROR';
+    process.send({ error: 'CONSULTATION_FAILED', stage, failureCode });
     process.exitCode = 1;
   } finally {
     await browser.close();

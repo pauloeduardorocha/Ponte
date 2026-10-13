@@ -183,7 +183,12 @@ export class EfaturaService {
       });
       worker.on(
         'message',
-        (message: { result?: unknown; error?: string; stage?: string }) => {
+        (message: {
+          result?: unknown;
+          error?: string;
+          stage?: string;
+          failureCode?: string;
+        }) => {
           if (
             ['launch', 'login', 'filters', 'extraction'].includes(
               message.stage ?? '',
@@ -210,11 +215,24 @@ export class EfaturaService {
                 requestId: trace?.requestId,
                 code,
                 stage: workerStage,
+                failureCode: [
+                  'FILTER_SUBMIT_NOT_FOUND',
+                  'PORTAL_TIMEOUT',
+                  'PORTAL_ERROR',
+                ].includes(message.failureCode ?? '')
+                  ? message.failureCode
+                  : 'UNKNOWN',
               }),
             );
             if (trace) trace.stage = `efatura.${stage}`;
             consultationError = new EfaturaUnavailableException(
-              message.error === 'BROWSER_UNAVAILABLE' ? 'browser' : 'portal',
+              message.error === 'BROWSER_UNAVAILABLE'
+                ? 'browser'
+                : workerStage === 'filters'
+                  ? 'filters'
+                  : workerStage === 'extraction'
+                    ? 'extraction'
+                    : 'portal',
             );
           } else if (message.result) result = message.result;
         },

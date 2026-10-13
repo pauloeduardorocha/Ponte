@@ -37,16 +37,43 @@ async function applyDateFilters(page, period, submitSelector) {
   } else {
     const submitted = await page.evaluate(() => {
       const form = document.getElementById('dataInicioFilter').closest('form');
-      const submit = form?.querySelector(
+      let submit = form?.querySelector(
         'button[type="submit"], input[type="submit"]',
       );
+      if (!submit) {
+        const scope = form || document;
+        const candidates = Array.from(
+          scope.querySelectorAll(
+            'button, input[type="button"], input[type="submit"], a[role="button"]',
+          ),
+        ).filter((button) => {
+          const label = (
+            button.textContent ||
+            button.value ||
+            button.getAttribute('aria-label') ||
+            ''
+          )
+            .trim()
+            .toLocaleLowerCase('pt-PT');
+          return (
+            /^(pesquisar|pesquisa|consultar|filtrar|procurar)$/.test(label) &&
+            !button.disabled &&
+            button.getClientRects().length > 0
+          );
+        });
+        // Never choose an arbitrary action when the portal has multiple matches.
+        if (candidates.length === 1) submit = candidates[0];
+      }
       if (!submit) return false;
       submit.click();
       return true;
     });
     if (!submitted)
-      throw new Error(
-        'Não foi possível aplicar automaticamente os filtros de data no portal.',
+      throw Object.assign(
+        new Error(
+          'Não foi possível aplicar automaticamente os filtros de data no portal.',
+        ),
+        { code: 'FILTER_SUBMIT_NOT_FOUND' },
       );
   }
   await page.waitForNetworkIdle();
