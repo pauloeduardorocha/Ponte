@@ -257,7 +257,7 @@ export function MoneyTrend({
                   }}
                 />
                 <Typography variant="caption">
-                  {kind === 'income' ? 'Receitas' : 'Despesas'} ï¿½{' '}
+                  {kind === 'income' ? 'Receitas' : 'Despesas'} ·{' '}
                   {category.name}
                 </Typography>
               </Stack>
@@ -302,7 +302,7 @@ export function MoneyTrend({
                       disableTouchListener={categories.some(
                         (category) => Number(category.amount) > 0,
                       )}
-                      title={`${r.month} ï¿½ ${label}: ${format(r[kind])}`}
+                      title={`${r.month} · ${label}: ${format(r[kind])}`}
                       arrow
                     >
                       <Box
@@ -325,7 +325,7 @@ export function MoneyTrend({
                             <Tooltip
                               key={category.id}
                               arrow
-                              title={`${r.month} ï¿½ ${label} ï¿½ ${category.name}: ${format(category.amount)} ï¿½ Total: ${format(r[kind])}`}
+                              title={`${r.month} · ${label} · ${category.name}: ${format(category.amount)} · Total: ${format(r[kind])}`}
                             >
                               <Box
                                 tabIndex={0}
