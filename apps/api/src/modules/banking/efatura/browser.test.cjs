@@ -51,11 +51,15 @@ test('both Vercel configurations include the worker runtime dependency tree', ()
   const { createRequire } = require('node:module');
   const apiRoot = resolve(__dirname, '../../../..');
   const repoRoot = resolve(apiRoot, '../..');
+  require('node:child_process').execFileSync(process.execPath, [
+    join(apiRoot, 'scripts/package-efatura.cjs'),
+  ]);
+  const runtime = join(apiRoot, 'dist/efatura-runtime');
+  const packagedApi = join(runtime, 'apps/api');
   const configurations = [
     JSON.parse(readFileSync(join(repoRoot, 'vercel.json'))).services.api,
     JSON.parse(readFileSync(join(apiRoot, 'vercel.json'))),
   ];
-  const packages = new Set();
   const visited = new Set();
   function visit(name, base) {
     const localRequire = createRequire(join(base, 'package.json'));
@@ -64,7 +68,10 @@ test('both Vercel configurations include the worker runtime dependency tree', ()
       .map((path) => join(path, name))
       .find((path) => existsSync(join(path, 'package.json')));
     assert.ok(directory, `Missing installed dependency: ${name}`);
-    packages.add(name);
+    assert.ok(
+      directory.startsWith(runtime),
+      `Dependency escaped packaged runtime: ${name}`,
+    );
     if (visited.has(directory)) return;
     visited.add(directory);
     const manifest = JSON.parse(readFileSync(join(directory, 'package.json')));
@@ -72,17 +79,12 @@ test('both Vercel configurations include the worker runtime dependency tree', ()
       visit(dependency, directory);
     }
   }
-  visit('puppeteer-core', apiRoot);
-  visit('@sparticuz/chromium', apiRoot);
+  visit('puppeteer-core', packagedApi);
+  visit('@sparticuz/chromium', packagedApi);
+  const packagedRequire = createRequire(join(packagedApi, 'package.json'));
+  packagedRequire('./src/modules/banking/efatura/browser.cjs');
   for (const configuration of configurations) {
     const include = configuration.functions['src/main.ts'].includeFiles;
-    assert.ok(include.includes('{node_modules,../../node_modules}'));
-    const declaredPackages = include.split('/{')[1].split('}')[0].split(',');
-    for (const name of packages) {
-      assert.ok(
-        declaredPackages.includes(name),
-        `Worker dependency omitted: ${name}`,
-      );
-    }
+    assert.equal(include, 'dist/efatura-runtime/**');
   }
 });

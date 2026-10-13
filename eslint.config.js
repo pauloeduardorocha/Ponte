@@ -22,7 +22,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/src/modules/banking/efatura/*.cjs'],
+    files: ['apps/api/src/modules/banking/efatura/*.cjs', 'apps/api/scripts/*.cjs'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {

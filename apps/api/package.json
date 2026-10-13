@@ -5,7 +5,7 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nest start --watch",
-    "build": "nest build && tsc -p tsconfig.seed.json",
+    "build": "nest build && tsc -p tsconfig.seed.json && node scripts/package-efatura.cjs",
     "start:prod": "node dist/main.js",
     "lint": "eslint src test",
     "test": "jest --maxWorkers=2 --workerIdleMemoryLimit=256MB && npm run test:efatura",

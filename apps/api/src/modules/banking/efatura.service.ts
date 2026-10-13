@@ -61,6 +61,18 @@ export class EfaturaService {
       // Resolve the included source asset when the bundled relative path is absent.
     }
     script = [
+      resolve(
+        process.cwd(),
+        'dist/efatura-runtime/apps/api/src/modules/banking/efatura/worker.cjs',
+      ),
+      resolve(
+        process.cwd(),
+        'apps/api/dist/efatura-runtime/apps/api/src/modules/banking/efatura/worker.cjs',
+      ),
+      resolve(
+        __dirname,
+        '../../efatura-runtime/apps/api/src/modules/banking/efatura/worker.cjs',
+      ),
       script,
       resolve(__dirname, 'efatura/worker.cjs'),
       resolve(process.cwd(), 'src/modules/banking/efatura/worker.cjs'),
