@@ -359,6 +359,7 @@ export function FinancePage() {
   return (
     <Stack spacing={3}>
       <Typography variant="h4">Financeiro</Typography>
+      <BankingPage pendingOnly />
       <Tabs
         value={route}
         onChange={(_, v: string) => {

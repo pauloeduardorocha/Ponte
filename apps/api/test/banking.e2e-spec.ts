@@ -161,6 +161,69 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       status: string;
       memberId: string | null;
     }[];
+  it('counts and pages pending classification consistently, excluding completed and ignored movements', async () => {
+    const f = await fixture();
+    const imported = (
+      await upload(
+        f.accountId,
+        Buffer.from(
+          csv + '\n07/10/2026;João Silva dizimo;25,10;REF1;BANK1;EUR',
+        ),
+      ).expect(201)
+    ).body;
+    expect(
+      (await get('/banking/pending-classification').expect(200)).body.total,
+    ).toBe(2);
+    const pending = (
+      await get(
+        '/banking/transactions?pendingClassification=true&pageSize=1',
+      ).expect(200)
+    ).body;
+    expect(pending.total).toBe(2);
+    expect(pending.items).toHaveLength(1);
+    const movements = await rows(imported.id);
+    const credit = movements.find(
+      (t) => t.direction === 'CREDIT' && t.status !== 'REJECTED',
+    )!;
+    const debit = movements.find((t) => t.direction === 'DEBIT')!;
+    const center = (
+      await post('/cost-centers', { name: randomUUID() }).expect(201)
+    ).body;
+    await post('/banking/classify', {
+      ids: [credit.id],
+      classification: 'INCOME',
+      categoryId: f.incomeCategoryId,
+      costCenterId: center.id,
+    }).expect(201);
+    expect(
+      (await get('/banking/pending-classification').expect(200)).body.total,
+    ).toBe(1);
+    await post('/banking/classify', {
+      ids: [debit.id],
+      classification: 'EXPENSE',
+      categoryId: f.expenseCategoryId,
+    }).expect(201);
+    expect(
+      (await get('/banking/pending-classification').expect(200)).body.total,
+    ).toBe(1);
+    await post('/banking/classify', {
+      ids: [debit.id],
+      classification: 'EXPENSE',
+      categoryId: f.expenseCategoryId,
+      costCenterId: center.id,
+    }).expect(201);
+    expect(
+      (await get('/banking/pending-classification').expect(200)).body.total,
+    ).toBe(0);
+    expect(
+      (
+        await get('/banking/transactions?pendingClassification=true').expect(
+          200,
+        )
+      ).body.items,
+    ).toHaveLength(0);
+    await get('/banking/pending-classification', reader).expect(403);
+  });
   it('imports private invoices, suggests, associates explicitly and preserves links through reconciliation/undo', async () => {
     const f = await fixture();
     const imported = (await upload(f.accountId, Buffer.from(csv)).expect(201))

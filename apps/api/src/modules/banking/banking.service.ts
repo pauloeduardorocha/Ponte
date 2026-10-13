@@ -637,6 +637,9 @@ export class BankingService {
   }
   async movements(q: BankQuery, user: CurrentUser) {
     const where: Prisma.BankTransactionWhereInput = {
+      ...(q.pendingClassification === 'true'
+        ? { AND: [this.pendingClassificationWhere()] }
+        : {}),
       id: q.transactionId,
       direction: q.direction,
       categoryId: q.categoryId,
@@ -727,6 +730,32 @@ export class BankingService {
       total: await this.db.bankTransaction.count({ where }),
       page: q.page,
       pageSize: q.pageSize,
+    };
+  }
+  private pendingClassificationWhere(): Prisma.BankTransactionWhereInput {
+    return {
+      status: { not: 'REJECTED' },
+      import: { status: { in: ['CONFIRMED', 'READY_FOR_REVIEW'] } },
+      OR: [
+        { categoryId: null },
+        {
+          categoryId: {
+            in: [
+              '00000000-0000-4000-8000-000000000001',
+              '00000000-0000-4000-8000-000000000002',
+            ],
+          },
+        },
+        { costCenterId: null },
+        { status: 'POSSIBLE_DUPLICATE' },
+      ],
+    };
+  }
+  async pendingClassificationSummary() {
+    return {
+      total: await this.db.bankTransaction.count({
+        where: this.pendingClassificationWhere(),
+      }),
     };
   }
   async members(q: BankQuery) {

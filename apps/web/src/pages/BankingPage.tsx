@@ -85,6 +85,10 @@ type Movement = {
     undoReason?: string | null;
   }[];
 };
+const uncategorizedIds = [
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000002',
+];
 const statusNames: Record<string, string> = {
   UPLOADED: 'Enviado',
   PROCESSING: 'Processando',
@@ -121,7 +125,11 @@ async function bankFile(path: string, options?: RequestInit) {
   }
   return response;
 }
-export function BankingPage() {
+export function BankingPage({
+  pendingOnly = false,
+}: {
+  pendingOnly?: boolean;
+}) {
   const [params] = useSearchParams();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -162,7 +170,13 @@ export function BankingPage() {
   const detail = useQuery({
     queryKey: ['finance', 'banking', 'import', importId],
     queryFn: () => apiRequest<Import>(`/finance/banking/imports/${importId}`),
-    enabled: authorized && Boolean(importId),
+    enabled: authorized && !pendingOnly && Boolean(importId),
+  });
+  const pendingSummary = useQuery({
+    queryKey: ['finance', 'banking', 'pending-classification'],
+    queryFn: () =>
+      apiRequest<{ total: number }>('/finance/banking/pending-classification'),
+    enabled: authorized && pendingOnly,
   });
   const accounts = useQuery({
     queryKey: ['finance', 'banking', 'accounts'],
@@ -170,7 +184,8 @@ export function BankingPage() {
       apiRequest<Page<Lookup>>('/finance/accounts', {
         query: { pageSize: 100 },
       }),
-    enabled: authorized && hasPermission('FINANCE_ACCOUNT_READ'),
+    enabled:
+      authorized && !pendingOnly && hasPermission('FINANCE_ACCOUNT_READ'),
   });
   const categories = useQuery({
     queryKey: ['finance', 'banking', 'categories'],
@@ -178,7 +193,10 @@ export function BankingPage() {
       apiRequest<Page<Lookup>>('/finance/categories', {
         query: { pageSize: 100 },
       }),
-    enabled: authorized && hasPermission('FINANCE_CATEGORY_READ'),
+    enabled:
+      authorized &&
+      (!pendingOnly || classificationOpen) &&
+      hasPermission('FINANCE_CATEGORY_READ'),
   });
   const members = useQuery({
     queryKey: ['finance', 'banking', 'members', debouncedMemberSearch],
@@ -276,7 +294,11 @@ export function BankingPage() {
     setClassification(
       row.classification ?? (row.direction === 'DEBIT' ? 'EXPENSE' : 'INCOME'),
     );
-    setCategoryId(row.categoryId ?? '');
+    setCategoryId(
+      row.categoryId && !uncategorizedIds.includes(row.categoryId)
+        ? row.categoryId
+        : '',
+    );
     setCostCenterId(row.costCenterId ?? '');
     setMemberId(row.memberId ?? '');
     setSupplierId(row.supplierId ?? '');
@@ -285,14 +307,19 @@ export function BankingPage() {
     setAcceptDuplicate(false);
   }
   const startReview = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async (id?: string) => {
       const rows: Movement[] = [];
       let page = 1;
       while (true) {
         const result = await apiRequest<Page<Movement>>(
           '/finance/banking/transactions',
           {
-            query: { importId: id, page, pageSize: 100 },
+            query: {
+              importId: id,
+              page,
+              pageSize: 100,
+              pendingClassification: pendingOnly ? 'true' : undefined,
+            },
           },
         );
         rows.push(...result.items);
@@ -303,6 +330,7 @@ export function BankingPage() {
         (row) =>
           row.status !== 'REJECTED' &&
           (!row.categoryId ||
+            uncategorizedIds.includes(row.categoryId) ||
             !row.costCenterId ||
             row.status === 'POSSIBLE_DUPLICATE'),
       );
@@ -314,8 +342,7 @@ export function BankingPage() {
       if (rows.length) {
         prepareMovement(rows[0]!);
         setClassificationOpen(true);
-      } else
-        setNotice('Todos os movimentos deste extrato já foram categorizados.');
+      } else setNotice('Todos os movimentos já foram categorizados.');
     },
   });
   function stopReview() {
@@ -382,7 +409,10 @@ export function BankingPage() {
         >
           <MenuItem value="">Sem categoria</MenuItem>
           {categories.data?.items
-            .filter((c) => c.kind === classification)
+            .filter(
+              (c) =>
+                c.kind === classification && !uncategorizedIds.includes(c.id),
+            )
             .map((c) => (
               <MenuItem key={c.id} value={c.id}>
                 {c.name}
@@ -483,6 +513,206 @@ export function BankingPage() {
       )}
     </Stack>
   );
+  const reviewDialog = (
+    <Dialog
+      open={classificationOpen}
+      onClose={stopReview}
+      fullWidth
+      maxWidth="sm"
+      aria-labelledby="movement-review-title"
+    >
+      <DialogTitle id="movement-review-title">
+        Categorizar movimentação
+      </DialogTitle>
+      <DialogContent sx={{ overflowX: 'hidden' }}>
+        <Stack spacing={2}>
+          <Typography aria-live="polite">
+            Movimento {reviewIndex + 1} de {reviewRows.length}
+          </Typography>
+          <LinearProgress
+            variant="determinate"
+            value={
+              reviewRows.length ? (reviewIndex / reviewRows.length) * 100 : 0
+            }
+            aria-label="Progresso da classificação"
+          />
+          <Typography variant="body2" color="text.secondary">
+            Cada etapa é salva. Você pode parar e continuar depois em Receitas
+            ou Despesas.
+          </Typography>
+          {currentMovement && (
+            <Slide
+              key={currentMovement.id}
+              direction={sliding ? 'right' : 'left'}
+              in={!sliding}
+              timeout={reducedMotion ? 0 : 240}
+              onExited={advanceReview}
+              mountOnEnter
+              unmountOnExit
+            >
+              <Box>
+                <Stack spacing={1} sx={{ mb: 2 }}>
+                  <Chip
+                    label={
+                      currentMovement.direction === 'CREDIT'
+                        ? 'Receita'
+                        : 'Despesa'
+                    }
+                    color={
+                      currentMovement.direction === 'CREDIT'
+                        ? 'success'
+                        : 'error'
+                    }
+                    sx={{ alignSelf: 'flex-start' }}
+                  />
+                  <Typography variant="h5" component="h3">
+                    {currentMovement.description}
+                  </Typography>
+                  <Typography variant="h4">
+                    {currentMovement.direction === 'CREDIT' ? '+' : '−'}
+                    {currentMovement.amount}{' '}
+                    {currentMovement.import.account.currency}
+                  </Typography>
+                  <Typography variant="body2">
+                    {currentMovement.date.slice(0, 10)} · Referência:{' '}
+                    {currentMovement.reference || 'Não informada'}
+                  </Typography>
+                  {currentMovement.status === 'POSSIBLE_DUPLICATE' && (
+                    <Alert severity="warning">
+                      <Typography sx={{ fontWeight: 600 }}>
+                        Possível réplica
+                      </Typography>
+                      Este movimento pode já ter sido importado. Confira os
+                      dados e descarte-o se for duplicado.
+                      {currentMovement.duplicateReason && (
+                        <Typography variant="body2">
+                          {currentMovement.duplicateReason}
+                        </Typography>
+                      )}
+                    </Alert>
+                  )}
+                </Stack>
+                <Box
+                  component="fieldset"
+                  disabled={classify.isPending || sliding}
+                  sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+                >
+                  {classificationForm}
+                </Box>
+                <MovementInvoices
+                  canAssociate={currentMovement.status !== 'REJECTED'}
+                  transactionId={currentMovement.id}
+                  invoices={currentMovement.invoices ?? []}
+                  description={currentMovement.description}
+                  amount={currentMovement.amount}
+                  currency={currentMovement.import.account.currency}
+                />
+                {[
+                  'PENDING_REVIEW',
+                  'POSSIBLE_DUPLICATE',
+                  'CLASSIFIED',
+                ].includes(currentMovement.status) && (
+                  <LinkBankMovement
+                    onLinked={() => setSliding(true)}
+                    id={currentMovement.id}
+                    direction={currentMovement.direction}
+                    accountId={currentMovement.import.accountId}
+                    date={currentMovement.date}
+                    amount={currentMovement.amount}
+                  />
+                )}
+              </Box>
+            </Slide>
+          )}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
+        {currentMovement?.status === 'POSSIBLE_DUPLICATE' && (
+          <Button
+            color="warning"
+            disabled={classify.isPending || sliding}
+            onClick={() => classify.mutate('IGNORE')}
+          >
+            Descartar movimento
+          </Button>
+        )}
+        <Button disabled={classify.isPending || sliding} onClick={stopReview}>
+          Continuar depois
+        </Button>
+        <Button
+          variant="contained"
+          disabled={
+            !currentMovement ||
+            classify.isPending ||
+            sliding ||
+            (classification !== 'IGNORE' && (!categoryId || !costCenterId)) ||
+            (classification !== 'IGNORE' &&
+              currentMovement.status === 'POSSIBLE_DUPLICATE' &&
+              !acceptDuplicate)
+          }
+          onClick={() => classify.mutate()}
+        >
+          {classify.isPending ? 'Salvando…' : 'Próxima'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+  if (pendingOnly) {
+    if (!authorized) return null;
+    const total = pendingSummary.data?.total ?? 0;
+    return (
+      <>
+        {total > 0 && (
+          <Alert
+            severity="warning"
+            action={
+              <Button
+                color="inherit"
+                disabled={startReview.isPending || classificationOpen}
+                onClick={() => startReview.mutate()}
+              >
+                {startReview.isPending
+                  ? 'Carregando…'
+                  : 'Categorizar movimentos'}
+              </Button>
+            }
+          >
+            <Typography sx={{ fontWeight: 600 }}>
+              {total === 1
+                ? '1 movimento aguarda categorização'
+                : `${total} movimentos aguardam categorização`}
+            </Typography>
+            Defina a categoria e o centro de custo. Possíveis réplicas também
+            precisam de revisão.
+          </Alert>
+        )}
+        {pendingSummary.error && (
+          <Alert
+            severity="error"
+            action={
+              <Button onClick={() => void pendingSummary.refetch()}>
+                Tentar novamente
+              </Button>
+            }
+          >
+            Não foi possível consultar os movimentos pendentes.
+          </Alert>
+        )}
+        {startReview.error && (
+          <Alert severity="error">{startReview.error.message}</Alert>
+        )}
+        {notice && (
+          <Alert severity="info" onClose={() => setNotice('')}>
+            {notice}
+          </Alert>
+        )}
+        {startReview.isPending && (
+          <LinearProgress aria-label="Carregando movimentos" />
+        )}
+        {reviewDialog}
+      </>
+    );
+  }
   const error =
     imports.error ?? detail.error ?? upload.error ?? startReview.error;
   if (!authorized)
@@ -653,148 +883,7 @@ export function BankingPage() {
       {startReview.isPending && (
         <LinearProgress aria-label="Carregando movimentos" />
       )}
-      <Dialog
-        open={classificationOpen}
-        onClose={stopReview}
-        fullWidth
-        maxWidth="sm"
-        aria-labelledby="movement-review-title"
-      >
-        <DialogTitle id="movement-review-title">
-          Categorizar movimentação
-        </DialogTitle>
-        <DialogContent sx={{ overflowX: 'hidden' }}>
-          <Stack spacing={2}>
-            <Typography aria-live="polite">
-              Movimento {reviewIndex + 1} de {reviewRows.length}
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={
-                reviewRows.length ? (reviewIndex / reviewRows.length) * 100 : 0
-              }
-              aria-label="Progresso da classificação"
-            />
-            <Typography variant="body2" color="text.secondary">
-              Cada etapa é salva. Você pode parar e continuar depois em Receitas
-              ou Despesas.
-            </Typography>
-            {currentMovement && (
-              <Slide
-                key={currentMovement.id}
-                direction={sliding ? 'right' : 'left'}
-                in={!sliding}
-                timeout={reducedMotion ? 0 : 240}
-                onExited={advanceReview}
-                mountOnEnter
-                unmountOnExit
-              >
-                <Box>
-                  <Stack spacing={1} sx={{ mb: 2 }}>
-                    <Chip
-                      label={
-                        currentMovement.direction === 'CREDIT'
-                          ? 'Receita'
-                          : 'Despesa'
-                      }
-                      color={
-                        currentMovement.direction === 'CREDIT'
-                          ? 'success'
-                          : 'error'
-                      }
-                      sx={{ alignSelf: 'flex-start' }}
-                    />
-                    <Typography variant="h5" component="h3">
-                      {currentMovement.description}
-                    </Typography>
-                    <Typography variant="h4">
-                      {currentMovement.direction === 'CREDIT' ? '+' : '−'}
-                      {currentMovement.amount}{' '}
-                      {currentMovement.import.account.currency}
-                    </Typography>
-                    <Typography variant="body2">
-                      {currentMovement.date.slice(0, 10)} · Referência:{' '}
-                      {currentMovement.reference || 'Não informada'}
-                    </Typography>
-                    {currentMovement.status === 'POSSIBLE_DUPLICATE' && (
-                      <Alert severity="warning">
-                        <Typography sx={{ fontWeight: 600 }}>
-                          Possível réplica
-                        </Typography>
-                        Este movimento pode já ter sido importado. Confira os
-                        dados e descarte-o se for duplicado.
-                        {currentMovement.duplicateReason && (
-                          <Typography variant="body2">
-                            {currentMovement.duplicateReason}
-                          </Typography>
-                        )}
-                      </Alert>
-                    )}
-                  </Stack>
-                  <Box
-                    component="fieldset"
-                    disabled={classify.isPending || sliding}
-                    sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
-                  >
-                    {classificationForm}
-                  </Box>
-                  <MovementInvoices
-                    canAssociate={currentMovement.status !== 'REJECTED'}
-                    transactionId={currentMovement.id}
-                    invoices={currentMovement.invoices ?? []}
-                    description={currentMovement.description}
-                    amount={currentMovement.amount}
-                    currency={currentMovement.import.account.currency}
-                  />
-                  {[
-                    'PENDING_REVIEW',
-                    'POSSIBLE_DUPLICATE',
-                    'CLASSIFIED',
-                  ].includes(currentMovement.status) && (
-                    <LinkBankMovement
-                      onLinked={() => setSliding(true)}
-                      id={currentMovement.id}
-                      direction={currentMovement.direction}
-                      accountId={currentMovement.import.accountId}
-                      date={currentMovement.date}
-                      amount={currentMovement.amount}
-                    />
-                  )}
-                </Box>
-              </Slide>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ flexWrap: 'wrap', gap: 1 }}>
-          {currentMovement?.status === 'POSSIBLE_DUPLICATE' && (
-            <Button
-              color="warning"
-              disabled={classify.isPending || sliding}
-              onClick={() => classify.mutate('IGNORE')}
-            >
-              Descartar movimento
-            </Button>
-          )}
-          <Button disabled={classify.isPending || sliding} onClick={stopReview}>
-            Continuar depois
-          </Button>
-          <Button
-            variant="contained"
-            disabled={
-              !currentMovement ||
-              classify.isPending ||
-              sliding ||
-              (classification !== 'IGNORE' && (!categoryId || !costCenterId)) ||
-              (classification !== 'IGNORE' &&
-                currentMovement.status === 'POSSIBLE_DUPLICATE' &&
-                !acceptDuplicate)
-            }
-            onClick={() => classify.mutate()}
-          >
-            {classify.isPending ? 'Salvando…' : 'Próxima'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {reviewDialog}
     </Stack>
   );
 }

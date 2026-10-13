@@ -16,6 +16,7 @@ export class ImportUploadDto {
   @IsUUID() accountId!: string;
 }
 export class BankQuery extends FinanceQuery {
+  @IsOptional() @IsIn(['true', 'false']) pendingClassification?: string;
   @IsOptional() @IsIn(['CREDIT', 'DEBIT']) direction?: 'CREDIT' | 'DEBIT';
   @IsOptional() @IsUUID() transactionId?: string;
   @IsOptional() @IsUUID() importId?: string;

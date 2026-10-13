@@ -92,6 +92,9 @@ export class BankingController {
   ) {
     return this.banking.movements(q, req.user);
   }
+  @Get('pending-classification') pendingClassificationSummary() {
+    return this.banking.pendingClassificationSummary();
+  }
   @Get('members') members(@Query() q: BankQuery) {
     return this.banking.members(q);
   }

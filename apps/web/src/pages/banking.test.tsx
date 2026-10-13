@@ -45,6 +45,7 @@ function routes() {
     ...sessionRoutes(
       makeUser(PERMISSIONS.filter((p) => p.startsWith('FINANCE_'))),
     ),
+    'GET /finance/banking/pending-classification': { body: { total: 0 } },
     'GET /finance/banking/imports': { body: page([imported]) },
     'GET /finance/banking/transactions': { body: page([row]) },
     'GET /finance/banking/imports/import-1': { body: imported },
@@ -232,6 +233,94 @@ describe('Bank statement review', () => {
     });
     expect(
       screen.queryByRole('button', { name: 'Descartar movimento' }),
+    ).not.toBeInTheDocument();
+  });
+  it('opens pending movements from Finance across imports and pages and refreshes the count after saving', async () => {
+    let total = 2;
+    const uncategorized = {
+      ...row,
+      categoryId: '00000000-0000-4000-8000-000000000001',
+      category: {
+        id: '00000000-0000-4000-8000-000000000001',
+        name: 'Sem categoria',
+      },
+    };
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/incomes': { body: page([]) },
+      'GET /finance/banking/pending-classification': () => ({
+        body: { total },
+      }),
+      'GET /finance/banking/transactions': (r) => ({
+        body: {
+          items:
+            r.query.get('page') === '2'
+              ? [
+                  {
+                    ...uncategorized,
+                    id: 'transaction-2',
+                    description: 'Outro extrato',
+                    import: { ...row.import, id: 'import-2' },
+                  },
+                ]
+              : [uncategorized],
+          total: 2,
+          page: Number(r.query.get('page')),
+          pageSize: 1,
+        },
+      }),
+      'GET /finance/cost-centers': {
+        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+      },
+      'POST /finance/banking/classify': () => {
+        total--;
+        return { body: { count: 1 } };
+      },
+    });
+    renderApp('/finance?tab=incomes');
+    await screen.findByText('2 movimentos aguardam categorização');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Categorizar movimentos' }),
+    );
+    await screen.findByRole('dialog', { name: 'Categorizar movimentação' });
+    expect(screen.getByText('Movimento 1 de 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+    const loads = requests.filter(
+      (r) => r.path === '/finance/banking/transactions',
+    );
+    expect(loads).toHaveLength(2);
+    expect(
+      loads.every(
+        (r) =>
+          r.query.get('pendingClassification') === 'true' &&
+          !r.query.has('importId'),
+      ),
+    ).toBe(true);
+    expect(
+      screen.queryByRole('dialog', { name: 'Buscar faturas deste extrato?' }),
+    ).not.toBeInTheDocument();
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Categoria' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Dízimos' }));
+    await screen.findByRole('option', { name: 'Comunidade' });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: /Centro de custo/ }),
+      { target: { value: 'center-1' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+    await screen.findByText('Outro extrato');
+    await screen.findByText('1 movimento aguarda categorização');
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar depois' }));
+    await screen.findByRole('button', { name: 'Categorizar movimentos' });
+    expect(
+      requests.filter((r) => r.path === '/finance/banking/classify'),
+    ).toHaveLength(1);
+  });
+  it('hides the pending alert when there are no movements to categorize', async () => {
+    mockApi({ ...routes(), 'GET /finance/incomes': { body: page([]) } });
+    renderApp('/finance?tab=incomes');
+    await screen.findByText('Nenhum registro.');
+    expect(
+      screen.queryByRole('button', { name: 'Categorizar movimentos' }),
     ).not.toBeInTheDocument();
   });
   it('fetches invoices with credentials and the selected import, without exporting JSON', async () => {
