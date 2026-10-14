@@ -146,6 +146,85 @@ describe('Bank statement review', () => {
       await within(dialog).findByRole('button', { name: 'Associar FT 42' }),
     ).toBeVisible();
   });
+  it('searches and selects a member in one field and saves the selected member', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/banking/members': (request) => ({
+        body: page(
+          request.query.get('search') === 'Maria'
+            ? [{ id: 'member-2', name: 'Maria Costa' }]
+            : [{ id: 'member-1', name: 'Jo\u00e3o Silva' }],
+        ),
+      }),
+      'GET /finance/cost-centers': {
+        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+      },
+    });
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    expect(screen.queryByLabelText('Pesquisar membro')).not.toBeInTheDocument();
+    const memberField = screen.getByRole('combobox', { name: 'Membro' });
+    fireEvent.focus(memberField);
+    fireEvent.change(memberField, { target: { value: 'Maria' } });
+    await waitFor(() =>
+      expect(requests.some((r) => r.query.get('search') === 'Maria')).toBe(
+        true,
+      ),
+    );
+    fireEvent.click(
+      await screen.findByRole(
+        'option',
+        { name: 'Maria Costa' },
+        { timeout: 3000 },
+      ),
+    );
+    expect(memberField).toHaveValue('Maria Costa');
+    await waitFor(() =>
+      expect(
+        requests.some(
+          (request) =>
+            request.path === '/finance/banking/members' &&
+            !request.query.get('search'),
+        ),
+      ).toBe(true),
+    );
+    expect(memberField).toHaveValue('Maria Costa');
+    select('Categoria', 'D\u00edzimos');
+    await screen.findByRole('option', { name: 'Comunidade' });
+    fireEvent.change(
+      screen.getByRole('combobox', { name: /Centro de custo/ }),
+      {
+        target: { value: 'center-1' },
+      },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Pr\u00f3xima' }));
+    await waitFor(() =>
+      expect(
+        requests.find((request) => request.path === '/finance/banking/classify')
+          ?.body,
+      ).toMatchObject({ memberId: 'member-2' }),
+    );
+  });
+  it('selects suggested members in the same searchable field and clears the association', async () => {
+    mockApi(routes());
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    fireEvent.click(await screen.findByRole('button', { name: 'Associar' }));
+    expect(screen.getByRole('combobox', { name: 'Membro' })).toHaveValue(
+      'Jo\u00e3o Silva',
+    );
+    expect(
+      screen.getByRole('combobox', { name: 'Tipo da contribui\u00e7\u00e3o' }),
+    ).toBeVisible();
+    fireEvent.focus(screen.getByRole('combobox', { name: 'Membro' }));
+    fireEvent.click(screen.getByTitle('Ignorar associa\u00e7\u00e3o'));
+    expect(screen.getByRole('combobox', { name: 'Membro' })).toHaveValue('');
+    expect(
+      screen.queryByRole('combobox', {
+        name: 'Tipo da contribui\u00e7\u00e3o',
+      }),
+    ).not.toBeInTheDocument();
+  });
   it('keeps the upload screen free of movements and only loads history on demand', async () => {
     const requests = mockApi(routes());
     renderApp('/finance?tab=banking');

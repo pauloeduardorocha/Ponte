@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -159,6 +160,7 @@ export function BankingPage({
     [contributionType, setContributionType] = useState(''),
     [acceptDuplicate, setAcceptDuplicate] = useState(false),
     [memberSearch, setMemberSearch] = useState('');
+  const [selectedMember, setSelectedMember] = useState<Lookup | null>(null);
   const debouncedMemberSearch = useDebouncedValue(memberSearch);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [fetchInvoicesOpen, setFetchInvoicesOpen] = useState(false);
@@ -308,6 +310,7 @@ export function BankingPage({
     setCostCenterId(row.costCenterId ?? '');
     setMovementDescription(row.customDescription ?? row.description);
     setMemberId(row.memberId ?? '');
+    setSelectedMember(null);
     setSupplierId(row.supplierId ?? '');
     setContributionType(row.contributionType ?? '');
     setMemberSearch('');
@@ -385,6 +388,8 @@ export function BankingPage({
           setClassification(e.target.value);
           setCategoryId('');
           setMemberId('');
+          setSelectedMember(null);
+          setMemberSearch('');
           setSupplierId('');
           setContributionType('');
         }}
@@ -447,11 +452,6 @@ export function BankingPage({
       )}
       {classification === 'INCOME' && (
         <>
-          <TextField
-            label="Pesquisar membro"
-            value={memberSearch}
-            onChange={(e) => setMemberSearch(e.target.value)}
-          />
           {suggestions.data?.map((s) => (
             <Stack key={s.id} direction="row" alignItems="center">
               <Typography>
@@ -459,26 +459,63 @@ export function BankingPage({
               </Typography>
               <Button
                 disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
-                onClick={() => setMemberId(s.id)}
+                onClick={() => {
+                  setMemberId(s.id);
+                  setSelectedMember(s);
+                  setMemberSearch('');
+                }}
               >
                 Associar
               </Button>
             </Stack>
           ))}
-          <TextField
-            select
-            label="Membro (escolher outro ou ignorar associação)"
-            value={memberId}
-            onChange={(e) => setMemberId(e.target.value)}
+          <Autocomplete
+            options={members.data?.items ?? []}
+            value={
+              memberId
+                ? (selectedMember ??
+                  members.data?.items.find(
+                    (member) => member.id === memberId,
+                  ) ??
+                  suggestions.data?.find(
+                    (member) => member.id === memberId,
+                  ) ?? { id: memberId, name: 'Membro associado' })
+                : null
+            }
+            getOptionLabel={(member) => member.name}
+            getOptionKey={(member) => member.id}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            filterOptions={(options) => options}
+            onInputChange={(_, value, reason) => {
+              if (reason === 'input') setMemberSearch(value);
+              else setMemberSearch('');
+            }}
+            onChange={(_, member) => {
+              setMemberId(member?.id ?? '');
+              setSelectedMember(member);
+              setMemberSearch('');
+              if (!member) setContributionType('');
+            }}
             disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
-          >
-            <MenuItem value="">Ignorar associação</MenuItem>
-            {members.data?.items.map((m) => (
-              <MenuItem key={m.id} value={m.id}>
-                {m.name}
-              </MenuItem>
-            ))}
-          </TextField>
+            loading={members.isFetching}
+            loadingText="Buscando membros..."
+            noOptionsText="Nenhum membro encontrado"
+            clearText="Ignorar associação"
+            openText="Mostrar membros"
+            closeText="Fechar lista"
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="Membro"
+                placeholder="Digite para buscar um membro"
+                helperText={
+                  members.error?.message ??
+                  'Opcional. Limpe o campo para ignorar a associação.'
+                }
+                error={Boolean(members.error)}
+              />
+            )}
+          />
           {memberId && (
             <TextField
               select
