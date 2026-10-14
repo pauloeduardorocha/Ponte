@@ -95,6 +95,73 @@ describe('Finance permissions and dashboard', () => {
       screen.getByRole('button', { name: 'Excluir expense.pdf' }),
     ).toBeVisible();
   });
+  it('reviews undocumented expenses and associates a suggested invoice', async () => {
+    const expense = {
+      id: 'expense-1',
+      description: 'Compra de material',
+      amount: '20.00',
+      date: '2026-10-14',
+      account: { currency: 'EUR' },
+    };
+    const invoice = {
+      id: 'invoice-1',
+      importId: 'import-1',
+      issuerName: 'Loja',
+      issuerTaxId: '123456789',
+      number: 'FT-1',
+      date: '2026-10-14',
+      amount: '20.00',
+      currency: 'EUR',
+      documentUrl: null,
+    };
+    const requests = mockApi({
+      ...sessionRoutes(
+        makeUser([
+          'FINANCE_TRANSACTION_READ',
+          'FINANCE_ATTACHMENT_READ',
+          'FINANCE_ATTACHMENT_WRITE',
+          'FINANCE_INVOICE_READ',
+          'FINANCE_INVOICE_ASSOCIATE',
+        ]),
+      ),
+      'GET /finance/expenses': {
+        body: { items: [expense], total: 1, page: 1, pageSize: 20 },
+      },
+      'GET /finance/expenses/expense-1/attachments': { body: [] },
+      'GET /finance/invoices': {
+        body: { items: [], total: 0, page: 1, pageSize: 100 },
+      },
+      'GET /finance/invoices/expense-suggestions/expense-1': {
+        body: [invoice],
+      },
+      'POST /finance/invoices/invoice-1/expense-association': {
+        body: { ...invoice, expenseId: expense.id },
+      },
+    });
+    renderApp('/finance?tab=expenses');
+    await screen.findByText('1 despesa sem anexo nem fatura associada');
+    fireEvent.click(screen.getByRole('button', { name: 'Anexar documento' }));
+    await screen.findByRole('dialog');
+    expect(
+      await screen.findByLabelText('Selecionar anexos'),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Associar FT-1' }),
+    );
+    await waitFor(() =>
+      expect(
+        requests.some(
+          (r) =>
+            r.method === 'POST' &&
+            r.path === '/finance/invoices/invoice-1/expense-association',
+        ),
+      ).toBe(true),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Concluir revisão' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+  });
   it('opens a bank attachment deep link even after classification is complete', async () => {
     mockApi({
       ...sessionRoutes(

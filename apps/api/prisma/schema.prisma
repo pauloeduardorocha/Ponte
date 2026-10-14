@@ -595,6 +595,7 @@ model Expense {
   bankTransaction   BankTransaction?      @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
   reconciliations   BankReconciliation[]
   attachments       FinancialAttachment[]
+  invoices          FinancialInvoice[]
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
 
@@ -1094,6 +1095,8 @@ model FinancialInvoice {
   fingerprint       String           @unique @db.VarChar(64)
   bankTransactionId String?          @db.Uuid
   bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  expenseId         String?          @db.Uuid
+  expense           Expense?         @relation(fields: [expenseId], references: [id], onDelete: Restrict)
   associatedBy      String?          @db.Uuid
   associator        User?            @relation("InvoiceAssociator", fields: [associatedBy], references: [id], onDelete: Restrict)
   associatedAt      DateTime?
@@ -1101,6 +1104,7 @@ model FinancialInvoice {
 
   @@index([importId])
   @@index([bankTransactionId])
+  @@index([expenseId])
   @@index([currency, amount, date])
   @@map("financial_invoices")
 }

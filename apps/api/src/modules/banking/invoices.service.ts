@@ -68,7 +68,8 @@ export class InvoicesService {
   }
   async list(q: InvoiceQuery) {
     const where: Prisma.FinancialInvoiceWhereInput = {
-      bankTransactionId: q.unassociated === 'true' ? null : undefined,
+      bankTransactionId: q.unassociated === 'true' ? null : q.transactionId,
+      expenseId: q.unassociated === 'true' ? null : q.expenseId,
       date: {
         gte: q.start ? new Date(q.start) : undefined,
         lte: q.end ? new Date(q.end) : undefined,
@@ -90,11 +91,25 @@ export class InvoicesService {
     ]);
     return { items, total, page: q.page, pageSize: q.pageSize };
   }
-  async suggestions(id: string) {
-    const movement = await this.db.bankTransaction.findUnique({
-      where: { id },
-      include: { import: { include: { account: true } } },
-    });
+  async suggestions(id: string, expenseTarget = false) {
+    const expense = expenseTarget
+      ? await this.db.expense.findUnique({
+          where: { id },
+          include: { account: true },
+        })
+      : null;
+    if (expenseTarget && !expense) throw new NotFoundException();
+    const movement = expense
+      ? {
+          ...expense,
+          direction: 'DEBIT',
+          reference: '',
+          import: { account: expense.account },
+        }
+      : await this.db.bankTransaction.findUnique({
+          where: { id },
+          include: { import: { include: { account: true } } },
+        });
     if (!movement) throw new NotFoundException();
     const signed =
       movement.direction === 'DEBIT'
@@ -103,6 +118,7 @@ export class InvoicesService {
     const candidates = await this.db.financialInvoice.findMany({
       where: {
         bankTransactionId: null,
+        expenseId: null,
         currency: movement.import.account.currency,
         amount: signed,
         date: {
@@ -151,25 +167,48 @@ export class InvoicesService {
       })
       .sort((a, b) => b.score - a.score);
   }
-  async associate(id: string, movementId: string | null, user: CurrentUser) {
+  async associate(
+    id: string,
+    movementId: string | null,
+    user: CurrentUser,
+    expenseTarget = false,
+  ) {
     return this.db.$transaction(async (tx) => {
       await bindAudit(tx);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(71932002)`;
       const invoice = await tx.financialInvoice.findUnique({ where: { id } });
       if (!invoice) throw new NotFoundException();
+      if (expenseTarget && !movementId && invoice.bankTransactionId)
+        throw new BadRequestException(
+          'A fatura está associada ao movimento bancário',
+        );
       if (
-        invoice.bankTransactionId &&
+        (invoice.bankTransactionId || invoice.expenseId) &&
         movementId &&
-        invoice.bankTransactionId !== movementId
+        (expenseTarget ? invoice.expenseId : invoice.bankTransactionId) !==
+          movementId
       )
         throw new ConflictException(
           'Fatura já associada; remova o vínculo anterior primeiro',
         );
       if (movementId) {
-        const movement = await tx.bankTransaction.findUnique({
-          where: { id: movementId },
-          include: { import: { include: { account: true } } },
-        });
+        const expense = expenseTarget
+          ? await tx.expense.findUnique({
+              where: { id: movementId },
+              include: { account: true },
+            })
+          : null;
+        if (expenseTarget && !expense) throw new NotFoundException();
+        const movement = expense
+          ? {
+              ...expense,
+              direction: 'DEBIT',
+              import: { account: expense.account },
+            }
+          : await tx.bankTransaction.findUnique({
+              where: { id: movementId },
+              include: { import: { include: { account: true } } },
+            });
         if (!movement) throw new NotFoundException();
         if (movement.status === 'REJECTED')
           throw new BadRequestException('Movimento ignorado');
@@ -184,7 +223,8 @@ export class InvoicesService {
       return tx.financialInvoice.update({
         where: { id },
         data: {
-          bankTransactionId: movementId,
+          bankTransactionId: expenseTarget ? null : movementId,
+          expenseId: expenseTarget ? movementId : null,
           associatedBy: user.id,
           associatedAt: new Date(),
         },

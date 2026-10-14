@@ -67,6 +67,36 @@ export class InvoicesController {
   upload(@UploadedFile() file: PrivateUpload, @Req() req: AuthRequest) {
     return this.service.upload(file, req.user);
   }
+  @Get('expense-suggestions/:expenseId')
+  @Permission('FINANCE_INVOICE_READ', 'FINANCE_TRANSACTION_READ')
+  expenseSuggestions(@Param('expenseId', ParseUUIDPipe) id: string) {
+    return this.service.suggestions(id, true);
+  }
+  @Post(':id/expense-association')
+  @Permission(
+    'FINANCE_INVOICE_READ',
+    'FINANCE_INVOICE_ASSOCIATE',
+    'FINANCE_TRANSACTION_READ',
+  )
+  associateExpense(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: InvoiceAssociationDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.service.associate(id, dto.transactionId, req.user, true);
+  }
+  @Delete(':id/expense-association')
+  @Permission(
+    'FINANCE_INVOICE_READ',
+    'FINANCE_INVOICE_ASSOCIATE',
+    'FINANCE_TRANSACTION_READ',
+  )
+  unlinkExpense(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.service.associate(id, null, req.user, true);
+  }
   @Get('suggestions/:transactionId')
   @Permission(
     'FINANCE_INVOICE_READ',

@@ -336,7 +336,22 @@ export class FinanceService {
     };
   }
   async expenses(q: FinanceQuery) {
-    const where = {
+    const where: Prisma.ExpenseWhereInput = {
+      ...(q.missingDocument === 'true'
+        ? {
+            attachments: { none: {} },
+            invoices: { none: {} },
+            OR: [
+              { bankTransactionId: null },
+              {
+                bankTransaction: {
+                  attachments: { none: {} },
+                  invoices: { none: {} },
+                },
+              },
+            ],
+          }
+        : {}),
       id: q.id,
       accountId: q.accountId,
       categoryId: q.categoryId,

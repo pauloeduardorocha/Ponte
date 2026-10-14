@@ -15,6 +15,7 @@ export class RenameFinancialAttachmentDto {
   @IsString() @MinLength(1) @MaxLength(255) filename!: string;
 }
 export class FinanceQuery extends PageQuery {
+  @IsOptional() @IsIn(['true', 'false']) missingDocument?: string;
   @IsOptional() @IsIn(['TITHE', 'OFFERING', 'DONATION', 'OTHER']) type?:
     'TITHE' | 'OFFERING' | 'DONATION' | 'OTHER';
   @IsOptional() @IsUUID() categoryId?: string;

@@ -29,6 +29,7 @@ export type Invoice = {
   documentUrl: string | null;
   associatedBy?: string | null;
   bankTransactionId?: string | null;
+  expenseId?: string | null;
   score?: number;
   reasons?: string[];
 };
@@ -87,6 +88,7 @@ export function InvoiceLink({ invoice }: { invoice: Invoice }) {
 }
 export function MovementInvoices({
   transactionId,
+  expenseTarget = false,
   invoices,
   description,
   amount,
@@ -97,6 +99,7 @@ export function MovementInvoices({
   onInvoicesChange,
 }: {
   transactionId: string;
+  expenseTarget?: boolean;
   invoices: Invoice[];
   description: string;
   amount: string;
@@ -118,10 +121,18 @@ export function MovementInvoices({
     ? showSuggestions && invoices.length === 0
     : open;
   const suggestions = useQuery({
-    queryKey: ['finance', 'invoices', 'suggestions', transactionId],
+    queryKey: [
+      'finance',
+      'invoices',
+      'suggestions',
+      expenseTarget,
+      transactionId,
+    ],
     enabled: readable && pickerVisible && editable && !debounced,
     queryFn: () =>
-      apiRequest<Invoice[]>(`/finance/invoices/suggestions/${transactionId}`),
+      apiRequest<Invoice[]>(
+        `/finance/invoices/${expenseTarget ? 'expense-suggestions' : 'suggestions'}/${transactionId}`,
+      ),
   });
   const list = useQuery({
     queryKey: ['finance', 'invoices', 'list', debounced, page],
@@ -133,10 +144,13 @@ export function MovementInvoices({
   });
   const change = useMutation({
     mutationFn: ({ id, remove }: { id: string; remove?: boolean }) =>
-      apiRequest<Invoice>(`/finance/invoices/${id}/association`, {
-        method: remove ? 'DELETE' : 'POST',
-        ...(remove ? {} : { body: { transactionId } }),
-      }),
+      apiRequest<Invoice>(
+        `/finance/invoices/${id}/${expenseTarget ? 'expense-association' : 'association'}`,
+        {
+          method: remove ? 'DELETE' : 'POST',
+          ...(remove ? {} : { body: { transactionId } }),
+        },
+      ),
     onSuccess: (invoice, { id, remove }) => {
       onInvoicesChange?.(
         remove
@@ -264,7 +278,7 @@ export function MovementInvoices({
             }
             actions={
               <>
-                {editable && (
+                {editable && !(expenseTarget && invoice.bankTransactionId) && (
                   <Button
                     color="warning"
                     disabled={change.isPending}

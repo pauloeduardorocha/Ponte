@@ -8,6 +8,10 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
 import { InvoicesPage } from './InvoicesPage';
+import {
+  ExpenseDocumentsAlert,
+  ExpenseDocumentContent,
+} from './ExpenseDocuments';
 import { MovementAttachments } from './MovementAttachments';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -340,6 +344,7 @@ export function FinancePage() {
     <Stack spacing={3}>
       <Typography variant="h4">Financeiro</Typography>
       <BankingPage pendingOnly />
+      <ExpenseDocumentsAlert />
       <Tabs
         value={route}
         onChange={(_, v: string) => {
@@ -848,16 +853,10 @@ export function FinancePage() {
                     />
                   </>
                 )}
-              <Typography variant="subtitle2">Documentos da despesa</Typography>
-              {(hasPermission('FINANCE_ATTACHMENT_READ') ||
-                hasPermission('FINANCE_ATTACHMENT_WRITE')) && (
-                <MovementAttachments
-                  key={fileExpense.id}
-                  expenseId={fileExpense.id}
-                  canWrite={hasPermission('FINANCE_ATTACHMENT_WRITE')}
-                  canRead={hasPermission('FINANCE_ATTACHMENT_READ')}
-                />
-              )}
+              <ExpenseDocumentContent
+                key={fileExpense.id}
+                expense={fileExpense}
+              />
             </Stack>
           )}
         </DialogContent>

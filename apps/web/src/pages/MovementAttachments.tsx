@@ -89,7 +89,7 @@ export function MovementAttachments({
       }
     },
     onError: (e: Error) => setError(e.message),
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
+    onSettled: () => client.invalidateQueries({ queryKey: ['finance'] }),
   });
   const rename = useMutation({
     mutationFn: ({
@@ -105,14 +105,14 @@ export function MovementAttachments({
       }),
     onSuccess: () => setEditing(null),
     onError: (e: Error) => setError(e.message),
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
+    onSettled: () => client.invalidateQueries({ queryKey: ['finance'] }),
   });
   const remove = useMutation({
     mutationFn: (attachment: Attachment) =>
       apiRequest(filePath(attachment.id), { method: 'DELETE' }),
     onSuccess: () => setDeleting(null),
     onError: (e: Error) => setError(e.message),
-    onSettled: () => client.invalidateQueries({ queryKey: key }),
+    onSettled: () => client.invalidateQueries({ queryKey: ['finance'] }),
   });
   const download = useMutation({
     mutationFn: async (attachment: Attachment) => {
