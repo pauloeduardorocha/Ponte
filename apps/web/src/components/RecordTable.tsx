@@ -1,8 +1,8 @@
+import { SortableTable } from './SortableTable';
 import type { ReactNode } from 'react';
 import {
   Paper,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableContainer,
@@ -31,7 +31,9 @@ export function RecordTable({
       variant="outlined"
       sx={{ width: '100%', overflowX: 'auto' }}
     >
-      <Table
+      <SortableTable
+        key={`${primaryLabel}-${summaryLabel ?? ''}-${detailsLabel}`}
+        nonSortableColumns={hasActions ? [summaryLabel ? 3 : 2] : []}
         size="small"
         aria-label={label}
         sx={{
@@ -50,7 +52,7 @@ export function RecordTable({
           </TableRow>
         </TableHead>
         <TableBody>{children}</TableBody>
-      </Table>
+      </SortableTable>
     </TableContainer>
   );
 }

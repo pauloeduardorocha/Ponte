@@ -18,7 +18,7 @@ export type AuthSession = AuthResponse;
 
 export type MemberStatus = 'ACTIVE' | 'INACTIVE';
 
-export type MemberSortBy = 'name' | 'email' | 'createdAt';
+export type MemberSortBy = 'name' | 'email' | 'phone' | 'status' | 'createdAt';
 export type SortOrder = 'asc' | 'desc';
 
 export interface MemberListParams {

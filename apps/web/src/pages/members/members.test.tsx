@@ -78,6 +78,14 @@ describe('Members', () => {
     await waitFor(() =>
       expect(lastListQuery(requests)?.get('sortBy')).toBe('createdAt'),
     );
+    fireEvent.click(screen.getByRole('button', { name: 'Telefone' }));
+    await waitFor(() =>
+      expect(lastListQuery(requests)?.get('sortBy')).toBe('phone'),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Status' }));
+    await waitFor(() =>
+      expect(lastListQuery(requests)?.get('sortBy')).toBe('status'),
+    );
 
     fireEvent.click(screen.getByRole('button', { name: /next page|próxima/i }));
     await waitFor(() => expect(lastListQuery(requests)?.get('page')).toBe('2'));

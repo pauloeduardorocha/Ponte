@@ -1,3 +1,4 @@
+import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,7 +23,6 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableContainer,
@@ -311,7 +311,10 @@ export function UsersPage() {
 
       <Card variant="outlined">
         <TableContainer>
-          <Table aria-label="Lista de usuários">
+          <SortableTable
+            nonSortableColumns={[3]}
+            aria-label="Lista de usuários"
+          >
             <TableHead>
               <TableRow>
                 <TableCell>Nome</TableCell>
@@ -385,7 +388,7 @@ export function UsersPage() {
                 );
               })}
             </TableBody>
-          </Table>
+          </SortableTable>
         </TableContainer>
         <TablePagination
           component="div"

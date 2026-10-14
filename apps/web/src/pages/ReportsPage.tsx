@@ -1,3 +1,4 @@
+import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -10,7 +11,6 @@ import {
   CardContent,
   MenuItem,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -504,7 +504,7 @@ export function ReportsPage() {
             </Stack>
           ))}
           <Box sx={{ overflowX: 'auto' }}>
-            <Table size="small">
+            <SortableTable nonSortableColumns={[8]} size="small">
               <TableHead>
                 <TableRow>
                   {[
@@ -583,7 +583,7 @@ export function ReportsPage() {
                   </TableRow>
                 ))}
               </TableBody>
-            </Table>
+            </SortableTable>
           </Box>
           {result.data.count === 0 && (
             <Alert severity="info">

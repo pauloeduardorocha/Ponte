@@ -41,9 +41,9 @@ export class MemberQuery extends PageQuery {
   @IsOptional()
   status?: 'ACTIVE' | 'INACTIVE';
 
-  @IsIn(['name', 'email', 'createdAt'])
+  @IsIn(['name', 'email', 'phone', 'status', 'createdAt'])
   @IsOptional()
-  sortBy: 'name' | 'email' | 'createdAt' = 'name';
+  sortBy: 'name' | 'email' | 'phone' | 'status' | 'createdAt' = 'name';
 
   @IsIn(['asc', 'desc'])
   @IsOptional()

@@ -49,7 +49,13 @@ import { MemberStatusChip } from './MemberStatusChip';
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 const DEFAULT_PAGE_SIZE = 10;
 const SEARCH_DEBOUNCE_MS = 350;
-const SORTABLE: MemberSortBy[] = ['name', 'email', 'createdAt'];
+const SORTABLE: MemberSortBy[] = [
+  'name',
+  'email',
+  'phone',
+  'status',
+  'createdAt',
+];
 const STATUSES: MemberStatus[] = ['ACTIVE', 'INACTIVE'];
 
 function readParams(params: URLSearchParams): MemberListParams {
@@ -206,8 +212,8 @@ export function MembersListPage() {
               <TableRow>
                 {sortableHeader('name', 'Nome')}
                 {sortableHeader('email', 'E-mail')}
-                <TableCell>Telefone</TableCell>
-                <TableCell>Status</TableCell>
+                {sortableHeader('phone', 'Telefone')}
+                {sortableHeader('status', 'Status')}
                 {sortableHeader('createdAt', 'Cadastrado em')}
                 <TableCell align="right">Ações</TableCell>
               </TableRow>

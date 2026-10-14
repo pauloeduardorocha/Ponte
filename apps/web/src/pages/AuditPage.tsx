@@ -1,3 +1,4 @@
+import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -9,7 +10,6 @@ import {
   DialogContent,
   DialogTitle,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableHead,
@@ -117,7 +117,10 @@ export function AuditPage() {
         </Alert>
       )}
       <Card sx={{ overflowX: 'auto' }}>
-        <Table aria-label="Registros de auditoria">
+        <SortableTable
+          nonSortableColumns={[5]}
+          aria-label="Registros de auditoria"
+        >
           <TableHead>
             <TableRow>
               <TableCell>Data</TableCell>
@@ -131,7 +134,7 @@ export function AuditPage() {
           <TableBody>
             {logs.data?.items.map((log) => (
               <TableRow key={log.id}>
-                <TableCell>
+                <TableCell data-sort-value={log.createdAt}>
                   {new Date(log.createdAt).toLocaleString('pt-PT')}
                 </TableCell>
                 <TableCell>{log.userId ?? 'Sistema'}</TableCell>
@@ -151,7 +154,7 @@ export function AuditPage() {
               </TableRow>
             )}
           </TableBody>
-        </Table>
+        </SortableTable>
         <TablePagination
           component="div"
           count={logs.data?.total ?? 0}

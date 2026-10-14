@@ -1,3 +1,4 @@
+import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -5,7 +6,6 @@ import {
   Button,
   Chip,
   Stack,
-  Table,
   TableBody,
   TableCell,
   TableContainer,
@@ -148,7 +148,10 @@ export function InvoicesPage() {
         <Alert severity="info">Nenhuma fatura encontrada.</Alert>
       )}
       <TableContainer>
-        <Table aria-label="Faturas recuperadas do e-Fatura">
+        <SortableTable
+          nonSortableColumns={[6]}
+          aria-label="Faturas recuperadas do e-Fatura"
+        >
           <TableHead>
             <TableRow>
               {[
@@ -189,7 +192,7 @@ export function InvoicesPage() {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </SortableTable>
       </TableContainer>
       <Stack direction="row" spacing={2} alignItems="center">
         <Button
