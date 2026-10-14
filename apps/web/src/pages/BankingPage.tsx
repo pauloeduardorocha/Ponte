@@ -452,23 +452,24 @@ export function BankingPage({
       )}
       {classification === 'INCOME' && (
         <>
-          {suggestions.data?.map((s) => (
-            <Stack key={s.id} direction="row" alignItems="center">
-              <Typography>
-                {s.name} · {s.confidence}% de correspondência
-              </Typography>
-              <Button
-                disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
-                onClick={() => {
-                  setMemberId(s.id);
-                  setSelectedMember(s);
-                  setMemberSearch('');
-                }}
-              >
-                Associar
-              </Button>
-            </Stack>
-          ))}
+          {!memberId &&
+            suggestions.data?.map((s) => (
+              <Stack key={s.id} direction="row" alignItems="center">
+                <Typography>
+                  {s.name} · {s.confidence}% de correspondência
+                </Typography>
+                <Button
+                  disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
+                  onClick={() => {
+                    setMemberId(s.id);
+                    setSelectedMember(s);
+                    setMemberSearch('');
+                  }}
+                >
+                  Associar
+                </Button>
+              </Stack>
+            ))}
           <Autocomplete
             options={members.data?.items ?? []}
             value={

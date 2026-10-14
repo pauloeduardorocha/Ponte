@@ -244,6 +244,10 @@ describe('Bank statement review', () => {
     expect(
       screen.getByRole('combobox', { name: 'Tipo da contribui\u00e7\u00e3o' }),
     ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: 'Associar' }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/95% de correspond/)).not.toBeInTheDocument();
     fireEvent.focus(screen.getByRole('combobox', { name: 'Membro' }));
     fireEvent.click(screen.getByTitle('Ignorar associa\u00e7\u00e3o'));
     expect(screen.getByRole('combobox', { name: 'Membro' })).toHaveValue('');
@@ -252,6 +256,9 @@ describe('Bank statement review', () => {
         name: 'Tipo da contribui\u00e7\u00e3o',
       }),
     ).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Associar' }),
+    ).toBeVisible();
   });
   it('keeps the upload screen free of movements and only loads history on demand', async () => {
     const requests = mockApi(routes());
