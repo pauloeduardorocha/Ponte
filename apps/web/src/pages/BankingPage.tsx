@@ -367,7 +367,7 @@ export function BankingPage({
     } else {
       setClassificationOpen(false);
       setNotice(
-        'Classificação concluída. Todas as movimentações foram percorridas.',
+        'Revisão concluída. Todas as movimentações foram percorridas. Os movimentos pulados continuam pendentes de categorização.',
       );
     }
     setSliding(false);
@@ -658,6 +658,12 @@ export function BankingPage({
         )}
         <Button disabled={classify.isPending || sliding} onClick={stopReview}>
           Continuar depois
+        </Button>
+        <Button
+          disabled={!currentMovement || classify.isPending || sliding}
+          onClick={() => setSliding(true)}
+        >
+          Pular
         </Button>
         <Button
           variant="contained"

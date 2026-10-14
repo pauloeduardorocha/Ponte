@@ -160,7 +160,7 @@ describe('Bank statement review', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
     await screen.findByText(
-      'Classificação concluída. Todas as movimentações foram percorridas.',
+      'Revisão concluída. Todas as movimentações foram percorridas. Os movimentos pulados continuam pendentes de categorização.',
     );
   });
   it('can stop without saving the current movement and provides ledger links', async () => {
@@ -336,6 +336,47 @@ describe('Bank statement review', () => {
     expect(
       requests.filter((r) => r.path === '/finance/banking/classify'),
     ).toHaveLength(1);
+  });
+  it('skips movements without saving and keeps them pending after review', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/incomes': { body: page([]) },
+      'GET /finance/banking/pending-classification': { body: { total: 2 } },
+      'GET /finance/banking/transactions': {
+        body: page([
+          row,
+          { ...row, id: 'transaction-2', description: 'Outro extrato' },
+        ]),
+      },
+    });
+    renderApp('/finance?tab=incomes');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Categorizar movimentos' }),
+    );
+    await screen.findByRole('dialog', { name: 'Categorizar movimentação' });
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), {
+      target: { value: 'Alteração não salva' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Pular' }));
+    await screen.findByRole('heading', { name: 'Outro extrato' });
+    expect(screen.getByText('Movimento 2 de 2')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Descrição' })).toHaveValue(
+      'Outro extrato',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Pular' }));
+    await screen.findByText(/Revisão concluída/);
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('dialog', { name: 'Categorizar movimentação' }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      screen.getByText('2 movimentos aguardam categorização'),
+    ).toBeInTheDocument();
+    expect(
+      requests.filter((r) => r.path === '/finance/banking/classify'),
+    ).toHaveLength(0);
   });
   it('hides the pending alert when there are no movements to categorize', async () => {
     mockApi({ ...routes(), 'GET /finance/incomes': { body: page([]) } });
