@@ -620,6 +620,17 @@ export function BankingPage({
                   transactionId={currentMovement.id}
                 />
                 <MovementInvoices
+                  key={currentMovement.id}
+                  inline
+                  onInvoicesChange={(invoices) =>
+                    setReviewRows((rows) =>
+                      rows.map((row) =>
+                        row.id === currentMovement.id
+                          ? { ...row, invoices }
+                          : row,
+                      ),
+                    )
+                  }
                   canAssociate={currentMovement.status !== 'REJECTED'}
                   transactionId={currentMovement.id}
                   invoices={currentMovement.invoices ?? []}

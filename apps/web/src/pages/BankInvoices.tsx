@@ -92,6 +92,8 @@ export function MovementInvoices({
   amount,
   currency,
   canAssociate = true,
+  inline = false,
+  onInvoicesChange,
 }: {
   transactionId: string;
   invoices: Invoice[];
@@ -99,6 +101,8 @@ export function MovementInvoices({
   amount: string;
   currency: string;
   canAssociate?: boolean;
+  inline?: boolean;
+  onInvoicesChange?: (invoices: Invoice[]) => void;
 }) {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -110,13 +114,13 @@ export function MovementInvoices({
   const editable = hasPermission('FINANCE_INVOICE_ASSOCIATE') && canAssociate;
   const suggestions = useQuery({
     queryKey: ['finance', 'invoices', 'suggestions', transactionId],
-    enabled: readable && open && !debounced,
+    enabled: readable && (inline || open) && editable && !debounced,
     queryFn: () =>
       apiRequest<Invoice[]>(`/finance/invoices/suggestions/${transactionId}`),
   });
   const list = useQuery({
     queryKey: ['finance', 'invoices', 'list', debounced, page],
-    enabled: readable && open,
+    enabled: readable && (inline || open) && editable && Boolean(debounced),
     queryFn: () =>
       apiRequest<Page<Invoice>>('/finance/invoices', {
         query: { search: debounced, page, pageSize: 20, unassociated: 'true' },
@@ -124,17 +128,122 @@ export function MovementInvoices({
   });
   const change = useMutation({
     mutationFn: ({ id, remove }: { id: string; remove?: boolean }) =>
-      apiRequest(`/finance/invoices/${id}/association`, {
+      apiRequest<Invoice>(`/finance/invoices/${id}/association`, {
         method: remove ? 'DELETE' : 'POST',
         ...(remove ? {} : { body: { transactionId } }),
       }),
-    onSuccess: () => {
+    onSuccess: (invoice, { id, remove }) => {
+      onInvoicesChange?.(
+        remove
+          ? invoices.filter((item) => item.id !== id)
+          : [...invoices.filter((item) => item.id !== id), invoice],
+      );
       void client.invalidateQueries({ queryKey: ['finance'] });
       setOpen(false);
     },
   });
   if (!readable) return null;
-  const rows = debounced ? (list.data?.items ?? []) : (suggestions.data ?? []);
+  const rows = (
+    debounced ? (list.data?.items ?? []) : (suggestions.data ?? [])
+  ).filter(
+    (invoice) => !invoices.some((associated) => associated.id === invoice.id),
+  );
+  const picker = (
+    <Stack spacing={2}>
+      <Typography fontWeight={600}>
+        {description} · {amount} {currency}
+      </Typography>
+      {change.error && <Alert severity="error">{change.error.message}</Alert>}
+      <Alert severity="info">
+        As sugestões não associam automaticamente. Pesquise para escolher
+        outro documento; um pagamento pode incluir várias faturas.
+      </Alert>
+      <TextField
+        label="Pesquisar emitente, NIF ou número"
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+      />
+      {(suggestions.isFetching || list.isFetching) && (
+        <Typography>Carregando faturas…</Typography>
+      )}
+      {(suggestions.error || list.error) && (
+        <Alert severity="error">
+          {(suggestions.error || list.error)?.message}
+        </Alert>
+      )}
+      {!rows.length && !suggestions.isFetching && !list.isFetching && (
+        <Typography>
+          Nenhuma fatura encontrada. Importe as faturas ou pesquise outro
+          documento.
+        </Typography>
+      )}
+      <RecordTable>
+        {rows.map((invoice) => (
+          <RecordRow
+            key={invoice.id}
+            primary={
+              <>
+                <Typography fontWeight={600}>
+                  {invoice.issuerName} · {invoice.number}
+                </Typography>
+              </>
+            }
+            actions={
+              <>
+                <Button
+                  variant="contained"
+                  disabled={change.isPending}
+                  onClick={() => change.mutate({ id: invoice.id })}
+                >
+                  Associar {invoice.number}
+                </Button>
+                <InvoiceLink invoice={invoice} />
+              </>
+            }
+          >
+            <Typography>
+              {invoice.date.slice(0, 10)} · {invoice.amount} {invoice.currency}{' '}
+              · NIF {invoice.issuerTaxId}
+            </Typography>
+            {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
+              invoice.currency !== currency) && (
+              <Alert severity="warning">
+                Valor ou moeda diferente do movimento. Confira se faz parte de
+                um pagamento agrupado.
+              </Alert>
+            )}
+            {invoice.score && (
+              <Chip
+                color={invoice.score >= 85 ? 'success' : 'warning'}
+                label={`Compatibilidade ${invoice.score}% · confirmar manualmente`}
+              />
+            )}
+            <Typography variant="caption">
+              {invoice.reasons?.join(' · ')}
+            </Typography>
+          </RecordRow>
+        ))}
+      </RecordTable>
+      {debounced && (
+        <Stack direction="row" gap={1}>
+          <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
+            Anterior
+          </Button>
+          <Typography>Página {page}</Typography>
+          <Button
+            disabled={page * 20 >= (list.data?.total ?? 0)}
+            onClick={() => setPage(page + 1)}
+          >
+            Seguinte
+          </Button>
+        </Stack>
+      )}
+      {!inline && <Button onClick={() => setOpen(false)}>Fechar</Button>}
+    </Stack>
+  );
   return (
     <Box>
       <RecordTable>
@@ -176,7 +285,13 @@ export function MovementInvoices({
           </RecordRow>
         ))}
       </RecordTable>
-      {editable && (
+      {inline && editable && (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="h6">Sugestões de faturas</Typography>
+          {picker}
+        </Box>
+      )}
+      {!inline && editable && (
         <Button onClick={() => setOpen(true)}>Associar fatura</Button>
       )}
       {change.error && <Alert severity="error">{change.error.message}</Alert>}
@@ -187,104 +302,7 @@ export function MovementInvoices({
         maxWidth="md"
       >
         <DialogTitle>Associar fatura ao movimento</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2}>
-            <Typography fontWeight={600}>
-              {description} · {amount} {currency}
-            </Typography>
-            {change.error && (
-              <Alert severity="error">{change.error.message}</Alert>
-            )}
-            <Alert severity="info">
-              As sugestões não associam automaticamente. Pesquise para escolher
-              outro documento; um pagamento pode incluir várias faturas.
-            </Alert>
-            <TextField
-              label="Pesquisar emitente, NIF ou número"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-            {(suggestions.isFetching || list.isFetching) && (
-              <Typography>Carregando faturas…</Typography>
-            )}
-            {(suggestions.error || list.error) && (
-              <Alert severity="error">
-                {(suggestions.error || list.error)?.message}
-              </Alert>
-            )}
-            {!rows.length && !suggestions.isFetching && !list.isFetching && (
-              <Typography>
-                Nenhuma fatura encontrada. Importe as faturas ou pesquise outro
-                documento.
-              </Typography>
-            )}
-            <RecordTable>
-              {rows.map((invoice) => (
-                <RecordRow
-                  key={invoice.id}
-                  primary={
-                    <>
-                      <Typography fontWeight={600}>
-                        {invoice.issuerName} · {invoice.number}
-                      </Typography>
-                    </>
-                  }
-                  actions={
-                    <>
-                      <Button
-                        variant="contained"
-                        disabled={change.isPending}
-                        onClick={() => change.mutate({ id: invoice.id })}
-                      >
-                        Associar {invoice.number}
-                      </Button>
-                      <InvoiceLink invoice={invoice} />
-                    </>
-                  }
-                >
-                  <Typography>
-                    {invoice.date.slice(0, 10)} · {invoice.amount}{' '}
-                    {invoice.currency} · NIF {invoice.issuerTaxId}
-                  </Typography>
-                  {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
-                    invoice.currency !== currency) && (
-                    <Alert severity="warning">
-                      Valor ou moeda diferente do movimento. Confira se faz
-                      parte de um pagamento agrupado.
-                    </Alert>
-                  )}
-                  {invoice.score && (
-                    <Chip
-                      color={invoice.score >= 85 ? 'success' : 'warning'}
-                      label={`Compatibilidade ${invoice.score}% · confirmar manualmente`}
-                    />
-                  )}
-                  <Typography variant="caption">
-                    {invoice.reasons?.join(' · ')}
-                  </Typography>
-                </RecordRow>
-              ))}
-            </RecordTable>
-            {debounced && (
-              <Stack direction="row" gap={1}>
-                <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-                  Anterior
-                </Button>
-                <Typography>Página {page}</Typography>
-                <Button
-                  disabled={page * 20 >= (list.data?.total ?? 0)}
-                  onClick={() => setPage(page + 1)}
-                >
-                  Seguinte
-                </Button>
-              </Stack>
-            )}
-            <Button onClick={() => setOpen(false)}>Fechar</Button>
-          </Stack>
-        </DialogContent>
+        <DialogContent>{picker}</DialogContent>
       </Dialog>
     </Box>
   );

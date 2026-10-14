@@ -93,6 +93,59 @@ async function uploadStatement() {
 }
 describe('Bank statement review', () => {
   beforeEach(resetTestState);
+  it('suggests invoices inside categorization and shows saved associations immediately', async () => {
+    const invoice = {
+      id: 'invoice-1',
+      importId: 'source-1',
+      issuerName: 'Fornecedor',
+      issuerTaxId: '123456789',
+      number: 'FT 42',
+      date: '2026-10-07',
+      amount: '25.10',
+      currency: 'EUR',
+      documentUrl: null,
+      score: 95,
+    };
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/invoices/suggestions/transaction-1': { body: [invoice] },
+      'POST /finance/invoices/invoice-1/association': {
+        body: { ...invoice, bankTransactionId: row.id, associatedBy: 'user-1' },
+      },
+      'DELETE /finance/invoices/invoice-1/association': { body: invoice },
+    });
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    const dialog = screen.getByRole('dialog', {
+      name: 'Categorizar movimenta\u00e7\u00e3o',
+    });
+    fireEvent.click(
+      await within(dialog).findByRole('button', { name: 'Associar FT 42' }),
+    );
+    expect(await within(dialog).findByText('Fatura associada')).toBeVisible();
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(
+      requests.find(
+        (r) => r.method === 'POST' && r.path.endsWith('/association'),
+      )?.body,
+    ).toEqual({ transactionId: row.id });
+    expect(
+      within(dialog).queryByRole('button', { name: 'Associar FT 42' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      within(dialog).getByRole('button', {
+        name: 'Remover associa\u00e7\u00e3o',
+      }),
+    );
+    await waitFor(() =>
+      expect(
+        within(dialog).queryByText('Fatura associada'),
+      ).not.toBeInTheDocument(),
+    );
+    expect(
+      await within(dialog).findByRole('button', { name: 'Associar FT 42' }),
+    ).toBeVisible();
+  });
   it('keeps the upload screen free of movements and only loads history on demand', async () => {
     const requests = mockApi(routes());
     renderApp('/finance?tab=banking');
