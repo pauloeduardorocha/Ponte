@@ -10,11 +10,10 @@ import {
 import { FinanceQuery } from '../finance/finance.dto';
 export class InvoiceQuery extends FinanceQuery {
   @IsOptional() @IsUUID() expenseId?: string;
-  @IsOptional() @IsUUID() transactionId?: string;
   @IsOptional() @IsIn(['true', 'false']) unassociated?: string;
 }
 export class InvoiceAssociationDto {
-  @IsUUID() transactionId!: string;
+  @IsUUID() expenseId!: string;
 }
 export class FetchInvoicesDto {
   @IsUUID() bankImportId!: string;

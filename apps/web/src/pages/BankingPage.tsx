@@ -29,7 +29,6 @@ import type { Page } from '@church/shared';
 import { useAuth } from '../auth/auth-context';
 import { apiRequest, getAccessToken } from '../lib/api';
 import { useDebouncedValue } from '../lib/use-debounced-value';
-import { MovementInvoices, type Invoice } from './BankInvoices';
 import { MovementAttachments } from './MovementAttachments';
 import { EfaturaFetch } from './EfaturaFetch';
 import { LinkBankMovement } from './LinkBankMovement';
@@ -53,7 +52,6 @@ type Ledger = {
   contribution?: { id: string; type: string } | null;
 };
 type Movement = {
-  invoices?: Invoice[];
   id: string;
   date: string;
   amount: string;
@@ -656,26 +654,6 @@ export function BankingPage({
                 <MovementAttachments
                   key={currentMovement.id}
                   transactionId={currentMovement.id}
-                />
-                <MovementInvoices
-                  key={currentMovement.id}
-                  inline
-                  showSuggestions={classification === 'EXPENSE'}
-                  onInvoicesChange={(invoices) =>
-                    setReviewRows((rows) =>
-                      rows.map((row) =>
-                        row.id === currentMovement.id
-                          ? { ...row, invoices }
-                          : row,
-                      ),
-                    )
-                  }
-                  canAssociate={currentMovement.status !== 'REJECTED'}
-                  transactionId={currentMovement.id}
-                  invoices={currentMovement.invoices ?? []}
-                  description={currentMovement.description}
-                  amount={currentMovement.amount}
-                  currency={currentMovement.import.account.currency}
                 />
                 {[
                   'PENDING_REVIEW',

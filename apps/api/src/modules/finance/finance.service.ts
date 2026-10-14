@@ -346,7 +346,6 @@ export class FinanceService {
               {
                 bankTransaction: {
                   attachments: { none: {} },
-                  invoices: { none: {} },
                 },
               },
             ],

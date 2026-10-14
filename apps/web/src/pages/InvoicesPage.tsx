@@ -180,10 +180,8 @@ export function InvoicesPage() {
                 <TableCell>
                   <Chip
                     size="small"
-                    color={invoice.bankTransactionId ? 'success' : 'default'}
-                    label={
-                      invoice.bankTransactionId ? 'Associada' : 'Não associada'
-                    }
+                    color={invoice.expenseId ? 'success' : 'default'}
+                    label={invoice.expenseId ? 'Associada' : 'Não associada'}
                   />
                 </TableCell>
                 <TableCell>

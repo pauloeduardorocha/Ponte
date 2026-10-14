@@ -822,7 +822,6 @@ export class BankingService {
           },
         },
         costCenterRecord: { select: { name: true } },
-        invoices: user.permissions.includes('FINANCE_INVOICE_READ'),
         reconciliations: {
           orderBy: { reconciledAt: 'desc' },
           include: {

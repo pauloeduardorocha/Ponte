@@ -277,18 +277,27 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
     expect(result.body.inserted).toBe(1);
     expect((await send().expect(201)).body.duplicates).toBe(1);
     expect(await db.expense.count()).toBe(before);
+    await post('/banking/classify', {
+      ids: [debit.id],
+      classification: 'EXPENSE',
+      categoryId: f.expenseCategoryId,
+    }).expect(201);
+    const expense = await db.expense.findFirstOrThrow({
+      where: { bankTransactionId: debit.id },
+    });
     const suggestions = (
-      await get('/invoices/suggestions/' + debit.id).expect(200)
+      await get('/invoices/expense-suggestions/' + expense.id).expect(200)
     ).body;
     const invoice = suggestions.find(
       (i: { number: string }) => i.number === doc.number,
     );
-    expect(invoice).toMatchObject({ score: 85, bankTransactionId: null });
-    await post('/invoices/' + invoice.id + '/association', {
-      transactionId: credit.id,
-    }).expect(400);
+    expect(invoice).toMatchObject({ expenseId: null });
+    await get('/invoices/suggestions/' + debit.id).expect(404);
     await post('/invoices/' + invoice.id + '/association', {
       transactionId: debit.id,
+    }).expect(404);
+    await post('/invoices/' + invoice.id + '/expense-association', {
+      expenseId: expense.id,
     }).expect(201);
     await post('/banking/classify', {
       ids: [credit.id],
@@ -304,7 +313,10 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
     const trace = await get(
       '/banking/transactions?transactionId=' + debit.id,
     ).expect(200);
-    expect(trace.body.items[0].invoices[0]).toMatchObject({
+    expect(
+      (await get('/invoices?expenseId=' + expense.id).expect(200)).body
+        .items[0],
+    ).toMatchObject({
       id: invoice.id,
       documentUrl: doc.documentUrl,
       importId: result.body.id,
@@ -315,8 +327,8 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       reason: 'Invoice trace test',
     }).expect(201);
     expect(
-      (await get('/banking/transactions?transactionId=' + debit.id).expect(200))
-        .body.items[0].invoices[0].id,
+      (await get('/invoices?expenseId=' + expense.id).expect(200)).body.items[0]
+        .id,
     ).toBe(invoice.id);
     await get(
       '/invoices/imports/' + result.body.id + '/download',
@@ -337,15 +349,12 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       },
     });
     expect(audit?.userId).toBeTruthy();
-    await post('/invoices/' + invoice.id + '/association', {
-      transactionId: credit.id,
-    }).expect(409);
     await request(app.getHttpServer())
-      .delete('/api/v1/finance/invoices/' + invoice.id + '/association')
+      .delete('/api/v1/finance/invoices/' + invoice.id + '/expense-association')
       .auth(normal, { type: 'bearer' })
       .expect(403);
     await request(app.getHttpServer())
-      .delete('/api/v1/finance/invoices/' + invoice.id + '/association')
+      .delete('/api/v1/finance/invoices/' + invoice.id + '/expense-association')
       .auth(token, { type: 'bearer' })
       .expect(200);
     expect(
@@ -353,17 +362,17 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
         await db.financialInvoice.findUniqueOrThrow({
           where: { id: invoice.id },
         })
-      ).bankTransactionId,
+      ).expenseId,
     ).toBeNull();
     const removal = await db.auditLog.findFirst({
       where: {
         entity: 'FinancialInvoice',
         entityId: invoice.id,
         action: 'DATA_FinancialInvoice_UPDATE',
-        newValues: { path: ['bankTransactionId'], equals: Prisma.JsonNull },
+        newValues: { path: ['expenseId'], equals: Prisma.JsonNull },
       },
     });
-    expect(removal?.oldValues).toMatchObject({ bankTransactionId: debit.id });
+    expect(removal?.oldValues).toMatchObject({ expenseId: expense.id });
     await send(token, {
       ...batch,
       invoices: [{ ...doc, documentUrl: 'https://evil.example/file' }],

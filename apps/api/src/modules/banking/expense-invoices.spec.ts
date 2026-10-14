@@ -26,7 +26,6 @@ describe('Expense documents', () => {
             {
               bankTransaction: {
                 attachments: { none: {} },
-                invoices: { none: {} },
               },
             },
           ],
@@ -41,26 +40,21 @@ describe('Expense documents', () => {
     const tx = {
       $executeRaw: jest.fn(),
       expense: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            id: 'expense',
-            amount: new Prisma.Decimal(20),
-            date: new Date('2026-10-14'),
-            description: 'Loja',
-            account: { currency },
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'expense',
+          amount: new Prisma.Decimal(20),
+          date: new Date('2026-10-14'),
+          description: 'Loja',
+          account: { currency },
+        }),
       },
       financialInvoice: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            id: 'invoice',
-            currency: 'EUR',
-            amount: new Prisma.Decimal(20),
-            bankTransactionId: associated ? 'bank' : null,
-            expenseId: null,
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 'invoice',
+          currency: 'EUR',
+          amount: new Prisma.Decimal(20),
+          expenseId: associated ? 'other-expense' : null,
+        }),
         update: jest
           .fn()
           .mockResolvedValue({ id: 'invoice', expenseId: 'expense' }),
@@ -81,17 +75,13 @@ describe('Expense documents', () => {
   }
   it('associates an invoice directly to a manual expense', async () => {
     const { tx, service } = setup();
-    await service.associate(
-      'invoice',
-      'expense',
-      { id: 'actor' } as CurrentUser,
-      true,
-    );
+    await service.associate('invoice', 'expense', {
+      id: 'actor',
+    } as CurrentUser);
     expect(tx.financialInvoice.update).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
           expenseId: 'expense',
-          bankTransactionId: null,
           associatedBy: 'actor',
         }),
       }),
@@ -100,34 +90,23 @@ describe('Expense documents', () => {
   it('rejects a currency mismatch', async () => {
     const { tx, service } = setup('BRL');
     await expect(
-      service.associate(
-        'invoice',
-        'expense',
-        { id: 'actor' } as CurrentUser,
-        true,
-      ),
+      service.associate('invoice', 'expense', { id: 'actor' } as CurrentUser),
     ).rejects.toThrow('Moeda ou direção incompatível');
     expect(tx.financialInvoice.update).not.toHaveBeenCalled();
   });
-  it('preserves an existing bank association', async () => {
+  it('preserves an existing expense association', async () => {
     const { tx, service } = setup('EUR', true);
     await expect(
-      service.associate(
-        'invoice',
-        'expense',
-        { id: 'actor' } as CurrentUser,
-        true,
-      ),
+      service.associate('invoice', 'expense', { id: 'actor' } as CurrentUser),
     ).rejects.toThrow('Fatura já associada');
     expect(tx.financialInvoice.update).not.toHaveBeenCalled();
   });
   it('suggests only unassociated invoices with the expense currency and amount', async () => {
     const { tx, service } = setup();
-    await service.suggestions('expense', true);
+    await service.suggestions('expense');
     expect(tx.financialInvoice.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
-          bankTransactionId: null,
           expenseId: null,
           currency: 'EUR',
           amount: new Prisma.Decimal(20),

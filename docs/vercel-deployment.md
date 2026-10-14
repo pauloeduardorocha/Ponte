@@ -101,3 +101,15 @@ References: https://vercel.com/docs/frameworks/backend/nestjs,
 https://vercel.com/docs/plans/hobby,
 https://vercel.com/docs/functions/limitations,
 https://neon.com/pricing.
+
+## Expense-only invoice associations
+
+Deploy the version that removes invoice-to-bank association routes before applying
+`20261015010000_invoice_expense_only`. Older API versions still query the removed
+column and must not serve traffic after this migration.
+
+The migration transfers each existing bank invoice link to the single expense
+with that bank transaction, preserves existing direct expense links, and removes
+the invoice bank-transaction column. It stops without changing data if a bank
+link has no matching expense or multiple matching expenses. Resolve those cases
+before retrying; do not discard invoice links.

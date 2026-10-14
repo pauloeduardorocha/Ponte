@@ -14,7 +14,7 @@ import type { Page } from '@church/shared';
 import { useAuth } from '../auth/auth-context';
 import { apiRequest } from '../lib/api';
 import { MovementAttachments } from './MovementAttachments';
-import { MovementInvoices, type Invoice } from './BankInvoices';
+import { ExpenseInvoices, type Invoice } from './BankInvoices';
 
 type Expense = {
   id: string;
@@ -27,29 +27,13 @@ type Expense = {
 export function ExpenseDocumentContent({ expense }: { expense: Expense }) {
   const { hasPermission } = useAuth();
   const linked = useQuery({
-    queryKey: [
-      'finance',
-      'invoices',
-      'expense',
-      expense.id,
-      expense.bankTransactionId,
-    ],
+    queryKey: ['finance', 'invoices', 'expense', expense.id],
     enabled: hasPermission('FINANCE_INVOICE_READ'),
     queryFn: async () => {
-      const [own, bank] = await Promise.all([
-        apiRequest<Page<Invoice>>('/finance/invoices', {
-          query: { expenseId: expense.id, pageSize: 100 },
-        }),
-        typeof expense.bankTransactionId === 'string'
-          ? apiRequest<Page<Invoice>>('/finance/invoices', {
-              query: {
-                transactionId: expense.bankTransactionId,
-                pageSize: 100,
-              },
-            })
-          : Promise.resolve(null),
-      ]);
-      return [...own.items, ...(bank?.items ?? [])];
+      const result = await apiRequest<Page<Invoice>>('/finance/invoices', {
+        query: { expenseId: expense.id, pageSize: 100 },
+      });
+      return result.items;
     },
   });
   return (
@@ -67,9 +51,8 @@ export function ExpenseDocumentContent({ expense }: { expense: Expense }) {
       {hasPermission('FINANCE_INVOICE_READ') &&
         !linked.isPending &&
         !linked.error && (
-          <MovementInvoices
-            transactionId={expense.id}
-            expenseTarget
+          <ExpenseInvoices
+            expenseId={expense.id}
             invoices={linked.data ?? []}
             description={expense.description ?? ''}
             amount={expense.amount ?? ''}

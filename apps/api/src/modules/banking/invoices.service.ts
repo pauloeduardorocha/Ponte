@@ -68,7 +68,6 @@ export class InvoicesService {
   }
   async list(q: InvoiceQuery) {
     const where: Prisma.FinancialInvoiceWhereInput = {
-      bankTransactionId: q.unassociated === 'true' ? null : q.transactionId,
       expenseId: q.unassociated === 'true' ? null : q.expenseId,
       date: {
         gte: q.start ? new Date(q.start) : undefined,
@@ -91,39 +90,20 @@ export class InvoicesService {
     ]);
     return { items, total, page: q.page, pageSize: q.pageSize };
   }
-  async suggestions(id: string, expenseTarget = false) {
-    const expense = expenseTarget
-      ? await this.db.expense.findUnique({
-          where: { id },
-          include: { account: true },
-        })
-      : null;
-    if (expenseTarget && !expense) throw new NotFoundException();
-    const movement = expense
-      ? {
-          ...expense,
-          direction: 'DEBIT',
-          reference: '',
-          import: { account: expense.account },
-        }
-      : await this.db.bankTransaction.findUnique({
-          where: { id },
-          include: { import: { include: { account: true } } },
-        });
-    if (!movement) throw new NotFoundException();
-    const signed =
-      movement.direction === 'DEBIT'
-        ? movement.amount
-        : movement.amount.negated();
+  async suggestions(id: string) {
+    const expense = await this.db.expense.findUnique({
+      where: { id },
+      include: { account: true },
+    });
+    if (!expense) throw new NotFoundException();
     const candidates = await this.db.financialInvoice.findMany({
       where: {
-        bankTransactionId: null,
         expenseId: null,
-        currency: movement.import.account.currency,
-        amount: signed,
+        currency: expense.account.currency,
+        amount: expense.amount,
         date: {
-          gte: new Date(movement.date.getTime() - 90 * 86400000),
-          lte: new Date(movement.date.getTime() + 7 * 86400000),
+          gte: new Date(expense.date.getTime() - 90 * 86400000),
+          lte: new Date(expense.date.getTime() + 7 * 86400000),
         },
       },
       orderBy: [{ date: 'desc' }, { id: 'asc' }],
@@ -135,13 +115,11 @@ export class InvoicesService {
         .replace(/[\u0300-\u036f]/g, '')
         .toUpperCase()
         .replace(/[^A-Z0-9]/g, '');
-    const description = normalize(
-      movement.description + ' ' + movement.reference,
-    );
+    const description = normalize(expense.description);
     return candidates
       .map((invoice) => {
         const days =
-          Math.abs(movement.date.getTime() - invoice.date.getTime()) / 86400000;
+          Math.abs(expense.date.getTime() - invoice.date.getTime()) / 86400000;
         const reference =
           (normalize(invoice.number).length >= 3 &&
             description.includes(normalize(invoice.number))) ||
@@ -160,61 +138,32 @@ export class InvoicesService {
           reasons: [
             'Valor e moeda iguais',
             `Diferença de ${days} dias`,
-            ...(reference ? ['Referência/NIF no movimento'] : []),
+            ...(reference ? ['Referência/NIF na despesa'] : []),
             ...(issuer ? ['Emitente na descrição'] : []),
           ],
         };
       })
       .sort((a, b) => b.score - a.score);
   }
-  async associate(
-    id: string,
-    movementId: string | null,
-    user: CurrentUser,
-    expenseTarget = false,
-  ) {
+  async associate(id: string, expenseId: string | null, user: CurrentUser) {
     return this.db.$transaction(async (tx) => {
       await bindAudit(tx);
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(71932002)`;
       const invoice = await tx.financialInvoice.findUnique({ where: { id } });
       if (!invoice) throw new NotFoundException();
-      if (expenseTarget && !movementId && invoice.bankTransactionId)
-        throw new BadRequestException(
-          'A fatura está associada ao movimento bancário',
-        );
-      if (
-        (invoice.bankTransactionId || invoice.expenseId) &&
-        movementId &&
-        (expenseTarget ? invoice.expenseId : invoice.bankTransactionId) !==
-          movementId
-      )
+      if (invoice.expenseId && expenseId && invoice.expenseId !== expenseId)
         throw new ConflictException(
           'Fatura já associada; remova o vínculo anterior primeiro',
         );
-      if (movementId) {
-        const expense = expenseTarget
-          ? await tx.expense.findUnique({
-              where: { id: movementId },
-              include: { account: true },
-            })
-          : null;
-        if (expenseTarget && !expense) throw new NotFoundException();
-        const movement = expense
-          ? {
-              ...expense,
-              direction: 'DEBIT',
-              import: { account: expense.account },
-            }
-          : await tx.bankTransaction.findUnique({
-              where: { id: movementId },
-              include: { import: { include: { account: true } } },
-            });
-        if (!movement) throw new NotFoundException();
-        if (movement.status === 'REJECTED')
-          throw new BadRequestException('Movimento ignorado');
+      if (expenseId) {
+        const expense = await tx.expense.findUnique({
+          where: { id: expenseId },
+          include: { account: true },
+        });
+        if (!expense) throw new NotFoundException();
         if (
-          movement.import.account.currency !== invoice.currency ||
-          (movement.direction === 'DEBIT') !== invoice.amount.isPositive()
+          expense.account.currency !== invoice.currency ||
+          !invoice.amount.isPositive()
         )
           throw new BadRequestException(
             'Moeda ou direção incompatível com a fatura',
@@ -222,12 +171,7 @@ export class InvoicesService {
       }
       return tx.financialInvoice.update({
         where: { id },
-        data: {
-          bankTransactionId: expenseTarget ? null : movementId,
-          expenseId: expenseTarget ? movementId : null,
-          associatedBy: user.id,
-          associatedAt: new Date(),
-        },
+        data: { expenseId, associatedBy: user.id, associatedAt: new Date() },
       });
     });
   }

@@ -28,7 +28,6 @@ export type Invoice = {
   currency: string;
   documentUrl: string | null;
   associatedBy?: string | null;
-  bankTransactionId?: string | null;
   expenseId?: string | null;
   score?: number;
   reasons?: string[];
@@ -86,9 +85,8 @@ export function InvoiceLink({ invoice }: { invoice: Invoice }) {
     </Stack>
   );
 }
-export function MovementInvoices({
-  transactionId,
-  expenseTarget = false,
+export function ExpenseInvoices({
+  expenseId,
   invoices,
   description,
   amount,
@@ -98,8 +96,7 @@ export function MovementInvoices({
   showSuggestions = true,
   onInvoicesChange,
 }: {
-  transactionId: string;
-  expenseTarget?: boolean;
+  expenseId: string;
   invoices: Invoice[];
   description: string;
   amount: string;
@@ -121,17 +118,11 @@ export function MovementInvoices({
     ? showSuggestions && invoices.length === 0
     : open;
   const suggestions = useQuery({
-    queryKey: [
-      'finance',
-      'invoices',
-      'suggestions',
-      expenseTarget,
-      transactionId,
-    ],
+    queryKey: ['finance', 'invoices', 'suggestions', expenseId],
     enabled: readable && pickerVisible && editable && !debounced,
     queryFn: () =>
       apiRequest<Invoice[]>(
-        `/finance/invoices/${expenseTarget ? 'expense-suggestions' : 'suggestions'}/${transactionId}`,
+        `/finance/invoices/expense-suggestions/${expenseId}`,
       ),
   });
   const list = useQuery({
@@ -144,13 +135,10 @@ export function MovementInvoices({
   });
   const change = useMutation({
     mutationFn: ({ id, remove }: { id: string; remove?: boolean }) =>
-      apiRequest<Invoice>(
-        `/finance/invoices/${id}/${expenseTarget ? 'expense-association' : 'association'}`,
-        {
-          method: remove ? 'DELETE' : 'POST',
-          ...(remove ? {} : { body: { transactionId } }),
-        },
-      ),
+      apiRequest<Invoice>(`/finance/invoices/${id}/expense-association`, {
+        method: remove ? 'DELETE' : 'POST',
+        ...(remove ? {} : { body: { expenseId } }),
+      }),
     onSuccess: (invoice, { id, remove }) => {
       onInvoicesChange?.(
         remove
@@ -230,8 +218,8 @@ export function MovementInvoices({
             {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
               invoice.currency !== currency) && (
               <Alert severity="warning">
-                Valor ou moeda diferente do movimento. Confira se faz parte de
-                um pagamento agrupado.
+                Valor ou moeda diferente da despesa. Confira se faz parte de um
+                pagamento agrupado.
               </Alert>
             )}
             {invoice.score && (
@@ -278,7 +266,7 @@ export function MovementInvoices({
             }
             actions={
               <>
-                {editable && !(expenseTarget && invoice.bankTransactionId) && (
+                {editable && (
                   <Button
                     color="warning"
                     disabled={change.isPending}
@@ -320,7 +308,7 @@ export function MovementInvoices({
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Associar fatura ao movimento</DialogTitle>
+        <DialogTitle>Associar fatura à despesa</DialogTitle>
         <DialogContent>{picker}</DialogContent>
       </Dialog>
     </Box>

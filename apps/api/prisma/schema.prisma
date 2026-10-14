@@ -693,7 +693,6 @@ model BankTransaction {
   incomes             Income[]
   expenses            Expense[]
   reconciliations     BankReconciliation[]
-  invoices            FinancialInvoice[]
   category            FinancialCategory?    @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_category_fk")
   member              Member?               @relation(fields: [memberId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_member_fk")
   supplier            Supplier?             @relation(fields: [supplierId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "bank_supplier_fk")
@@ -1093,8 +1092,6 @@ model FinancialInvoice {
   currency          String           @db.VarChar(3)
   documentUrl       String?          @db.VarChar(2000)
   fingerprint       String           @unique @db.VarChar(64)
-  bankTransactionId String?          @db.Uuid
-  bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
   expenseId         String?          @db.Uuid
   expense           Expense?         @relation(fields: [expenseId], references: [id], onDelete: Restrict)
   associatedBy      String?          @db.Uuid
@@ -1103,7 +1100,6 @@ model FinancialInvoice {
   createdAt         DateTime         @default(now())
 
   @@index([importId])
-  @@index([bankTransactionId])
   @@index([expenseId])
   @@index([currency, amount, date])
   @@map("financial_invoices")

@@ -70,7 +70,7 @@ export class InvoicesController {
   @Get('expense-suggestions/:expenseId')
   @Permission('FINANCE_INVOICE_READ', 'FINANCE_TRANSACTION_READ')
   expenseSuggestions(@Param('expenseId', ParseUUIDPipe) id: string) {
-    return this.service.suggestions(id, true);
+    return this.service.suggestions(id);
   }
   @Post(':id/expense-association')
   @Permission(
@@ -83,7 +83,7 @@ export class InvoicesController {
     @Body() dto: InvoiceAssociationDto,
     @Req() req: AuthRequest,
   ) {
-    return this.service.associate(id, dto.transactionId, req.user, true);
+    return this.service.associate(id, dto.expenseId, req.user);
   }
   @Delete(':id/expense-association')
   @Permission(
@@ -95,39 +95,6 @@ export class InvoicesController {
     @Param('id', ParseUUIDPipe) id: string,
     @Req() req: AuthRequest,
   ) {
-    return this.service.associate(id, null, req.user, true);
-  }
-  @Get('suggestions/:transactionId')
-  @Permission(
-    'FINANCE_INVOICE_READ',
-    'FINANCE_BANK_IMPORT',
-    'FINANCE_CONTRIBUTION_READ',
-  )
-  suggestions(@Param('transactionId', ParseUUIDPipe) id: string) {
-    return this.service.suggestions(id);
-  }
-  @Post(':id/association')
-  @Permission(
-    'FINANCE_INVOICE_READ',
-    'FINANCE_INVOICE_ASSOCIATE',
-    'FINANCE_BANK_IMPORT',
-    'FINANCE_CONTRIBUTION_READ',
-  )
-  associate(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: InvoiceAssociationDto,
-    @Req() req: AuthRequest,
-  ) {
-    return this.service.associate(id, dto.transactionId, req.user);
-  }
-  @Delete(':id/association')
-  @Permission(
-    'FINANCE_INVOICE_READ',
-    'FINANCE_INVOICE_ASSOCIATE',
-    'FINANCE_BANK_IMPORT',
-    'FINANCE_CONTRIBUTION_READ',
-  )
-  unlink(@Param('id', ParseUUIDPipe) id: string, @Req() req: AuthRequest) {
     return this.service.associate(id, null, req.user);
   }
   @Get('imports/:id/download')

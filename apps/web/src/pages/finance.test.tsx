@@ -157,6 +157,13 @@ describe('Finance permissions and dashboard', () => {
         ),
       ).toBe(true),
     );
+    expect(
+      requests.find(
+        (r) =>
+          r.method === 'POST' &&
+          r.path === '/finance/invoices/invoice-1/expense-association',
+      )?.body,
+    ).toEqual({ expenseId: expense.id });
     fireEvent.click(screen.getByRole('button', { name: 'Concluir revisão' }));
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
