@@ -93,6 +93,7 @@ export function MovementInvoices({
   currency,
   canAssociate = true,
   inline = false,
+  showSuggestions = true,
   onInvoicesChange,
 }: {
   transactionId: string;
@@ -102,6 +103,7 @@ export function MovementInvoices({
   currency: string;
   canAssociate?: boolean;
   inline?: boolean;
+  showSuggestions?: boolean;
   onInvoicesChange?: (invoices: Invoice[]) => void;
 }) {
   const { hasPermission } = useAuth();
@@ -112,15 +114,18 @@ export function MovementInvoices({
   const [page, setPage] = useState(1);
   const readable = hasPermission('FINANCE_INVOICE_READ');
   const editable = hasPermission('FINANCE_INVOICE_ASSOCIATE') && canAssociate;
+  const pickerVisible = inline
+    ? showSuggestions && invoices.length === 0
+    : open;
   const suggestions = useQuery({
     queryKey: ['finance', 'invoices', 'suggestions', transactionId],
-    enabled: readable && (inline || open) && editable && !debounced,
+    enabled: readable && pickerVisible && editable && !debounced,
     queryFn: () =>
       apiRequest<Invoice[]>(`/finance/invoices/suggestions/${transactionId}`),
   });
   const list = useQuery({
     queryKey: ['finance', 'invoices', 'list', debounced, page],
-    enabled: readable && (inline || open) && editable && Boolean(debounced),
+    enabled: readable && pickerVisible && editable && Boolean(debounced),
     queryFn: () =>
       apiRequest<Page<Invoice>>('/finance/invoices', {
         query: { search: debounced, page, pageSize: 20, unassociated: 'true' },
@@ -155,8 +160,8 @@ export function MovementInvoices({
       </Typography>
       {change.error && <Alert severity="error">{change.error.message}</Alert>}
       <Alert severity="info">
-        As sugestões não associam automaticamente. Pesquise para escolher
-        outro documento; um pagamento pode incluir várias faturas.
+        As sugestões não associam automaticamente. Pesquise para escolher outro
+        documento; um pagamento pode incluir várias faturas.
       </Alert>
       <TextField
         label="Pesquisar emitente, NIF ou número"
@@ -285,7 +290,7 @@ export function MovementInvoices({
           </RecordRow>
         ))}
       </RecordTable>
-      {inline && editable && (
+      {inline && editable && pickerVisible && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="h6">Sugestões de faturas</Typography>
           {picker}

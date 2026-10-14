@@ -659,6 +659,7 @@ export function BankingPage({
                 <MovementInvoices
                   key={currentMovement.id}
                   inline
+                  showSuggestions={classification === 'EXPENSE'}
                   onInvoicesChange={(invoices) =>
                     setReviewRows((rows) =>
                       rows.map((row) =>

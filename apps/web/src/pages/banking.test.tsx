@@ -108,6 +108,9 @@ describe('Bank statement review', () => {
     };
     const requests = mockApi({
       ...routes(),
+      'GET /finance/banking/transactions': {
+        body: page([{ ...row, direction: 'DEBIT' }]),
+      },
       'GET /finance/invoices/suggestions/transaction-1': { body: [invoice] },
       'POST /finance/invoices/invoice-1/association': {
         body: { ...invoice, bankTransactionId: row.id, associatedBy: 'user-1' },
@@ -124,6 +127,12 @@ describe('Bank statement review', () => {
     );
     expect(await within(dialog).findByText('Fatura associada')).toBeVisible();
     expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(
+      within(dialog).queryByText('Sugestões de faturas'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText('Pesquisar emitente, NIF ou número'),
+    ).not.toBeInTheDocument();
     expect(
       requests.find(
         (r) => r.method === 'POST' && r.path.endsWith('/association'),
@@ -145,6 +154,25 @@ describe('Bank statement review', () => {
     expect(
       await within(dialog).findByRole('button', { name: 'Associar FT 42' }),
     ).toBeVisible();
+  });
+  it('does not offer or fetch invoice suggestions when categorizing income', async () => {
+    const requests = mockApi(routes());
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    const dialog = screen.getByRole('dialog', {
+      name: 'Categorizar movimenta\u00e7\u00e3o',
+    });
+    expect(
+      within(dialog).queryByText('Sugest\u00f5es de faturas'),
+    ).not.toBeInTheDocument();
+    expect(
+      within(dialog).queryByLabelText('Pesquisar emitente, NIF ou n\u00famero'),
+    ).not.toBeInTheDocument();
+    expect(
+      requests.some((request) =>
+        request.path.startsWith('/finance/invoices/suggestions/'),
+      ),
+    ).toBe(false);
   });
   it('searches and selects a member in one field and saves the selected member', async () => {
     const requests = mockApi({
