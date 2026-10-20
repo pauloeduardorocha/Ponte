@@ -45,6 +45,9 @@ function routes() {
     ...sessionRoutes(
       makeUser(PERMISSIONS.filter((p) => p.startsWith('FINANCE_'))),
     ),
+    'GET /finance/banking/coverage': {
+      body: { start: '2026-01-01', end: '2026-01-15' },
+    },
     'GET /finance/banking/pending-classification': { body: { total: 0 } },
     'GET /finance/banking/imports': { body: page([imported]) },
     'GET /finance/banking/transactions': { body: page([row]) },
@@ -93,6 +96,50 @@ async function uploadStatement() {
 }
 describe('Bank statement review', () => {
   beforeEach(resetTestState);
+  it('shows account coverage and suggests importing through yesterday', async () => {
+    mockApi(routes());
+    renderApp('/finance?tab=banking');
+    await screen.findByRole('combobox', { name: 'Conta bancária' });
+    select('Conta bancária', 'Millennium (EUR)');
+    expect(
+      await screen.findByText('Última data importada: 2026-01-15.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Próximo período sugerido: 2026-01-15 a/),
+    ).toBeInTheDocument();
+  });
+  it('explains the first import when the account has no movements', async () => {
+    mockApi({
+      ...routes(),
+      'GET /finance/banking/coverage': { body: { start: null, end: null } },
+    });
+    renderApp('/finance?tab=banking');
+    await screen.findByRole('combobox', { name: 'Conta bancária' });
+    select('Conta bancária', 'Millennium (EUR)');
+    expect(
+      await screen.findByText(/Nenhum movimento importado nesta conta/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Próximo período sugerido:/),
+    ).not.toBeInTheDocument();
+  });
+  it('does not suggest an inverted interval when the latest movement is after yesterday', async () => {
+    mockApi({
+      ...routes(),
+      'GET /finance/banking/coverage': {
+        body: { start: '2099-01-01', end: '2099-01-15' },
+      },
+    });
+    renderApp('/finance?tab=banking');
+    await screen.findByRole('combobox', { name: 'Conta bancária' });
+    select('Conta bancária', 'Millennium (EUR)');
+    expect(
+      await screen.findByText(/Não há novo período até/),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Próximo período sugerido:/),
+    ).not.toBeInTheDocument();
+  });
   it('does not offer invoice associations while categorizing expenses', async () => {
     const requests = mockApi({
       ...routes(),

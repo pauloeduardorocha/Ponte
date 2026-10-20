@@ -172,6 +172,18 @@ export function BankingPage({
       }),
     enabled: authorized && historyOpen,
   });
+  const coverage = useQuery({
+    queryKey: ['finance', 'banking', 'coverage', accountId],
+    queryFn: () =>
+      apiRequest<{ start: string | null; end: string | null }>(
+        '/finance/banking/coverage',
+        { query: { accountId } },
+      ),
+    enabled: authorized && !pendingOnly && Boolean(accountId),
+  });
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const suggestedEnd = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
   const detail = useQuery({
     queryKey: ['finance', 'banking', 'import', importId],
     queryFn: () => apiRequest<Import>(`/finance/banking/imports/${importId}`),
@@ -828,6 +840,52 @@ export function BankingPage({
             {accounts.error && (
               <Alert severity="error">{accounts.error.message}</Alert>
             )}
+            {accountId && coverage.isPending && (
+              <Typography>Consultando período importado…</Typography>
+            )}
+            {accountId && coverage.error && (
+              <Alert
+                severity="error"
+                action={
+                  <Button onClick={() => void coverage.refetch()}>
+                    Tentar novamente
+                  </Button>
+                }
+              >
+                Não foi possível consultar o período importado.
+              </Alert>
+            )}
+            {accountId && coverage.data && (
+              <Alert severity="info">
+                {coverage.data.end ? (
+                  <>
+                    <Typography>
+                      Movimentos importados: {coverage.data.start} a{' '}
+                      {coverage.data.end}.
+                    </Typography>
+                    <Typography>
+                      Última data importada: {coverage.data.end}.
+                    </Typography>
+                    <Typography>
+                      {coverage.data.end <= suggestedEnd
+                        ? `Próximo período sugerido: ${coverage.data.end} a ${suggestedEnd} (ontem).`
+                        : `Não há novo período até ${suggestedEnd} (ontem).`}
+                    </Typography>
+                    <Typography variant="body2">
+                      A sugestão inclui o último dia para conferir movimentos
+                      adicionais. As datas dos movimentos não garantem cobertura
+                      contínua do extrato.
+                    </Typography>
+                  </>
+                ) : (
+                  <Typography>
+                    Nenhum movimento importado nesta conta. Escolha a data
+                    inicial do primeiro extrato e exporte até {suggestedEnd}{' '}
+                    (ontem).
+                  </Typography>
+                )}
+              </Alert>
+            )}
             <Button component="label">
               Escolher arquivo (até 10 MB)
               <input
@@ -893,6 +951,11 @@ export function BankingPage({
                   <Typography>
                     {i.account?.name} · {i.createdAt?.slice(0, 10)} ·{' '}
                     {statusNames[i.status]} · {i._count.transactions} movimentos
+                  </Typography>
+                  <Typography>
+                    {i.period?.start && i.period.end
+                      ? `Datas dos movimentos: ${i.period.start} a ${i.period.end}`
+                      : 'Sem período de movimentos disponível'}
                   </Typography>
                 </RecordRow>
               ))}

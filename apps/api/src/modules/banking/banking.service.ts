@@ -695,28 +695,64 @@ export class BankingService {
       expenseId: expense?.id ?? null,
     });
   }
+  async coverage(q: BankQuery) {
+    // Only completed parsing contributes to the suggested import interval.
+    const range = await this.db.bankTransaction.aggregate({
+      where: {
+        import: {
+          accountId: q.accountId,
+          status: { in: ['READY_FOR_REVIEW', 'CONFIRMED'] },
+        },
+      },
+      _min: { date: true },
+      _max: { date: true },
+    });
+    return {
+      start: range._min.date?.toISOString().slice(0, 10) ?? null,
+      end: range._max.date?.toISOString().slice(0, 10) ?? null,
+    };
+  }
   async imports(q: BankQuery) {
     const where = { accountId: q.accountId };
-    return {
-      items: await this.db.bankImport.findMany({
-        where,
-        select: {
-          id: true,
-          accountId: true,
-          account: { select: { name: true } },
-          filename: true,
-          status: true,
-          format: true,
-          createdAt: true,
-          error: true,
-          confirmedAt: true,
-          uploadedBy: true,
-          _count: { select: { transactions: true } },
+    const items = await this.db.bankImport.findMany({
+      where,
+      select: {
+        id: true,
+        accountId: true,
+        account: { select: { name: true } },
+        filename: true,
+        status: true,
+        format: true,
+        createdAt: true,
+        error: true,
+        confirmedAt: true,
+        uploadedBy: true,
+        _count: { select: { transactions: true } },
+      },
+      orderBy: { createdAt: 'desc' },
+      skip: (q.page - 1) * q.pageSize,
+      take: q.pageSize,
+    });
+    const ranges = await this.db.bankTransaction.groupBy({
+      by: ['importId'],
+      where: { importId: { in: items.map((item) => item.id) } },
+      _min: { date: true },
+      _max: { date: true },
+    });
+    const periods = new Map(
+      ranges.map((range) => [
+        range.importId,
+        {
+          start: range._min.date?.toISOString().slice(0, 10) ?? null,
+          end: range._max.date?.toISOString().slice(0, 10) ?? null,
         },
-        orderBy: { createdAt: 'desc' },
-        skip: (q.page - 1) * q.pageSize,
-        take: q.pageSize,
-      }),
+      ]),
+    );
+    return {
+      items: items.map((item) => ({
+        ...item,
+        period: periods.get(item.id) ?? { start: null, end: null },
+      })),
       total: await this.db.bankImport.count({ where }),
       page: q.page,
       pageSize: q.pageSize,
