@@ -23,7 +23,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
-import { Permission } from '../auth/permission.decorator';
+import { Permission, PermissionAny } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { FinanceService } from './finance.service';
 import { MAX_ATTACHMENT_SIZE, PrivateUpload } from './storage.service';
@@ -207,7 +207,7 @@ export class FinanceController {
   }
 
   @Get('dashboard')
-  @Permission('FINANCE_DASHBOARD_READ')
+  @PermissionAny('FINANCE_DASHBOARD_READ', 'FINANCE_SUMMARY_READ')
   dashboard(@Req() req: AuthRequest, @Query() query: DashboardQuery) {
     return this.finance.dashboard(req.user, query);
   }

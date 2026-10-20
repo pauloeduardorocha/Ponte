@@ -56,7 +56,6 @@ class AuditQuery extends PageQuery {
   'SMALL_GROUP_READ',
   'MINISTRY_READ',
   'SCHEDULE_READ',
-  'ATTENDANCE_READ',
   'NOTIFICATION_READ',
   'MEMBER_READ',
   'USER_READ',

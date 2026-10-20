@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { PageQuery } from '../members/member.dto';
 import {
   AdjustmentDto,
   BookDto,
@@ -322,6 +323,30 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  bookOptions(field: 'author' | 'category', query: PageQuery) {
+    return this.transaction(async (tx) => {
+      // Only these two constant identifiers enter SQL; search remains parameterized.
+      const column =
+        field === 'author' ? Prisma.sql`"author"` : Prisma.sql`"category"`;
+      const where = Prisma.sql`${column} IS NOT NULL AND ${column} <> ''
+        AND strpos(lower(${column}), lower(${query.search ?? ''})) > 0`;
+      const items = await tx.$queryRaw<
+        { id: string; name: string }[]
+      >(Prisma.sql`
+        SELECT DISTINCT ${column} AS id, ${column} AS name FROM library_books
+        WHERE ${where} ORDER BY name ASC
+        LIMIT ${query.pageSize} OFFSET ${(query.page - 1) * query.pageSize}`);
+      const [count] = await tx.$queryRaw<{ total: number }[]>(Prisma.sql`
+        SELECT COUNT(DISTINCT ${column})::int AS total FROM library_books WHERE ${where}`);
+      return {
+        items,
+        total: count?.total ?? 0,
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
   getBook(id: string) {
     return this.transaction(async (tx) =>
       tx.book.findUniqueOrThrow({ where: { id } }),
@@ -391,7 +416,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  copyHistory(id: string) {
+  copyHistory(id: string, query: PageQuery = new PageQuery()) {
     return this.transaction(async (tx) => ({
       copy: await tx.bookCopy.findUniqueOrThrow({
         where: { id },
@@ -399,21 +424,36 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
       }),
       loans: await tx.loan.findMany({
         where: { bookCopyId: id },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
         include: {
           ...loanInclude,
           fine: { include: { payments: true, adjustments: true } },
         },
-        orderBy: { borrowedAt: 'desc' },
+        orderBy: [{ borrowedAt: 'desc' }, { id: 'desc' }],
       }),
       reservations: await tx.reservation.findMany({
         where: { bookCopyId: id },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
         include: reservationInclude,
-        orderBy: { createdAt: 'desc' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
       events: await tx.auditLog.findMany({
         where: { entity: 'BookCopy', entityId: id },
-        orderBy: { createdAt: 'desc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       }),
+      totalLoans: await tx.loan.count({ where: { bookCopyId: id } }),
+      totalReservations: await tx.reservation.count({
+        where: { bookCopyId: id },
+      }),
+      totalEvents: await tx.auditLog.count({
+        where: { entity: 'BookCopy', entityId: id },
+      }),
+      page: query.page,
+      pageSize: query.pageSize,
     }));
   }
 
@@ -675,24 +715,34 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  memberHistory(id: string) {
+  memberHistory(id: string, query: PageQuery = new PageQuery()) {
     return this.transaction(async (tx) => {
       await bindAudit(tx);
       await tx.member.findUniqueOrThrow({ where: { id } });
       return {
         loans: await tx.loan.findMany({
           where: { memberId: id },
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
           include: {
             ...loanInclude,
             fine: { include: { payments: true, adjustments: true } },
           },
-          orderBy: { borrowedAt: 'desc' },
+          orderBy: [{ borrowedAt: 'desc' }, { id: 'desc' }],
         }),
         reservations: await tx.reservation.findMany({
           where: { memberId: id },
+          skip: (query.page - 1) * query.pageSize,
+          take: query.pageSize,
           include: reservationInclude,
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         }),
+        totalLoans: await tx.loan.count({ where: { memberId: id } }),
+        totalReservations: await tx.reservation.count({
+          where: { memberId: id },
+        }),
+        page: query.page,
+        pageSize: query.pageSize,
       };
     });
   }
@@ -957,37 +1007,30 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  dashboard() {
+  dashboard(query: PageQuery = new PageQuery()) {
     return this.transaction(async (tx) => {
       await bindAudit(tx);
       const copies = await tx.bookCopy.groupBy({
         by: ['status'],
         _count: true,
       });
-      const popular = await tx.loan.groupBy({
-        by: ['bookCopyId'],
-        where: { status: { not: 'CANCELLED' } },
-        _count: true,
+      const mostBorrowed = await tx.$queryRaw<
+        { bookId: string; title: string; count: number }[]
+      >(Prisma.sql`
+        SELECT b.id AS "bookId", b.title, COUNT(*)::int AS count
+        FROM library_loans l JOIN library_copies c ON c.id = l."bookCopyId"
+        JOIN library_books b ON b.id = c."bookId"
+        WHERE l.status <> 'CANCELLED'
+        GROUP BY b.id, b.title ORDER BY count DESC, b.id ASC
+        LIMIT ${query.pageSize} OFFSET ${(query.page - 1) * query.pageSize}`);
+      const [popularCount] = await tx.$queryRaw<{ total: number }[]>(Prisma.sql`
+        SELECT COUNT(DISTINCT c."bookId")::int AS total
+        FROM library_loans l JOIN library_copies c ON c.id = l."bookCopyId"
+        WHERE l.status <> 'CANCELLED'`);
+      const fines = await tx.fine.aggregate({
+        where: { status: 'OPEN' },
+        _sum: { amount: true, paidAmount: true, discount: true },
       });
-      const byBook = new Map<
-        string,
-        { bookId: string; title: string; count: number }
-      >();
-      const popularCopies = await tx.bookCopy.findMany({
-        where: { id: { in: popular.map((row) => row.bookCopyId) } },
-        include: { book: true },
-      });
-      for (const row of popular) {
-        const copy = popularCopies.find((item) => item.id === row.bookCopyId)!;
-        const entry = byBook.get(copy.bookId) ?? {
-          bookId: copy.bookId,
-          title: copy.book.title,
-          count: 0,
-        };
-        entry.count += row._count;
-        byBook.set(copy.bookId, entry);
-      }
-      const fines = await tx.fine.findMany({ where: { status: 'OPEN' } });
       return {
         totalBooks: await tx.book.count(),
         totalCopies: copies.reduce((sum, row) => sum + row._count, 0),
@@ -995,15 +1038,14 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
           copies.find((row) => row.status === 'AVAILABLE')?._count ?? 0,
         loaned: copies.find((row) => row.status === 'LOANED')?._count ?? 0,
         overdue: await tx.loan.count({ where: { status: 'OVERDUE' } }),
-        pendingFines: fines
-          .reduce(
-            (sum, fine) => sum.plus(outstanding(fine)),
-            new Prisma.Decimal(0),
-          )
+        pendingFines: new Prisma.Decimal(fines._sum.amount ?? 0)
+          .minus(fines._sum.paidAmount ?? 0)
+          .minus(fines._sum.discount ?? 0)
           .toFixed(2),
-        mostBorrowed: [...byBook.values()]
-          .sort((a, b) => b.count - a.count || a.bookId.localeCompare(b.bookId))
-          .slice(0, 10),
+        mostBorrowed,
+        totalMostBorrowed: popularCount?.total ?? 0,
+        page: query.page,
+        pageSize: query.pageSize,
       };
     });
   }

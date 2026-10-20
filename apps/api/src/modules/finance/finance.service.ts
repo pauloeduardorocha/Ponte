@@ -346,6 +346,14 @@ export class FinanceService {
               {
                 bankTransaction: {
                   attachments: { none: {} },
+                  OR: [
+                    { reimbursement: null },
+                    {
+                      reimbursement: {
+                        attachments: { none: { kind: 'DOCUMENT' } },
+                      },
+                    },
+                  ],
                 },
               },
             ],
@@ -752,6 +760,8 @@ export class FinanceService {
     const trendStart = new Date(
       Date.UTC(start.getUTCFullYear(), start.getUTCMonth() - 5, 1),
     );
+    const summaryOnly = !user.permissions.includes('FINANCE_TRANSACTION_READ');
+    if (summaryOnly && q.accountId) throw new ForbiddenException();
     const account = q.accountId ?? null;
     return this.db.$transaction(
       async (tx) => {
@@ -810,6 +820,18 @@ export class FinanceService {
           COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',income::text) ORDER BY category_name,category_id) FILTER (WHERE kind='INCOME'),'[]'::jsonb) AS "incomeCategories",
           COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',expenses::text) ORDER BY category_name,category_id) FILTER (WHERE kind='EXPENSE'),'[]'::jsonb) AS "expenseCategories"
         FROM categories GROUP BY month,currency ORDER BY month,currency`;
+        if (summaryOnly)
+          return {
+            month,
+            balances,
+            trend: trend.map(({ month, currency, income, expenses }) => ({
+              month,
+              currency,
+              income,
+              expenses,
+            })),
+            latestTransactions: [],
+          };
         const latestIncome = await tx.income.findMany({
           where: { accountId: q.accountId, date: { gte: start, lt: end } },
           include: { account: { select: { currency: true } } },

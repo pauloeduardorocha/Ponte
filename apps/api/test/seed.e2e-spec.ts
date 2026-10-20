@@ -69,7 +69,6 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
     expect(await db.followUpInteraction.count()).toBe(1);
     expect(await db.volunteerSchedule.count()).toBe(1);
     expect(await db.volunteerAssignment.count()).toBe(1);
-    expect(await db.attendance.count()).toBe(1);
     expect(await db.notificationTemplate.count()).toBe(1);
     expect(await db.fine.count()).toBe(1);
     expect(await db.bankAccount.count()).toBe(1);

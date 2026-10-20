@@ -1,4 +1,7 @@
 export const PERMISSIONS = [
+  'COMMUNITY_READ',
+  'FINANCE_SUMMARY_READ',
+  'LIBRARY_SELF_RESERVE',
   'OPERATION_SCOPE_ALL',
   'VISITOR_CREATE',
   'VISITOR_UPDATE',
@@ -30,8 +33,6 @@ export const PERMISSIONS = [
   'EVENT_MANAGER_ASSIGN',
   'SCHEDULE_READ',
   'SCHEDULE_MANAGE',
-  'ATTENDANCE_READ',
-  'ATTENDANCE_MANAGE',
   'NOTIFICATION_READ',
   'NOTIFICATION_SEND',
   'VISITOR_READ',
@@ -93,6 +94,13 @@ export const PERMISSIONS = [
   'FINANCE_CONTRIBUTION_EXPORT',
 ] as const;
 
+export const MEMBER_PERMISSIONS = [
+  'COMMUNITY_READ',
+  'FINANCE_SUMMARY_READ',
+  'LIBRARY_BOOK_READ',
+  'LIBRARY_SELF_RESERVE',
+] as const;
+
 export type Permission = (typeof PERMISSIONS)[number];
 
 export const INITIAL_ROLES = [
@@ -118,7 +126,6 @@ const OPERATIONAL_PERMISSIONS = PERMISSIONS.filter(
       'MINISTRY_',
       'EVENT_',
       'SCHEDULE_',
-      'ATTENDANCE_',
       'NOTIFICATION_',
     ].some((prefix) => code.startsWith(prefix)) &&
     (!code.startsWith('EVENT_') ||
@@ -146,7 +153,6 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
         'SMALL_GROUP_',
         'MINISTRY_',
         'SCHEDULE_',
-        'ATTENDANCE_',
         'NOTIFICATION_',
       ].some((prefix) => code.startsWith(prefix)) ||
       (code.startsWith('LIBRARY_') && code.endsWith('_READ')) ||
@@ -190,6 +196,8 @@ export interface CurrentUser {
   name: string;
   email: string;
   status: 'ACTIVE' | 'INVITED' | 'DISABLED';
+  memberId?: string | null;
+  roles?: string[];
   permissions: Permission[];
 }
 
@@ -199,6 +207,12 @@ export interface AuthResponse {
 }
 
 export interface Member {
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+    status: CurrentUser['status'];
+  } | null;
   id: string;
   name: string;
   email: string | null;

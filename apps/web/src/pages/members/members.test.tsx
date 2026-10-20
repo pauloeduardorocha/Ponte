@@ -179,7 +179,7 @@ describe('Members', () => {
     fireEvent.change(screen.getByLabelText(/^Nome/), {
       target: { value: 'João Alves' },
     });
-    fireEvent.change(screen.getByLabelText('E-mail'), {
+    fireEvent.change(screen.getByLabelText(/^E-mail/), {
       target: { value: 'invalido' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Cadastrar membro' }));
@@ -187,8 +187,8 @@ describe('Members', () => {
       await screen.findByText('Informe um e-mail válido.'),
     ).toBeInTheDocument();
 
-    fireEvent.change(screen.getByLabelText('E-mail'), {
-      target: { value: '' },
+    fireEvent.change(screen.getByLabelText(/^E-mail/), {
+      target: { value: 'joao@aponte.pt' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Cadastrar membro' }));
 
@@ -199,6 +199,7 @@ describe('Members', () => {
       requests.find((r) => r.method === 'POST' && r.path === '/members')?.body,
     ).toEqual({
       name: 'João Alves',
+      email: 'joao@aponte.pt',
       status: 'ACTIVE',
     });
   });

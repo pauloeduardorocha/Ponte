@@ -10,7 +10,9 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
+import type { AuthRequest } from '../auth/auth.guard';
 import { Permission } from '../auth/permission.decorator';
 import { CreateMemberDto, MemberQuery, UpdateMemberDto } from './member.dto';
 import { MembersService } from './members.service';
@@ -41,8 +43,12 @@ export class MembersController {
 
   @Patch(':id')
   @Permission('MEMBER_UPDATE')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateMemberDto) {
-    return this.members.update(id, dto);
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateMemberDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.members.update(id, dto, req.user);
   }
 
   @Delete(':id')

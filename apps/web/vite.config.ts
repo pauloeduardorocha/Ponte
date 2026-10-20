@@ -1,13 +1,49 @@
 import { defineConfig } from 'vitest/config';
 import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
+import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'node:path';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, resolve(process.cwd(), '..', '..'), '');
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      VitePWA({
+        registerType: 'prompt',
+        includeAssets: ['logo.jpg', 'icons/*.png'],
+        manifest: {
+          id: '/',
+          name: 'Ponte — Gestão da Igreja',
+          short_name: 'Ponte',
+          description: 'A vida da igreja no seu telemóvel.',
+          lang: 'pt',
+          start_url: '/',
+          scope: '/',
+          display: 'standalone',
+          theme_color: '#d91017',
+          background_color: '#f7f8fa',
+          icons: [
+            { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+            { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+            {
+              src: '/icons/maskable-512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2}'],
+          navigateFallbackDenylist: [/^\/api(?:\/|$)/],
+          // Only the public application shell is cached, never authenticated API data.
+          runtimeCaching: [],
+          cleanupOutdatedCaches: true,
+        },
+      }),
+    ],
     server: {
       port: Number(env.WEB_PORT ?? 5173),
       strictPort: true,

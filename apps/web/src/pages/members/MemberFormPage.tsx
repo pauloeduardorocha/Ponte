@@ -19,18 +19,11 @@ import { PageHeader, QueryError } from '../../components/PageParts';
 import { errorMessage } from '../../lib/errors';
 import { createMember, getMember, updateMember } from '../../lib/members-api';
 import type { Member, MemberInput } from '../../lib/types';
-import { nameSchema } from '../../lib/validation';
+import { nameSchema, emailSchema } from '../../lib/validation';
 
 const memberSchema = z.object({
   name: nameSchema,
-  email: z.union([
-    z.literal(''),
-    z
-      .string()
-      .trim()
-      .max(320, 'O e-mail deve ter no máximo 320 caracteres.')
-      .pipe(z.email('Informe um e-mail válido.')),
-  ]),
+  email: emailSchema,
   phone: z
     .string()
     .trim()
@@ -140,6 +133,7 @@ function MemberForm({
               />
               <TextField
                 label="E-mail"
+                required
                 type="email"
                 error={Boolean(formState.errors.email)}
                 helperText={formState.errors.email?.message}

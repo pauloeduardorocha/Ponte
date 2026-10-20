@@ -109,9 +109,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Auditoria"
-        ]
+        "tags": ["Auditoria"]
       }
     },
     "/api/v1/audit/{id}": {
@@ -137,9 +135,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Auditoria"
-        ]
+        "tags": ["Auditoria"]
       }
     },
     "/api/v1/privacy/me": {
@@ -156,9 +152,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/me/requests": {
@@ -175,9 +169,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       },
       "post": {
         "operationId": "PrivacyController_request",
@@ -202,9 +194,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/me/consents": {
@@ -231,9 +221,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/me/export": {
@@ -246,10 +234,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -263,9 +248,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/members/{id}/export": {
@@ -286,10 +269,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -303,9 +283,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/requests": {
@@ -362,9 +340,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/requests/{id}": {
@@ -400,9 +376,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/retention": {
@@ -426,9 +400,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       },
       "post": {
         "operationId": "PrivacyController_policy",
@@ -453,9 +425,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/members/{id}/legal-hold": {
@@ -491,9 +461,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/privacy/members/{id}/anonymize": {
@@ -529,9 +497,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Privacidade"
-        ]
+        "tags": ["Privacidade"]
       }
     },
     "/api/v1/community/dashboard": {
@@ -548,9 +514,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       }
     },
     "/api/v1/community/visitors": {
@@ -616,9 +580,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       },
       "post": {
         "operationId": "CommunityController_visitor",
@@ -643,9 +605,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       }
     },
     "/api/v1/community/visitors/{id}": {
@@ -681,9 +641,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       }
     },
     "/api/v1/community/events": {
@@ -749,9 +707,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       },
       "post": {
         "operationId": "CommunityController_event",
@@ -776,9 +732,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       }
     },
     "/api/v1/community/events/{id}": {
@@ -814,9 +768,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Comunidade"
-        ]
+        "tags": ["A Ponte"]
       }
     },
     "/api/v1/operations/inbox": {
@@ -956,10 +908,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -983,9 +932,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/identity": {
@@ -1002,9 +949,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}/respond": {
@@ -1048,9 +993,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/dashboard": {
@@ -1190,10 +1133,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -1224,9 +1164,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/people": {
@@ -1366,10 +1304,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -1393,9 +1328,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/assignees": {
@@ -1535,10 +1468,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -1562,9 +1492,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/visitors": {
@@ -1704,10 +1632,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -1731,9 +1656,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createVisitor",
@@ -1758,9 +1681,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/visitors/{id}": {
@@ -1796,9 +1717,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/follow-ups": {
@@ -1938,10 +1857,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -1965,9 +1881,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createFollowUp",
@@ -1992,9 +1906,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/follow-ups/{id}": {
@@ -2030,9 +1942,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/small-groups": {
@@ -2172,10 +2082,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -2199,9 +2106,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createGroup",
@@ -2226,9 +2131,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/small-groups/{id}": {
@@ -2264,9 +2167,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/ministries": {
@@ -2406,10 +2307,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -2433,9 +2331,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createMinistry",
@@ -2460,9 +2356,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/ministries/{id}": {
@@ -2498,9 +2392,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/events": {
@@ -2640,10 +2532,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -2667,9 +2556,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createEvent",
@@ -2694,9 +2581,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/events/{id}": {
@@ -2732,9 +2617,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules": {
@@ -2874,10 +2757,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -2901,9 +2781,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createSchedule",
@@ -2928,9 +2806,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules/{id}": {
@@ -2966,9 +2842,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/visitors/{id}/convert": {
@@ -3004,9 +2878,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/visitors/{id}/history": {
@@ -3154,10 +3026,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -3181,9 +3050,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/follow-ups/{id}/interactions": {
@@ -3331,10 +3198,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -3358,9 +3222,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_interact",
@@ -3394,9 +3256,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/small-groups/{id}/participants": {
@@ -3544,10 +3404,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -3578,9 +3435,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_joingroup",
@@ -3621,9 +3476,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/small-groups/{id}/participants/{participantId}/leave": {
@@ -3664,9 +3517,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/ministries/{id}/participants": {
@@ -3814,10 +3665,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -3848,9 +3696,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_joinministry",
@@ -3891,9 +3737,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/ministries/{id}/participants/{participantId}/leave": {
@@ -3934,9 +3778,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/events/{id}/registrations": {
@@ -4084,10 +3926,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -4111,9 +3950,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_register",
@@ -4147,9 +3984,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/events/{id}/registrations/{registrationId}/cancel": {
@@ -4183,9 +4018,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments": {
@@ -4333,10 +4166,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -4360,9 +4190,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_assign",
@@ -4396,9 +4224,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}": {
@@ -4442,9 +4268,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}/replace": {
@@ -4488,243 +4312,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
-      }
-    },
-    "/api/v1/operations/attendance": {
-      "get": {
-        "operationId": "OperationsController_attendance",
-        "parameters": [
-          {
-            "name": "page",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100000,
-              "default": 1,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "pageSize",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Object"
-                }
-              ]
-            }
-          },
-          {
-            "name": "search",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 120,
-              "type": "string"
-            }
-          },
-          {
-            "name": "status",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "maxLength": 30,
-              "type": "string"
-            }
-          },
-          {
-            "name": "memberId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "visitorId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "leaderMemberId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "assignedToUserId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "eventId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "smallGroupId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "ministryId",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "format": "uuid",
-              "type": "string"
-            }
-          },
-          {
-            "name": "start",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "end",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "active",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
-            }
-          },
-          {
-            "name": "meetingDay",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "minimum": 0,
-              "maximum": 6,
-              "type": "number"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Operacao da igreja"
-        ]
-      },
-      "post": {
-        "operationId": "OperationsController_record",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttendanceDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Operacao da igreja"
-        ]
-      }
-    },
-    "/api/v1/operations/attendance/{id}": {
-      "patch": {
-        "operationId": "OperationsController_editAttendance",
-        "parameters": [
-          {
-            "name": "id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AttendancePatch"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/notifications": {
@@ -4864,10 +4452,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -4891,9 +4476,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_notify",
@@ -4918,9 +4501,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/notifications/{id}/send": {
@@ -4946,9 +4527,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/notifications/{id}/cancel": {
@@ -4974,9 +4553,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/notification-templates": {
@@ -5116,10 +4693,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           },
           {
@@ -5143,9 +4717,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       },
       "post": {
         "operationId": "OperationsController_createTemplate",
@@ -5170,9 +4742,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/operations/notification-templates/{id}": {
@@ -5208,9 +4778,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Operacao da igreja"
-        ]
+        "tags": ["Operacao da igreja"]
       }
     },
     "/api/v1/health": {
@@ -5238,9 +4806,7 @@
             "description": "API disponível, mas o banco de dados não está acessível."
           }
         },
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/api/v1/auth/login": {
@@ -5262,9 +4828,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/register": {
@@ -5293,9 +4857,7 @@
             }
           }
         },
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/refresh": {
@@ -5312,9 +4874,7 @@
             "refresh_token": []
           }
         ],
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/logout": {
@@ -5331,9 +4891,7 @@
             "refresh_token": []
           }
         ],
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/me": {
@@ -5357,9 +4915,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/password": {
@@ -5386,9 +4942,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -5410,9 +4964,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/auth/reset-password": {
@@ -5434,9 +4986,7 @@
             "description": ""
           }
         },
-        "tags": [
-          "Autenticacao"
-        ]
+        "tags": ["Autenticacao"]
       }
     },
     "/api/v1/members": {
@@ -5488,10 +5038,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "ACTIVE",
-                "INACTIVE"
-              ]
+              "enum": ["ACTIVE", "INACTIVE"]
             }
           },
           {
@@ -5501,11 +5048,7 @@
             "schema": {
               "default": "name",
               "type": "string",
-              "enum": [
-                "name",
-                "email",
-                "createdAt"
-              ]
+              "enum": ["name", "email", "createdAt"]
             }
           },
           {
@@ -5515,10 +5058,7 @@
             "schema": {
               "default": "asc",
               "type": "string",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           }
         ],
@@ -5532,9 +5072,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Membros"
-        ]
+        "tags": ["Membros"]
       },
       "post": {
         "operationId": "MembersController_create",
@@ -5559,9 +5097,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Membros"
-        ]
+        "tags": ["Membros"]
       }
     },
     "/api/v1/members/{id}": {
@@ -5587,9 +5123,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Membros"
-        ]
+        "tags": ["Membros"]
       },
       "patch": {
         "operationId": "MembersController_update",
@@ -5623,9 +5157,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Membros"
-        ]
+        "tags": ["Membros"]
       },
       "delete": {
         "operationId": "MembersController_delete",
@@ -5649,9 +5181,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Membros"
-        ]
+        "tags": ["Membros"]
       }
     },
     "/api/v1/users": {
@@ -5708,9 +5238,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Usuarios"
-        ]
+        "tags": ["Usuarios"]
       },
       "post": {
         "operationId": "UsersController_create",
@@ -5742,9 +5270,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Usuarios"
-        ]
+        "tags": ["Usuarios"]
       }
     },
     "/api/v1/users/{id}/status": {
@@ -5780,9 +5306,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Usuarios"
-        ]
+        "tags": ["Usuarios"]
       }
     },
     "/api/v1/users/{id}/roles": {
@@ -5818,9 +5342,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Usuarios"
-        ]
+        "tags": ["Usuarios"]
       }
     },
     "/api/v1/users/{id}/member": {
@@ -5856,9 +5378,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Usuarios"
-        ]
+        "tags": ["Usuarios"]
       }
     },
     "/api/v1/library/books": {
@@ -5928,10 +5448,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -5945,9 +5462,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "post": {
         "operationId": "LibraryController_createBook",
@@ -5972,9 +5487,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/books/{id}": {
@@ -6000,9 +5513,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "patch": {
         "operationId": "LibraryController_updateBook",
@@ -6036,9 +5547,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "delete": {
         "operationId": "LibraryController_deleteBook",
@@ -6062,9 +5571,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/copies": {
@@ -6146,9 +5653,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/copies/{id}/history": {
@@ -6162,11 +5667,94 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Histórico paginado; os arrays existentes são preservados e limitados a pageSize.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "loans",
+                    "reservations",
+                    "totalLoans",
+                    "totalReservations",
+                    "page",
+                    "pageSize",
+                    "copy",
+                    "events",
+                    "totalEvents"
+                  ],
+                  "properties": {
+                    "loans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "reservations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "totalLoans": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "totalReservations": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "copy": {
+                      "type": "object"
+                    },
+                    "events": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "totalEvents": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6174,9 +5762,8 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"],
+        "description": "Cada lista recebe a mesma página (page/pageSize). Ordenação decrescente por data e id. Totais independentes permitem alcançar todas as páginas."
       }
     },
     "/api/v1/library/books/{id}/copies": {
@@ -6219,9 +5806,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/copies/{id}": {
@@ -6264,9 +5849,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/loans": {
@@ -6318,13 +5901,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "ACTIVE",
-                "RETURNED",
-                "OVERDUE",
-                "LOST",
-                "CANCELLED"
-              ]
+              "enum": ["ACTIVE", "RETURNED", "OVERDUE", "LOST", "CANCELLED"]
             }
           },
           {
@@ -6356,9 +5933,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "post": {
         "operationId": "LibraryController_borrow",
@@ -6390,9 +5965,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/loans/{id}/return": {
@@ -6425,9 +5998,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/loans/{id}/renew": {
@@ -6460,9 +6031,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/loans/{id}/close": {
@@ -6505,9 +6074,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/members/{id}/history": {
@@ -6521,11 +6088,78 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Histórico paginado; os arrays existentes são preservados e limitados a pageSize.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "loans",
+                    "reservations",
+                    "totalLoans",
+                    "totalReservations",
+                    "page",
+                    "pageSize"
+                  ],
+                  "properties": {
+                    "loans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "reservations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "totalLoans": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "totalReservations": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6533,9 +6167,8 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"],
+        "description": "Cada lista recebe a mesma página (page/pageSize). Ordenação decrescente por data e id. Totais independentes permitem alcançar todas as páginas."
       }
     },
     "/api/v1/library/members": {
@@ -6610,9 +6243,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/reservations": {
@@ -6687,9 +6318,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "post": {
         "operationId": "LibraryController_reserve",
@@ -6721,9 +6350,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/reservations/{id}/cancel": {
@@ -6756,9 +6383,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/settings": {
@@ -6775,9 +6400,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       },
       "patch": {
         "operationId": "LibraryController_updateSettings",
@@ -6802,9 +6425,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/fines": {
@@ -6879,9 +6500,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/fines/{id}/payments": {
@@ -6917,9 +6536,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/fines/{id}/adjustments": {
@@ -6962,15 +6579,36 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/dashboard": {
       "get": {
         "operationId": "LibraryController_dashboard",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": ""
@@ -6981,9 +6619,8 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Biblioteca"
-        ]
+        "tags": ["Biblioteca"],
+        "description": "Indicadores agregados no banco. mostBorrowed é paginado por page/pageSize, ordenado por quantidade decrescente e bookId. Inclui totalMostBorrowed, page e pageSize."
       }
     },
     "/api/v1/finance/members": {
@@ -7035,12 +6672,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -7094,11 +6726,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -7112,9 +6740,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/categories": {
@@ -7166,12 +6792,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -7225,11 +6846,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -7243,9 +6860,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createCategory",
@@ -7270,9 +6885,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/categories/{id}": {
@@ -7308,9 +6921,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/accounts": {
@@ -7362,12 +6973,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -7421,11 +7027,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -7439,9 +7041,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createAccount",
@@ -7466,9 +7066,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/accounts/{id}": {
@@ -7504,9 +7102,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/suppliers": {
@@ -7558,12 +7154,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -7617,11 +7208,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -7635,9 +7222,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createSupplier",
@@ -7662,9 +7247,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/suppliers/{id}": {
@@ -7700,9 +7283,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/incomes": {
@@ -7754,12 +7335,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -7813,11 +7389,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -7831,9 +7403,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createIncome",
@@ -7865,9 +7435,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/incomes/{id}": {
@@ -7910,9 +7478,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/expenses": {
@@ -7964,12 +7530,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -8023,11 +7584,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -8041,9 +7598,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createExpense",
@@ -8068,9 +7623,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/expenses/{id}": {
@@ -8106,9 +7659,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/contributions": {
@@ -8160,12 +7711,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -8219,11 +7765,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           }
         ],
@@ -8237,9 +7779,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_createContribution",
@@ -8264,9 +7804,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/contributions/{id}": {
@@ -8302,9 +7840,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/dashboard": {
@@ -8340,9 +7876,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/expenses/{id}/attachments": {
@@ -8368,9 +7902,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       },
       "post": {
         "operationId": "FinanceController_upload",
@@ -8390,9 +7922,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -8414,9 +7944,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/attachments/{id}/download": {
@@ -8442,9 +7970,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/reports/lookups": {
@@ -8457,12 +7983,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "accounts",
-                "categories",
-                "members",
-                "suppliers"
-              ]
+              "enum": ["accounts", "categories", "members", "suppliers"]
             }
           },
           {
@@ -8485,9 +8006,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/reports": {
@@ -8587,11 +8106,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -8614,12 +8129,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -8669,9 +8179,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/reports/export": {
@@ -8771,11 +8279,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -8798,12 +8302,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -8848,11 +8347,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "csv",
-                "xlsx",
-                "pdf"
-              ]
+              "enum": ["csv", "xlsx", "pdf"]
             }
           }
         ],
@@ -8866,9 +8361,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Financeiro"
-        ]
+        "tags": ["Financeiro"]
       }
     },
     "/api/v1/finance/banking/imports": {
@@ -8886,9 +8379,7 @@
                   },
                   {
                     "type": "object",
-                    "required": [
-                      "file"
-                    ],
+                    "required": ["file"],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -8912,9 +8403,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       },
       "get": {
         "operationId": "BankingController_imports",
@@ -8964,12 +8453,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -9023,11 +8507,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -9036,10 +8516,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "CREDIT",
-                "DEBIT"
-              ]
+              "enum": ["CREDIT", "DEBIT"]
             }
           },
           {
@@ -9081,10 +8558,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -9098,9 +8572,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/imports/{id}": {
@@ -9126,9 +8598,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/imports/{id}/confirm": {
@@ -9154,9 +8624,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/transactions": {
@@ -9208,12 +8676,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -9267,11 +8730,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -9280,10 +8739,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "CREDIT",
-                "DEBIT"
-              ]
+              "enum": ["CREDIT", "DEBIT"]
             }
           },
           {
@@ -9325,10 +8781,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -9342,9 +8795,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/members": {
@@ -9396,12 +8847,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -9455,11 +8901,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -9468,10 +8910,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "CREDIT",
-                "DEBIT"
-              ]
+              "enum": ["CREDIT", "DEBIT"]
             }
           },
           {
@@ -9513,10 +8952,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -9530,9 +8966,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/transactions/{id}/suggestions": {
@@ -9558,9 +8992,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/classify": {
@@ -9587,9 +9019,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/reconcile": {
@@ -9616,9 +9046,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/undo": {
@@ -9645,9 +9073,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/banking/imports/{id}/download": {
@@ -9673,9 +9099,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Importacoes bancarias"
-        ]
+        "tags": ["Importacoes bancarias"]
       }
     },
     "/api/v1/finance/invoices": {
@@ -9727,12 +9151,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "TITHE",
-                "OFFERING",
-                "DONATION",
-                "OTHER"
-              ]
+              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
             }
           },
           {
@@ -9786,11 +9205,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "PENDING",
-                "COMPLETED",
-                "CANCELLED"
-              ]
+              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
             }
           },
           {
@@ -9799,10 +9214,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": [
-                "true",
-                "false"
-              ]
+              "enum": ["true", "false"]
             }
           }
         ],
@@ -9816,9 +9228,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
-        ]
+        "tags": ["Faturas e-fatura"]
       }
     },
     "/api/v1/finance/invoices/imports": {
@@ -9831,9 +9241,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -9854,9 +9262,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
-        ]
+        "tags": ["Faturas e-fatura"]
       }
     },
     "/api/v1/finance/invoices/suggestions/{transactionId}": {
@@ -9882,9 +9288,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
-        ]
+        "tags": ["Faturas e-fatura"]
       }
     },
     "/api/v1/finance/invoices/{id}/association": {
@@ -9920,9 +9324,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
-        ]
+        "tags": ["Faturas e-fatura"]
       },
       "delete": {
         "operationId": "InvoicesController_unlink",
@@ -9946,9 +9348,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
-        ]
+        "tags": ["Faturas e-fatura"]
       }
     },
     "/api/v1/finance/invoices/imports/{id}/download": {
@@ -9974,8 +9374,649 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Faturas e-fatura"
+        "tags": ["Faturas e-fatura"]
+      }
+    },
+    "/api/v1/member-portal/dashboard": {
+      "get": {
+        "operationId": "MemberPortalController_dashboard",
+        "summary": "Resumo pessoal do membro autenticado",
+        "description": "Requer COMMUNITY_READ e membro ativo vinculado à conta. Retorna até cinco escalas publicadas futuras do membro ou de seus ministérios, grupos familiares atuais, reembolsos próprios não excluídos sem pagamento nem movimento associado, até cinco eventos publicados futuros, reservas vigentes, empréstimos ativos/em atraso/perdidos e multas abertas próprias. Não aceita identificador de outro membro. As seções opcionais vazias são ocultadas pelo dashboard.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resumo pessoal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "upcomingSchedules",
+                    "groups",
+                    "reimbursements",
+                    "upcomingEvents",
+                    "reservations",
+                    "loans",
+                    "fines"
+                  ],
+                  "properties": {
+                    "upcomingSchedules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "reimbursements": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "upcomingEvents": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "reservations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "loans": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "fines": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem permissão COMMUNITY_READ"
+          },
+          "404": {
+            "description": "Membro ativo não encontrado"
+          }
+        },
+        "tags": ["MemberPortal"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/library/book-options/authors": {
+      "get": {
+        "operationId": "LibraryController_authors",
+        "summary": "Pesquisar autores",
+        "description": "Pesquisa sem distinção de maiúsculas/minúsculas; valores distintos, ordenados e paginados no banco. Requer LIBRARY_BOOK_READ.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Biblioteca"],
+        "responses": {
+          "200": {
+            "description": "Uma página de opções; id e name contêm o valor do filtro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "total", "page", "pageSize"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "name"],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/library/book-options/categories": {
+      "get": {
+        "operationId": "LibraryController_categories",
+        "summary": "Pesquisar categorias",
+        "description": "Pesquisa sem distinção de maiúsculas/minúsculas; valores distintos, ordenados e paginados no banco. Requer LIBRARY_BOOK_READ.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Biblioteca"],
+        "responses": {
+          "200": {
+            "description": "Uma página de opções; id e name contêm o valor do filtro.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "total", "page", "pageSize"],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": ["id", "name"],
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "page": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "pageSize": {
+                      "type": "integer",
+                      "minimum": 1
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys": {
+      "get": {
+        "operationId": "PasskeysController_list",
+        "tags": ["Autenticacao"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      "lastUsedAt": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys/register/options": {
+      "post": {
+        "operationId": "PasskeysController_options",
+        "tags": ["Autenticacao"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["challengeId", "options"],
+                  "properties": {
+                    "challengeId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "options": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyOptionsDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys/register/verify": {
+      "post": {
+        "operationId": "PasskeysController_register",
+        "tags": ["Autenticacao"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyRegisterDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys/login/options": {
+      "post": {
+        "operationId": "PasskeysController_loginOptions",
+        "tags": ["Autenticacao"],
+        "security": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["challengeId", "options"],
+                  "properties": {
+                    "challengeId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "options": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys/login/verify": {
+      "post": {
+        "operationId": "PasskeysController_login",
+        "tags": ["Autenticacao"],
+        "security": [],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["accessToken", "user"],
+                  "properties": {
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "user": {
+                      "type": "object",
+                      "additionalProperties": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyVerifyDto"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/passkeys/{id}": {
+      "delete": {
+        "operationId": "PasskeysController_remove",
+        "tags": ["Autenticacao"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Origin",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed"
+          },
+          "401": {
+            "description": "Invalid credentials, inactive user or expired/consumed challenge"
+          },
+          "403": {
+            "description": "Origin is not permitted"
+          },
+          "429": {
+            "description": "Too many requests"
+          }
+        }
+      }
+    },
+    "/api/v1/community/birthdays": {
+      "get": {
+        "operationId": "CommunityController_birthdays",
+        "summary": "Aniversariantes do dia",
+        "description": "Disponível a qualquer utilizador autenticado, sem permissões administrativas. Retorna membros ACTIVE, não anonimizados, cujo dia e mês de nascimento coincidem com a data atual em Europe/Lisbon; ordenados por nome e id. Não retorna data de nascimento ou idade. Em 29 de fevereiro só há correspondência no próprio dia.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Aniversariantes; lista vazia quando não há resultados.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": ["id", "name"],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Autenticação necessária"
+          }
+        },
+        "tags": ["A Ponte"],
+        "security": [
+          {
+            "bearer": []
+          }
         ]
       }
     }
@@ -10006,11 +10047,7 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "EXPORT",
-              "RECTIFICATION",
-              "ANONYMIZATION"
-            ]
+            "enum": ["EXPORT", "RECTIFICATION", "ANONYMIZATION"]
           },
           "details": {
             "type": "string",
@@ -10018,10 +10055,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "kind",
-          "details"
-        ]
+        "required": ["kind", "details"]
       },
       "ConsentDto": {
         "type": "object",
@@ -10040,21 +10074,14 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "purpose",
-          "policyVersion",
-          "granted"
-        ]
+        "required": ["purpose", "policyVersion", "granted"]
       },
       "ResolvePrivacyDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "COMPLETED",
-              "REJECTED"
-            ]
+            "enum": ["COMPLETED", "REJECTED"]
           },
           "resolution": {
             "type": "string",
@@ -10062,10 +10089,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "status",
-          "resolution"
-        ]
+        "required": ["status", "resolution"]
       },
       "RetentionDto": {
         "type": "object",
@@ -10091,11 +10115,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "dataClass",
-          "minimumMonths",
-          "legalBasis"
-        ]
+        "required": ["dataClass", "minimumMonths", "legalBasis"]
       },
       "LegalHoldDto": {
         "type": "object",
@@ -10104,9 +10124,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "legalHold"
-        ]
+        "required": ["legalHold"]
       },
       "AnonymizeDto": {
         "type": "object",
@@ -10116,9 +10134,7 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "requestId"
-        ]
+        "required": ["requestId"]
       },
       "VisitorDto": {
         "type": "object",
@@ -10145,11 +10161,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "NEW",
-              "CONTACTED",
-              "ARCHIVED"
-            ]
+            "enum": ["NEW", "CONTACTED", "ARCHIVED"]
           },
           "notes": {
             "type": "string",
@@ -10157,10 +10169,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "name",
-          "visitedAt"
-        ]
+        "required": ["name", "visitedAt"]
       },
       "VisitorPatch": {
         "type": "object",
@@ -10187,11 +10196,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "NEW",
-              "CONTACTED",
-              "ARCHIVED"
-            ]
+            "enum": ["NEW", "CONTACTED", "ARCHIVED"]
           },
           "notes": {
             "type": "string",
@@ -10218,11 +10223,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
           },
           "description": {
             "type": "string",
@@ -10230,11 +10231,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "name",
-          "startsAt",
-          "location"
-        ]
+        "required": ["name", "startsAt", "location"]
       },
       "EventPatch": {
         "type": "object",
@@ -10254,11 +10251,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
           },
           "description": {
             "type": "string",
@@ -10272,15 +10265,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "CONFIRMED",
-              "DECLINED"
-            ]
+            "enum": ["CONFIRMED", "DECLINED"]
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "OperationalVisitorDto": {
         "type": "object",
@@ -10313,12 +10301,7 @@
           "gender": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "FEMALE",
-              "MALE",
-              "OTHER",
-              "UNDISCLOSED"
-            ]
+            "enum": ["FEMALE", "MALE", "OTHER", "UNDISCLOSED"]
           },
           "firstVisitDate": {
             "type": "string",
@@ -10352,10 +10335,7 @@
             ]
           }
         },
-        "required": [
-          "firstName",
-          "firstVisitDate"
-        ]
+        "required": ["firstName", "firstVisitDate"]
       },
       "OperationalVisitorPatch": {
         "type": "object",
@@ -10388,12 +10368,7 @@
           "gender": {
             "type": "string",
             "nullable": true,
-            "enum": [
-              "FEMALE",
-              "MALE",
-              "OTHER",
-              "UNDISCLOSED"
-            ]
+            "enum": ["FEMALE", "MALE", "OTHER", "UNDISCLOSED"]
           },
           "firstVisitDate": {
             "type": "string",
@@ -10464,9 +10439,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "assignedToUserId"
-        ]
+        "required": ["assignedToUserId"]
       },
       "FollowUpPatch": {
         "type": "object",
@@ -10626,10 +10599,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "leaderMemberId"
-        ]
+        "required": ["name", "leaderMemberId"]
       },
       "MinistryPatch": {
         "type": "object",
@@ -10708,11 +10678,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
           }
         },
         "required": [
@@ -10779,11 +10745,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "SCHEDULED",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
           }
         }
       },
@@ -10812,19 +10774,10 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "CANCELLED",
-              "COMPLETED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]
           }
         },
-        "required": [
-          "eventId",
-          "title",
-          "date"
-        ]
+        "required": ["eventId", "title", "date"]
       },
       "SchedulePatch": {
         "type": "object",
@@ -10851,12 +10804,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "DRAFT",
-              "PUBLISHED",
-              "CANCELLED",
-              "COMPLETED"
-            ]
+            "enum": ["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]
           }
         }
       },
@@ -10874,13 +10822,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "PHONE",
-              "WHATSAPP",
-              "EMAIL",
-              "IN_PERSON",
-              "OTHER"
-            ]
+            "enum": ["PHONE", "WHATSAPP", "EMAIL", "IN_PERSON", "OTHER"]
           },
           "interactionDate": {
             "type": "string"
@@ -10894,11 +10836,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "type",
-          "interactionDate",
-          "notes"
-        ]
+        "required": ["type", "interactionDate", "notes"]
       },
       "ParticipantDto": {
         "type": "object",
@@ -10909,17 +10847,10 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "LEADER",
-              "CO_LEADER",
-              "HOST",
-              "MEMBER"
-            ]
+            "enum": ["LEADER", "CO_LEADER", "HOST", "MEMBER"]
           }
         },
-        "required": [
-          "memberId"
-        ]
+        "required": ["memberId"]
       },
       "PersonDto": {
         "type": "object",
@@ -10955,80 +10886,17 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "memberId",
-          "function"
-        ]
+        "required": ["memberId", "function"]
       },
       "AssignmentStatusDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "CONFIRMED",
-              "DECLINED",
-              "COMPLETED",
-              "ABSENT"
-            ]
+            "enum": ["CONFIRMED", "DECLINED", "COMPLETED", "ABSENT"]
           }
         },
-        "required": [
-          "status"
-        ]
-      },
-      "AttendanceDto": {
-        "type": "object",
-        "properties": {
-          "memberId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "visitorId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "eventId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "smallGroupId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "attendanceDate": {
-            "type": "string",
-            "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "PRESENT",
-              "ABSENT",
-              "EXCUSED"
-            ]
-          }
-        },
-        "required": [
-          "attendanceDate",
-          "status"
-        ]
-      },
-      "AttendancePatch": {
-        "type": "object",
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "PRESENT",
-              "ABSENT",
-              "EXCUSED"
-            ]
-          }
-        },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "NotificationDto": {
         "type": "object",
@@ -11043,13 +10911,7 @@
           },
           "channel": {
             "type": "string",
-            "enum": [
-              "EMAIL",
-              "SMS",
-              "WHATSAPP",
-              "PUSH",
-              "INTERNAL"
-            ]
+            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
           },
           "subject": {
             "type": "string",
@@ -11064,10 +10926,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "channel",
-          "content"
-        ]
+        "required": ["channel", "content"]
       },
       "TemplateDto": {
         "type": "object",
@@ -11079,13 +10938,7 @@
           },
           "channel": {
             "type": "string",
-            "enum": [
-              "EMAIL",
-              "SMS",
-              "WHATSAPP",
-              "PUSH",
-              "INTERNAL"
-            ]
+            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
           },
           "subject": {
             "type": "string",
@@ -11100,11 +10953,7 @@
             "type": "boolean"
           }
         },
-        "required": [
-          "name",
-          "channel",
-          "content"
-        ]
+        "required": ["name", "channel", "content"]
       },
       "TemplatePatch": {
         "type": "object",
@@ -11116,13 +10965,7 @@
           },
           "channel": {
             "type": "string",
-            "enum": [
-              "EMAIL",
-              "SMS",
-              "WHATSAPP",
-              "PUSH",
-              "INTERNAL"
-            ]
+            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
           },
           "subject": {
             "type": "string",
@@ -11152,10 +10995,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "email",
-          "password"
-        ]
+        "required": ["email", "password"]
       },
       "RegisterDto": {
         "type": "object",
@@ -11176,11 +11016,7 @@
             "maxLength": 120
           }
         },
-        "required": [
-          "email",
-          "password",
-          "name"
-        ]
+        "required": ["email", "password", "name"]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -11196,10 +11032,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "currentPassword",
-          "newPassword"
-        ]
+        "required": ["currentPassword", "newPassword"]
       },
       "ForgotPasswordDto": {
         "type": "object",
@@ -11210,9 +11043,7 @@
             "format": "email"
           }
         },
-        "required": [
-          "email"
-        ]
+        "required": ["email"]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -11228,10 +11059,7 @@
             "maxLength": 128
           }
         },
-        "required": [
-          "token",
-          "newPassword"
-        ]
+        "required": ["token", "newPassword"]
       },
       "CreateMemberDto": {
         "type": "object",
@@ -11254,10 +11082,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "INACTIVE"
-            ]
+            "enum": ["ACTIVE", "INACTIVE"]
           },
           "birthDate": {
             "type": "string",
@@ -11270,9 +11095,7 @@
             "maxLength": 2000
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "UpdateMemberDto": {
         "type": "object",
@@ -11294,10 +11117,7 @@
             "maxLength": 32
           },
           "status": {
-            "enum": [
-              "ACTIVE",
-              "INACTIVE"
-            ],
+            "enum": ["ACTIVE", "INACTIVE"],
             "type": "string"
           },
           "birthDate": {
@@ -11317,15 +11137,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "DISABLED"
-            ]
+            "enum": ["ACTIVE", "DISABLED"]
           }
         },
-        "required": [
-          "status"
-        ]
+        "required": ["status"]
       },
       "UserRolesDto": {
         "type": "object",
@@ -11339,9 +11154,7 @@
             }
           }
         },
-        "required": [
-          "roleIds"
-        ]
+        "required": ["roleIds"]
       },
       "LinkMemberDto": {
         "type": "object",
@@ -11422,10 +11235,7 @@
             }
           }
         },
-        "required": [
-          "title",
-          "author"
-        ]
+        "required": ["title", "author"]
       },
       "UpdateBookDto": {
         "type": "object",
@@ -11534,10 +11344,7 @@
             "maxLength": 4000
           }
         },
-        "required": [
-          "assetCode",
-          "location"
-        ]
+        "required": ["assetCode", "location"]
       },
       "UpdateCopyDto": {
         "type": "object",
@@ -11577,12 +11384,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "AVAILABLE",
-              "MAINTENANCE",
-              "LOST",
-              "DISPOSED"
-            ]
+            "enum": ["AVAILABLE", "MAINTENANCE", "LOST", "DISPOSED"]
           },
           "justification": {
             "type": "string",
@@ -11590,9 +11392,7 @@
             "pattern": "\\S"
           }
         },
-        "required": [
-          "justification"
-        ]
+        "required": ["justification"]
       },
       "LoanDto": {
         "type": "object",
@@ -11610,20 +11410,14 @@
             "maxLength": 4000
           }
         },
-        "required": [
-          "memberId",
-          "bookCopyId"
-        ]
+        "required": ["memberId", "bookCopyId"]
       },
       "CloseLoanDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "LOST",
-              "CANCELLED"
-            ]
+            "enum": ["LOST", "CANCELLED"]
           },
           "justification": {
             "type": "string",
@@ -11631,10 +11425,7 @@
             "pattern": "\\S"
           }
         },
-        "required": [
-          "status",
-          "justification"
-        ]
+        "required": ["status", "justification"]
       },
       "ReservationDto": {
         "type": "object",
@@ -11648,10 +11439,7 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "memberId",
-          "bookId"
-        ]
+        "required": ["memberId", "bookId"]
       },
       "SettingsDto": {
         "type": "object",
@@ -11717,21 +11505,14 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "amount",
-          "idempotencyKey"
-        ]
+        "required": ["amount", "idempotencyKey"]
       },
       "AdjustmentDto": {
         "type": "object",
         "properties": {
           "kind": {
             "type": "string",
-            "enum": [
-              "DISCOUNT",
-              "FORGIVE",
-              "CANCEL"
-            ]
+            "enum": ["DISCOUNT", "FORGIVE", "CANCEL"]
           },
           "amount": {
             "type": "string",
@@ -11743,10 +11524,7 @@
             "pattern": "\\S"
           }
         },
-        "required": [
-          "kind",
-          "justification"
-        ]
+        "required": ["kind", "justification"]
       },
       "CategoryDto": {
         "type": "object",
@@ -11758,10 +11536,7 @@
           },
           "kind": {
             "type": "string",
-            "enum": [
-              "INCOME",
-              "EXPENSE"
-            ]
+            "enum": ["INCOME", "EXPENSE"]
           },
           "parentId": {
             "type": "string",
@@ -11769,10 +11544,7 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "name",
-          "kind"
-        ]
+        "required": ["name", "kind"]
       },
       "CategoryPatch": {
         "type": "object",
@@ -11783,10 +11555,7 @@
             "pattern": "\\S"
           },
           "kind": {
-            "enum": [
-              "INCOME",
-              "EXPENSE"
-            ],
+            "enum": ["INCOME", "EXPENSE"],
             "type": "string"
           },
           "parentId": {
@@ -11834,18 +11603,10 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "ACTIVE",
-              "INACTIVE"
-            ]
+            "enum": ["ACTIVE", "INACTIVE"]
           }
         },
-        "required": [
-          "bank",
-          "name",
-          "currency",
-          "openingBalance"
-        ]
+        "required": ["bank", "name", "currency", "openingBalance"]
       },
       "AccountPatch": {
         "type": "object",
@@ -11884,10 +11645,7 @@
             "pattern": "^-?(?:0|[1-9]\\d{0,11})(?:\\.\\d{1,2})?$"
           },
           "status": {
-            "enum": [
-              "ACTIVE",
-              "INACTIVE"
-            ],
+            "enum": ["ACTIVE", "INACTIVE"],
             "type": "string"
           }
         }
@@ -11917,9 +11675,7 @@
             "maxLength": 32
           }
         },
-        "required": [
-          "name"
-        ]
+        "required": ["name"]
       },
       "SupplierPatch": {
         "type": "object",
@@ -11998,11 +11754,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["PENDING", "COMPLETED", "CANCELLED"]
           }
         },
         "required": [
@@ -12044,11 +11796,7 @@
             "maxLength": 120
           },
           "status": {
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "CANCELLED"
-            ],
+            "enum": ["PENDING", "COMPLETED", "CANCELLED"],
             "type": "string"
           },
           "origin": {
@@ -12123,11 +11871,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "CANCELLED"
-            ]
+            "enum": ["PENDING", "COMPLETED", "CANCELLED"]
           }
         },
         "required": [
@@ -12169,11 +11913,7 @@
             "maxLength": 120
           },
           "status": {
-            "enum": [
-              "PENDING",
-              "COMPLETED",
-              "CANCELLED"
-            ],
+            "enum": ["PENDING", "COMPLETED", "CANCELLED"],
             "type": "string"
           },
           "dueDate": {
@@ -12210,19 +11950,10 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "TITHE",
-              "OFFERING",
-              "DONATION",
-              "OTHER"
-            ]
+            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
           }
         },
-        "required": [
-          "incomeId",
-          "memberId",
-          "type"
-        ]
+        "required": ["incomeId", "memberId", "type"]
       },
       "ContributionPatch": {
         "type": "object",
@@ -12236,12 +11967,7 @@
             "format": "uuid"
           },
           "type": {
-            "enum": [
-              "TITHE",
-              "OFFERING",
-              "DONATION",
-              "OTHER"
-            ],
+            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"],
             "type": "string"
           }
         }
@@ -12254,20 +11980,14 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "accountId"
-        ]
+        "required": ["accountId"]
       },
       "ClassifyBankDto": {
         "type": "object",
         "properties": {
           "classification": {
             "type": "string",
-            "enum": [
-              "INCOME",
-              "EXPENSE",
-              "IGNORE"
-            ]
+            "enum": ["INCOME", "EXPENSE", "IGNORE"]
           },
           "categoryId": {
             "type": "string",
@@ -12283,12 +12003,7 @@
           },
           "contributionType": {
             "type": "string",
-            "enum": [
-              "TITHE",
-              "OFFERING",
-              "DONATION",
-              "OTHER"
-            ]
+            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
           },
           "acceptDuplicate": {
             "type": "boolean"
@@ -12304,10 +12019,7 @@
             }
           }
         },
-        "required": [
-          "classification",
-          "ids"
-        ]
+        "required": ["classification", "ids"]
       },
       "ReconcileBankDto": {
         "type": "object",
@@ -12331,9 +12043,7 @@
             }
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "UndoBankDto": {
         "type": "object",
@@ -12354,10 +12064,7 @@
             }
           }
         },
-        "required": [
-          "reason",
-          "ids"
-        ]
+        "required": ["reason", "ids"]
       },
       "InvoiceAssociationDto": {
         "type": "object",
@@ -12367,9 +12074,53 @@
             "format": "uuid"
           }
         },
-        "required": [
-          "transactionId"
-        ]
+        "required": ["transactionId"]
+      },
+      "PasskeyOptionsDto": {
+        "type": "object",
+        "required": ["password"],
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        }
+      },
+      "PasskeyVerifyDto": {
+        "type": "object",
+        "required": ["challengeId", "response"],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "response": {
+            "type": "object",
+            "description": "WebAuthn JSON response returned by @simplewebauthn/browser",
+            "additionalProperties": true
+          }
+        }
+      },
+      "PasskeyRegisterDto": {
+        "type": "object",
+        "required": ["challengeId", "response", "name"],
+        "properties": {
+          "challengeId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "response": {
+            "type": "object",
+            "description": "WebAuthn JSON response returned by @simplewebauthn/browser",
+            "additionalProperties": true
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          }
+        }
       }
     }
   }

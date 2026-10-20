@@ -20,7 +20,7 @@ export async function seedOperations(tx: Prisma.TransactionClient) {
       name: 'Grupo familiar Esperança',
       leaderMemberId: leader,
       hostMemberId: member,
-      address: 'Sala da comunidade',
+      address: 'Sala de A Ponte',
       meetingDay: 3,
       meetingTime: '20:00',
       capacity: 15,
@@ -47,7 +47,7 @@ export async function seedOperations(tx: Prisma.TransactionClient) {
     create: {
       id: id(4),
       name: 'Recepção',
-      description: 'Acolhimento da comunidade',
+      description: 'Acolhimento de A Ponte',
       leaderMemberId: leader,
     },
     update: {},
@@ -111,25 +111,13 @@ export async function seedOperations(tx: Prisma.TransactionClient) {
     },
     update: {},
   });
-  await tx.attendance.upsert({
-    where: { id: id(11) },
-    create: {
-      id: id(11),
-      visitorId: visitor.id,
-      attendanceDate: visitor.visitedAt,
-      status: 'PRESENT',
-      source: 'MANUAL',
-      registeredByUserId: admin.id,
-    },
-    update: {},
-  });
   await tx.notificationTemplate.upsert({
     where: { name: 'Boas-vindas' },
     create: {
       id: id(12),
       name: 'Boas-vindas',
       channel: 'INTERNAL',
-      subject: 'Bem-vindo à comunidade',
+      subject: 'Bem-vindo a A Ponte',
       content: 'Estamos felizes com sua visita.',
     },
     update: {},

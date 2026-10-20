@@ -11,6 +11,9 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import * as D from './operations.dto';
+import { initialPasswordHash } from '../members/member-identity';
+import type { PrivateUpload } from '../finance/storage.service';
+import { randomUUID } from 'node:crypto';
 import { occupiedRegistrations } from '../events/registration-capacity';
 import {
   NOTIFICATION_PROVIDERS,
@@ -38,6 +41,10 @@ const groupInclude = {
 } as const;
 const ministryInclude = {
   leader: { select: operationalMemberSelect },
+  members: {
+    where: { active: true, leftAt: null, role: 'LEADER' },
+    select: { member: { select: operationalMemberSelect } },
+  },
 } as const;
 const eventInclude = {
   ministry: { select: { id: true, name: true } },
@@ -113,7 +120,48 @@ export class OperationsService {
     };
   }
   async ministryScope(user: CurrentUser): Promise<Prisma.MinistryWhereInput> {
-    return this.all(user) ? {} : { leaderMemberId: await this.memberId(user) };
+    if (this.all(user)) return {};
+    const memberId = await this.memberId(user);
+    return {
+      OR: [
+        { leaderMemberId: memberId },
+        {
+          members: {
+            some: { memberId, active: true, leftAt: null, role: 'LEADER' },
+          },
+        },
+      ],
+    };
+  }
+  private async ministryReadScope(
+    user: CurrentUser,
+  ): Promise<Prisma.MinistryWhereInput> {
+    if (this.all(user)) return {};
+    return {
+      OR: [
+        await this.ministryScope(user),
+        {
+          members: {
+            some: {
+              memberId: await this.memberId(user),
+              active: true,
+              leftAt: null,
+            },
+          },
+        },
+      ],
+    };
+  }
+  private async canManageMinistry(id: string, user: CurrentUser) {
+    if (
+      !(await this.db.ministry.findFirst({
+        where: { AND: [{ id }, await this.ministryScope(user)] },
+        select: { id: true },
+      }))
+    )
+      throw new ForbiddenException(
+        'Apenas administradores e líderes deste ministério podem gerir.',
+      );
   }
   async visitorScope(user: CurrentUser): Promise<Prisma.VisitorWhereInput> {
     return this.all(user) || user.permissions.includes('VISITOR_WRITE')
@@ -150,8 +198,8 @@ export class OperationsService {
     if (this.all(user)) return {};
     return {
       OR: [
-        { event: await this.eventScope(user) },
-        { ministry: await this.ministryScope(user) },
+        { ministryId: null, event: await this.eventScope(user) },
+        { ministry: await this.ministryReadScope(user) },
         { assignments: { some: { memberId: await this.memberId(user) } } },
       ],
     };
@@ -266,16 +314,19 @@ export class OperationsService {
     const directory =
       !!q.search &&
       q.search.trim().length >= 2 &&
-      user.permissions.some((p) =>
-        [
-          'SMALL_GROUP_MANAGE',
-          'MINISTRY_MANAGE',
-          'SCHEDULE_MANAGE',
-          'EVENT_MANAGE',
-          'EVENT_REGISTRATION_MANAGE',
-          'VISITOR_CREATE',
-        ].includes(p),
-      );
+      ((await this.db.ministry.count({
+        where: await this.ministryScope(user),
+      })) > 0 ||
+        user.permissions.some((p) =>
+          [
+            'SMALL_GROUP_MANAGE',
+            'MINISTRY_MANAGE',
+            'SCHEDULE_MANAGE',
+            'EVENT_MANAGE',
+            'EVENT_REGISTRATION_MANAGE',
+            'VISITOR_CREATE',
+          ].includes(p),
+        ));
     const scope: Prisma.MemberWhereInput =
       this.all(user) || directory
         ? {}
@@ -480,18 +531,29 @@ export class OperationsService {
           'Selecione uma das correspondências existentes.',
         );
       if (memberId) await this.validMember(tx, memberId);
-      else
+      else {
+        const email =
+          v.email?.toLowerCase() ?? `sememail+${randomUUID()}@aponte.pt`;
         memberId = (
           await tx.member.create({
             data: {
               name: v.name,
-              email: v.email?.toLowerCase(),
+              email,
+              user: {
+                create: {
+                  name: v.name,
+                  email,
+                  passwordHash: await initialPasswordHash(),
+                  status: 'ACTIVE',
+                },
+              },
               phone: v.phone,
               birthDate: v.birthDate,
             },
             select: { id: true },
           })
         ).id;
+      }
       if (
         await tx.visitor.findFirst({
           where: { memberId, id: { not: id } },
@@ -718,9 +780,25 @@ export class OperationsService {
   async ministries(q: D.OperationQuery, user: CurrentUser) {
     const where: Prisma.MinistryWhereInput = {
       AND: [
-        await this.ministryScope(user),
+        await this.ministryReadScope(user),
         {
-          leaderMemberId: q.leaderMemberId,
+          ...(q.leaderMemberId
+            ? {
+                OR: [
+                  { leaderMemberId: q.leaderMemberId },
+                  {
+                    members: {
+                      some: {
+                        memberId: q.leaderMemberId,
+                        role: 'LEADER',
+                        active: true,
+                        leftAt: null,
+                      },
+                    },
+                  },
+                ],
+              }
+            : {}),
           active: q.active ? q.active === 'true' : undefined,
           name: q.search
             ? { contains: q.search, mode: 'insensitive' }
@@ -737,11 +815,21 @@ export class OperationsService {
       }),
       this.db.ministry.count({ where }),
     ]);
-    return this.page(items, total, q);
+    const scope = await this.ministryScope(user);
+    const managed = await this.db.ministry.findMany({
+      where: { AND: [scope, { id: { in: items.map((item) => item.id) } }] },
+      select: { id: true },
+    });
+    const ids = new Set(managed.map((m) => m.id));
+    return this.page(
+      items.map((m) => ({ ...m, canManage: ids.has(m.id) })),
+      total,
+      q,
+    );
   }
   async ministry(id: string, user: CurrentUser) {
     const m = await this.db.ministry.findFirst({
-      where: { AND: [{ id }, await this.ministryScope(user)] },
+      where: { AND: [{ id }, await this.ministryReadScope(user)] },
       include: ministryInclude,
     });
     if (!m) throw new NotFoundException();
@@ -752,18 +840,37 @@ export class OperationsService {
     dto: D.MinistryDto | D.MinistryPatch,
     user: CurrentUser,
   ) {
-    if (id) await this.ministry(id, user);
     if (
-      !this.all(user) &&
-      dto.leaderMemberId &&
-      dto.leaderMemberId !== (await this.memberId(user))
+      !this.all(user) ||
+      (user.roles &&
+        !user.roles.some((role) => ['ADMIN', 'SUPER_ADMIN'].includes(role)))
     )
-      throw new ForbiddenException('Mudança de liderança exige acesso global.');
+      throw new ForbiddenException(
+        'Apenas administradores podem criar ou editar ministérios.',
+      );
     return this.write(async (tx) => {
       await this.validMember(tx, dto.leaderMemberId);
-      return id
+      const ministry = await (id
         ? tx.ministry.update({ where: { id }, data: dto })
-        : tx.ministry.create({ data: dto as D.MinistryDto });
+        : tx.ministry.create({ data: dto as D.MinistryDto }));
+      if (
+        dto.leaderMemberId &&
+        !(await tx.ministryMember.findFirst({
+          where: {
+            ministryId: ministry.id,
+            memberId: dto.leaderMemberId,
+            active: true,
+          },
+        }))
+      )
+        await tx.ministryMember.create({
+          data: {
+            ministryId: ministry.id,
+            memberId: dto.leaderMemberId,
+            role: 'LEADER',
+          },
+        });
+      return ministry;
     });
   }
   async participants(
@@ -822,7 +929,7 @@ export class OperationsService {
       !['MEMBER', 'LEADER'].includes(dto.role)
     )
       throw new BadRequestException('Função inválida para ministério.');
-    // Roles in membership history do not grant leadership access; the parent leader defines scope.
+    if (kind === 'ministry') await this.canManageMinistry(id, user);
     return this.write(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${id},0))`;
       await this.validMember(tx, dto.memberId);
@@ -841,6 +948,12 @@ export class OperationsService {
           data: { smallGroupId: id, ...dto },
         });
       }
+      if (
+        await tx.ministryMember.findFirst({
+          where: { ministryId: id, memberId: dto.memberId, active: true },
+        })
+      )
+        throw new ConflictException('Membro já cadastrado neste ministério.');
       return tx.ministryMember.create({ data: { ministryId: id, ...dto } });
     });
   }
@@ -851,7 +964,7 @@ export class OperationsService {
     user: CurrentUser,
   ) {
     if (kind === 'group') await this.group(id, user);
-    else await this.ministry(id, user);
+    else await this.canManageMinistry(id, user);
     return this.write(async (tx) => {
       if (kind === 'group') {
         const row = await tx.smallGroupMember.findFirst({
@@ -867,6 +980,11 @@ export class OperationsService {
         where: { id: membershipId, ministryId: id, active: true },
       });
       if (!row) throw new NotFoundException();
+      const ministry = await tx.ministry.findUniqueOrThrow({ where: { id } });
+      if (ministry.leaderMemberId === row.memberId)
+        throw new ConflictException(
+          'Altere o líder principal antes de remover este integrante.',
+        );
       return tx.ministryMember.update({
         where: { id: membershipId },
         data: { active: false, leftAt: new Date() },
@@ -1138,14 +1256,42 @@ export class OperationsService {
       }),
       this.db.volunteerSchedule.count({ where }),
     ]);
-    return this.page(items, total, q);
+    const ministryScope = await this.ministryScope(user);
+    const managed = await this.db.ministry.findMany({
+      where: {
+        AND: [
+          ministryScope,
+          {
+            id: {
+              in: items.flatMap((item) =>
+                item.ministryId ? [item.ministryId] : [],
+              ),
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+    const ids = new Set(managed.map((m) => m.id));
+    return this.page(
+      items.map((item) => ({
+        ...item,
+        canManage:
+          this.all(user) ||
+          (item.ministryId
+            ? ids.has(item.ministryId)
+            : user.permissions.includes('SCHEDULE_MANAGE')),
+      })),
+      total,
+      q,
+    );
   }
   async schedule(id: string, user: CurrentUser, manage = false) {
     const scope =
       manage && !this.all(user)
         ? {
             OR: [
-              { event: await this.eventScope(user) },
+              { ministryId: null, event: await this.eventScope(user) },
               { ministry: await this.ministryScope(user) },
             ],
           }
@@ -1162,9 +1308,11 @@ export class OperationsService {
     dto: D.ScheduleDto | D.SchedulePatch,
     user: CurrentUser,
   ) {
+    if (!id && !dto.eventId && !dto.ministryId)
+      throw new BadRequestException('Selecione um ministério ou evento.');
     if (id) await this.schedule(id, user, true);
     if (dto.eventId) await this.event(dto.eventId, user);
-    if (dto.ministryId) await this.ministry(dto.ministryId, user);
+    if (dto.ministryId) await this.canManageMinistry(dto.ministryId, user);
     return this.write(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
       const { date, ...rest } = dto;
@@ -1182,6 +1330,143 @@ export class OperationsService {
         );
       return saved;
     });
+  }
+  async deleteSchedule(id: string, user: CurrentUser) {
+    await this.schedule(id, user, true);
+    return this.write(async (tx) => {
+      await tx.volunteerAssignment.updateMany({
+        where: { scheduleId: id },
+        data: { replacedByAssignmentId: null },
+      });
+      await tx.volunteerAssignment.deleteMany({ where: { scheduleId: id } });
+      return tx.volunteerSchedule.delete({ where: { id } });
+    });
+  }
+  async attachments(id: string, user: CurrentUser) {
+    await this.schedule(id, user);
+    return this.db.scheduleAttachment.findMany({
+      where: { scheduleId: id, uploadComplete: true },
+      select: { id: true, filename: true, mime: true, size: true },
+      orderBy: { createdAt: 'asc' },
+    });
+  }
+  async uploadAttachment(
+    id: string,
+    file: PrivateUpload,
+    user: CurrentUser,
+    totalSize?: number,
+  ) {
+    await this.schedule(id, user, true);
+    if (!file || file.size > 5 * 1024 * 1024)
+      throw new BadRequestException('O arquivo deve ter até 5 MB.');
+    if (
+      !file.buffer ||
+      file.size !== file.buffer.length ||
+      file.size < 1 ||
+      !file.originalname ||
+      file.originalname.length > 255 ||
+      /[\\/:]/.test(file.originalname) ||
+      [...file.originalname].some(
+        (c) => c.charCodeAt(0) < 32 || c.charCodeAt(0) === 127,
+      )
+    )
+      throw new BadRequestException('Arquivo ou nome inválido.');
+    if (
+      totalSize !== undefined &&
+      (!Number.isSafeInteger(totalSize) ||
+        totalSize < file.size ||
+        totalSize > 5 * 1024 * 1024)
+    )
+      throw new BadRequestException('Tamanho total inv\u00e1lido.');
+    const signatures: Record<string, boolean> = {
+      'application/pdf': file.buffer.subarray(0, 5).toString() === '%PDF-',
+      'image/jpeg': file.buffer
+        .subarray(0, 3)
+        .equals(Buffer.from([255, 216, 255])),
+      'image/png': file.buffer
+        .subarray(0, 8)
+        .equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+    };
+    if (Object.hasOwn(signatures, file.mimetype) && !signatures[file.mimetype])
+      throw new BadRequestException('Assinatura do arquivo inválida.');
+    const mime = Object.hasOwn(signatures, file.mimetype)
+      ? file.mimetype
+      : 'application/octet-stream';
+    return this.write((tx) =>
+      tx.scheduleAttachment.create({
+        data: {
+          scheduleId: id,
+          filename: file.originalname,
+          mime,
+          size: totalSize ?? file.size,
+          uploadComplete: totalSize === undefined || file.size === totalSize,
+          content: new Uint8Array(file.buffer),
+        },
+        select: { id: true, filename: true, mime: true, size: true },
+      }),
+    );
+  }
+  async appendAttachment(
+    id: string,
+    attachmentId: string,
+    offset: number,
+    file: PrivateUpload,
+    user: CurrentUser,
+  ) {
+    await this.schedule(id, user, true);
+    if (
+      !Number.isSafeInteger(offset) ||
+      offset < 1 ||
+      !file?.buffer ||
+      file.size < 1 ||
+      file.size > 2 * 1024 * 1024 ||
+      file.size !== file.buffer.length
+    )
+      throw new BadRequestException('Parte inv\u00e1lida.');
+    return this.write(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${attachmentId},0))`;
+      const current = await tx.scheduleAttachment.findFirst({
+        where: { id: attachmentId, scheduleId: id, uploadComplete: false },
+      });
+      if (!current) throw new NotFoundException();
+      if (
+        current.content.length !== offset ||
+        offset + file.size > current.size
+      )
+        throw new ConflictException('Parte fora de ordem ou tamanho excedido.');
+      const content = Buffer.concat([
+        Buffer.from(current.content),
+        file.buffer,
+      ]);
+      return tx.scheduleAttachment.update({
+        where: { id: attachmentId },
+        data: {
+          content: new Uint8Array(content),
+          uploadComplete: content.length === current.size,
+        },
+        select: { id: true, filename: true, mime: true, size: true },
+      });
+    });
+  }
+  async attachment(
+    id: string,
+    attachmentId: string,
+    user: CurrentUser,
+    remove = false,
+  ) {
+    await this.schedule(id, user, remove);
+    const file = await this.db.scheduleAttachment.findFirst({
+      where: { id: attachmentId, scheduleId: id },
+    });
+    if (!file || (!remove && !file.uploadComplete))
+      throw new NotFoundException();
+    if (remove) {
+      await this.write((tx) =>
+        tx.scheduleAttachment.delete({ where: { id: attachmentId } }),
+      );
+      return null;
+    }
+    return file;
   }
   async assignments(id: string, q: D.OperationQuery, user: CurrentUser) {
     await this.schedule(id, user);
@@ -1206,43 +1491,26 @@ export class OperationsService {
       where: { id: scheduleId },
       include: { event: true },
     });
-    const end =
-      schedule.event.endsAt ??
-      new Date(schedule.event.startsAt.getTime() + 3600000);
-    return tx.volunteerAssignment.findMany({
+    const start = schedule.event?.startsAt ?? schedule.date;
+    const end = schedule.event?.endsAt ?? new Date(start.getTime() + 3600000);
+    const rows = await tx.volunteerAssignment.findMany({
       where: {
         memberId,
-        status: { in: ['INVITED', 'CONFIRMED'] },
         scheduleId: { not: scheduleId },
-        schedule: {
-          status: { not: 'CANCELLED' },
-          event: {
-            status: { not: 'CANCELLED' },
-            startsAt: { lt: end },
-            OR: [
-              { endsAt: { gt: schedule.event.startsAt } },
-              {
-                endsAt: null,
-                startsAt: {
-                  gte: new Date(schedule.event.startsAt.getTime() - 3600000),
-                },
-              },
-            ],
-          },
-        },
+        status: { in: ['INVITED', 'CONFIRMED'] },
+        schedule: { status: { in: ['DRAFT', 'PUBLISHED'] } },
       },
-      select: {
-        id: true,
-        schedule: {
-          select: {
-            id: true,
-            title: true,
-            event: { select: { startsAt: true, endsAt: true } },
-          },
-        },
-      },
+      include: { schedule: { include: { event: true } } },
+    });
+    return rows.filter((row) => {
+      if (row.schedule.event?.status === 'CANCELLED') return false;
+      const otherStart = row.schedule.event?.startsAt ?? row.schedule.date;
+      const otherEnd =
+        row.schedule.event?.endsAt ?? new Date(otherStart.getTime() + 3600000);
+      return otherStart < end && start < otherEnd;
     });
   }
+
   async addAssignment(
     id: string,
     dto: D.AssignmentDto,
@@ -1252,10 +1520,36 @@ export class OperationsService {
     const schedule = await this.schedule(id, user, true);
     if (['CANCELLED', 'COMPLETED'].includes(schedule.status))
       throw new ConflictException('Escala encerrada.');
-    if (dto.ministryId) await this.ministry(dto.ministryId, user);
+    if (dto.ministryId) await this.canManageMinistry(dto.ministryId, user);
     return this.write(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
-      await this.accessiblePerson(tx, { memberId: dto.memberId }, user);
+      if (schedule.ministryId) await this.validMember(tx, dto.memberId);
+      else await this.accessiblePerson(tx, { memberId: dto.memberId }, user);
+      if (
+        schedule.ministryId &&
+        !(await tx.ministryMember.findFirst({
+          where: {
+            ministryId: schedule.ministryId,
+            memberId: dto.memberId,
+            active: true,
+          },
+        })) &&
+        !(await tx.ministry.findFirst({
+          where: { id: schedule.ministryId, leaderMemberId: dto.memberId },
+        }))
+      )
+        throw new BadRequestException('Selecione um membro deste ministério.');
+      if (
+        await tx.volunteerAssignment.findFirst({
+          where: {
+            scheduleId: id,
+            memberId: dto.memberId,
+            status: { in: ['INVITED', 'CONFIRMED'] },
+            ...(replacesId ? { id: { not: replacesId } } : {}),
+          },
+        })
+      )
+        throw new ConflictException('Membro já escalado.');
       const conflicts = await this.assignmentConflicts(tx, dto.memberId, id);
       if (conflicts.length)
         throw new ConflictException({
@@ -1350,10 +1644,10 @@ export class OperationsService {
       { count: bigint }[]
     >`SELECT count(*) FROM volunteer_assignments a JOIN volunteer_assignments b ON a."memberId"=b."memberId" AND a.id<b.id AND a."scheduleId"<>b."scheduleId"
       JOIN volunteer_schedules sa ON sa.id=a."scheduleId" JOIN volunteer_schedules sb ON sb.id=b."scheduleId"
-      JOIN community_events ea ON ea.id=sa."eventId" JOIN community_events eb ON eb.id=sb."eventId"
+      LEFT JOIN community_events ea ON ea.id=sa."eventId" LEFT JOIN community_events eb ON eb.id=sb."eventId"
       LEFT JOIN ministries ma ON ma.id=sa."ministryId" LEFT JOIN small_groups ga ON ga.id=ea."smallGroupId"
-      WHERE a.status IN ('INVITED','CONFIRMED') AND b.status IN ('INVITED','CONFIRMED') AND sa.status IN ('DRAFT','PUBLISHED') AND sb.status IN ('DRAFT','PUBLISHED') AND ea.status<>'CANCELLED' AND eb.status<>'CANCELLED'
-      AND ea."startsAt"<COALESCE(eb."endsAt",eb."startsAt"+interval '1 hour') AND eb."startsAt"<COALESCE(ea."endsAt",ea."startsAt"+interval '1 hour')
+      WHERE a.status IN ('INVITED','CONFIRMED') AND b.status IN ('INVITED','CONFIRMED') AND sa.status IN ('DRAFT','PUBLISHED') AND sb.status IN ('DRAFT','PUBLISHED') AND COALESCE(ea.status,'SCHEDULED')<>'CANCELLED' AND COALESCE(eb.status,'SCHEDULED')<>'CANCELLED'
+      AND COALESCE(ea."startsAt",sa.date)<COALESCE(eb."endsAt",eb."startsAt"+interval '1 hour',sb.date+interval '1 hour') AND COALESCE(eb."startsAt",sb.date)<COALESCE(ea."endsAt",ea."startsAt"+interval '1 hour',sa.date+interval '1 hour')
       ${eventId ? Prisma.sql`AND (ea.id=${eventId}::uuid OR eb.id=${eventId}::uuid)` : Prisma.empty}
       ${scheduleId ? Prisma.sql`AND (sa.id=${scheduleId}::uuid OR sb.id=${scheduleId}::uuid)` : Prisma.empty} ${scope}`;
     return Number(row?.count ?? 0);
@@ -1387,132 +1681,6 @@ export class OperationsService {
         },
       });
     });
-  }
-  async attendance(q: D.OperationQuery, user: CurrentUser) {
-    const scope: Prisma.AttendanceWhereInput = this.all(user)
-      ? {}
-      : {
-          OR: [
-            { event: await this.eventScope(user) },
-            { smallGroup: await this.groupScope(user) },
-            { memberId: await this.memberId(user) },
-            { visitor: { memberId: await this.memberId(user) } },
-          ],
-        };
-    const where: Prisma.AttendanceWhereInput = {
-      AND: [
-        scope,
-        {
-          AND: q.memberId
-            ? [
-                {
-                  OR: [
-                    { memberId: q.memberId },
-                    { visitor: { memberId: q.memberId } },
-                  ],
-                },
-              ]
-            : undefined,
-          visitorId: q.visitorId,
-          eventId: q.eventId,
-          smallGroupId: q.smallGroupId,
-          status: q.status,
-          attendanceDate: this.range(q),
-          ...(q.search
-            ? {
-                OR: [
-                  {
-                    member: {
-                      name: { contains: q.search, mode: 'insensitive' },
-                    },
-                  },
-                  {
-                    visitor: {
-                      name: { contains: q.search, mode: 'insensitive' },
-                    },
-                  },
-                ],
-              }
-            : {}),
-        },
-      ],
-    };
-    const [items, total, summary] = await this.db.$transaction([
-      this.db.attendance.findMany({
-        where,
-        include: {
-          ...personInclude,
-          event: { select: { id: true, name: true } },
-          smallGroup: { select: { id: true, name: true } },
-        },
-        ...this.pagination(q),
-        orderBy: [{ attendanceDate: 'desc' }, { id: 'asc' }],
-      }),
-      this.db.attendance.count({ where }),
-      this.db.attendance.groupBy({
-        where,
-        by: ['status'],
-        orderBy: { status: 'asc' },
-        _count: { _all: true },
-      }),
-    ]);
-    return { ...this.page(items, total, q), summary };
-  }
-  async recordAttendance(dto: D.AttendanceDto, user: CurrentUser) {
-    if (dto.eventId && dto.smallGroupId)
-      throw new BadRequestException('Selecione uma atividade.');
-    if (dto.eventId) await this.event(dto.eventId, user);
-    if (dto.smallGroupId) await this.group(dto.smallGroupId, user);
-    if (!dto.eventId && !dto.smallGroupId && !this.all(user))
-      throw new ForbiddenException();
-    return this.write(async (tx) => {
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009001)`;
-      await this.accessiblePerson(tx, dto, user);
-      const identity = await this.personIdentity(tx, dto);
-      if (
-        await tx.attendance.findFirst({
-          where: {
-            ...identity,
-            eventId: dto.eventId ?? null,
-            smallGroupId: dto.smallGroupId ?? null,
-            attendanceDate: new Date(dto.attendanceDate),
-          },
-          select: { id: true },
-        })
-      )
-        throw new ConflictException(
-          'Presença já registrada para esta pessoa na atividade.',
-        );
-      return tx.attendance.create({
-        data: {
-          ...dto,
-          attendanceDate: new Date(dto.attendanceDate),
-          registeredByUserId: user.id,
-          source: dto.eventId
-            ? 'EVENT'
-            : dto.smallGroupId
-              ? 'SMALL_GROUP'
-              : 'MANUAL',
-        },
-      });
-    });
-  }
-  async updateAttendance(
-    id: string,
-    dto: D.AttendancePatch,
-    user: CurrentUser,
-  ) {
-    const a = await this.db.attendance.findUnique({ where: { id } });
-    if (!a) throw new NotFoundException();
-    if (a.eventId) await this.event(a.eventId, user);
-    else if (a.smallGroupId) await this.group(a.smallGroupId, user);
-    else if (!this.all(user)) throw new ForbiddenException();
-    return this.write((tx) =>
-      tx.attendance.update({
-        where: { id },
-        data: { status: dto.status, registeredByUserId: user.id },
-      }),
-    );
   }
   async notifications(q: D.OperationQuery, user: CurrentUser) {
     const where: Prisma.NotificationWhereInput = {
@@ -1747,11 +1915,6 @@ export class OperationsService {
         take: 5,
         orderBy: [{ date: 'asc' }, { id: 'asc' }],
       });
-    if (p.includes('ATTENDANCE_READ')) {
-      const a = await this.attendance({ ...q, page: 1, pageSize: 5 }, user);
-      result.recentAttendance = a.items;
-      result.attendanceSummary = a.summary;
-    }
     return result;
   }
 }

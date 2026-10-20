@@ -19,6 +19,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import * as argon2 from 'argon2';
 import { Prisma } from '@prisma/client';
 import {
   IsIn,
@@ -27,6 +28,9 @@ import {
   ArrayUnique,
   IsUUID,
   IsOptional,
+  IsString,
+  MinLength,
+  MaxLength,
 } from 'class-validator';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthService } from '../auth/auth.service';
@@ -52,6 +56,9 @@ class LinkMemberDto {
   @IsOptional()
   @IsUUID()
   memberId?: string | null;
+}
+class AccessPasswordDto {
+  @IsString() @MinLength(12) @MaxLength(128) password!: string;
 }
 class StatusDto {
   @ApiProperty({ enum: ['ACTIVE', 'DISABLED'] })
@@ -258,46 +265,75 @@ export class UsersController {
       return { id, roles: roles.map((r) => ({ id: r.id, name: r.name })) };
     });
   }
+  @Post(':id/password')
+  @Permission('USER_UPDATE')
+  async password(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AccessPasswordDto,
+    @Req() req: AuthRequest,
+  ) {
+    const administrator =
+      req.user.roles?.some(
+        (role) => role === 'ADMIN' || role === 'SUPER_ADMIN',
+      ) ?? false;
+    if (!administrator && id === req.user.id)
+      throw new ConflictException('Use a alteração de senha da sua conta.');
+    const passwordHash = await argon2.hash(dto.password, {
+      type: argon2.argon2id,
+    });
+    return this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      await tx.$queryRaw`SELECT id FROM users WHERE id=${id}::uuid FOR UPDATE`;
+      const target = await tx.user.findUnique({
+        where: { id },
+        include: {
+          userRoles: {
+            include: {
+              role: {
+                include: { permissions: { include: { permission: true } } },
+              },
+            },
+          },
+        },
+      });
+      if (!target || target.deletedAt) throw new NotFoundException();
+      if (
+        !administrator &&
+        target.userRoles.some(({ role }) =>
+          role.permissions.some(
+            ({ permission }) =>
+              !req.user.permissions.some((p) => p === permission.code),
+          ),
+        )
+      )
+        throw new ForbiddenException();
+      await tx.user.update({ where: { id }, data: { passwordHash } });
+      await tx.refreshToken.updateMany({
+        where: { userId: id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await tx.passwordReset.updateMany({
+        where: { userId: id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+      return { id };
+    });
+  }
   @Patch(':id/member')
   @Permission('PERMISSION_MANAGE', 'MEMBER_READ')
   async link(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: LinkMemberDto,
   ) {
-    try {
-      return await this.db.$transaction(async (tx) => {
-        await bindAudit(tx);
-        if (
-          dto.memberId &&
-          !(await tx.member.findFirst({
-            where: { id: dto.memberId, anonymizedAt: null },
-          }))
-        )
-          throw new NotFoundException('Membro inexistente');
-        await tx.$queryRaw`SELECT id FROM users WHERE id=${id}::uuid FOR UPDATE`;
-        const user = await tx.user.findUnique({ where: { id } });
-        if (!user || user.deletedAt) throw new NotFoundException();
-        if (dto.memberId === undefined)
-          throw new ConflictException(
-            'Informe o membro ou null para remover o vínculo',
-          );
-        await tx.refreshToken.updateMany({
-          where: { userId: id, revokedAt: null },
-          data: { revokedAt: new Date() },
-        });
-        return tx.user.update({
-          where: { id },
-          data: { memberId: dto.memberId },
-          select: { ...userSelect, memberId: true },
-        });
-      });
-    } catch (e) {
-      if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
-      )
-        throw new ConflictException('Membro já vinculado a outro usuário');
-      throw e;
-    }
+    const account = await this.db.user.findUnique({
+      where: { id },
+      select: { memberId: true },
+    });
+    if (!account) throw new NotFoundException();
+    if (!dto.memberId || dto.memberId !== account.memberId)
+      throw new ConflictException(
+        'Membro e conta são um único cadastro; o vínculo não pode ser removido ou trocado.',
+      );
+    return { id, memberId: account.memberId };
   }
 }

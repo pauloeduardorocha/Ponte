@@ -139,8 +139,6 @@ describe('Church operations with isolated PostgreSQL', () => {
       'EVENT_MANAGE',
       'SCHEDULE_READ',
       'SCHEDULE_MANAGE',
-      'ATTENDANCE_READ',
-      'ATTENDANCE_MANAGE',
       'NOTIFICATION_READ',
       'NOTIFICATION_SEND',
     ]);
@@ -185,7 +183,6 @@ describe('Church operations with isolated PostgreSQL', () => {
       await post('/small-groups', {
         name: randomUUID(),
         leaderMemberId,
-        address: 'Community',
         meetingDay: 2,
         meetingTime: '20:00',
         capacity,
@@ -554,58 +551,22 @@ describe('Church operations with isolated PostgreSQL', () => {
       ).body.name,
     ).toBe(veryLongName);
   });
-  it('avoids duplicate attendance, supports corrections and period totals', async () => {
-    const e = await event('2026-11-10T19:00:00Z', '2026-11-10T21:00:00Z');
-    const body = {
-      memberId: leaderId,
-      eventId: e.id,
-      attendanceDate: '2026-11-10',
-      status: 'PRESENT',
-    };
-    const a = (await post('/attendance', body).expect(201)).body as {
-      id: string;
-    };
-    await post('/attendance', body).expect(409);
-    await post('/attendance', {
-      ...body,
-      visitorId: (await visitor()).id,
-    }).expect(400);
-    await patch('/attendance/' + a.id, { status: 'EXCUSED' }).expect(200);
-    const report = await get(
-      '/attendance?memberId=' + leaderId + '&start=2026-11-01&end=2026-11-30',
-    ).expect(200);
-    expect(report.body.total).toBe(1);
-    expect(report.body.summary[0].status).toBe('EXCUSED');
-    const guest = await visitor('Attendance conversion');
-    await post('/attendance', {
-      visitorId: guest.id,
-      eventId: e.id,
-      attendanceDate: '2026-11-10',
-      status: 'PRESENT',
-    }).expect(201);
-    await post('/events/' + e.id + '/registrations', {
-      visitorId: guest.id,
-    }).expect(201);
-    const converted = await post(
-      '/visitors/' + guest.id + '/convert',
-      {},
-    ).expect(201);
-    await post('/attendance', {
-      memberId: converted.body.memberId,
-      eventId: e.id,
-      attendanceDate: '2026-11-10',
-      status: 'PRESENT',
-    }).expect(409);
-    await post('/events/' + e.id + '/registrations', {
-      memberId: converted.body.memberId,
-    }).expect(409);
+  it('removes attendance routes, table and permissions', async () => {
+    await get('/attendance').expect(404);
+    await post('/attendance', {}).expect(404);
+    await patch('/attendance/' + randomUUID(), {}).expect(404);
+    const tables = await db.$queryRaw<{ name: string | null }[]>`
+      SELECT to_regclass(current_schema() || '.attendances')::text AS name
+    `;
+    expect(tables[0]?.name).toBeNull();
     expect(
-      (await get('/attendance?memberId=' + converted.body.memberId)).body.total,
-    ).toBe(1);
-    expect(
-      (await db.attendance.findUniqueOrThrow({ where: { id: a.id } }))
-        .registeredByUserId,
-    ).toBe(actorId);
+      await db.permission.count({
+        where: { code: { startsWith: 'ATTENDANCE_' } },
+      }),
+    ).toBe(0);
+    const dashboard = await get('/dashboard').expect(200);
+    expect(dashboard.body).not.toHaveProperty('recentAttendance');
+    expect(dashboard.body).not.toHaveProperty('attendanceSummary');
   });
   it('applies RBAC and returns minimal member data without financial or administrative fields', async () => {
     await get('/small-groups', normalToken).expect(403);

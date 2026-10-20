@@ -47,8 +47,8 @@ describe('Entity selectors', () => {
     expect(requests.map((r) => r.query?.get('page'))).toEqual(['1', '2']);
   });
   it('shows lookup failures without allowing a manual GUID', async () => {
-    mockApi({ 'GET /library/members': { status: 403 } });
-    show({ endpoint: '/library/members', label: 'Membro', value: '' });
+    mockApi({ 'GET /finance/members': { status: 403 } });
+    show({ endpoint: '/finance/members', label: 'Membro', value: '' });
     expect(
       await screen.findByText(
         'Você não tem permissão para realizar esta ação.',

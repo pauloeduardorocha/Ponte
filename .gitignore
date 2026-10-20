@@ -3,6 +3,7 @@ node_modules/
 dist/
 dist-seed/
 coverage/
+*.tsbuildinfo
 .env
 .env.*
 !.env.example

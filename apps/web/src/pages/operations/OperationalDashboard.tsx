@@ -14,8 +14,8 @@ import {
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/auth-context';
 import { apiRequest } from '../../lib/api';
-import { BreakdownChart, MetricCard } from '../../components/DataPresentation';
-import { entryName, operationLabels, type Entry } from './operation-config';
+import { MetricCard } from '../../components/DataPresentation';
+import { entryName, type Entry } from './operation-config';
 type Dashboard = {
   scheduleConflicts?: number;
   visitors?: number;
@@ -32,8 +32,6 @@ type Dashboard = {
   nextContacts?: Entry[];
   upcomingEvents?: Entry[];
   upcomingSchedules?: Entry[];
-  recentAttendance?: Entry[];
-  attendanceSummary?: { status: string; _count: { _all: number } }[];
 };
 export function OperationalDashboard() {
   const { user } = useAuth(),
@@ -48,7 +46,6 @@ export function OperationalDashboard() {
         'MINISTRY_READ',
         'EVENT_READ',
         'SCHEDULE_READ',
-        'ATTENDANCE_READ',
       ].includes(p),
     ) ?? false;
   const data = useQuery({
@@ -139,28 +136,8 @@ export function OperationalDashboard() {
               ) : null,
             )}
           </div>
-          {!!data.data.attendanceSummary?.length && (
-            <BreakdownChart
-              title="Frequência no período"
-              items={data.data.attendanceSummary.map((s) => ({
-                label: operationLabels[s.status] ?? s.status,
-                value: s._count._all,
-                color:
-                  s.status === 'PRESENT'
-                    ? '#245b4a'
-                    : s.status === 'ABSENT'
-                      ? '#b53b36'
-                      : '#b57b18',
-              }))}
-            />
-          )}
           {(
-            [
-              'nextContacts',
-              'upcomingEvents',
-              'upcomingSchedules',
-              'recentAttendance',
-            ] as const
+            ['nextContacts', 'upcomingEvents', 'upcomingSchedules'] as const
           ).map(
             (k) =>
               data.data?.[k] && (
@@ -173,7 +150,6 @@ export function OperationalDashboard() {
                             nextContacts: 'Próximos contatos',
                             upcomingEvents: 'Próximos eventos',
                             upcomingSchedules: 'Próximas escalas',
-                            recentAttendance: 'Presença recente',
                           }[k]
                         }
                       </Typography>
@@ -190,7 +166,6 @@ export function OperationalDashboard() {
                                   e.nextContactAt ??
                                     e.startsAt ??
                                     e.date ??
-                                    e.attendanceDate ??
                                     'Sem data',
                                 )
                                   .slice(0, 16)
@@ -211,7 +186,6 @@ export function OperationalDashboard() {
                             nextContacts: '/follow-ups',
                             upcomingEvents: '/events',
                             upcomingSchedules: '/schedules',
-                            recentAttendance: '/attendance',
                           }[k]
                         }
                       >

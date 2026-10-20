@@ -17,6 +17,7 @@ export function RecordTable({
   detailsLabel = 'Detalhes',
   summaryLabel,
   hasActions = true,
+  imageLabel,
 }: {
   children: ReactNode;
   label?: string;
@@ -24,6 +25,7 @@ export function RecordTable({
   detailsLabel?: string;
   summaryLabel?: string;
   hasActions?: boolean;
+  imageLabel?: string;
 }) {
   return (
     <TableContainer
@@ -33,7 +35,12 @@ export function RecordTable({
     >
       <SortableTable
         key={`${primaryLabel}-${summaryLabel ?? ''}-${detailsLabel}`}
-        nonSortableColumns={hasActions ? [summaryLabel ? 3 : 2] : []}
+        nonSortableColumns={[
+          ...(imageLabel ? [0] : []),
+          ...(hasActions
+            ? [(summaryLabel ? 3 : 2) + (imageLabel ? 1 : 0)]
+            : []),
+        ]}
         size="small"
         aria-label={label}
         sx={{
@@ -45,6 +52,7 @@ export function RecordTable({
       >
         <TableHead>
           <TableRow>
+            {imageLabel && <TableCell>{imageLabel}</TableCell>}
             <TableCell>{primaryLabel}</TableCell>
             {summaryLabel && <TableCell>{summaryLabel}</TableCell>}
             <TableCell>{detailsLabel}</TableCell>
@@ -63,15 +71,20 @@ export function RecordRow({
   actions,
   summary,
   hasActions = true,
+  image,
 }: {
   primary: ReactNode;
   children?: ReactNode;
   actions?: ReactNode;
   summary?: ReactNode;
   hasActions?: boolean;
+  image?: ReactNode;
 }) {
   return (
     <TableRow hover>
+      {image !== undefined && (
+        <TableCell sx={{ width: 116 }}>{image}</TableCell>
+      )}
       <TableCell
         component="th"
         scope="row"

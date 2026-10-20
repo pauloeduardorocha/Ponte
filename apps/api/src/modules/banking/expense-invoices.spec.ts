@@ -26,6 +26,14 @@ describe('Expense documents', () => {
             {
               bankTransaction: {
                 attachments: { none: {} },
+                OR: [
+                  { reimbursement: null },
+                  {
+                    reimbursement: {
+                      attachments: { none: { kind: 'DOCUMENT' } },
+                    },
+                  },
+                ],
               },
             },
           ],

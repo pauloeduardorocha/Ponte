@@ -111,7 +111,7 @@ async function send<T>(
   token: string | null,
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) {
+  if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
   if (token) {
@@ -124,7 +124,11 @@ async function send<T>(
       method: options.method ?? 'GET',
       headers,
       body:
-        options.body === undefined ? undefined : JSON.stringify(options.body),
+        options.body instanceof FormData
+          ? options.body
+          : options.body === undefined
+            ? undefined
+            : JSON.stringify(options.body),
       credentials: 'include',
     });
   } catch {

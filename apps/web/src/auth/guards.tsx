@@ -30,12 +30,21 @@ export function RequireAuth() {
 /** Public-only pages (login, register...) redirect authenticated users home. */
 export function PublicOnly() {
   const { status } = useAuth();
+  const location = useLocation();
+  const from = (
+    location.state as { from?: { pathname: string; search?: string } } | null
+  )?.from;
 
   if (status === 'loading') {
     return <FullPageLoader />;
   }
   if (status === 'authenticated') {
-    return <Navigate to="/" replace />;
+    return (
+      <Navigate
+        to={from ? `${from.pathname}${from.search ?? ''}` : '/'}
+        replace
+      />
+    );
   }
   return <Outlet />;
 }

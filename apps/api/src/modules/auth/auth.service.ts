@@ -11,7 +11,11 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
-import { PERMISSIONS, type CurrentUser } from '@church/shared';
+import {
+  PERMISSIONS,
+  MEMBER_PERMISSIONS,
+  type CurrentUser,
+} from '@church/shared';
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../database/prisma.service';
@@ -27,14 +31,18 @@ const userInclude = {
 } satisfies Prisma.UserInclude;
 type Identity = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 export const safeUser = (user: Identity): CurrentUser => ({
+  roles: user.userRoles.map(({ role }) => role.name),
+  memberId: user.memberId,
   id: user.id,
   name: user.name,
   email: user.email,
   status: user.status,
-  permissions: PERMISSIONS.filter((code) =>
-    user.userRoles.some(({ role }) =>
-      role.permissions.some(({ permission }) => permission.code === code),
-    ),
+  permissions: PERMISSIONS.filter(
+    (code) =>
+      MEMBER_PERMISSIONS.some((permission) => permission === code) ||
+      user.userRoles.some(({ role }) =>
+        role.permissions.some(({ permission }) => permission.code === code),
+      ),
   ),
 });
 const ACCESS_TTL_SECONDS = 900;
@@ -89,16 +97,7 @@ export class AuthService {
             email: dto.email,
             passwordHash,
             status: 'ACTIVE',
-            userRoles: {
-              create: {
-                role: {
-                  connectOrCreate: {
-                    where: { name: 'MEMBER' },
-                    create: { name: 'MEMBER' },
-                  },
-                },
-              },
-            },
+            member: { create: { name: dto.name, email: dto.email } },
           },
           include: userInclude,
         });
@@ -233,6 +232,46 @@ export class AuthService {
       },
     );
     return { accessToken, user: safeUser(user), refreshToken };
+  }
+
+  async loginWithPasskey(id: string, counter: bigint, nextCounter: number) {
+    const token = randomBytes(32).toString('base64url');
+    const result = await this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      const credential = await tx.passkey.findUnique({ where: { id } });
+      if (!credential) throw new UnauthorizedException();
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${credential.userId}::uuid FOR UPDATE`;
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: credential.userId },
+        include: userInclude,
+      });
+      if (user.status !== 'ACTIVE' || user.deletedAt)
+        throw new UnauthorizedException();
+      const changed = await tx.passkey.updateMany({
+        where: { id, counter },
+        data: { counter: BigInt(nextCounter), lastUsedAt: new Date() },
+      });
+      if (changed.count !== 1) throw new UnauthorizedException();
+      const refresh = await tx.refreshToken.create({
+        data: {
+          userId: user.id,
+          familyId: randomUUID(),
+          tokenHash: this.hashToken(token),
+          expiresAt: new Date(Date.now() + REFRESH_TTL_MS),
+        },
+      });
+      await tx.auditLog.create({
+        data: {
+          ...auditRequestFields(),
+          userId: user.id,
+          action: 'AUTH_PASSKEY_LOGIN',
+          entity: 'User',
+          entityId: user.id,
+        },
+      });
+      return { user, refresh };
+    });
+    return this.tokens(result.user, result.refresh.id, token);
   }
 
   async authenticate(token: string) {

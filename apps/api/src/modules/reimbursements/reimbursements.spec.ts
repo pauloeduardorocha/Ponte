@@ -1,0 +1,289 @@
+import { Prisma } from '@prisma/client';
+import type { CurrentUser } from '@church/shared';
+import {
+  ReimbursementsService,
+  reimbursementStatus,
+} from './reimbursements.service';
+import { PrismaService } from '../../database/prisma.service';
+import { StorageService } from '../finance/storage.service';
+
+const user = { id: 'actor', permissions: [] } as unknown as CurrentUser;
+const manager = {
+  ...user,
+  permissions: ['FINANCE_TRANSACTION_READ', 'FINANCE_TRANSACTION_UPDATE'],
+} as CurrentUser;
+const row = {
+  id: 'request',
+  deletedAt: null,
+  beneficiaryName: 'Maria',
+  contact: '912345678',
+  purpose: 'Material para crianças',
+  amount: new Prisma.Decimal('25.10'),
+  currency: 'EUR',
+  submittedBy: user.id,
+  paidAt: null as Date | null,
+  bankTransactionId: null as string | null,
+  attachments: [{ id: 'document', kind: 'DOCUMENT', filename: 'receipt.pdf' }],
+};
+const file = {
+  originalname: 'receipt.pdf',
+  mimetype: 'application/pdf',
+  buffer: Buffer.from('%PDF-test'),
+  size: 9,
+};
+function setup() {
+  const tx = {
+    $queryRaw: jest.fn().mockResolvedValue([{ id: 'request' }]),
+    reimbursement: {
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+      findUnique: jest.fn().mockResolvedValue(row),
+      findUniqueOrThrow: jest.fn().mockResolvedValue(row),
+      update: jest.fn().mockResolvedValue(row),
+      create: jest.fn().mockResolvedValue(row),
+    },
+    bankTransaction: {
+      findUnique: jest.fn().mockResolvedValue({
+        id: 'bank',
+        direction: 'DEBIT',
+        amount: new Prisma.Decimal('25.10'),
+        status: 'CLASSIFIED',
+        classification: 'EXPENSE',
+        reimbursement: null,
+        import: { status: 'CONFIRMED', account: { currency: 'EUR' } },
+      }),
+    },
+    reimbursementAttachment: {
+      create: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
+      findFirst: jest.fn().mockResolvedValue({ storageKey: 'key' }),
+    },
+    auditLog: { create: jest.fn() },
+  };
+  const db = { ...tx, $transaction: jest.fn(async (callback) => callback(tx)) };
+  const storage = {
+    validate: jest.fn(),
+    put: jest.fn().mockResolvedValue('key'),
+    remove: jest.fn(),
+    get: jest.fn().mockResolvedValue(Buffer.from('file')),
+  };
+  return {
+    tx,
+    db,
+    storage,
+    service: new ReimbursementsService(
+      db as unknown as PrismaService,
+      storage as unknown as StorageService,
+    ),
+  };
+}
+describe('Reimbursement lifecycle and access', () => {
+  it('allows the authenticated author to delete their request and audits it', async () => {
+    const { service, tx, storage } = setup();
+    await expect(service.remove('request', user)).resolves.toEqual({
+      id: 'request',
+    });
+    expect(tx.reimbursement.update).toHaveBeenCalledWith({
+      where: { id: 'request' },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: 'REIMBURSEMENT_DELETE',
+          userId: user.id,
+        }),
+      }),
+    );
+    expect(storage.remove).not.toHaveBeenCalled();
+  });
+  it('does not let another member delete a request, including anonymous requests', async () => {
+    const { service, tx } = setup();
+    for (const submittedBy of ['other', null]) {
+      tx.reimbursement.findUnique.mockResolvedValue({ ...row, submittedBy });
+      await expect(service.remove('request', user)).rejects.toThrow();
+    }
+    expect(tx.reimbursement.update).not.toHaveBeenCalled();
+  });
+  it('lets the treasurer delete an anonymous or paid request without removing bank evidence', async () => {
+    const { service, tx, storage } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      submittedBy: null,
+      paidAt: new Date(),
+      bankTransactionId: 'bank',
+    });
+    await service.remove('request', manager);
+    expect(tx.reimbursement.update).toHaveBeenCalledWith({
+      where: { id: 'request' },
+      data: { deletedAt: expect.any(Date) },
+    });
+    expect(storage.remove).not.toHaveBeenCalled();
+  });
+  it('excludes deleted requests from both personal and treasury lists', async () => {
+    const { service, tx } = setup();
+    for (const reader of [user, manager])
+      await service.list({ page: 1, pageSize: 20 }, reader);
+    for (const [query] of tx.reimbursement.findMany.mock.calls)
+      expect(query.where.deletedAt).toBeNull();
+  });
+  it('makes deletion idempotent and rejects payment or edits after deletion', async () => {
+    const { service, tx } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      deletedAt: new Date(),
+    });
+    await expect(service.remove('request', user)).resolves.toEqual({
+      id: 'request',
+    });
+    expect(tx.reimbursement.update).not.toHaveBeenCalled();
+    await expect(
+      service.pay('request', '2026-01-01', manager),
+    ).rejects.toThrow();
+    await expect(
+      service.update('request', { amount: '10' }, user),
+    ).rejects.toThrow();
+  });
+  it('distinguishes incomplete, ready, paid and linked requests', () => {
+    expect(reimbursementStatus({ ...row, contact: '' })).toBe('INCOMPLETE');
+    expect(
+      reimbursementStatus({ ...row, attachments: [{ kind: 'PAYMENT' }] }),
+    ).toBe('INCOMPLETE');
+    expect(reimbursementStatus(row)).toBe('READY');
+    expect(reimbursementStatus({ ...row, paidAt: new Date() })).toBe('PAID');
+    expect(
+      reimbursementStatus({
+        ...row,
+        bankTransactionId: 'bank',
+        paidAt: new Date(),
+      }),
+    ).toBe('LINKED');
+  });
+  it('hides other members requests and files', async () => {
+    const { service, tx, storage } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      submittedBy: 'other',
+    });
+    await expect(service.detail('request', user)).rejects.toThrow();
+    await expect(
+      service.download('request', 'document', user),
+    ).rejects.toThrow();
+    expect(storage.get).not.toHaveBeenCalled();
+  });
+  it('returns only a receipt for anonymous submissions', async () => {
+    const { service, tx } = setup();
+    expect(await service.create({}, [file])).toEqual({ id: 'request' });
+    expect(
+      tx.reimbursement.create.mock.calls[0]![0].data.submittedBy,
+    ).toBeUndefined();
+  });
+  it('stores the authenticated submitter separately from the beneficiary', async () => {
+    const { service, tx } = setup();
+    await service.create({ beneficiaryName: 'Outra pessoa' }, [file], user);
+    expect(tx.reimbursement.create.mock.calls[0]![0].data).toMatchObject({
+      submittedBy: user.id,
+      beneficiaryName: 'Outra pessoa',
+    });
+  });
+  it('requires a document and cleans files when persistence fails', async () => {
+    const { service, tx, storage } = setup();
+    await expect(service.create({}, [])).rejects.toThrow('documento');
+    tx.reimbursement.create.mockRejectedValueOnce(
+      new Error('database unavailable'),
+    );
+    await expect(service.create({}, [file])).rejects.toThrow(
+      'database unavailable',
+    );
+    expect(storage.remove).toHaveBeenCalledWith('key');
+  });
+  it('does not mark an incomplete request as paid', async () => {
+    const { service, tx } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({ ...row, purpose: '' });
+    await expect(service.pay('request', '2026-01-01', manager)).rejects.toThrow(
+      'Complete',
+    );
+    expect(tx.reimbursement.update).not.toHaveBeenCalled();
+  });
+  it('requires payment before association', async () => {
+    const { service, tx } = setup();
+    await expect(service.link('request', 'bank', manager)).rejects.toThrow(
+      'pedido pago',
+    );
+    expect(tx.reimbursement.update).not.toHaveBeenCalled();
+  });
+  it.each([
+    { amount: new Prisma.Decimal('24.10') },
+    { direction: 'CREDIT' },
+    { status: 'REJECTED' },
+    { status: 'POSSIBLE_DUPLICATE' },
+    { classification: 'IGNORE' },
+    { import: { status: 'CONFIRMED', account: { currency: 'USD' } } },
+  ])('rejects incompatible bank movements: %p', async (mismatch) => {
+    const { service, tx } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      paidAt: new Date('2026-01-01'),
+    });
+    const movement = await tx.bankTransaction.findUnique();
+    tx.bankTransaction.findUnique.mockResolvedValue({
+      ...movement,
+      ...mismatch,
+    });
+    await expect(service.link('request', 'bank', manager)).rejects.toThrow();
+    expect(tx.reimbursement.update).not.toHaveBeenCalled();
+  });
+  it('links an exact debit under locks and writes an audit event', async () => {
+    const { service, tx } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      paidAt: new Date('2026-01-01'),
+    });
+    await service.link('request', 'bank', manager);
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
+    expect(tx.reimbursement.update).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { bankTransactionId: 'bank' } }),
+    );
+    expect(tx.auditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: 'REIMBURSEMENT_LINK' }),
+      }),
+    );
+  });
+  it('prevents reusing a movement already linked to another request', async () => {
+    const { service, tx } = setup();
+    const movement = await tx.bankTransaction.findUnique();
+    tx.bankTransaction.findUnique.mockResolvedValue({
+      ...movement,
+      reimbursement: row,
+    });
+    await expect(service.link('request', 'bank', manager)).rejects.toThrow(
+      'já está associado',
+    );
+  });
+  it('blocks changes to paid requests and payment evidence uploaded by a member', async () => {
+    const { service, tx, storage } = setup();
+    tx.reimbursement.findUniqueOrThrow.mockResolvedValue({
+      ...row,
+      paidAt: new Date(),
+    });
+    await expect(
+      service.update('request', { amount: '99' }, user),
+    ).rejects.toThrow('pago');
+    await expect(
+      service.attach('request', file, 'PAYMENT', user),
+    ).rejects.toThrow();
+    expect(storage.put).not.toHaveBeenCalled();
+  });
+  it('requires unlinking before correcting a payment', async () => {
+    const { service, tx } = setup();
+    tx.reimbursement.findUnique.mockResolvedValue({
+      ...row,
+      paidAt: new Date(),
+      bankTransactionId: 'bank',
+    });
+    await expect(service.undoPayment('request', manager)).rejects.toThrow(
+      'Desfaça',
+    );
+  });
+});

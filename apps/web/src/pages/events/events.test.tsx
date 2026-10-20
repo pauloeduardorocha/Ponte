@@ -70,7 +70,7 @@ describe('Event manager workspace', () => {
       },
     });
     renderApp('/my-events?event=e1&section=payments');
-    await screen.findByText('Meus eventos', { selector: 'h4' });
+    await screen.findByText('Gestão de eventos', { selector: 'h4' });
     await waitFor(() =>
       expect(requests.some((r) => r.path === '/events')).toBe(true),
     );

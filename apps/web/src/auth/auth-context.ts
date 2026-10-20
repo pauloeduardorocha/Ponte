@@ -10,6 +10,7 @@ export interface AuthContextValue {
   signOutNotice: string | null;
   sessionError: string | null;
   login: (email: string, password: string) => Promise<void>;
+  loginWithPasskey: () => Promise<void>;
   logout: () => Promise<void>;
   /** Drops the local session without calling the API (e.g. after revocation). */
   clearSession: (notice?: string) => void;

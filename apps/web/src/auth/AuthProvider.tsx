@@ -8,6 +8,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { onSessionExpired, refreshSession, setAccessToken } from '../lib/api';
 import * as authApi from '../lib/auth-api';
+import { loginWithPasskey as passkeyLogin } from '../lib/passkeys';
 import type { CurrentUser, Permission } from '../lib/types';
 import { errorMessage } from '../lib/errors';
 import {
@@ -87,6 +88,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loginWithPasskey = useCallback(async () => {
+    const session = await passkeyLogin();
+    queryClient.clear();
+    setState({ ...ANONYMOUS, status: 'authenticated', user: session.user });
+  }, [queryClient]);
+
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
@@ -107,8 +114,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, logout, clearSession, hasPermission }),
-    [state, login, logout, clearSession, hasPermission],
+    () => ({
+      ...state,
+      login,
+      loginWithPasskey,
+      logout,
+      clearSession,
+      hasPermission,
+    }),
+    [state, login, loginWithPasskey, logout, clearSession, hasPermission],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -20,7 +20,7 @@ credenciais e valores financeiros não são incluídos nessas projeções.
 ## Migrations
 
 - 20261008010000_church_operations: amplia visitantes/eventos, adiciona acompanhamento,
-  grupos familiares, ministérios, inscrições, escalas, presenças e notificações; acrescenta
+  grupos familiares, ministérios, inscrições, escalas e notificações; acrescenta
   índices, foreign keys, checks, unicidades parciais e triggers de auditoria.
 - 20261008020000_operations_compatibility: rastreia o criador do visitante, preserva
   as permissões legadas de escrita e configura as permissões operacionais de
@@ -34,16 +34,15 @@ dos novos campos e mantém o nome original completo.
 
 ## Permissões e escopo
 
-| Módulo         | Consulta          | Alterações                       |
-| -------------- | ----------------- | -------------------------------- |
-| Visitantes     | VISITOR_READ      | VISITOR_CREATE, VISITOR_UPDATE   |
-| Acompanhamento | FOLLOWUP_READ     | FOLLOWUP_CREATE, FOLLOWUP_UPDATE |
-| Grupos familiares        | SMALL_GROUP_READ  | SMALL_GROUP_MANAGE               |
-| Ministérios    | MINISTRY_READ     | MINISTRY_MANAGE                  |
-| Eventos        | EVENT_READ        | EVENT_MANAGE                     |
-| Escalas        | SCHEDULE_READ     | SCHEDULE_MANAGE                  |
-| Presenças      | ATTENDANCE_READ   | ATTENDANCE_MANAGE                |
-| Comunicação    | NOTIFICATION_READ | NOTIFICATION_SEND                |
+| Módulo            | Consulta          | Alterações                       |
+| ----------------- | ----------------- | -------------------------------- |
+| Visitantes        | VISITOR_READ      | VISITOR_CREATE, VISITOR_UPDATE   |
+| Acompanhamento    | FOLLOWUP_READ     | FOLLOWUP_CREATE, FOLLOWUP_UPDATE |
+| Grupos familiares | SMALL_GROUP_READ  | SMALL_GROUP_MANAGE               |
+| Ministérios       | MINISTRY_READ     | MINISTRY_MANAGE                  |
+| Eventos           | EVENT_READ        | EVENT_MANAGE                     |
+| Escalas           | SCHEDULE_READ     | SCHEDULE_MANAGE                  |
+| Comunicação       | NOTIFICATION_READ | NOTIFICATION_SEND                |
 
 OPERATION_SCOPE_ALL permite consultas globais apenas nos módulos cujas permissões
 o usuário também possui. ADMIN/SUPER_ADMIN e PASTOR recebem esse escopo. LEADER
@@ -80,7 +79,7 @@ Todas as rotas abaixo começam em /api/v1/operations e exigem JWT.
 | Conversão/histórico | POST /visitors/:id/convert, GET /visitors/:id/history                                     |
 | Acompanhamentos     | GET/POST /follow-ups, PATCH /follow-ups/:id                                               |
 | Contatos            | GET/POST /follow-ups/:id/interactions                                                     |
-| Grupos familiares             | GET/POST /small-groups, PATCH /small-groups/:id                                           |
+| Grupos familiares   | GET/POST /small-groups, PATCH /small-groups/:id                                           |
 | Ministérios         | GET/POST /ministries, PATCH /ministries/:id                                               |
 | Participação        | GET/POST /small-groups/:id/participants ou /ministries/:id/participants                   |
 | Saída               | POST /small-groups/:id/participants/:participantId/leave ou equivalente em /ministries    |
@@ -90,15 +89,12 @@ Todas as rotas abaixo começam em /api/v1/operations e exigem JWT.
 | Convocações         | GET/POST /schedules/:id/assignments, PATCH /schedules/:id/assignments/:assignmentId       |
 | Resposta pessoal    | POST /schedules/:id/assignments/:assignmentId/respond                                     |
 | Substituição        | POST /schedules/:id/assignments/:assignmentId/replace                                     |
-| Presenças           | GET/POST /attendance, PATCH /attendance/:id                                               |
 | Notificações        | GET/POST /notifications, POST /notifications/:id/send ou /cancel                          |
 | Modelos             | GET/POST /notification-templates, PATCH /notification-templates/:id                       |
 
 Listas possuem page/pageSize (máximo 100), busca e filtros aplicáveis: status,
 start/end, active, memberId, visitorId, assignedToUserId, leaderMemberId,
 meetingDay, eventId, ministryId e smallGroupId. A data final inclui o dia inteiro.
-Presenças retornam também summary por situação sobre todos os registros filtrados,
-independentemente da página.
 
 Swagger interativo: /api/v1/docs em desenvolvimento. O contrato estático atualizado
 está em docs/openapi.json.
@@ -121,9 +117,6 @@ está em docs/openapi.json.
   verificadas e revertidas se criarem conflito. A substituição mantém a convocação
   anterior com REPLACED e registra o vínculo de substituição. Respostas pessoais
   permitem apenas CONFIRMED/DECLINED ao membro vinculado à sessão.
-- Presenças: exatamente uma pessoa; no máximo uma atividade; unicidade por
-  pessoa/atividade/data, incluindo a identidade de visitantes convertidos. O histórico do membro inclui essas presenças anteriores. Alterações administrativas são auditadas. MANUAL/EVENT/
-  SMALL_GROUP são atribuídos pelo servidor, não pelo cliente.
 - Privacidade: a anonimização aprovada já existente também limpa cópias pessoais
   em visitantes convertidos, acompanhamentos, interações e mensagens, preservando
   vínculos históricos e auditoria sujeita à política de retenção.
@@ -135,7 +128,7 @@ consistência entre eventos; pode ser particionado com cuidado se o volume exigi
 ## Páginas e operação
 
 Menu: Pessoas (Membros, Visitantes, Acompanhamento), Grupos (Grupos familiares, Ministérios),
-Operação (Vida da igreja, Eventos, Escalas, Presenças), Comunicação (Notificações).
+Operação (Vida da igreja, Eventos, Escalas), Comunicação (Notificações).
 O painel /operations é exclusivamente operacional.
 
 Há estados de carregamento/vazio/erro, pesquisa com debounce, filtros básicos e
@@ -151,7 +144,7 @@ e SEED_DEMO_PASSWORD configurado, usando npm run db:seed. Reutiliza usuários e 
 anteriores sem trocar suas senhas nem substituir edições existentes.
 
 Inclui grupo familiar com líder/anfitrião/participantes, ministério de recepção, acompanhamento
-com interação, evento, escala com voluntário confirmado, presença de visitante,
+com interação, evento, escala com voluntário confirmado,
 modelo de boas-vindas e notificação interna pendente. Todos usam IDs estáveis.
 
 ## Comunicação preparada para evolução
@@ -165,8 +158,7 @@ O sino no topo abre /inbox, com a caixa pessoal acessível a qualquer conta aute
 Envio é explícito e respeita scheduledAt. Falhas de adaptadores configurados são
 registradas como FAILED com mensagem genérica. Antes de integrar provedores externos,
 adicionar worker/outbox, idempotência de entrega, política de consentimento,
-retentativas e processamento de agendamentos. A infraestrutura de presenças permite
-novas entradas de check-in/QR/kiosk/importação, ainda não implementadas.
+retentativas e processamento de agendamentos.
 
 ## Validação
 
@@ -175,7 +167,7 @@ PostgreSQL aleatórios com todas as migrations, sem apagar dados da aplicação.
 
 Cobertura nova: conversão/idempotência/correspondências, acompanhamento/reatribuição,
 participação/capacidade/histórico, ministérios, inscrições concorrentes, conflitos
-e mudanças de horário, substituição/resposta pessoal, presenças/duplicação/totais,
+e mudanças de horário, substituição/resposta pessoal,
 RBAC/IDOR/projeções, notificações, anonimização operacional e seed repetível.
 O frontend testa proteção das rotas, paginação, histórico, confirmação de saída,
 feedback de conflitos, cadastro e painel sem consultas financeiras.

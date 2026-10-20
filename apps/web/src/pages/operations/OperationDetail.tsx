@@ -1,3 +1,4 @@
+import { ScheduleDocuments } from './ScheduleDocuments';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -82,22 +83,28 @@ export function OperationDetail({
     enabled: resource === 'schedules',
   });
   const canManage =
-    hasPermission(configs[resource].update) ||
-    (resource === 'events' && hasPermission('EVENT_REGISTRATION_MANAGE'));
+    typeof entry.canManage === 'boolean'
+      ? entry.canManage
+      : hasPermission(configs[resource].update) ||
+        (resource === 'events' && hasPermission('EVENT_REGISTRATION_MANAGE'));
   const member: Field = {
     key: 'memberId',
     label: 'Membro',
     lookup: 'people',
     required: true,
   };
-  const person: Field[] = [
-    { ...member, required: false },
-    { key: 'visitorId', label: 'Visitante', lookup: 'visitors' },
-  ];
   const assignmentFields: Field[] = [
     member,
     { key: 'function', label: 'Função', required: true },
-    { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
+    ...(!entry.ministryId
+      ? [
+          {
+            key: 'ministryId',
+            label: 'Ministério',
+            lookup: 'ministries' as const,
+          },
+        ]
+      : []),
     { key: 'notes', label: 'Observações', type: 'textarea' },
   ];
   return (
@@ -117,6 +124,18 @@ export function OperationDetail({
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
+            {resource === 'schedules' && (
+              <ScheduleDocuments
+                id={entry.id}
+                canManage={canManage}
+                onDeleted={onClose}
+              />
+            )}
+            {resource === 'ministries' && (
+              <Button component={Link} to={`/schedules?ministryId=${entry.id}`}>
+                Ver escalas do minist�rio
+              </Button>
+            )}
             {notice && <Alert severity="success">{notice}</Alert>}
             {action.isError && (
               <Alert severity="error">{action.error.message}</Alert>
@@ -362,53 +381,6 @@ export function OperationDetail({
                             }
                           >
                             Cancelar inscrição
-                          </Button>
-                        )}
-                      {resource === 'events' &&
-                        hasPermission('ATTENDANCE_MANAGE') && (
-                          <Button
-                            onClick={() =>
-                              setForm({
-                                title: 'Registrar presença no evento',
-                                path: '/operations/attendance',
-                                fields: [
-                                  ...person,
-                                  {
-                                    key: 'eventId',
-                                    label: 'Evento',
-                                    lookup: 'events',
-                                    required: true,
-                                  },
-                                  {
-                                    key: 'attendanceDate',
-                                    label: 'Data',
-                                    type: 'date',
-                                    required: true,
-                                  },
-                                  {
-                                    key: 'status',
-                                    label: 'Presença',
-                                    options: ['PRESENT', 'ABSENT', 'EXCUSED'],
-                                    required: true,
-                                  },
-                                ],
-                                initial: {
-                                  id: row.id,
-                                  memberId: row.memberId,
-                                  visitorId: row.visitorId,
-                                  eventId: entry.id,
-                                  event: entry,
-                                  member: row.member,
-                                  visitor: row.visitor,
-                                  attendanceDate: String(entry.startsAt).slice(
-                                    0,
-                                    10,
-                                  ),
-                                },
-                              })
-                            }
-                          >
-                            Registrar presença
                           </Button>
                         )}
                       {resource === 'schedules' &&

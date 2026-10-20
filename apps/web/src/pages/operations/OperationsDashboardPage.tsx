@@ -11,7 +11,6 @@ export function OperationsDashboardPage() {
       'MINISTRY_READ',
       'EVENT_READ',
       'SCHEDULE_READ',
-      'ATTENDANCE_READ',
     ].includes(p),
   ) ? (
     <OperationalDashboard />

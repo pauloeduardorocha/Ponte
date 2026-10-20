@@ -31,6 +31,7 @@ import {
   UpdateCopyDto,
 } from './library.dto';
 import { LibraryService } from './library.service';
+import { PageQuery } from '../members/member.dto';
 
 @ApiTags('Biblioteca')
 @ApiBearerAuth()
@@ -42,6 +43,18 @@ export class LibraryController {
   @Permission('LIBRARY_BOOK_READ')
   books(@Query() query: BookQuery) {
     return this.library.listBooks(query);
+  }
+
+  @Get('book-options/authors')
+  @Permission('LIBRARY_BOOK_READ')
+  authors(@Query() query: PageQuery) {
+    return this.library.bookOptions('author', query);
+  }
+
+  @Get('book-options/categories')
+  @Permission('LIBRARY_BOOK_READ')
+  categories(@Query() query: PageQuery) {
+    return this.library.bookOptions('category', query);
   }
 
   @Get('books/:id')
@@ -81,8 +94,11 @@ export class LibraryController {
 
   @Get('copies/:id/history')
   @Permission('LIBRARY_COPY_READ', 'LIBRARY_HISTORY_READ')
-  copyHistory(@Param('id', ParseUUIDPipe) id: string) {
-    return this.library.copyHistory(id);
+  copyHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PageQuery,
+  ) {
+    return this.library.copyHistory(id, query);
   }
 
   @Post('books/:id/copies')
@@ -141,8 +157,11 @@ export class LibraryController {
 
   @Get('members/:id/history')
   @Permission('LIBRARY_HISTORY_READ')
-  memberHistory(@Param('id', ParseUUIDPipe) id: string) {
-    return this.library.memberHistory(id);
+  memberHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PageQuery,
+  ) {
+    return this.library.memberHistory(id, query);
   }
 
   @Get('members')
@@ -212,7 +231,7 @@ export class LibraryController {
 
   @Get('dashboard')
   @Permission('LIBRARY_DASHBOARD_READ')
-  dashboard() {
-    return this.library.dashboard();
+  dashboard(@Query() query: PageQuery) {
+    return this.library.dashboard(query);
   }
 }

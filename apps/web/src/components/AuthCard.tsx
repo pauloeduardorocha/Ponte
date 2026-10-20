@@ -29,8 +29,9 @@ export function AuthCard({
         <CardContent>
           <Stack spacing={3}>
             <Box>
+              <Box component="img" src="/logo.jpg" alt="Logo de A Ponte" width={64} height={64} className="auth-brand-logo" />
               <Typography variant="overline" color="primary" fontWeight={700}>
-                COMUNIDADE
+                A Ponte
               </Typography>
               <Typography variant="h4" component="h1" fontWeight={700}>
                 {title}

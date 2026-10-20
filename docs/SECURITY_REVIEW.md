@@ -55,7 +55,7 @@ removidos dos snapshots e metadados.
 O menu **Auditoria** e `GET /api/v1/audit` permitem filtros por período, ator,
 ação, entidade e entidadeId, com paginação. A consulta exige conjuntamente
 AUDIT_READ, MEMBER_READ, USER_READ, FINANCE_CONTRIBUTION_READ e
-LIBRARY_HISTORY_READ, VISITOR_READ, EVENT_READ, OPERATION_SCOPE_ALL e leitura de FOLLOWUP, SMALL_GROUP, MINISTRY, SCHEDULE, ATTENDANCE e NOTIFICATION, evitando usar auditoria como uma rota alternativa para
+LIBRARY_HISTORY_READ, VISITOR_READ, EVENT_READ, OPERATION_SCOPE_ALL e leitura de FOLLOWUP, SMALL_GROUP, MINISTRY, SCHEDULE e NOTIFICATION, evitando usar auditoria como uma rota alternativa para
 dados protegidos. SUPER_ADMIN possui essas permissões. Não existe endpoint de
 exclusão ou edição. Eventos antigos sem snapshots completos não podem ter seu
 estado anterior reconstruído retroativamente.

@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { PasskeysService } from './passkeys.service';
+import { PasskeysController } from './passkeys.controller';
 import {
   PasswordResetDelivery,
   PendingEmailDelivery,
@@ -9,9 +11,10 @@ import {
 
 @Module({
   imports: [JwtModule.register({})],
-  controllers: [AuthController],
+  controllers: [AuthController, PasskeysController],
   providers: [
     AuthService,
+    PasskeysService,
     { provide: PasswordResetDelivery, useClass: PendingEmailDelivery },
   ],
   exports: [AuthService],

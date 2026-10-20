@@ -25,7 +25,7 @@ import {
   VisitorDto,
   VisitorPatch,
 } from './community.dto';
-@ApiTags('Comunidade')
+@ApiTags('A Ponte')
 @ApiBearerAuth()
 @Controller('community')
 export class CommunityController {
@@ -33,6 +33,16 @@ export class CommunityController {
     private readonly db: PrismaService,
     private readonly operations: OperationsService,
   ) {}
+  @Get('birthdays') async birthdays() {
+    // Dates of birth have no timezone; only today's date follows Lisbon time.
+    return this.db.$queryRaw<{ id: string; name: string }[]>`
+      SELECT id, name FROM members
+      WHERE status = 'ACTIVE' AND anonymized_at IS NULL
+        AND EXTRACT(MONTH FROM birth_date) = EXTRACT(MONTH FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
+        AND EXTRACT(DAY FROM birth_date) = EXTRACT(DAY FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
+      ORDER BY name ASC, id ASC
+    `;
+  }
   @Get('dashboard') async dashboard(@Req() r: AuthRequest) {
     const p = r.user.permissions;
     if (

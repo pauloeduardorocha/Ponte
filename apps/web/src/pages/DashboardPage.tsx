@@ -1,3 +1,6 @@
+import { MemberDashboard } from './MemberDashboard';
+import { BirthdaysCard } from '../components/BirthdaysCard';
+import { YouTubeCarousel } from '../components/YouTubeCarousel';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -50,7 +53,6 @@ export function DashboardPage() {
   const d = community.data;
   return (
     <Stack spacing={4}>
-      <OperationalDashboard />
       <Box>
         <Typography variant="overline" color="primary.main">
           {new Date().toLocaleDateString('pt-PT', {
@@ -60,13 +62,30 @@ export function DashboardPage() {
           })}
         </Typography>
         <Typography variant="h4" component="h1">
-          Bom dia, comunidade
+          Bom dia, A Ponte
         </Typography>
         <Typography color="text.secondary">
           Olá, {user?.name}. Acompanhe os dados e acesse as listas pelo seu
           painel.
         </Typography>
       </Box>
+      <YouTubeCarousel />
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'minmax(0, 1fr)',
+            lg: 'repeat(2, minmax(0, 1fr))',
+          },
+          gap: 3,
+          alignItems: 'start',
+          '& > *': { minWidth: 0, overflowWrap: 'anywhere' },
+        }}
+      >
+        <BirthdaysCard />
+        {hasPermission('COMMUNITY_READ') && <MemberDashboard />}
+      </Box>
+      <OperationalDashboard />
       {health.isError && (
         <Alert severity="warning">
           Não foi possível conectar à API. Tente novamente em instantes.
@@ -76,7 +95,7 @@ export function DashboardPage() {
         <Skeleton
           variant="rounded"
           height={140}
-          aria-label="Carregando indicadores da comunidade"
+          aria-label="Carregando indicadores de A Ponte"
         />
       )}
       {community.isError && (
@@ -88,7 +107,7 @@ export function DashboardPage() {
             </Button>
           }
         >
-          Não foi possível carregar os indicadores da comunidade.
+          Não foi possível carregar os indicadores de A Ponte.
         </Alert>
       )}
       {d && (
@@ -117,7 +136,7 @@ export function DashboardPage() {
               <MetricCard
                 label="Próximos eventos"
                 value={d.events}
-                detail="Agenda da comunidade"
+                detail="Agenda de A Ponte"
                 color="secondary.main"
                 href="/events?status=SCHEDULED"
               />
@@ -215,11 +234,29 @@ export function DashboardPage() {
           )}
         </>
       )}
+      {hasPermission('COMMUNITY_READ') && (
+        <Stack direction="row" gap={1} flexWrap="wrap">
+          <Button component={Link} to="/events?view=community">
+            Eventos e inscrições
+          </Button>
+          <Button component={Link} to="/library">
+            Livros e reservas
+          </Button>
+          <Button component={Link} to="/small-groups?view=community">
+            Grupos familiares
+          </Button>
+          <Button component={Link} to="/ministries?view=community">
+            Ministérios
+          </Button>
+        </Stack>
+      )}
       {hasPermission('LIBRARY_DASHBOARD_READ') && <LibraryDashboardPanel />}
-      {hasPermission('FINANCE_DASHBOARD_READ') && <FinancialDashboardPanel />}
+      {(hasPermission('FINANCE_DASHBOARD_READ') ||
+        hasPermission('FINANCE_SUMMARY_READ')) && <FinancialDashboardPanel />}
       {!canCommunity &&
         !hasPermission('LIBRARY_DASHBOARD_READ') &&
-        !hasPermission('FINANCE_DASHBOARD_READ') && (
+        !hasPermission('FINANCE_DASHBOARD_READ') &&
+        !hasPermission('COMMUNITY_READ') && (
           <Alert severity="info">
             Seu perfil não possui acesso aos painéis administrativos.{' '}
             <Button component={Link} to="/account">

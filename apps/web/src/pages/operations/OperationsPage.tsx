@@ -1,3 +1,4 @@
+import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
@@ -41,13 +42,22 @@ type FormSpec = {
 };
 export function OperationsPage({ resource }: { resource: Resource }) {
   const c = configs[resource],
-    { hasPermission } = useAuth();
-  const allowed = hasPermission(c.read),
+    { hasPermission, user } = useAuth();
+  const ministryAdmin =
+    hasPermission('OPERATION_SCOPE_ALL') &&
+    (!user?.roles ||
+      user.roles.some((role) => ['ADMIN', 'SUPER_ADMIN'].includes(role)));
+  const allowed =
+      hasPermission(c.read) ||
+      (['ministries', 'schedules'].includes(resource) &&
+        hasPermission('COMMUNITY_READ')),
     canCreate =
       (hasPermission(c.create) ||
+        (resource === 'schedules' && hasPermission('COMMUNITY_READ')) ||
         (resource === 'events' && hasPermission('EVENT_CREATE'))) &&
       (resource !== 'notification-templates' ||
-        hasPermission('OPERATION_SCOPE_ALL')),
+        hasPermission('OPERATION_SCOPE_ALL')) &&
+      (resource !== 'ministries' || ministryAdmin),
     canUpdate =
       (hasPermission(c.update) ||
         (resource === 'events' && hasPermission('EVENT_UPDATE'))) &&
@@ -63,7 +73,9 @@ export function OperationsPage({ resource }: { resource: Resource }) {
   const [meetingDay, setMeetingDay] = useState(''),
     [page, setPage] = useState(0);
   const filterForm = useForm<Record<string, string | boolean>>({
-    defaultValues: {},
+    defaultValues: params.get('ministryId')
+      ? { ministryId: params.get('ministryId')! }
+      : {},
   });
   const filters = useWatch({ control: filterForm.control });
   const filterKey = JSON.stringify(filters);
@@ -100,26 +112,16 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                 },
                 { key: 'memberId', label: 'Membro', lookup: 'people' },
               ]
-            : resource === 'attendance'
+            : resource === 'notifications'
               ? [
                   { key: 'memberId', label: 'Membro', lookup: 'people' },
-                  { key: 'eventId', label: 'Evento', lookup: 'events' },
                   {
-                    key: 'smallGroupId',
-                    label: 'Grupo familiar',
-                    lookup: 'small-groups',
+                    key: 'visitorId',
+                    label: 'Visitante',
+                    lookup: 'visitors',
                   },
                 ]
-              : resource === 'notifications'
-                ? [
-                    { key: 'memberId', label: 'Membro', lookup: 'people' },
-                    {
-                      key: 'visitorId',
-                      label: 'Visitante',
-                      lookup: 'visitors',
-                    },
-                  ]
-                : [];
+              : [];
   const [form, setForm] = useState<FormSpec>(),
     [detail, setDetail] = useState<Entry>(),
     [notice, setNotice] = useState('');
@@ -142,7 +144,6 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       apiRequest<{
         items: Entry[];
         total: number;
-        summary?: { status: string; _count: { _all: number } }[];
       }>(`/operations/${resource}`, {
         query: {
           ...Object.fromEntries(
@@ -161,7 +162,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           meetingDay,
         },
       }),
-    enabled: allowed,
+    enabled: allowed && params.get('view') !== 'community',
   });
   const action = useMutation({
     mutationFn: (path: string) => apiRequest(path, { method: 'POST' }),
@@ -173,18 +174,29 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     },
   });
   const open = (e?: Entry) => {
-    const fields =
-      resource === 'attendance' && e
-        ? c.fields.filter((f) => f.key === 'status')
-        : c.fields;
+    const fields = c.fields;
     setForm({
       title: e ? 'Editar registro' : 'Novo registro',
       path: `/operations/${resource}${e ? '/' + e.id : ''}`,
       method: e ? 'PATCH' : 'POST',
       fields,
-      initial: e,
+      initial:
+        e ??
+        (resource === 'schedules' && params.get('ministryId')
+          ? { id: '', ministryId: params.get('ministryId')! }
+          : undefined),
     });
   };
+  if (
+    (!allowed || params.get('view') === 'community') &&
+    ['events', 'small-groups', 'ministries'].includes(resource)
+  )
+    return (
+      <MemberPortalPage
+        key={resource}
+        resource={resource as 'events' | 'small-groups' | 'ministries'}
+      />
+    );
   if (!allowed)
     return (
       <Alert severity="warning">
@@ -214,7 +226,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         </Stack>
       </Stack>
       <Typography color="text.secondary">
-        Organize a vida da comunidade e acompanhe cada atividade. O acesso
+        Organize a vida de A Ponte e acompanhe cada atividade. O acesso
         respeita suas responsabilidades.
       </Typography>
       {notice && (
@@ -359,15 +371,6 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           Nenhum registro encontrado. Ajuste os filtros ou cadastre o primeiro.
         </Alert>
       )}
-      {data.data?.summary && (
-        <Stack direction="row" gap={2} flexWrap="wrap">
-          {data.data.summary.map((s) => (
-            <Typography key={s.status}>
-              {operationLabels[s.status]}: {s._count._all}
-            </Typography>
-          ))}
-        </Stack>
-      )}
       <RecordTable primaryLabel="Nome" label={c.title} summaryLabel="Situação">
         {data.data?.items.map((e) => (
           <RecordRow
@@ -379,16 +382,16 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             }
             actions={
               <>
-                {![
-                  'attendance',
-                  'notifications',
-                  'notification-templates',
-                ].includes(resource) && (
-                  <Button onClick={() => setDetail(e)}>Detalhes</Button>
-                )}
-                {canUpdate && !['notifications'].includes(resource) && (
-                  <Button onClick={() => open(e)}>Editar</Button>
-                )}
+                {!['notifications', 'notification-templates'].includes(
+                  resource,
+                ) && <Button onClick={() => setDetail(e)}>Detalhes</Button>}
+                {(canUpdate ||
+                  (resource === 'schedules' && e.canManage === true)) &&
+                  (resource !== 'ministries' || ministryAdmin) &&
+                  e.canManage !== false &&
+                  !['notifications'].includes(resource) && (
+                    <Button onClick={() => open(e)}>Editar</Button>
+                  )}
                 {resource === 'notifications' &&
                   canUpdate &&
                   e.status === 'PENDING' && (
@@ -438,10 +441,9 @@ export function OperationsPage({ resource }: { resource: Resource }) {
               'nextContactAt',
               'startsAt',
               'date',
-              'attendanceDate',
               'scheduledAt',
             ].map((k) =>
-              e[k] ? (
+              e[k] && !(resource === 'ministries' && k === 'leader') ? (
                 <Typography key={k} variant="body2">
                   {
                     (
@@ -450,7 +452,6 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                         nextContactAt: 'Próximo contato',
                         startsAt: 'Início',
                         date: 'Data',
-                        attendanceDate: 'Presença',
                         scheduledAt: 'Agendamento',
                       } as Record<string, string>
                     )[k]
@@ -458,6 +459,19 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                   : {new Date(String(e[k])).toLocaleString('pt-PT')}
                 </Typography>
               ) : null,
+            )}
+            {resource === 'ministries' && (
+              <Typography variant="body2">
+                Líderes:{' '}
+                {Array.from(
+                  new Set([
+                    ...(e.leader ? [entryName(e.leader as Entry)] : []),
+                    ...(
+                      (e.members as { member: Entry }[] | undefined) ?? []
+                    ).map((m) => entryName(m.member)),
+                  ]),
+                ).join(', ')}
+              </Typography>
             )}
             {[
               'leader',

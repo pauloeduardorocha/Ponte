@@ -12,6 +12,10 @@ import { mockApi, resetTestState } from '../test/utils';
 
 const path = '/finance/banking/transactions/movement/attachments';
 const attachment = { id: 'attachment', filename: 'receipt.pdf', size: 8 };
+vi.mock('./reimbursements/ReimbursementDocuments', () => ({
+  MovementReimbursement: () => null,
+}));
+vi.mock('../components/PdfPreview', () => ({ PdfPreview: () => null }));
 function renderAttachments() {
   return render(
     <QueryClientProvider
@@ -121,7 +125,7 @@ describe('Movement attachments interactions', () => {
       ).not.toBeInTheDocument(),
     );
   });
-  it('shows download loading and surfaces a failure without leaving buttons blocked', async () => {
+  it('opens a full screen preview and lets the user retry a failed private load', async () => {
     const pending = deferred();
     mockApi({
       [`GET ${path}`]: { body: [attachment] },
@@ -131,13 +135,28 @@ describe('Movement attachments interactions', () => {
       },
     });
     renderAttachments();
-    fireEvent.click(await screen.findByRole('button', { name: 'receipt.pdf' }));
-    expect(await screen.findByLabelText('Baixando anexo')).toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Ver receipt.pdf' }),
+    );
     expect(
-      screen.getByRole('button', { name: 'Renomear receipt.pdf' }),
-    ).toBeDisabled();
+      await screen.findByRole('dialog', { name: 'receipt.pdf' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getAllByLabelText('A carregar receipt.pdf').length,
+    ).toBeGreaterThan(0);
     await act(async () => pending.resolve());
-    await screen.findByText('Falha no download');
+    await screen.findByText(
+      'Não foi possível carregar este documento. Tente novamente.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Tentar novamente' }),
+    ).toBeEnabled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Fechar visualização' }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
     expect(
       screen.getByRole('button', { name: 'Renomear receipt.pdf' }),
     ).toBeEnabled();

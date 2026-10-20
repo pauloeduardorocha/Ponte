@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App';
 import './styles.css';
+import { PwaControls } from './components/PwaControls';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,13 +16,15 @@ const queryClient = new QueryClient({
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#245b4a' },
-    secondary: { main: '#6554a6' },
+    primary: { main: '#d91017', light: '#fff0f1', dark: '#ad0d13', contrastText: '#ffffff' },
+    secondary: { main: '#42434a', contrastText: '#ffffff' },
     success: { main: '#24754c' },
-    error: { main: '#ba3646' },
+    error: { main: '#b42318' },
     warning: { main: '#a85d08' },
     info: { main: '#2863a4' },
-    background: { default: '#f7f8fa' },
+    background: { default: '#f7f8fa', paper: '#ffffff' },
+    text: { primary: '#24252b', secondary: '#62646e' },
+    divider: '#e5e7eb',
   },
   shape: { borderRadius: 10 },
   typography: { fontFamily: 'Inter, system-ui, sans-serif' },
@@ -48,6 +51,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <CssBaseline />
         <BrowserRouter>
           <App />
+          <PwaControls />
           <SpeedInsights />
         </BrowserRouter>
       </ThemeProvider>

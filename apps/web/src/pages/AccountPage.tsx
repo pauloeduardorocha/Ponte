@@ -18,6 +18,7 @@ import { PageHeader } from '../components/PageParts';
 import { changePassword } from '../lib/auth-api';
 import { errorMessage } from '../lib/errors';
 import { passwordSchema } from '../lib/validation';
+import { PasskeySettings } from '../components/PasskeySettings';
 
 const passwordFormSchema = z
   .object({
@@ -140,6 +141,7 @@ export function AccountPage() {
           </CardContent>
         </Card>
       </Box>
+      <PasskeySettings />
     </Stack>
   );
 }

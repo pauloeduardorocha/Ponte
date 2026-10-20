@@ -14,7 +14,7 @@ const book = {
   id: 'b1',
   title: 'Livro Ponte',
   author: 'Autora Ponte',
-  category: 'Comunidade',
+  category: 'A Ponte',
   quantity: 2,
   available: 1,
   cover: 'https://example.com/capa.png',
@@ -89,6 +89,12 @@ function routes() {
   return {
     ...sessionRoutes(makeUser([...staff])),
     'GET /library/books': { body: page([book]) },
+    'GET /library/book-options/authors': {
+      body: page([{ id: 'Autora Ponte', name: 'Autora Ponte' }]),
+    },
+    'GET /library/book-options/categories': {
+      body: page([{ id: 'Comunidade', name: 'Comunidade' }]),
+    },
     'GET /library/copies': { body: page([copy]) },
     'GET /library/loans': { body: page([loan]) },
     'GET /library/fines': { body: page([fine]) },
@@ -114,15 +120,12 @@ async function selectEntity(name: string, value: string) {
   const select = within(screen.getByRole('dialog')).getByRole('combobox', {
     name: new RegExp(`^${name}`),
   });
-  await waitFor(() =>
-    expect(
-      within(select).getByRole('option', {
-        name:
-          name === 'Membro' ? 'Ana Biblioteca' : 'Livro Ponte · Autora Ponte',
-      }),
-    ).toBeInTheDocument(),
+  fireEvent.mouseDown(select);
+  fireEvent.click(
+    await screen.findByRole('option', {
+      name: value === 'm1' ? 'Ana Biblioteca' : 'Livro Ponte · Autora Ponte',
+    }),
   );
-  fireEvent.change(select, { target: { value } });
 }
 async function tab(name: string) {
   fireEvent.click(await screen.findByRole('tab', { name }));
@@ -183,8 +186,12 @@ describe('Library frontend', () => {
       screen.getByText('Exemplares: 2 · Disponíveis: 1'),
     ).toBeInTheDocument();
     fill('Pesquisa', 'ponte');
-    fill('Autor', 'autora');
-    fill('Categoria', 'Comunidade');
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Autor' }));
+    fireEvent.click(
+      await screen.findByRole('option', { name: 'Autora Ponte' }),
+    );
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Categoria' }));
+    fireEvent.click(await screen.findByRole('option', { name: 'Comunidade' }));
     fireEvent.mouseDown(
       screen.getByRole('combobox', { name: 'Disponibilidade' }),
     );
@@ -195,6 +202,8 @@ describe('Library frontend', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
     await waitFor(() => expect(requests.at(-1)?.query.get('page')).toBe('2'));
     expect(requests.at(-1)?.query.get('search')).toBe('ponte');
+    expect(requests.at(-1)?.query.get('author')).toBe('Autora Ponte');
+    expect(requests.at(-1)?.query.get('category')).toBe('Comunidade');
   });
   it('creates a full book and copy, and surfaces API errors instead of closing the form', async () => {
     const requests = mockApi({
@@ -301,6 +310,8 @@ describe('Library frontend', () => {
     renderApp('/library');
     await tab('Exemplares');
     expect(await screen.findByText('Livro Ponte · EX-01')).toBeInTheDocument();
+    const cover = screen.getByRole('img', { name: 'Capa de Livro Ponte' });
+    expect(cover.closest('tr')?.firstElementChild).toContainElement(cover);
     fireEvent.click(
       screen.getAllByRole('button', { name: 'Emprestar' }).at(-1)!,
     );
@@ -416,6 +427,11 @@ describe('Library frontend', () => {
       'GET /library/copies/c1/history': {
         body: {
           copy,
+          page: 1,
+          pageSize: 20,
+          totalLoans: 21,
+          totalReservations: 1,
+          totalEvents: 1,
           loans: [{ ...loan, fine }],
           reservations: [reservation],
           events: [
@@ -430,7 +446,14 @@ describe('Library frontend', () => {
         },
       },
       'GET /library/members/m1/history': {
-        body: { loans: [{ ...loan, fine }], reservations: [reservation] },
+        body: {
+          loans: [{ ...loan, fine }],
+          reservations: [reservation],
+          page: 1,
+          pageSize: 20,
+          totalLoans: 1,
+          totalReservations: 1,
+        },
       },
     });
     renderApp('/library');
@@ -464,6 +487,40 @@ describe('Library frontend', () => {
     expect(
       await screen.findByRole('link', { name: 'Biblioteca' }),
     ).toBeInTheDocument();
+  });
+  it('requests another history page instead of loading the complete history', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /library/members/m1/history': ({ query }) => ({
+        body: {
+          loans: [loan],
+          reservations: [],
+          totalLoans: 41,
+          totalReservations: 0,
+          page: Number(query.get('page')),
+          pageSize: 20,
+        },
+      }),
+    });
+    renderApp('/library');
+    await tab('Membros / histórico');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Histórico da biblioteca' }),
+    );
+    expect(await screen.findByText('Página 1')).toBeInTheDocument();
+    expect(requests.filter((r) => r.path.endsWith('/m1/history'))).toHaveLength(
+      1,
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Próxima página do histórico' }),
+    );
+    expect(await screen.findByText('Página 2')).toBeInTheDocument();
+    expect(
+      requests
+        .filter((r) => r.path.endsWith('/m1/history'))
+        .at(-1)
+        ?.query.get('page'),
+    ).toBe('2');
   });
   it('formats money using integer cents', () => {
     expect(

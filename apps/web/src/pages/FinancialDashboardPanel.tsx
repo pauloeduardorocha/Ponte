@@ -68,7 +68,9 @@ export function FinancialDashboardPanel() {
       apiRequest<FinancialDashboard>('/finance/dashboard', {
         query: { month, accountId },
       }),
-    enabled: hasPermission('FINANCE_DASHBOARD_READ'),
+    enabled:
+      hasPermission('FINANCE_DASHBOARD_READ') ||
+      hasPermission('FINANCE_SUMMARY_READ'),
     staleTime: 30000,
   });
   const accounts = useQuery({
@@ -92,7 +94,11 @@ export function FinancialDashboardPanel() {
   const list = hasPermission('FINANCE_TRANSACTION_READ');
   const contribution = hasPermission('FINANCE_CONTRIBUTION_READ');
   const banking = hasPermission('FINANCE_BANK_IMPORT') && contribution;
-  if (!hasPermission('FINANCE_DASHBOARD_READ')) return null;
+  if (
+    !hasPermission('FINANCE_DASHBOARD_READ') &&
+    !hasPermission('FINANCE_SUMMARY_READ')
+  )
+    return null;
   return (
     <Stack spacing={2}>
       <Stack
@@ -233,7 +239,7 @@ export function FinancialDashboardPanel() {
           />
         </Stack>
       ))}
-      {data.data && (
+      {list && data.data && (
         <Box className="metric-grid">
           <MetricCard
             label="Movimentos pendentes de revisão"

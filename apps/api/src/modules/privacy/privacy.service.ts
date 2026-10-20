@@ -304,7 +304,7 @@ export class PrivacyService {
               name: 'Usuário anonimizado',
               email: `anonymous-${member.user.id}@invalid.example`,
               status: 'DISABLED',
-              memberId: null,
+              deletedAt: new Date(),
             },
           });
           await tx.refreshToken.updateMany({

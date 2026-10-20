@@ -147,7 +147,7 @@ async function seed() {
             title: 'Biblioteca Ponte: guia de demonstração',
             author: 'Equipe Ponte',
             isbn: 'DEMO-PONTE-001',
-            category: 'Comunidade',
+            category: 'A Ponte',
             keywords: ['demo'],
           },
           update: {},

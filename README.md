@@ -673,14 +673,14 @@ fixtures no schema informado. Consulte [o acabamento e a validação](docs/UX_FI
 ## Operação e vida da igreja — Etapa 9
 
 Visitantes e eventos foram ampliados preservando seus dados e endpoints legados.
-O menu inclui acompanhamento, grupos familiares, ministérios, escalas, presenças e
+O menu inclui acompanhamento, grupos familiares, ministérios, escalas e
 notificações, além do painel exclusivamente operacional em /operations.
 
 Os novos endpoints ficam em /api/v1/operations. Líderes possuem acesso limitado
 às suas responsabilidades, com seletores de membros por nome e projeções mínimas.
 Permissões pastorais não concedem acesso a contribuições ou documentos financeiros.
-Conversões, participação histórica, inscrições, conflitos, substituições e
-presenças possuem validação no banco e auditoria.
+Conversões, participação histórica, inscrições, conflitos e substituições
+possuem validação no banco e auditoria.
 
 Após atualizar, execute as duas migrations incrementais com
 npm run db:deploy --workspace @church/api e gere o cliente com npm run db:generate.

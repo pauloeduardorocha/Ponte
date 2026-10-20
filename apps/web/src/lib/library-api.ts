@@ -98,9 +98,14 @@ export interface Reservation {
 export interface LibraryHistory {
   loans: Loan[];
   reservations: Reservation[];
+  totalLoans: number;
+  totalReservations: number;
+  page: number;
+  pageSize: number;
 }
 export interface CopyHistory extends LibraryHistory {
   copy: BookCopy;
+  totalEvents: number;
   events: {
     id: string;
     action: string;
@@ -120,6 +125,9 @@ export interface LibrarySettings {
   reservationDays: number;
 }
 export interface LibraryDashboard {
+  totalMostBorrowed: number;
+  page: number;
+  pageSize: number;
   totalBooks: number;
   totalCopies: number;
   available: number;
@@ -149,8 +157,8 @@ export const updateCopy = (
   id: string,
   body: Partial<CopyInput> & { status?: CopyStatus; justification: string },
 ) => apiRequest<BookCopy>(`${root}/copies/${id}`, { method: 'PATCH', body });
-export const getCopyHistory = (id: string) =>
-  apiRequest<CopyHistory>(`${root}/copies/${id}/history`);
+export const getCopyHistory = (id: string, query: LibraryFilters = {}) =>
+  apiRequest<CopyHistory>(`${root}/copies/${id}/history`, { query });
 export const listLoans = (query: LibraryFilters = {}) =>
   apiRequest<Page<Loan>>(`${root}/loans`, { query });
 export const borrow = (body: {
@@ -166,8 +174,10 @@ export const closeLoan = (
   id: string,
   body: { status: 'LOST' | 'CANCELLED'; justification: string },
 ) => apiRequest<Loan>(`${root}/loans/${id}/close`, { method: 'POST', body });
-export const getMemberLibraryHistory = (id: string) =>
-  apiRequest<LibraryHistory>(`${root}/members/${id}/history`);
+export const getMemberLibraryHistory = (
+  id: string,
+  query: LibraryFilters = {},
+) => apiRequest<LibraryHistory>(`${root}/members/${id}/history`, { query });
 export const listLibraryMembers = (query: LibraryFilters = {}) =>
   apiRequest<Page<{ id: string; name: string; status: string }>>(
     `${root}/members`,
@@ -204,8 +214,8 @@ export const getLibrarySettings = () =>
   apiRequest<LibrarySettings>(`${root}/settings`);
 export const updateLibrarySettings = (body: LibrarySettings) =>
   apiRequest<LibrarySettings>(`${root}/settings`, { method: 'PATCH', body });
-export const getLibraryDashboard = () =>
-  apiRequest<LibraryDashboard>(`${root}/dashboard`);
+export const getLibraryDashboard = (query: LibraryFilters = {}) =>
+  apiRequest<LibraryDashboard>(`${root}/dashboard`, { query });
 
 /** Presentation arithmetic in cents, never binary floating point. */
 export function fineBalance(

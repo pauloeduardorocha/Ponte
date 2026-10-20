@@ -28,7 +28,6 @@ model Visitor {
   convertedAt       DateTime?
   followUps         FollowUp[]
   registrations     EventRegistration[]
-  attendances       Attendance[]
   notifications     Notification[]
   id                String              @id @default(uuid()) @db.Uuid
   name              String              @db.VarChar(120)
@@ -67,7 +66,6 @@ model CommunityEvent {
   smallGroup           SmallGroup?         @relation(fields: [smallGroupId], references: [id], onDelete: Restrict)
   registrations        EventRegistration[]
   schedules            VolunteerSchedule[]
-  attendances          Attendance[]
   id                   String              @id @default(uuid()) @db.Uuid
   name                 String              @db.VarChar(160)
   startsAt             DateTime            @db.Timestamptz(6)
@@ -103,6 +101,7 @@ enum UserStatus {
 }
 
 model User {
+  passkeys              Passkey[]
   managedEvents         EventManagerAssignment[] @relation("EventManager")
   assignedEventManagers EventManagerAssignment[] @relation("EventAssigner")
 
@@ -114,7 +113,6 @@ model User {
   followUps             FollowUp[]
   interactions          FollowUpInteraction[]
   createdEvents         CommunityEvent[]      @relation("EventCreator")
-  registeredAttendances Attendance[]
   id                    String                @id @default(uuid()) @db.Uuid
   name                  String                @default("") @db.VarChar(120)
   email                 String                @unique @db.VarChar(320)
@@ -140,6 +138,31 @@ model User {
   @@index([status])
   @@index([deletedAt])
   @@map("users")
+}
+
+model Passkey {
+  id String @id
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publicKey Bytes
+  counter BigInt @default(0)
+  transports String[]
+  name String @db.VarChar(80)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  @@index([userId])
+  @@map("passkeys")
+}
+
+model PasskeyChallenge {
+  id String @id @default(uuid()) @db.Uuid
+  challenge String
+  userId String? @db.Uuid
+  purpose String
+  origin String
+  expiresAt DateTime @db.Timestamptz(6)
+  @@index([expiresAt])
+  @@map("passkey_challenges")
 }
 
 model Role {
@@ -235,7 +258,6 @@ model Member {
   ministryMemberships MinistryMember[]
   eventRegistrations  EventRegistration[]
   assignments         VolunteerAssignment[]
-  attendances         Attendance[]
   notifications       Notification[]
   id                  String                @id @default(uuid()) @db.Uuid
   name                String                @db.VarChar(120)
@@ -661,6 +683,7 @@ model BankImport {
 }
 
 model BankTransaction {
+  reimbursement       Reimbursement?
   attachments         BankAttachment[]
   id                  String                @id @default(uuid()) @db.Uuid
   importId            String                @db.Uuid
@@ -707,6 +730,45 @@ model BankTransaction {
   @@index([categoryId])
   @@index([supplierId])
   @@map("bank_transactions")
+}
+
+model Reimbursement {
+  deletedAt         DateTime?
+  id                String   @id @default(uuid()) @db.Uuid
+  submittedBy       String?  @db.Uuid
+  beneficiaryName   String   @default("") @db.VarChar(120)
+  contact           String   @default("") @db.VarChar(120)
+  purpose           String   @default("") @db.VarChar(2000)
+  amount            Decimal? @db.Decimal(14, 2)
+  currency          String   @default("EUR") @db.VarChar(3)
+  paidAt            DateTime? @db.Date
+  bankTransactionId String? @unique @db.Uuid
+  bankTransaction   BankTransaction? @relation(fields: [bankTransactionId], references: [id], onDelete: Restrict)
+  attachments       ReimbursementAttachment[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([submittedBy, createdAt])
+  @@index([deletedAt, createdAt])
+  @@index([paidAt, createdAt])
+  @@map("reimbursements")
+}
+
+model ReimbursementAttachment {
+  id              String @id @default(uuid()) @db.Uuid
+  reimbursementId String @db.Uuid
+  reimbursement   Reimbursement @relation(fields: [reimbursementId], references: [id], onDelete: Restrict)
+  storageKey      String @unique @db.VarChar(100)
+  filename        String @db.VarChar(255)
+  mime            String @db.VarChar(100)
+  size            Int
+  kind            String @default("DOCUMENT") @db.VarChar(20)
+  hash            String @db.VarChar(64)
+  createdAt       DateTime @default(now())
+
+  @@index([reimbursementId])
+  @@index([hash])
+  @@map("reimbursement_attachments")
 }
 
 model BankAttachment {
@@ -872,7 +934,7 @@ model SmallGroup {
   coLeader         Member?            @relation("GroupCoLeader", fields: [coLeaderMemberId], references: [id], onDelete: Restrict)
   hostMemberId     String?            @db.Uuid
   host             Member?            @relation("GroupHost", fields: [hostMemberId], references: [id], onDelete: Restrict)
-  address          String             @db.VarChar(200)
+  address          String?            @db.VarChar(200)
   meetingDay       Int
   meetingTime      String             @db.VarChar(5)
   active           Boolean            @default(true)
@@ -881,7 +943,6 @@ model SmallGroup {
   updatedAt        DateTime           @updatedAt
   members          SmallGroupMember[]
   events           CommunityEvent[]
-  attendances      Attendance[]
 
   @@index([leaderMemberId, active])
   @@index([coLeaderMemberId])
@@ -967,8 +1028,8 @@ model EventRegistration {
 
 model VolunteerSchedule {
   id          String                @id @default(uuid()) @db.Uuid
-  eventId     String                @db.Uuid
-  event       CommunityEvent        @relation(fields: [eventId], references: [id], onDelete: Restrict)
+  eventId     String?                @db.Uuid
+  event       CommunityEvent?        @relation(fields: [eventId], references: [id], onDelete: Restrict)
   ministryId  String?               @db.Uuid
   ministry    Ministry?             @relation(fields: [ministryId], references: [id], onDelete: Restrict)
   title       String                @db.VarChar(160)
@@ -977,6 +1038,7 @@ model VolunteerSchedule {
   status      String                @default("DRAFT") @db.VarChar(20)
   createdAt   DateTime              @default(now())
   updatedAt   DateTime              @updatedAt
+  attachments ScheduleAttachment[]
   assignments VolunteerAssignment[]
 
   @@index([ministryId, date])
@@ -1003,29 +1065,6 @@ model VolunteerAssignment {
   @@index([scheduleId, status])
   @@index([memberId, status])
   @@map("volunteer_assignments")
-}
-
-model Attendance {
-  id                 String          @id @default(uuid()) @db.Uuid
-  memberId           String?         @db.Uuid
-  member             Member?         @relation(fields: [memberId], references: [id], onDelete: Restrict)
-  visitorId          String?         @db.Uuid
-  visitor            Visitor?        @relation(fields: [visitorId], references: [id], onDelete: Restrict)
-  eventId            String?         @db.Uuid
-  event              CommunityEvent? @relation(fields: [eventId], references: [id], onDelete: Restrict)
-  smallGroupId       String?         @db.Uuid
-  smallGroup         SmallGroup?     @relation(fields: [smallGroupId], references: [id], onDelete: Restrict)
-  attendanceDate     DateTime        @db.Date
-  status             String          @db.VarChar(20)
-  source             String          @default("MANUAL") @db.VarChar(20)
-  registeredByUserId String?         @db.Uuid
-  registeredBy       User?           @relation(fields: [registeredByUserId], references: [id], onDelete: Restrict)
-  createdAt          DateTime        @default(now())
-
-  @@index([memberId, attendanceDate])
-  @@index([eventId, attendanceDate])
-  @@index([smallGroupId, attendanceDate])
-  @@map("attendances")
 }
 
 model Notification {
@@ -1211,4 +1250,18 @@ model EventSessionCheckin {
 
   @@unique([sessionId, registrationId])
   @@map("event_session_checkins")
+}
+
+model ScheduleAttachment {
+  id String @id @default(uuid()) @db.Uuid
+  scheduleId String @db.Uuid
+  schedule VolunteerSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  filename String @db.VarChar(255)
+  mime String @db.VarChar(120)
+  size Int
+  content Bytes
+  uploadComplete Boolean @default(true)
+  createdAt DateTime @default(now())
+  @@index([scheduleId], map: "schedule_attachments_schedule_idx")
+  @@map("schedule_attachments")
 }

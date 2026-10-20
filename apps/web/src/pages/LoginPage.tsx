@@ -9,6 +9,7 @@ import { AuthCard } from '../components/AuthCard';
 import { ApiError } from '../lib/api';
 import { errorMessage } from '../lib/errors';
 import { emailSchema } from '../lib/validation';
+import { passkeysSupported, passkeyError } from '../lib/passkeys';
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -23,7 +24,8 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
-  const { login, signOutNotice, sessionError } = useAuth();
+  const { login, loginWithPasskey, signOutNotice, sessionError } = useAuth();
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state ?? {}) as LoginLocationState;
@@ -91,10 +93,36 @@ export function LoginPage() {
             type="submit"
             variant="contained"
             size="large"
-            disabled={formState.isSubmitting}
+            disabled={formState.isSubmitting || passkeyBusy}
           >
             Entrar
           </Button>
+          {passkeysSupported() && (
+            <Button
+              variant="outlined"
+              size="large"
+              disabled={formState.isSubmitting || passkeyBusy}
+              onClick={async () => {
+                setError(null);
+                setPasskeyBusy(true);
+                try {
+                  await loginWithPasskey();
+                  navigate(
+                    state.from
+                      ? `${state.from.pathname}${state.from.search ?? ''}`
+                      : '/',
+                    { replace: true },
+                  );
+                } catch (err) {
+                  setError(passkeyError(err));
+                } finally {
+                  setPasskeyBusy(false);
+                }
+              }}
+            >
+              {passkeyBusy ? 'A confirmar…' : 'Entrar com biometria ou passkey'}
+            </Button>
+          )}
         </Stack>
       </Box>
     </AuthCard>

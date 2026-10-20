@@ -44,7 +44,7 @@ export async function seedDemoData(tx: Prisma.TransactionClient) {
     where: { id: id(2, 1) },
     create: {
       id: id(2, 1),
-      name: 'Encontro da comunidade',
+      name: 'Encontro de A Ponte',
       startsAt: new Date(today.getTime() + 7 * 86400000),
       endsAt: new Date(today.getTime() + 7 * 86400000 + 3600000),
       location: 'Auditório',

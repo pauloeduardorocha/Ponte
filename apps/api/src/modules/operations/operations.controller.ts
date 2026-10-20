@@ -1,5 +1,16 @@
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
+import type { PrivateUpload } from '../finance/storage.service';
 import {
   Body,
+  Headers,
+  BadRequestException,
+  ParseIntPipe,
+  Delete,
+  StreamableFile,
+  UploadedFile,
+  UseInterceptors,
+  Res,
   Controller,
   ForbiddenException,
   Get,
@@ -32,7 +43,7 @@ export class OperationsController {
     return this.service.identity(r.user);
   }
   @Post('schedules/:id/assignments/:assignmentId/respond')
-  @Permission('SCHEDULE_READ')
+  @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
   respond(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
@@ -54,7 +65,6 @@ export class OperationsController {
           'MINISTRY_READ',
           'EVENT_READ',
           'SCHEDULE_READ',
-          'ATTENDANCE_READ',
         ].includes(p),
       )
     )
@@ -70,9 +80,9 @@ export class OperationsController {
           'MINISTRY_READ',
           'EVENT_READ',
           'SCHEDULE_READ',
-          'ATTENDANCE_READ',
           'NOTIFICATION_READ',
           'VISITOR_READ',
+          'COMMUNITY_READ',
         ].includes(p),
       )
     )
@@ -142,19 +152,19 @@ export class OperationsController {
   ) {
     return this.service.saveGroup(id, dto, r.user);
   }
-  @Get('ministries') @Permission('MINISTRY_READ') listMinistry(
-    @Query() q: D.OperationQuery,
-    @Req() r: AuthRequest,
-  ) {
+  @Get('ministries')
+  @PermissionAny('MINISTRY_READ', 'COMMUNITY_READ')
+  listMinistry(@Query() q: D.OperationQuery, @Req() r: AuthRequest) {
     return this.service.ministries(q, r.user);
   }
-  @Post('ministries') @Permission('MINISTRY_MANAGE') createMinistry(
-    @Body() dto: D.MinistryDto,
-    @Req() r: AuthRequest,
-  ) {
+  @Post('ministries')
+  @PermissionAny('MINISTRY_MANAGE', 'COMMUNITY_READ')
+  createMinistry(@Body() dto: D.MinistryDto, @Req() r: AuthRequest) {
     return this.service.saveMinistry(undefined, dto, r.user);
   }
-  @Patch('ministries/:id') @Permission('MINISTRY_MANAGE') updateMinistry(
+  @Patch('ministries/:id')
+  @PermissionAny('MINISTRY_MANAGE', 'COMMUNITY_READ')
+  updateMinistry(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.MinistryPatch,
     @Req() r: AuthRequest,
@@ -182,19 +192,19 @@ export class OperationsController {
   ) {
     return this.service.saveEvent(id, dto, r.user);
   }
-  @Get('schedules') @Permission('SCHEDULE_READ') listSchedule(
-    @Query() q: D.OperationQuery,
-    @Req() r: AuthRequest,
-  ) {
+  @Get('schedules')
+  @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
+  listSchedule(@Query() q: D.OperationQuery, @Req() r: AuthRequest) {
     return this.service.schedules(q, r.user);
   }
-  @Post('schedules') @Permission('SCHEDULE_MANAGE') createSchedule(
-    @Body() dto: D.ScheduleDto,
-    @Req() r: AuthRequest,
-  ) {
+  @Post('schedules')
+  @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
+  createSchedule(@Body() dto: D.ScheduleDto, @Req() r: AuthRequest) {
     return this.service.saveSchedule(undefined, dto, r.user);
   }
-  @Patch('schedules/:id') @Permission('SCHEDULE_MANAGE') updateSchedule(
+  @Patch('schedules/:id')
+  @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
+  updateSchedule(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.SchedulePatch,
     @Req() r: AuthRequest,
@@ -261,7 +271,7 @@ export class OperationsController {
     return this.service.leave('group', id, participantId, r.user);
   }
   @Get('ministries/:id/participants')
-  @Permission('MINISTRY_READ')
+  @PermissionAny('MINISTRY_READ', 'COMMUNITY_READ')
   participantsministry(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() q: D.OperationQuery,
@@ -270,7 +280,7 @@ export class OperationsController {
     return this.service.participants('ministry', id, q, r.user);
   }
   @Post('ministries/:id/participants')
-  @Permission('MINISTRY_MANAGE')
+  @PermissionAny('MINISTRY_MANAGE', 'COMMUNITY_READ')
   joinministry(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.ParticipantDto,
@@ -279,7 +289,7 @@ export class OperationsController {
     return this.service.join('ministry', id, dto, r.user);
   }
   @Post('ministries/:id/participants/:participantId/leave')
-  @Permission('MINISTRY_MANAGE')
+  @PermissionAny('MINISTRY_MANAGE', 'COMMUNITY_READ')
   leaveministry(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('participantId', ParseUUIDPipe) participantId: string,
@@ -314,14 +324,18 @@ export class OperationsController {
   ) {
     return this.service.cancelRegistration(id, registrationId, r.user);
   }
-  @Get('schedules/:id/assignments') @Permission('SCHEDULE_READ') assignments(
+  @Get('schedules/:id/assignments')
+  @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
+  assignments(
     @Param('id', ParseUUIDPipe) id: string,
     @Query() q: D.OperationQuery,
     @Req() r: AuthRequest,
   ) {
     return this.service.assignments(id, q, r.user);
   }
-  @Post('schedules/:id/assignments') @Permission('SCHEDULE_MANAGE') assign(
+  @Post('schedules/:id/assignments')
+  @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
+  assign(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: D.AssignmentDto,
     @Req() r: AuthRequest,
@@ -329,7 +343,7 @@ export class OperationsController {
     return this.service.addAssignment(id, dto, r.user);
   }
   @Patch('schedules/:id/assignments/:assignmentId')
-  @Permission('SCHEDULE_MANAGE')
+  @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
   assignmentStatus(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
@@ -339,7 +353,7 @@ export class OperationsController {
     return this.service.assignmentStatus(id, assignmentId, dto, r.user);
   }
   @Post('schedules/:id/assignments/:assignmentId/replace')
-  @Permission('SCHEDULE_MANAGE')
+  @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
   replace(
     @Param('id', ParseUUIDPipe) id: string,
     @Param('assignmentId', ParseUUIDPipe) assignmentId: string,
@@ -348,24 +362,110 @@ export class OperationsController {
   ) {
     return this.service.addAssignment(id, dto, r.user, assignmentId);
   }
-  @Get('attendance') @Permission('ATTENDANCE_READ') attendance(
-    @Query() q: D.OperationQuery,
-    @Req() r: AuthRequest,
-  ) {
-    return this.service.attendance(q, r.user);
-  }
-  @Post('attendance') @Permission('ATTENDANCE_MANAGE') record(
-    @Body() dto: D.AttendanceDto,
-    @Req() r: AuthRequest,
-  ) {
-    return this.service.recordAttendance(dto, r.user);
-  }
-  @Patch('attendance/:id') @Permission('ATTENDANCE_MANAGE') editAttendance(
+  @Delete('schedules/:id')
+  deleteSchedule(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: D.AttendancePatch,
     @Req() r: AuthRequest,
   ) {
-    return this.service.updateAttendance(id, dto, r.user);
+    return this.service.deleteSchedule(id, r.user);
+  }
+  @Get('schedules/:id/attachments')
+  attachments(@Param('id', ParseUUIDPipe) id: string, @Req() r: AuthRequest) {
+    return this.service.attachments(id, r.user);
+  }
+  @Post('schedules/:id/attachments')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024, files: 1, fields: 0 },
+    }),
+  )
+  uploadAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: PrivateUpload,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.uploadAttachment(id, file, r.user);
+  }
+  @Post('schedules/:id/attachments/chunks/:totalSize')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 2 * 1024 * 1024, files: 1, fields: 0 },
+    }),
+  )
+  startAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('totalSize', ParseIntPipe) totalSize: number,
+    @UploadedFile() file: PrivateUpload,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.uploadAttachment(id, file, r.user, totalSize);
+  }
+  @Post('schedules/:id/attachments/:attachmentId/chunks/:offset')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 2 * 1024 * 1024, files: 1, fields: 0 },
+    }),
+  )
+  appendAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Param('offset', ParseIntPipe) offset: number,
+    @UploadedFile() file: PrivateUpload,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.appendAttachment(
+      id,
+      attachmentId,
+      offset,
+      file,
+      r.user,
+    );
+  }
+  @Get('schedules/:id/attachments/:attachmentId')
+  async attachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Headers('range') range: string | undefined,
+    @Req() r: AuthRequest,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const file = await this.service.attachment(id, attachmentId, r.user);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    const content = Buffer.from(file!.content);
+    let buffer = content;
+    res.setHeader('Accept-Ranges', 'bytes');
+    if (range) {
+      const match = /^bytes=(\d+)-(\d+)$/.exec(range);
+      if (!match) throw new BadRequestException('Intervalo inv\u00e1lido.');
+      const start = Number(match[1]),
+        end = Number(match[2]);
+      if (
+        !Number.isSafeInteger(start) ||
+        !Number.isSafeInteger(end) ||
+        start > end ||
+        start >= content.length ||
+        end >= content.length ||
+        end - start + 1 > 2 * 1024 * 1024
+      )
+        throw new BadRequestException('Intervalo inv\u00e1lido.');
+      buffer = content.subarray(start, end + 1);
+      res.status(206);
+      res.setHeader('Content-Range', `bytes ${start}-${end}/${content.length}`);
+    }
+    return new StreamableFile(buffer, {
+      type: file!.mime,
+      disposition:
+        "attachment; filename*=UTF-8''" + encodeURIComponent(file!.filename),
+    });
+  }
+  @Delete('schedules/:id/attachments/:attachmentId')
+  removeAttachment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('attachmentId', ParseUUIDPipe) attachmentId: string,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.attachment(id, attachmentId, r.user, true);
   }
   @Get('notifications') @Permission('NOTIFICATION_READ') notifications(
     @Query() q: D.OperationQuery,

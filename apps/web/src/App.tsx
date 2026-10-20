@@ -1,6 +1,16 @@
 import { lazy, Suspense } from 'react';
+const ReimbursementsPage = lazy(() =>
+  import('./pages/reimbursements/ReimbursementsPage').then((m) => ({
+    default: m.ReimbursementsPage,
+  })),
+);
+const PublicReimbursementPage = lazy(() =>
+  import('./pages/reimbursements/ReimbursementsPage').then((m) => ({
+    default: m.PublicReimbursementPage,
+  })),
+);
 import { LinearProgress } from '@mui/material';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { PublicOnly, RequireAuth, RequirePermission } from './auth/guards';
 import { AppShell } from './layout/AppShell';
@@ -15,9 +25,7 @@ import { LoginPage } from './pages/LoginPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ResetPasswordPage } from './pages/ResetPasswordPage';
-const UsersPage = lazy(() =>
-  import('./pages/UsersPage').then((m) => ({ default: m.UsersPage })),
-);
+
 import { MemberDetailPage } from './pages/members/MemberDetailPage';
 import {
   MemberCreatePage,
@@ -57,6 +65,10 @@ export function App() {
       <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
         <Routes>
           <Route
+            path="/pedir-reembolso"
+            element={<PublicReimbursementPage />}
+          />
+          <Route
             path="/events/:id/register"
             element={<PublicEventRegistration />}
           />
@@ -74,6 +86,7 @@ export function App() {
               <Route path="inbox" element={<InboxPage />} />
               <Route path="my-events" element={<EventWorkspace />} />
               <Route path="account" element={<AccountPage />} />
+              <Route path="reimbursements" element={<ReimbursementsPage />} />
               <Route path="library" element={<LibraryPage />} />
               <Route
                 path="members"
@@ -109,11 +122,7 @@ export function App() {
               />
               <Route
                 path="users"
-                element={
-                  <RequirePermission permission="USER_READ">
-                    <UsersPage />
-                  </RequirePermission>
-                }
+                element={<Navigate to="/members" replace />}
               />
               <Route
                 path="events"
@@ -147,12 +156,6 @@ export function App() {
                 path="schedules"
                 element={
                   <OperationsPage key="schedules" resource="schedules" />
-                }
-              />
-              <Route
-                path="attendance"
-                element={
-                  <OperationsPage key="attendance" resource="attendance" />
                 }
               />
               <Route

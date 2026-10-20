@@ -185,7 +185,8 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
     await db.loan.deleteMany();
     await db.bookCopy.deleteMany();
     await db.book.deleteMany();
-    await db.member.deleteMany();
+    // Auth fixtures now have linked members; retain them between library tests.
+    await db.member.deleteMany({ where: { user: null } });
 
     await db.librarySettings.upsert({
       where: { id: 1 },
@@ -201,6 +202,109 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
       await db.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       await db.$disconnect();
     }
+  });
+
+  it('paginates distinct author/category suggestions and searches on the server', async () => {
+    for (const [author, category] of [
+      ['Ana', 'História'],
+      ['Ana', 'História'],
+      ['Beatriz', 'Teologia'],
+      ['Carla', 'História'],
+    ]) {
+      await post('/books', { title: 'Livro', author, category }).expect(201);
+    }
+    const first = await get('/book-options/authors?pageSize=1').expect(200);
+    const second = await get('/book-options/authors?pageSize=1&page=2').expect(
+      200,
+    );
+    expect(first.body).toEqual({
+      items: [{ id: 'Ana', name: 'Ana' }],
+      total: 3,
+      page: 1,
+      pageSize: 1,
+    });
+    expect(second.body.items).toEqual([{ id: 'Beatriz', name: 'Beatriz' }]);
+    const searched = await get(
+      '/book-options/categories?search=HIST&pageSize=1',
+    ).expect(200);
+    expect(searched.body).toMatchObject({
+      items: [{ id: 'História', name: 'História' }],
+      total: 1,
+    });
+    expect(
+      (await get('/book-options/authors?search=%27%20OR%201%3D1').expect(200))
+        .body.total,
+    ).toBe(0);
+    await get('/book-options/authors?pageSize=101').expect(400);
+    await get('/book-options/categories?page=0').expect(400);
+    // Members have catalog read access by default, including its filter options.
+    await get('/book-options/authors', normal).expect(200);
+    await request(app.getHttpServer())
+      .get('/api/v1/library/book-options/authors')
+      .expect(401);
+  });
+
+  it('paginates member/copy histories and dashboard rankings without losing records', async () => {
+    const { book, copy } = await bookCopy();
+    const m = await member();
+    for (let index = 0; index < 3; index++) {
+      await post('/reservations', { memberId: m.id, bookId: book.id }).expect(
+        201,
+      );
+      const loan = await post('/loans', {
+        memberId: m.id,
+        bookCopyId: copy.id,
+      }).expect(201);
+      await post(`/loans/${loan.body.id}/return`).expect(201);
+      await patch(`/copies/${copy.id}`, {
+        location: `Estante ${index}`,
+        justification: 'Teste de paginação',
+      }).expect(200);
+    }
+    for (const path of [
+      `/members/${m.id}/history`,
+      `/copies/${copy.id}/history`,
+    ]) {
+      const first = await get(`${path}?pageSize=2`).expect(200);
+      const second = await get(`${path}?pageSize=2&page=2`).expect(200);
+      expect(first.body).toMatchObject({
+        page: 1,
+        pageSize: 2,
+        totalLoans: 3,
+        totalReservations: 3,
+      });
+      expect(first.body.loans).toHaveLength(2);
+      expect(second.body.loans).toHaveLength(1);
+      expect(first.body.reservations).toHaveLength(2);
+      expect(second.body.reservations).toHaveLength(1);
+      expect(
+        new Set(
+          [...first.body.loans, ...second.body.loans].map(
+            (loan: { id: string }) => loan.id,
+          ),
+        ).size,
+      ).toBe(3);
+      if (first.body.events) {
+        expect(first.body.events).toHaveLength(2);
+        expect(second.body.events).toHaveLength(2);
+        expect(first.body.totalEvents).toBeGreaterThanOrEqual(4);
+        expect(first.body.events[0].id).not.toBe(second.body.events[0].id);
+      }
+      await get(`${path}?pageSize=101`).expect(400);
+    }
+    await bookCopy();
+    const ranked = await get('/dashboard?pageSize=1').expect(200);
+    expect(ranked.body).toMatchObject({
+      totalMostBorrowed: 1,
+      page: 1,
+      pageSize: 1,
+    });
+    expect(ranked.body.mostBorrowed).toEqual([
+      { bookId: book.id, title: 'Livro teste', count: 3 },
+    ]);
+    expect(
+      (await get('/dashboard?pageSize=1&page=2').expect(200)).body.mostBorrowed,
+    ).toEqual([]);
   });
 
   it('stores full catalog/copy metadata, filters/paginates and protects existing history', async () => {
@@ -696,8 +800,8 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
 
   it('requires separate permissions and prevents MEMBER_READ horizontal history exposure', async () => {
     const f = await fineFixture();
+    await get('/books', normal).expect(200);
     for (const path of [
-      '/books',
       '/copies',
       '/loans',
       '/fines',

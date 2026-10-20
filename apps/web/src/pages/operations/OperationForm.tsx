@@ -45,7 +45,8 @@ export function LookupField({
       : field.lookup === 'assignees'
         ? hasPermission('FOLLOWUP_READ')
         : field.lookup
-          ? hasPermission(configs[field.lookup].read)
+          ? hasPermission(configs[field.lookup].read) ||
+            (field.lookup === 'ministries' && hasPermission('COMMUNITY_READ'))
           : false;
   const data = useQuery({
     queryKey: ['operations', 'lookup', field.lookup, debounced],

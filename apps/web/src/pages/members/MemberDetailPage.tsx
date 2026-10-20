@@ -1,3 +1,7 @@
+import { RolesDialog } from './MemberRolesDialog';
+import { useAuth } from '../../auth/auth-context';
+import { apiRequest } from '../../lib/api';
+import { updateUserStatus } from '../../lib/users-api';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -14,6 +18,7 @@ import {
   DialogTitle,
   Stack,
   Typography,
+  TextField,
 } from '@mui/material';
 import {
   ArrowBackRounded,
@@ -47,6 +52,13 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function MemberDetailPage() {
+  const { user: currentUser, hasPermission, clearSession } = useAuth();
+  const administrator =
+    currentUser?.roles?.some(
+      (role) => role === 'ADMIN' || role === 'SUPER_ADMIN',
+    ) ?? false;
+  const [password, setPassword] = useState('');
+  const [rolesOpen, setRolesOpen] = useState(false);
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,6 +71,32 @@ export function MemberDetailPage() {
     queryFn: () => getMember(id),
   });
 
+  const passwordMutation = useMutation({
+    mutationFn: () =>
+      apiRequest(`/users/${member.data!.user!.id}/password`, {
+        method: 'POST',
+        body: { password },
+      }),
+    onSuccess: () => {
+      setPassword('');
+      if (member.data?.user?.id === currentUser?.id) {
+        clearSession();
+        navigate('/login', {
+          replace: true,
+          state: { notice: 'Senha alterada. Entre novamente.' },
+        });
+      }
+    },
+  });
+  const access = useMutation({
+    mutationFn: () =>
+      updateUserStatus(
+        member.data!.user!.id,
+        member.data!.user!.status === 'DISABLED' ? 'ACTIVE' : 'DISABLED',
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: ['member', id] }),
+  });
   const removal = useMutation({
     mutationFn: () => deleteMember(id),
     onSuccess: async () => {
@@ -171,6 +209,87 @@ export function MemberDetailPage() {
         </CardContent>
       </Card>
 
+      {data.user && (
+        <Card variant="outlined">
+          <CardContent>
+            <Stack spacing={2}>
+              <Typography variant="h6">Acesso à plataforma</Typography>
+              <Typography>
+                {data.user.email} ·{' '}
+                {data.user.status === 'ACTIVE' ? 'Ativo' : 'Desativado'}
+              </Typography>
+              {hasPermission('USER_UPDATE') &&
+                data.user.id !== currentUser?.id && (
+                  <Button
+                    disabled={access.isPending}
+                    onClick={() => access.mutate()}
+                  >
+                    {data.user.status === 'DISABLED'
+                      ? 'Ativar acesso'
+                      : 'Desativar acesso'}
+                  </Button>
+                )}
+              {hasPermission('PERMISSION_MANAGE') &&
+                data.user.id !== currentUser?.id && (
+                  <Button onClick={() => setRolesOpen(true)}>
+                    Gerenciar roles
+                  </Button>
+                )}
+              {access.isError && (
+                <Alert severity="error">{errorMessage(access.error)}</Alert>
+              )}
+              {hasPermission('USER_UPDATE') &&
+                (administrator || data.user.id !== currentUser?.id) && (
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    <TextField
+                      label="Nova senha de acesso"
+                      type="password"
+                      autoComplete="new-password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      helperText="Entre 12 e 128 caracteres"
+                    />
+                    <Button
+                      disabled={
+                        password.length < 12 ||
+                        password.length > 128 ||
+                        passwordMutation.isPending
+                      }
+                      onClick={() => passwordMutation.mutate()}
+                    >
+                      Definir senha
+                    </Button>
+                  </Stack>
+                )}
+              {passwordMutation.isError && (
+                <Alert severity="error">
+                  {errorMessage(passwordMutation.error)}
+                </Alert>
+              )}
+              {passwordMutation.isSuccess && (
+                <Alert severity="success">Senha definida.</Alert>
+              )}
+              <Typography variant="body2">
+                Sem roles, o membro pode consultar eventos, reservar livros, ver
+                o balanço financeiro e os grupos e ministérios. Um administrador
+                pode definir a primeira senha no cadastro.
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
+      {rolesOpen && data.user && (
+        <RolesDialog
+          user={data.user}
+          onClose={() => setRolesOpen(false)}
+          onSaved={() => {
+            setRolesOpen(false);
+            void queryClient.invalidateQueries({
+              queryKey: ['user-roles', data.user!.id],
+            });
+          }}
+        />
+      )}
       <Can permission="LIBRARY_HISTORY_READ">
         <Card variant="outlined">
           <CardContent>

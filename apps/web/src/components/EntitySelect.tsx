@@ -2,6 +2,7 @@ import { TextField, type TextFieldProps } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import type { Page } from '@church/shared';
 import { apiRequest } from '../lib/api';
+import { LibraryAutocomplete } from './LibraryAutocomplete';
 
 type Entity = {
   id: string;
@@ -34,6 +35,22 @@ function label(entity: Entity) {
 }
 
 export function EntitySelect({
+  endpoint,
+  ...props
+}: TextFieldProps & {
+  endpoint: string;
+  excludeId?: string;
+  kind?: string;
+  query?: Record<string, string>;
+}) {
+  return endpoint.startsWith('/library/') ? (
+    <LibraryAutocomplete endpoint={endpoint} {...props} />
+  ) : (
+    <FullEntitySelect endpoint={endpoint} {...props} />
+  );
+}
+
+function FullEntitySelect({
   endpoint,
   excludeId,
   kind,

@@ -145,7 +145,7 @@ describe('Bank statement review', () => {
         ),
       }),
       'GET /finance/cost-centers': {
-        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+        body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
     });
     renderApp('/finance?tab=banking');
@@ -178,7 +178,7 @@ describe('Bank statement review', () => {
     );
     expect(memberField).toHaveValue('Maria Costa');
     select('Categoria', 'D\u00edzimos');
-    await screen.findByRole('option', { name: 'Comunidade' });
+    await screen.findByRole('option', { name: 'A Ponte' });
     fireEvent.change(
       screen.getByRole('combobox', { name: /Centro de custo/ }),
       {
@@ -254,14 +254,14 @@ describe('Bank statement review', () => {
         ]),
       },
       'GET /finance/cost-centers': {
-        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+        body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
     });
     renderApp('/finance?tab=banking');
     await uploadStatement();
     expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
     select('Categoria', 'Dízimos');
-    await screen.findByRole('option', { name: 'Comunidade' });
+    await screen.findByRole('option', { name: 'A Ponte' });
     fireEvent.change(
       screen.getByRole('combobox', { name: /Centro de custo/ }),
       { target: { value: 'center-1' } },
@@ -320,7 +320,7 @@ describe('Bank statement review', () => {
         ]),
       },
       'GET /finance/cost-centers': {
-        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+        body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
       'POST /finance/banking/classify': {
         status: 409,
@@ -407,7 +407,7 @@ describe('Bank statement review', () => {
         },
       }),
       'GET /finance/cost-centers': {
-        body: page([{ id: 'center-1', name: 'Comunidade' }]),
+        body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
       'POST /finance/banking/classify': () => {
         total--;
@@ -438,7 +438,7 @@ describe('Bank statement review', () => {
     ).not.toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Categoria' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Dízimos' }));
-    await screen.findByRole('option', { name: 'Comunidade' });
+    await screen.findByRole('option', { name: 'A Ponte' });
     fireEvent.change(
       screen.getByRole('combobox', { name: /Centro de custo/ }),
       { target: { value: 'center-1' } },
@@ -447,7 +447,7 @@ describe('Bank statement review', () => {
       row.description,
     );
     fireEvent.change(screen.getByRole('textbox', { name: 'Descrição' }), {
-      target: { value: '  Oferta da comunidade  ' },
+      target: { value: '  Oferta de A Ponte  ' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
     await screen.findByRole('heading', { name: 'Outro extrato' });
@@ -456,7 +456,7 @@ describe('Bank statement review', () => {
     );
     expect(
       requests.find((r) => r.path === '/finance/banking/classify')?.body,
-    ).toMatchObject({ customDescription: 'Oferta da comunidade' });
+    ).toMatchObject({ customDescription: 'Oferta de A Ponte' });
     await screen.findByText('1 movimento aguarda categorização');
     fireEvent.click(screen.getByRole('button', { name: 'Continuar depois' }));
     await screen.findByRole('button', { name: 'Categorizar movimentos' });

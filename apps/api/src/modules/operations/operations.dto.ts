@@ -94,7 +94,7 @@ export class SmallGroupDto {
   @IsUUID() leaderMemberId!: string;
   @IsOptional() @IsUUID() coLeaderMemberId?: string;
   @IsOptional() @IsUUID() hostMemberId?: string;
-  @IsString() @Matches(/\S/) @MaxLength(200) address!: string;
+  @IsOptional() @IsString() @MaxLength(200) address?: string;
   @IsInt() @Min(0) @Max(6) meetingDay!: number;
   @Matches(/^([01]\d|2[0-3]):[0-5]\d$/) meetingTime!: string;
   @IsOptional() @IsBoolean() active?: boolean;
@@ -143,7 +143,7 @@ export class PersonDto {
   @IsOptional() @IsUUID() visitorId?: string;
 }
 export class ScheduleDto {
-  @IsUUID() eventId!: string;
+  @IsOptional() @IsUUID() eventId?: string;
   @IsOptional() @IsUUID() ministryId?: string;
   @IsString() @Matches(/\S/) @MaxLength(160) title!: string;
   @IsDateString({ strict: true }) date!: string;
@@ -165,17 +165,6 @@ export class AssignmentStatusDto {
 export class AssignmentResponseDto {
   @IsIn(['CONFIRMED', 'DECLINED'])
   status!: string;
-}
-export class AttendanceDto extends PersonDto {
-  @IsOptional() @IsUUID() eventId?: string;
-  @IsOptional() @IsUUID() smallGroupId?: string;
-  @Matches(/^\d{4}-\d{2}-\d{2}$/)
-  @IsDateString({ strict: true })
-  attendanceDate!: string;
-  @IsIn(['PRESENT', 'ABSENT', 'EXCUSED']) status!: string;
-}
-export class AttendancePatch {
-  @IsIn(['PRESENT', 'ABSENT', 'EXCUSED']) status!: string;
 }
 export class NotificationDto {
   @IsOptional() @IsUUID() recipientMemberId?: string;

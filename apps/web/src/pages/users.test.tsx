@@ -1,35 +1,46 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
-import type { User } from '../lib/types';
 import {
-  ADMIN_PERMISSIONS,
   makeUser,
   mockApi,
   renderApp,
   resetTestState,
+  sessionRoutes,
 } from '../test/utils';
-import { sessionRoutes } from '../test/utils';
-
-const others: User[] = [
-  { id: 'u2', name: 'Bruno Dias', email: 'bruno@igreja.org', status: 'ACTIVE' },
-  {
-    id: 'u3',
-    name: 'Carla Reis',
-    email: 'carla@igreja.org',
-    status: 'DISABLED',
+const member = {
+  id: 'm2',
+  name: 'Bruno Dias',
+  email: 'bruno@igreja.org',
+  status: 'ACTIVE',
+  phone: null,
+  birthDate: null,
+  notes: null,
+  createdAt: '2026-01-01',
+  updatedAt: '2026-01-01',
+  user: {
+    id: 'u2',
+    name: 'Bruno Dias',
+    email: 'bruno@igreja.org',
+    status: 'ACTIVE',
   },
-];
-
-describe('Users', () => {
+};
+describe('Unified member accounts', () => {
   beforeEach(resetTestState);
-
-  it('loads existing roles and saves multiple roles while blocking higher permissions', async () => {
-    const current = makeUser(['USER_READ', 'PERMISSION_MANAGE']);
+  it('redirects the old user list to members', async () => {
     const requests = mockApi({
-      ...sessionRoutes(current),
-      'GET /users': {
-        body: { items: [current, ...others], total: 3, page: 1, pageSize: 10 },
+      ...sessionRoutes(makeUser(['MEMBER_READ'])),
+      'GET /members': {
+        body: { items: [member], total: 1, page: 1, pageSize: 10 },
       },
+    });
+    renderApp('/users');
+    expect(await screen.findByText('Bruno Dias')).toBeInTheDocument();
+    expect(requests.some((r) => r.path === '/users')).toBe(false);
+  });
+  it('manages roles directly from the member and blocks superior roles', async () => {
+    const requests = mockApi({
+      ...sessionRoutes(makeUser(['MEMBER_READ', 'PERMISSION_MANAGE'])),
+      'GET /members/m2': { body: member },
       'GET /users/roles': {
         body: [
           { id: 'r1', name: 'MEMBER', assignable: true },
@@ -38,166 +49,67 @@ describe('Users', () => {
         ],
       },
       'GET /users/u2/roles': { body: [{ id: 'r1', name: 'MEMBER' }] },
-      'PATCH /users/u2/roles': { body: { id: 'u2', roles: [] } },
+      'PATCH /users/u2/roles': { body: {} },
     });
-    renderApp('/users');
+    renderApp('/members/m2');
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Gerir roles de Bruno Dias' }),
+      await screen.findByRole('button', { name: 'Gerenciar roles' }),
     );
-    const dialog = await screen.findByRole('dialog');
+    const dialog = within(await screen.findByRole('dialog'));
     expect(
-      await within(dialog).findByRole('checkbox', { name: 'MEMBER' }),
+      await dialog.findByRole('checkbox', { name: 'MEMBER' }),
     ).toBeChecked();
     expect(
-      within(dialog).getByRole('checkbox', { name: 'SUPER_ADMIN' }),
+      dialog.getByRole('checkbox', { name: 'SUPER_ADMIN' }),
     ).toBeDisabled();
-    expect(
-      screen.queryByRole('button', { name: 'Gerir roles de Ana Souza' }),
-    ).not.toBeInTheDocument();
-    fireEvent.click(
-      within(dialog).getByRole('checkbox', { name: 'SECRETARY' }),
-    );
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Salvar roles' }),
-    );
-    expect(
-      await screen.findByText('Roles de Bruno Dias atualizadas.'),
-    ).toBeInTheDocument();
-    expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
-      roleIds: ['r1', 'r2'],
-    });
-  });
-
-  it('keeps the dialog open and shows server errors when role changes fail', async () => {
-    mockApi({
-      ...sessionRoutes(makeUser(['USER_READ', 'PERMISSION_MANAGE'])),
-      'GET /users': {
-        body: { items: others, total: 2, page: 1, pageSize: 10 },
-      },
-      'GET /users/roles': {
-        body: [{ id: 'r1', name: 'MEMBER', assignable: true }],
-      },
-      'GET /users/u2/roles': { body: [{ id: 'r1', name: 'MEMBER' }] },
-      'PATCH /users/u2/roles': {
-        status: 409,
-        body: { message: 'Preserve ao menos um administrador ativo' },
-      },
-    });
-    renderApp('/users');
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Gerir roles de Bruno Dias' }),
-    );
-    const checkbox = await screen.findByRole('checkbox', { name: 'MEMBER' });
-    fireEvent.click(checkbox);
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar roles' }));
-    expect(
-      await screen.findByText('Preserve ao menos um administrador ativo'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-  });
-
-  it('lists users and toggles their status', async () => {
-    const current = makeUser(ADMIN_PERMISSIONS);
-    const requests = mockApi({
-      ...sessionRoutes(current),
-      'GET /users': {
-        body: { items: [current, ...others], total: 3, page: 1, pageSize: 10 },
-      },
-      'PATCH /users/u2/status': { body: { ...others[0], status: 'DISABLED' } },
-      'PATCH /users/u3/status': { body: { ...others[1], status: 'ACTIVE' } },
-    });
-    renderApp('/users');
-
-    expect(await screen.findByText('Bruno Dias')).toBeInTheDocument();
-    expect(
-      screen.queryByRole('button', { name: /Ana Souza/ }),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole('button', { name: 'Desativar Bruno Dias' }),
-    );
-    expect(
-      await screen.findByText('Usuário Bruno Dias desativado.'),
-    ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Ativar Carla Reis' }));
-    expect(
-      await screen.findByText('Usuário Carla Reis ativado.'),
-    ).toBeInTheDocument();
-
-    const patches = requests.filter((r) => r.method === 'PATCH');
-    expect(patches.map((r) => [r.path, r.body])).toEqual([
-      ['/users/u2/status', { status: 'DISABLED' }],
-      ['/users/u3/status', { status: 'ACTIVE' }],
-    ]);
-    const list = requests.find((r) => r.path === '/users');
-    expect(list?.query.get('page')).toBe('1');
-    expect(list?.query.get('pageSize')).toBe('10');
-  });
-
-  it('creates a user without roles', async () => {
-    const requests = mockApi({
-      ...sessionRoutes(makeUser(ADMIN_PERMISSIONS)),
-      'GET /users': {
-        body: { items: others, total: 2, page: 1, pageSize: 10 },
-      },
-      'POST /users': {
-        status: 201,
-        body: {
-          id: 'u4',
-          name: 'Davi',
-          email: 'davi@igreja.org',
-          status: 'ACTIVE',
-        },
-      },
-    });
-    renderApp('/users');
-
-    fireEvent.click(
-      await screen.findByRole('button', { name: /Novo usuário/ }),
-    );
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.change(within(dialog).getByLabelText(/^Nome/), {
-      target: { value: 'Davi' },
-    });
-    fireEvent.change(within(dialog).getByLabelText(/E-mail/), {
-      target: { value: 'davi@igreja.org' },
-    });
-    fireEvent.change(within(dialog).getByLabelText(/Senha inicial/), {
-      target: { value: 'segredo123456' },
-    });
-    fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Criar usuário' }),
-    );
-
+    fireEvent.click(dialog.getByRole('checkbox', { name: 'SECRETARY' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Salvar roles' }));
     await waitFor(() =>
-      expect(
-        requests.find((r) => r.method === 'POST' && r.path === '/users')?.body,
-      ).toEqual({
-        name: 'Davi',
-        email: 'davi@igreja.org',
-        password: 'segredo123456',
+      expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
+        roleIds: ['r1', 'r2'],
       }),
     );
   });
-
-  it('hides management actions when only USER_READ is granted', async () => {
-    mockApi({
-      ...sessionRoutes(makeUser(['USER_READ'])),
-      'GET /users': {
-        body: { items: others, total: 2, page: 1, pageSize: 10 },
-      },
+  it('changes access status and sets a password through the member', async () => {
+    const requests = mockApi({
+      ...sessionRoutes(makeUser(['MEMBER_READ', 'USER_UPDATE'])),
+      'GET /members/m2': { body: member },
+      'PATCH /users/u2/status': { body: {} },
+      'POST /users/u2/password': { body: {} },
     });
-    renderApp('/users');
-
-    expect(await screen.findByText('Bruno Dias')).toBeInTheDocument();
+    renderApp('/members/m2');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Desativar acesso' }),
+    );
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
+        status: 'DISABLED',
+      }),
+    );
+    fireEvent.change(screen.getByLabelText('Nova senha de acesso'), {
+      target: { value: 'new-password-2026' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Definir senha' }));
+    expect(await screen.findByText('Senha definida.')).toBeInTheDocument();
+    expect(requests.find((r) => r.path === '/users/u2/password')?.body).toEqual(
+      { password: 'new-password-2026' },
+    );
+  });
+  it('hides account management without administrative permissions', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['MEMBER_READ'])),
+      'GET /members/m2': { body: member },
+    });
+    renderApp('/members/m2');
+    expect(await screen.findByText('Acesso à plataforma')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Novo usuário/ }),
+      screen.queryByRole('button', { name: 'Gerenciar roles' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Desativar/ }),
+      screen.queryByRole('button', { name: 'Desativar acesso' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Gerir roles/ }),
+      screen.queryByLabelText('Nova senha de acesso'),
     ).not.toBeInTheDocument();
   });
 });

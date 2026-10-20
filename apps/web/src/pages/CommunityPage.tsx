@@ -148,7 +148,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
       <Typography color="text.secondary">
         {kind === 'events'
           ? 'Organize a agenda e acompanhe a situação dos encontros.'
-          : 'Acompanhe as visitas e o acolhimento da comunidade.'}
+          : 'Acompanhe as visitas e o acolhimento de A Ponte.'}
       </Typography>
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>

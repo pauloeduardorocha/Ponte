@@ -1,0 +1,303 @@
+import { useId, useRef, useState } from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
+import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
+import { useMutation } from '@tanstack/react-query';
+import { apiRequest } from '../../lib/api';
+import { useAuth } from '../../auth/auth-context';
+import { DocumentGallery } from '../../components/DocumentGallery';
+import {
+  type Reimbursement,
+  prepareReimbursementFiles,
+  reimbursementFileRequest,
+} from './api';
+
+export function ReimbursementForm({
+  initial,
+  onSaved,
+}: {
+  initial?: Reimbursement;
+  onSaved: (receipt: { id: string; possibleDuplicate?: boolean }) => void;
+}) {
+  const { user } = useAuth();
+  const [beneficiaryName, setName] = useState(
+    initial?.beneficiaryName ?? user?.name ?? '',
+  );
+  const [contact, setContact] = useState(initial?.contact ?? '');
+  const [purpose, setPurpose] = useState(initial?.purpose ?? '');
+  const [amount, setAmount] = useState(initial?.amount ?? '');
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState('');
+  const [preparing, setPreparing] = useState(false);
+  const preparingRef = useRef(false);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const dragDepth = useRef(0);
+  const [dragging, setDragging] = useState(false);
+  const dropHintId = useId();
+  const save = useMutation({
+    mutationFn: async ({
+      beneficiaryName,
+      contact,
+      purpose,
+      amount,
+      files,
+    }: {
+      beneficiaryName: string;
+      contact: string;
+      purpose: string;
+      amount: string;
+      files: File[];
+    }) => {
+      const values = {
+        beneficiaryName,
+        contact,
+        purpose,
+        ...(amount ? { amount: amount.replace(',', '.') } : {}),
+      };
+      if (initial)
+        return apiRequest<{ id: string }>(`/reimbursements/${initial.id}`, {
+          method: 'PATCH',
+          body: values,
+        });
+      const body = new FormData();
+      Object.entries(values).forEach(([key, value]) => body.append(key, value));
+      files.forEach((file) => body.append('files', file));
+      const response = await reimbursementFileRequest(
+        user ? '' : '/public',
+        body,
+      );
+      return response.json() as Promise<{
+        id: string;
+        possibleDuplicate?: boolean;
+      }>;
+    },
+    onSuccess: onSaved,
+  });
+  async function addFiles(selected: FileList | null) {
+    if (save.isPending || preparingRef.current || !selected?.length) return;
+    const incoming = Array.from(selected);
+    if (files.length + incoming.length > 3) {
+      setFileError('Selecione até 3 documentos no envio inicial.');
+      return;
+    }
+    preparingRef.current = true;
+    setPreparing(true);
+    setFileError('');
+    try {
+      setFiles(await prepareReimbursementFiles([...files, ...incoming]));
+    } catch (error) {
+      setFileError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível preparar os documentos.',
+      );
+    } finally {
+      preparingRef.current = false;
+      setPreparing(false);
+    }
+  }
+  const busy = save.isPending || preparing;
+  return (
+    <Stack
+      component="form"
+      spacing={2}
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (!busy)
+          save.mutate({ beneficiaryName, contact, purpose, amount, files });
+      }}
+    >
+      <Typography variant="body2">
+        Pode guardar já os documentos e completar os restantes dados depois.
+        Para outra pessoa, altere o beneficiário e o contacto MB WAY.
+      </Typography>
+      {!initial && (
+        <>
+          <Box
+            role="button"
+            tabIndex={busy ? -1 : 0}
+            aria-label="Carregar documentos"
+            aria-describedby={dropHintId}
+            aria-disabled={busy}
+            onClick={() => {
+              if (!busy) fileInput.current?.click();
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                if (!busy) fileInput.current?.click();
+              }
+            }}
+            onDragEnter={(event) => {
+              event.preventDefault();
+              if (busy) return;
+              dragDepth.current += 1;
+              setDragging(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = busy ? 'none' : 'copy';
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              dragDepth.current = Math.max(0, dragDepth.current - 1);
+              if (!dragDepth.current) setDragging(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              dragDepth.current = 0;
+              setDragging(false);
+              addFiles(event.dataTransfer.files);
+            }}
+            sx={{
+              border: '2px dashed',
+              borderColor: dragging ? 'primary.main' : 'divider',
+              borderRadius: 2,
+              bgcolor: dragging ? 'action.selected' : 'background.default',
+              p: { xs: 3, sm: 4 },
+              textAlign: 'center',
+              cursor: busy ? 'default' : 'pointer',
+              opacity: busy ? 0.6 : 1,
+              transition: 'background-color 150ms, border-color 150ms',
+              '&:hover, &:focus-visible': {
+                borderColor: 'primary.main',
+                bgcolor: 'action.hover',
+              },
+              '&:focus-visible': {
+                outline: '2px solid',
+                outlineColor: 'primary.main',
+                outlineOffset: 3,
+              },
+            }}
+          >
+            <CloudUploadRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
+            <Typography fontWeight={600}>
+              {dragging
+                ? 'Largue os documentos aqui'
+                : 'Arraste os documentos para aqui'}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              ou clique para escolher os ficheiros
+            </Typography>
+            <Typography
+              id={dropHintId}
+              variant="caption"
+              color="text.secondary"
+            >
+              Fotos JPEG/PNG até 10 MB · PDFs até 1 MB · até 3 documentos
+            </Typography>
+          </Box>
+          <input
+            ref={fileInput}
+            hidden
+            type="file"
+            multiple
+            accept="application/pdf,image/jpeg,image/png"
+            onChange={(e) => {
+              addFiles(e.target.files);
+              e.target.value = '';
+            }}
+          />
+          <Stack direction="row" gap={1} flexWrap="wrap">
+            <Button component="label" disabled={busy}>
+              Tirar fotografia
+              <input
+                hidden
+                type="file"
+                accept="image/jpeg,image/png"
+                capture="environment"
+                onChange={(e) => {
+                  addFiles(e.target.files);
+                  e.target.value = '';
+                }}
+              />
+            </Button>
+          </Stack>
+          <Typography variant="caption">
+            As fotos são comprimidas para cerca de 2 MB, sem recortes. Várias
+            fotos podem ser comprimidas um pouco mais para caberem no mesmo
+            envio.
+          </Typography>
+          {preparing && (
+            <Typography role="status">A preparar os documentos…</Typography>
+          )}
+          <DocumentGallery
+            disabled={busy}
+            documents={files.map((file, index) => ({
+              id: `${file.name}-${index}`,
+              filename: file.name,
+              file,
+              mime: file.type,
+              size: file.size,
+            }))}
+            actions={(document, index) => (
+              <Button
+                disabled={busy}
+                aria-label={`Remover ${document.filename}`}
+                onClick={() =>
+                  setFiles((previous) => previous.filter((_, i) => i !== index))
+                }
+              >
+                Remover
+              </Button>
+            )}
+          />
+        </>
+      )}
+      <TextField
+        label="Quem recebe o reembolso?"
+        value={beneficiaryName}
+        onChange={(e) => setName(e.target.value)}
+        slotProps={{ htmlInput: { maxLength: 120 } }}
+        disabled={save.isPending}
+      />
+      <TextField
+        label="Contacto / número MB WAY do beneficiário"
+        value={contact}
+        onChange={(e) => setContact(e.target.value)}
+        slotProps={{ htmlInput: { maxLength: 120 } }}
+        disabled={save.isPending}
+      />
+      <TextField
+        label="Valor total (€)"
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        slotProps={{
+          htmlInput: {
+            inputMode: 'decimal',
+            pattern: '[0-9]+([.,][0-9]{1,2})?',
+          },
+        }}
+        disabled={save.isPending}
+      />
+      <TextField
+        label="Para que foi esta despesa?"
+        multiline
+        minRows={2}
+        value={purpose}
+        onChange={(e) => setPurpose(e.target.value)}
+        slotProps={{ htmlInput: { maxLength: 2000 } }}
+        disabled={save.isPending}
+      />
+      {fileError && <Alert severity="error">{fileError}</Alert>}
+      {save.error && <Alert severity="error">{save.error.message}</Alert>}
+      <Button
+        type="submit"
+        variant="contained"
+        disabled={busy || (!initial && !files.length)}
+      >
+        {save.isPending
+          ? 'A guardar…'
+          : initial
+            ? 'Guardar alterações'
+            : 'Guardar pedido'}
+      </Button>
+    </Stack>
+  );
+}

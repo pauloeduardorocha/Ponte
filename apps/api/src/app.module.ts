@@ -1,3 +1,6 @@
+import { ReimbursementsModule } from './modules/reimbursements/reimbursements.controller';
+import { VideosModule } from './modules/videos/videos.module';
+import { MemberPortalModule } from './modules/community/member-portal.controller';
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { auditMiddleware } from './modules/audit/audit-context';
@@ -41,6 +44,8 @@ import { EventsModule } from './modules/events/events.controller';
     AuditModule,
     PrivacyModule,
     CommunityModule,
+    VideosModule,
+    MemberPortalModule,
     OperationsModule,
     EventsModule,
     HealthModule,
@@ -49,6 +54,7 @@ import { EventsModule } from './modules/events/events.controller';
     UsersModule,
     LibraryModule,
     FinanceModule,
+    ReimbursementsModule,
     BankingModule,
   ],
   providers: [

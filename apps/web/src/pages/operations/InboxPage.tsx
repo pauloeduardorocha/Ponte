@@ -71,7 +71,7 @@ export function InboxPage() {
             primary={
               <>
                 <Typography variant="h6">
-                  {m.subject ?? 'Mensagem da comunidade'}
+                  {m.subject ?? 'Mensagem de A Ponte'}
                 </Typography>
               </>
             }

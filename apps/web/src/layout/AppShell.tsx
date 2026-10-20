@@ -54,7 +54,6 @@ const navigationGroups = [
   'Início',
   'Pessoas',
   'Grupos e ministérios',
-  'Eventos',
   'Operação',
   'Recursos',
   'Comunicação',
@@ -75,53 +74,17 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
-    label: 'Meus eventos',
-    group: 'Eventos',
+    label: 'Meus reembolsos',
+    group: 'Recursos',
+    to: '/reimbursements',
+    icon: AccountBalanceRounded,
+  },
+  {
+    label: 'Gestão de eventos',
+    group: 'Recursos',
     to: '/my-events',
     icon: CalendarMonthRounded,
-    permission: 'EVENT_REGISTRATION_READ',
-  },
-  {
-    label: 'Criar evento',
-    group: 'Eventos',
-    to: '/my-events?create=true',
-    icon: CalendarMonthRounded,
-    permission: 'EVENT_CREATE',
-  },
-  {
-    label: 'Inscrições',
-    group: 'Eventos',
-    to: '/my-events?section=registrations',
-    icon: PeopleAltRounded,
-    permission: 'EVENT_REGISTRATION_READ',
-  },
-  {
-    label: 'Ingressos',
-    group: 'Eventos',
-    to: '/my-events?section=tickets',
-    icon: CalendarMonthRounded,
-    permission: 'EVENT_TICKET_MANAGE',
-  },
-  {
-    label: 'Pagamentos',
-    group: 'Eventos',
-    to: '/my-events?section=payments',
-    icon: CalendarMonthRounded,
-    permission: 'EVENT_PAYMENT_READ',
-  },
-  {
-    label: 'Credenciamento',
-    group: 'Eventos',
-    to: '/my-events?section=checkin',
-    icon: PeopleAltRounded,
-    permission: 'EVENT_CHECKIN',
-  },
-  {
-    label: 'Relatórios',
-    group: 'Eventos',
-    to: '/my-events?section=reports',
-    icon: CalendarMonthRounded,
-    permission: 'EVENT_REPORT_READ',
+    permission: 'EVENT_READ',
   },
   {
     label: 'Vida da igreja',
@@ -135,7 +98,6 @@ const navigation: NavigationItem[] = [
       'MINISTRY_READ',
       'EVENT_READ',
       'SCHEDULE_READ',
-      'ATTENDANCE_READ',
     ],
   },
   {
@@ -154,11 +116,11 @@ const navigation: NavigationItem[] = [
     permission: 'MEMBER_READ',
   },
   {
-    label: 'Eventos',
-    group: 'Eventos',
-    to: '/events',
+    label: 'Agenda de eventos',
+    group: 'Recursos',
+    to: '/events?view=community',
     icon: CalendarMonthRounded,
-    permission: 'EVENT_READ',
+    anyPermissions: ['EVENT_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Visitantes',
@@ -177,30 +139,23 @@ const navigation: NavigationItem[] = [
   {
     label: 'Grupos familiares',
     group: 'Grupos e ministérios',
-    to: '/small-groups',
+    to: '/small-groups?view=community',
     icon: PeopleAltRounded,
-    permission: 'SMALL_GROUP_READ',
+    anyPermissions: ['SMALL_GROUP_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Ministérios',
     group: 'Grupos e ministérios',
-    to: '/ministries',
+    to: '/ministries?view=community',
     icon: PeopleAltRounded,
-    permission: 'MINISTRY_READ',
+    anyPermissions: ['MINISTRY_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Escalas',
     group: 'Operação',
     to: '/schedules',
     icon: CalendarMonthRounded,
-    permission: 'SCHEDULE_READ',
-  },
-  {
-    label: 'Presenças',
-    group: 'Operação',
-    to: '/attendance',
-    icon: PeopleAltRounded,
-    permission: 'ATTENDANCE_READ',
+    permission: 'COMMUNITY_READ',
   },
   {
     label: 'Notificações',
@@ -223,33 +178,13 @@ const navigation: NavigationItem[] = [
     icon: AccountBalanceRounded,
     permissionPrefix: 'FINANCE_',
   },
-  {
-    label: 'Usuários',
-    group: 'Administração',
-    to: '/users',
-    icon: AdminPanelSettingsRounded,
-    permission: 'USER_READ',
-  },
 ];
 
-// Event workspace shortcuts share a path; select only the current task.
-function isNavigationActive(
-  to: string,
-  location: { pathname: string; search: string },
-) {
-  const [pathname, search = ''] = to.split('?');
-  if (pathname !== '/my-events') {
-    return (
-      location.pathname === pathname ||
-      (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
-    );
-  }
-  if (location.pathname !== pathname) return false;
-  const current = new URLSearchParams(location.search);
-  const target = new URLSearchParams(search);
-  if (current.get('create') === 'true') return target.get('create') === 'true';
+function isNavigationActive(to: string, location: { pathname: string }) {
+  const [pathname] = to.split('?');
   return (
-    !target.has('create') && current.get('section') === target.get('section')
+    location.pathname === pathname ||
+    (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
   );
 }
 
@@ -289,10 +224,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         alignItems="center"
         sx={{ px: 3, py: 3 }}
       >
-        <Box className="brand-mark">C</Box>
+        <Box
+          component="img"
+          src="/logo.jpg"
+          alt="Logo de A Ponte"
+          width={42}
+          height={42}
+          className="brand-mark"
+        />
         <Box>
           <Typography fontWeight={700} lineHeight={1.2}>
-            Comunidade
+            A Ponte
           </Typography>
           <Typography variant="caption" color="text.secondary">
             Gestão da Igreja
@@ -472,7 +414,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
             </IconButton>
           )}
           <Typography fontWeight={600} sx={{ flexGrow: 1 }}>
-            Painel da comunidade
+            Painel de A Ponte
           </Typography>
           <Tooltip title="Notificações">
             <IconButton

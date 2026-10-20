@@ -1,6 +1,13 @@
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, CircularProgress, Stack, Typography } from '@mui/material';
+import {
+  Alert,
+  CircularProgress,
+  Stack,
+  Typography,
+  TablePagination,
+} from '@mui/material';
+import { useState } from 'react';
 import {
   getMemberLibraryHistory,
   fineBalance,
@@ -92,9 +99,10 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
 }
 
 export function MemberLibraryHistory({ memberId }: { memberId: string }) {
+  const [page, setPage] = useState(1);
   const history = useQuery({
-    queryKey: ['library', 'member-history', memberId],
-    queryFn: () => getMemberLibraryHistory(memberId),
+    queryKey: ['library', 'member-history', memberId, page],
+    queryFn: () => getMemberLibraryHistory(memberId, { page, pageSize: 20 }),
   });
   if (history.isPending)
     return <CircularProgress aria-label="Carregando biblioteca" />;
@@ -105,5 +113,40 @@ export function MemberLibraryHistory({ memberId }: { memberId: string }) {
         onRetry={() => void history.refetch()}
       />
     );
-  return <HistoryContent history={history.data} />;
+  return (
+    <Stack spacing={2}>
+      <HistoryContent history={history.data} />
+      <HistoryPagination history={history.data} onPageChange={setPage} />
+    </Stack>
+  );
+}
+
+export function HistoryPagination({
+  history,
+  onPageChange,
+}: {
+  history: LibraryHistory & { totalEvents?: number };
+  onPageChange: (page: number) => void;
+}) {
+  return (
+    <TablePagination
+      component="div"
+      count={Math.max(
+        history.totalLoans,
+        history.totalReservations,
+        history.totalEvents ?? 0,
+      )}
+      page={history.page - 1}
+      rowsPerPage={history.pageSize}
+      rowsPerPageOptions={[20]}
+      onPageChange={(_, page) => onPageChange(page + 1)}
+      labelRowsPerPage="Por página em cada lista"
+      labelDisplayedRows={({ page }) => `Página ${page + 1}`}
+      getItemAriaLabel={(type) =>
+        type === 'next'
+          ? 'Próxima página do histórico'
+          : 'Página anterior do histórico'
+      }
+    />
+  );
 }

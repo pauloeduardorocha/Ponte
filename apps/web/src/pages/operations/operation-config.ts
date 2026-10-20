@@ -6,7 +6,6 @@ export type Resource =
   | 'ministries'
   | 'events'
   | 'schedules'
-  | 'attendance'
   | 'notifications'
   | 'notification-templates';
 export type Field = {
@@ -148,7 +147,7 @@ export const configs: Record<Resource, Config> = {
       leader,
       { key: 'coLeaderMemberId', label: 'Co-líder', lookup: 'people' },
       { key: 'hostMemberId', label: 'Anfitrião', lookup: 'people' },
-      { key: 'address', label: 'Endereço', required: true },
+      { key: 'address', label: 'Endereço' },
       {
         key: 'meetingDay',
         label: 'Dia da semana',
@@ -157,7 +156,6 @@ export const configs: Record<Resource, Config> = {
       },
       { key: 'meetingTime', label: 'Horário', type: 'time', required: true },
       { key: 'capacity', label: 'Capacidade', type: 'number' },
-      { key: 'isPaid', label: 'Evento pago', type: 'boolean' },
       active,
     ],
   },
@@ -230,7 +228,7 @@ export const configs: Record<Resource, Config> = {
     statuses: ['DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED'],
     fields: [
       { key: 'title', label: 'Título', required: true },
-      { key: 'eventId', label: 'Evento', lookup: 'events', required: true },
+      { key: 'eventId', label: 'Evento (opcional)', lookup: 'events' },
       { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
       {
         key: 'date',
@@ -243,26 +241,6 @@ export const configs: Record<Resource, Config> = {
         key: 'status',
         label: 'Situação',
         options: ['DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED'],
-      },
-    ],
-  },
-  attendance: {
-    title: 'Presenças',
-    read: 'ATTENDANCE_READ',
-    create: 'ATTENDANCE_MANAGE',
-    update: 'ATTENDANCE_MANAGE',
-    statuses: ['PRESENT', 'ABSENT', 'EXCUSED'],
-    fields: [
-      member,
-      visitor,
-      { key: 'eventId', label: 'Evento', lookup: 'events' },
-      { key: 'smallGroupId', label: 'Grupo familiar', lookup: 'small-groups' },
-      { key: 'attendanceDate', label: 'Data', type: 'date', required: true },
-      {
-        key: 'status',
-        label: 'Presença',
-        options: ['PRESENT', 'ABSENT', 'EXCUSED'],
-        required: true,
       },
     ],
   },
@@ -324,9 +302,7 @@ export const operationLabels: Record<string, string> = {
   CANCELLED: 'Cancelado',
   DRAFT: 'Rascunho',
   PUBLISHED: 'Publicado',
-  PRESENT: 'Presente',
   ABSENT: 'Ausente',
-  EXCUSED: 'Justificado',
   REGISTERED: 'Inscrito',
   INVITED: 'Convidado',
   CONFIRMED: 'Confirmado',

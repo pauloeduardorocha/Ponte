@@ -225,7 +225,7 @@ export function EventWorkspace() {
     return <Alert severity="warning">Sem permissão para eventos.</Alert>;
   return (
     <Stack spacing={2}>
-      <Typography variant="h4">Meus eventos</Typography>
+      <Typography variant="h4">Gestão de eventos</Typography>
       {notice && <Alert onClose={() => setNotice('')}>{notice}</Alert>}
       {checkoutUrl && (
         <Alert severity="info">

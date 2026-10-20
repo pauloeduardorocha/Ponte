@@ -64,8 +64,7 @@ export class CreateMemberDto {
   )
   @IsEmail()
   @MaxLength(320)
-  @IsOptional()
-  email?: string | null;
+  email!: string;
 
   @IsString()
   @MaxLength(32)

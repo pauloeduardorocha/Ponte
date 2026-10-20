@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
 import { InvoicesPage } from './InvoicesPage';
+import { ReimbursementsPage } from './reimbursements/ReimbursementsPage';
 import {
   ExpenseDocumentsAlert,
   ExpenseDocumentContent,
@@ -60,6 +61,11 @@ const modules = [
   },
   { route: 'dashboard', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
   { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
+  {
+    route: 'reimbursements',
+    label: 'Reembolsos',
+    read: 'FINANCE_TRANSACTION_READ',
+  },
   {
     route: 'incomes',
     label: 'Receitas',
@@ -197,12 +203,30 @@ const labels: Record<string, string> = {
   OTHER: 'Outro',
 };
 export function FinancePage() {
+  const { user } = useAuth();
+  if (!user?.permissions.some((p) => p.startsWith('FINANCE_')))
+    return <Alert severity="warning">Sem permissão financeira.</Alert>;
+  const managesFinance = user?.permissions.some(
+    (p) =>
+      p.startsWith('FINANCE_') &&
+      p !== 'FINANCE_SUMMARY_READ' &&
+      p !== 'FINANCE_DASHBOARD_READ',
+  );
+  return managesFinance ? (
+    <FinanceManagementPage />
+  ) : (
+    <FinancialDashboardPanel />
+  );
+}
+function FinanceManagementPage() {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
   const allowed = modules.filter(
     (m) =>
       hasPermission(m.read) &&
+      (m.route !== 'reimbursements' ||
+        hasPermission('FINANCE_TRANSACTION_UPDATE')) &&
       (m.route !== 'banking' || hasPermission('FINANCE_CONTRIBUTION_READ')),
   );
   const [selected, setSelected] = useState('');
@@ -261,7 +285,13 @@ export function FinancePage() {
       }),
     enabled:
       Boolean(current) &&
-      !['dashboard', 'banking', 'reports', 'invoices'].includes(route),
+      ![
+        'dashboard',
+        'banking',
+        'reports',
+        'invoices',
+        'reimbursements',
+      ].includes(route),
   });
   const useLookup = (name: string, permission: Permission) =>
     useQuery({
@@ -361,6 +391,7 @@ export function FinancePage() {
       {route === 'banking' && <BankingPage />}
       {route === 'reports' && <ReportsPage />}
       {route === 'invoices' && <InvoicesPage />}
+      {route === 'reimbursements' && <ReimbursementsPage management />}
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
           {notice}
@@ -385,7 +416,13 @@ export function FinancePage() {
           Cadastrar {current.label.toLowerCase()}
         </Button>
       )}
-      {!['dashboard', 'banking', 'reports', 'invoices'].includes(route) && (
+      {![
+        'dashboard',
+        'banking',
+        'reports',
+        'invoices',
+        'reimbursements',
+      ].includes(route) && (
         <>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}

@@ -2,6 +2,7 @@ import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useAuth } from '../../auth/auth-context';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import {
   CircularProgress,
   Box,
@@ -10,15 +11,17 @@ import {
   Button,
   Typography,
   Stack,
+  TablePagination,
 } from '@mui/material';
 import { MetricCard, BreakdownChart } from '../../components/DataPresentation';
 import { QueryError } from '../../components/PageParts';
 import * as api from '../../lib/library-api';
 export function LibraryDashboardPanel() {
   const { hasPermission } = useAuth();
+  const [page, setPage] = useState(1);
   const dashboard = useQuery({
-    queryKey: ['library', 'dashboard'],
-    queryFn: api.getLibraryDashboard,
+    queryKey: ['library', 'dashboard', page],
+    queryFn: () => api.getLibraryDashboard({ page, pageSize: 10 }),
     staleTime: 30000,
   });
   if (dashboard.isPending)
@@ -131,6 +134,20 @@ export function LibraryDashboardPanel() {
                 </RecordRow>
               ))}
             </RecordTable>
+            <TablePagination
+              component="div"
+              count={d.totalMostBorrowed ?? d.mostBorrowed.length}
+              page={page - 1}
+              rowsPerPage={10}
+              rowsPerPageOptions={[10]}
+              onPageChange={(_, next) => setPage(next + 1)}
+              labelRowsPerPage="Por página"
+              getItemAriaLabel={(type) =>
+                type === 'next'
+                  ? 'Próxima página dos mais emprestados'
+                  : 'Página anterior dos mais emprestados'
+              }
+            />
           </CardContent>
         </Card>
       </Box>

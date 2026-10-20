@@ -80,7 +80,7 @@ describe('Authentication', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
 
     expect(
-      await screen.findByRole('heading', { name: /Bom dia, comunidade/ }),
+      await screen.findByRole('heading', { name: /Bom dia, A Ponte/ }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBe('access-login');
     expect(window.localStorage.length).toBe(0);
@@ -122,7 +122,7 @@ describe('Authentication', () => {
     renderApp('/');
 
     expect(
-      await screen.findByRole('heading', { name: /Bom dia, comunidade/ }),
+      await screen.findByRole('heading', { name: /Bom dia, A Ponte/ }),
     ).toBeInTheDocument();
     const refresh = requests.find((r) => r.path === '/auth/refresh');
     expect(refresh?.method).toBe('POST');
@@ -298,7 +298,7 @@ describe('Permissions', () => {
       name: 'Navegação principal',
     });
     expect(within(nav).getByText('Membros')).toBeInTheDocument();
-    expect(within(nav).getByText('Usuários')).toBeInTheDocument();
+    expect(within(nav).queryByText('Usuários')).not.toBeInTheDocument();
   });
 
   it('keeps functional groups ordered for combined permissions without duplicate links', async () => {
@@ -329,11 +329,9 @@ describe('Permissions', () => {
     ).toEqual([
       'Pessoas',
       'Grupos e ministérios',
-      'Eventos',
       'Operação',
       'Recursos',
       'Comunicação',
-      'Administração',
     ]);
     expect(within(nav).getAllByRole('link')).toHaveLength(1);
     for (const button of within(nav).getAllByRole('button')) {
@@ -361,24 +359,57 @@ describe('Permissions', () => {
     const nav = await screen.findByRole('navigation', {
       name: 'Navegação principal',
     });
-    expect(within(nav).queryAllByRole('button')).toHaveLength(0);
+    // Personal reimbursements are available to every authenticated account.
+    expect(within(nav).queryAllByRole('button')).toHaveLength(1);
+    expect(
+      within(nav).getByRole('button', { name: 'Recursos' }),
+    ).toBeInTheDocument();
+    fireEvent.click(within(nav).getByRole('button', { name: 'Recursos' }));
+    expect(
+      await within(nav).findByRole('link', { name: 'Meus reembolsos' }),
+    ).toBeInTheDocument();
+    for (const name of ['Administração', 'Operação', 'Eventos']) {
+      expect(
+        within(nav).queryByRole('button', { name }),
+      ).not.toBeInTheDocument();
+    }
   });
 
   it.each([
-    ['/my-events', 'Meus eventos'],
-    ['/my-events?section=registrations', 'Inscrições'],
-    ['/my-events?create=true', 'Criar evento'],
-  ])('selects only the current event shortcut on %s', async (route, label) => {
+    ['/my-events', 'Gestão de eventos'],
+    ['/my-events?section=registrations', 'Gestão de eventos'],
+    ['/my-events?event=e1&section=payments', 'Gestão de eventos'],
+    ['/my-events?create=true', 'Gestão de eventos'],
+  ])('keeps the event workspace selected on %s', async (route, label) => {
     mockApi(
-      sessionRoutes(makeUser(['EVENT_REGISTRATION_READ', 'EVENT_CREATE'])),
+      sessionRoutes(
+        makeUser(['EVENT_READ', 'EVENT_REGISTRATION_READ', 'EVENT_CREATE']),
+      ),
     );
     renderApp(route);
+    if (route.includes('create=true')) {
+      fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
+    }
     const nav = await screen.findByRole('navigation', {
       name: 'Navegação principal',
     });
     const active = nav.querySelectorAll('[aria-current="page"]');
     expect(active).toHaveLength(1);
     expect(active[0]).toHaveTextContent(label);
+    fireEvent.click(within(nav).getByRole('button', { name: 'Recursos' }));
+    expect(
+      await within(nav).findByRole('link', { name: 'Gestão de eventos' }),
+    ).toHaveAttribute('href', '/my-events');
+    for (const name of [
+      'Criar evento',
+      'Inscrições',
+      'Ingressos',
+      'Pagamentos',
+      'Credenciamento',
+      'Relatórios',
+    ]) {
+      expect(within(nav).queryByRole('link', { name })).not.toBeInTheDocument();
+    }
   });
 
   it('blocks direct access to routes without permission', async () => {
@@ -391,12 +422,15 @@ describe('Permissions', () => {
     expect(requests.some((r) => r.path === '/members')).toBe(false);
   });
 
-  it('blocks the users page for SECRETARY', async () => {
-    mockApi(sessionRoutes(makeUser(SECRETARY_PERMISSIONS)));
+  it('redirects the old users route to members for SECRETARY', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(SECRETARY_PERMISSIONS)),
+      'GET /members': { body: { items: [], total: 0, page: 1, pageSize: 10 } },
+    });
     renderApp('/users');
 
     expect(
-      await screen.findByRole('heading', { name: 'Acesso negado' }),
+      await screen.findByRole('heading', { name: 'Membros' }),
     ).toBeInTheDocument();
   });
 });

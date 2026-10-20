@@ -1,3 +1,4 @@
+import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
 import { STATUS_LABELS } from '../../lib/status-labels';
@@ -9,6 +10,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
+  Autocomplete,
   Box,
   Button,
   Card,
@@ -31,7 +33,11 @@ import { PageHeader, QueryError } from '../../components/PageParts';
 import { errorMessage } from '../../lib/errors';
 import { formatDate } from '../../lib/format';
 import * as api from '../../lib/library-api';
-import { HistoryContent, MemberLibraryHistory } from './LibraryHistory';
+import {
+  HistoryContent,
+  HistoryPagination,
+  MemberLibraryHistory,
+} from './LibraryHistory';
 
 interface Field {
   name: string;
@@ -280,9 +286,10 @@ function Paged({
 }
 
 function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
+  const [page, setPage] = useState(1);
   const history = useQuery({
-    queryKey: ['library', 'copy-history', id],
-    queryFn: () => api.getCopyHistory(id),
+    queryKey: ['library', 'copy-history', id, page],
+    queryFn: () => api.getCopyHistory(id, { page, pageSize: 20 }),
   });
   return (
     <Dialog open onClose={close} fullWidth maxWidth="md">
@@ -320,6 +327,7 @@ function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
                 </RecordRow>
               ))}
             </RecordTable>
+            <HistoryPagination history={history.data} onPageChange={setPage} />
           </Stack>
         )}
       </DialogContent>
@@ -331,6 +339,26 @@ function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
 }
 
 export function LibraryPage() {
+  const { user } = useAuth();
+  if (!user?.permissions.some((p) => p.startsWith('LIBRARY_')))
+    return (
+      <Alert severity="warning">
+        Você não tem permissão para consultar a biblioteca.
+      </Alert>
+    );
+  const managesLibrary = user?.permissions.some(
+    (p) =>
+      p.startsWith('LIBRARY_') &&
+      p !== 'LIBRARY_BOOK_READ' &&
+      p !== 'LIBRARY_SELF_RESERVE',
+  );
+  return managesLibrary ? (
+    <LibraryManagementPage />
+  ) : (
+    <MemberPortalPage resource="books" />
+  );
+}
+function LibraryManagementPage() {
   const { hasPermission } = useAuth();
   const tabs = [
     ['catalog', 'Catálogo', 'LIBRARY_BOOK_READ'],
@@ -365,6 +393,7 @@ export function LibraryPage() {
   const [notice, setNotice] = useState('');
   const [action, setAction] = useState<Action>();
   const [copyHistory, setCopyHistory] = useState<string>();
+  const [detailBook, setDetailBook] = useState<api.Book>();
   const [historyMember, setHistoryMember] = useState<string>();
   const books = useQuery({
     queryKey: ['library', 'books', page, search, author, category, available],
@@ -471,27 +500,34 @@ export function LibraryPage() {
               )}
               {tab === 'catalog' ? (
                 <>
-                  <TextField
+                  <EntitySelect
+                    endpoint="/library/book-options/authors"
                     label="Autor"
                     value={author}
                     onChange={(e) => filter(setAuthor, e.target.value)}
                   />
-                  <TextField
+                  <EntitySelect
+                    endpoint="/library/book-options/categories"
                     label="Categoria"
                     value={category}
                     onChange={(e) => filter(setCategory, e.target.value)}
                   />
-                  <TextField
-                    select
-                    label="Disponibilidade"
-                    value={available}
-                    onChange={(e) => filter(setAvailable, e.target.value)}
+                  <Autocomplete
+                    options={['true', 'false']}
+                    getOptionLabel={(value) =>
+                      value === 'true' ? 'Disponível' : 'Indisponível'
+                    }
+                    value={available || null}
+                    onChange={(_, value) => filter(setAvailable, value ?? '')}
                     sx={{ minWidth: 180 }}
-                  >
-                    <MenuItem value="">Todos</MenuItem>
-                    <MenuItem value="true">Disponível</MenuItem>
-                    <MenuItem value="false">Indisponível</MenuItem>
-                  </TextField>
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Disponibilidade"
+                        placeholder="Todos"
+                      />
+                    )}
+                  />
                 </>
               ) : (
                 tab !== 'members' && (
@@ -514,36 +550,36 @@ export function LibraryPage() {
                         />
                       )}
                     {(tab === 'copies' || tab === 'loans') && (
-                      <TextField
-                        select
-                        label="Status"
-                        value={status}
-                        onChange={(e) => filter(setStatus, e.target.value)}
+                      <Autocomplete
+                        value={status || null}
+                        onChange={(_, value) => filter(setStatus, value ?? '')}
                         sx={{ minWidth: 180 }}
-                      >
-                        <MenuItem value="">Todos</MenuItem>
-                        {(tab === 'copies'
-                          ? [
-                              'AVAILABLE',
-                              'LOANED',
-                              'RESERVED',
-                              'MAINTENANCE',
-                              'LOST',
-                              'DISPOSED',
-                            ]
-                          : [
-                              'ACTIVE',
-                              'OVERDUE',
-                              'RETURNED',
-                              'LOST',
-                              'CANCELLED',
-                            ]
-                        ).map((s) => (
-                          <MenuItem key={s} value={s}>
-                            {s}
-                          </MenuItem>
-                        ))}
-                      </TextField>
+                        options={
+                          tab === 'copies'
+                            ? [
+                                'AVAILABLE',
+                                'LOANED',
+                                'RESERVED',
+                                'MAINTENANCE',
+                                'LOST',
+                                'DISPOSED',
+                              ]
+                            : [
+                                'ACTIVE',
+                                'OVERDUE',
+                                'RETURNED',
+                                'LOST',
+                                'CANCELLED',
+                              ]
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label="Status"
+                            placeholder="Todos"
+                          />
+                        )}
+                      />
                     )}
                   </>
                 )
@@ -673,12 +709,30 @@ export function LibraryPage() {
               <Box>
                 <RecordTable
                   primaryLabel="Livro"
+                  imageLabel="Capa"
                   label={'Catálogo da biblioteca'}
                   summaryLabel="Autor / Categoria"
                 >
                   {books.data.items.map((book) => (
                     <RecordRow
                       key={book.id}
+                      image={
+                        book.cover ? (
+                          <Box
+                            component="img"
+                            src={book.cover}
+                            alt={`Capa de ${book.title}`}
+                            loading="lazy"
+                            sx={{
+                              width: 80,
+                              height: 112,
+                              objectFit: 'contain',
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="caption">Sem capa</Typography>
+                        )
+                      }
                       primary={
                         <>
                           <Typography variant="h6">{book.title}</Typography>
@@ -686,6 +740,9 @@ export function LibraryPage() {
                       }
                       actions={
                         <>
+                          <Button onClick={() => setDetailBook(book)}>
+                            Ver detalhes
+                          </Button>
                           <Can permission="LIBRARY_BOOK_UPDATE">
                             <Button
                               onClick={() =>
@@ -758,7 +815,6 @@ export function LibraryPage() {
                         {book.publisher} · {book.edition} · {book.year} ·{' '}
                         {book.language} · {book.pages} páginas
                       </Typography>
-                      <Typography>{book.description}</Typography>
                       <Typography>{book.keywords?.join(', ')}</Typography>
                       <Typography>
                         Exemplares: {book.quantity} · Disponíveis:{' '}
@@ -767,18 +823,6 @@ export function LibraryPage() {
                       <Typography variant="caption">
                         ID: {book.id} · ISBN: {book.isbn}
                       </Typography>
-                      {book.cover && (
-                        <Box
-                          component="img"
-                          src={book.cover}
-                          alt={`Capa de ${book.title}`}
-                          sx={{
-                            width: 100,
-                            height: 140,
-                            objectFit: 'contain',
-                          }}
-                        />
-                      )}
                     </RecordRow>
                   ))}
                 </RecordTable>
@@ -789,12 +833,26 @@ export function LibraryPage() {
             <Paged total={copies.data.total} page={page} setPage={setPage}>
               <RecordTable
                 primaryLabel="Livro / Exemplar"
+                imageLabel="Capa"
                 label={'Exemplares'}
                 summaryLabel="Situação"
               >
                 {copies.data.items.map((copy) => (
                   <RecordRow
                     key={copy.id}
+                    image={
+                      copy.book.cover ? (
+                        <Box
+                          component="img"
+                          src={copy.book.cover}
+                          alt={`Capa de ${copy.book.title}`}
+                          loading="lazy"
+                          sx={{ width: 80, height: 112, objectFit: 'contain' }}
+                        />
+                      ) : (
+                        <Typography variant="caption">Sem capa</Typography>
+                      )
+                    }
                     primary={
                       <>
                         <Typography variant="h6">
@@ -1297,6 +1355,29 @@ export function LibraryPage() {
             </Card>
           )}
         </>
+      )}
+      {detailBook && (
+        <Dialog
+          open
+          onClose={() => setDetailBook(undefined)}
+          fullWidth
+          maxWidth="sm"
+          aria-labelledby="book-details-title"
+        >
+          <DialogTitle id="book-details-title">{detailBook.title}</DialogTitle>
+          <DialogContent>
+            <Typography variant="subtitle1">{detailBook.author}</Typography>
+            <Typography variant="h6" sx={{ mt: 2 }}>
+              Descrição
+            </Typography>
+            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
+              {detailBook.description || 'Sem descrição.'}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDetailBook(undefined)}>Fechar</Button>
+          </DialogActions>
+        </Dialog>
       )}
       {action && (
         <ActionDialog

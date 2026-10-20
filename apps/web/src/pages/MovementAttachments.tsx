@@ -1,4 +1,5 @@
-import { RecordTable, RecordRow } from '../components/RecordTable';
+import { DocumentGallery } from '../components/DocumentGallery';
+import { MovementReimbursement } from './reimbursements/ReimbursementDocuments';
 import { useState } from 'react';
 import {
   Alert,
@@ -114,23 +115,7 @@ export function MovementAttachments({
     onError: (e: Error) => setError(e.message),
     onSettled: () => client.invalidateQueries({ queryKey: ['finance'] }),
   });
-  const download = useMutation({
-    mutationFn: async (attachment: Attachment) => {
-      const response = await requestFile(`${filePath(attachment.id)}/download`);
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = attachment.filename;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    },
-    onError: (e: Error) => setError(e.message),
-  });
-  const busy =
-    upload.isPending ||
-    rename.isPending ||
-    remove.isPending ||
-    download.isPending;
+  const busy = upload.isPending || rename.isPending || remove.isPending;
   const extension =
     editing?.filename.slice(editing.filename.lastIndexOf('.')) ?? '';
   function select(files: FileList | null) {
@@ -166,6 +151,9 @@ export function MovementAttachments({
     (attachments.data?.length ?? 0) >= maxFiles;
   return (
     <Stack spacing={1}>
+      {transactionId && canRead && (
+        <MovementReimbursement transactionId={transactionId} />
+      )}
       <Typography variant="subtitle2">
         Anexos ({attachments.data?.length ?? 0}
         {expenseId ? '' : '/5'})
@@ -220,77 +208,44 @@ export function MovementAttachments({
           </Button>
         )}
       </Stack>
-      <RecordTable primaryLabel="Arquivo" label={'Anexos'}>
-        {attachments.data?.map((attachment) => (
-          <RecordRow
-            key={attachment.id}
-            primary={
-              <>
-                <Typography>{attachment.filename}</Typography>
-              </>
-            }
-            actions={
-              <>
-                <Button
-                  disabled={busy}
-                  sx={{
-                    justifyContent: 'flex-start',
-                    overflowWrap: 'anywhere',
-                  }}
-                  onClick={() => {
-                    setError('');
-                    download.mutate(attachment);
-                  }}
-                >
-                  {download.isPending &&
-                    download.variables?.id === attachment.id && (
-                      <CircularProgress
-                        size={16}
-                        aria-label="Baixando anexo"
-                        sx={{ mr: 1 }}
-                      />
-                    )}
-                  {attachment.filename}
-                </Button>
-                <Button
-                  disabled={busy || !canWrite}
-                  aria-label={`Renomear ${attachment.filename}`}
-                  onClick={() => {
-                    setError('');
-                    setEditing(attachment);
-                    setName(
-                      attachment.filename.slice(
-                        0,
-                        attachment.filename.lastIndexOf('.'),
-                      ),
-                    );
-                  }}
-                >
-                  Renomear
-                </Button>
-                <Button
-                  disabled={busy || !canWrite}
-                  color="error"
-                  aria-label={`Excluir ${attachment.filename}`}
-                  onClick={() => {
-                    setError('');
-                    setDeleting(attachment);
-                  }}
-                >
-                  Excluir
-                </Button>
-              </>
-            }
-          >
-            <Typography>
-              {new Intl.NumberFormat('pt-PT', {
-                maximumFractionDigits: 1,
-              }).format(attachment.size / 1024)}{' '}
-              KB
-            </Typography>
-          </RecordRow>
-        ))}
-      </RecordTable>
+      <DocumentGallery
+        disabled={busy}
+        documents={(attachments.data ?? []).map((attachment) => ({
+          ...attachment,
+          path: `${filePath(attachment.id)}/download`,
+        }))}
+        actions={(document) => (
+          <>
+            <Button
+              disabled={busy || !canWrite}
+              aria-label={`Renomear ${document.filename}`}
+              onClick={() => {
+                setError('');
+                setEditing(document as Attachment);
+                setName(
+                  document.filename.slice(
+                    0,
+                    document.filename.lastIndexOf('.'),
+                  ),
+                );
+              }}
+            >
+              Renomear
+            </Button>
+            <Button
+              disabled={busy || !canWrite}
+              color="error"
+              aria-label={`Excluir ${document.filename}`}
+              onClick={() => {
+                setError('');
+                setDeleting(document as Attachment);
+              }}
+            >
+              Excluir
+            </Button>
+          </>
+        )}
+      />
       <Dialog
         open={!!editing}
         onClose={() => {
