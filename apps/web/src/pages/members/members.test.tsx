@@ -232,6 +232,7 @@ describe('Members', () => {
       status: 'INACTIVE',
       email: 'maria@igreja.org',
       phone: null,
+      iban: null,
       birthDate: '1990-05-20',
       notes: 'Ministério de louvor',
     });

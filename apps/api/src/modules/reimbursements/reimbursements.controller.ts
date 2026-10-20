@@ -59,6 +59,10 @@ export class ReimbursementsController {
   list(@Query() q: ReimbursementQuery, @Req() req: AuthRequest) {
     return this.service.list(q, req.user);
   }
+  @Get('profile')
+  profile(@Req() req: AuthRequest) {
+    return this.service.profile(req.user);
+  }
   @Get('mine')
   mine(@Query() q: ReimbursementQuery, @Req() req: AuthRequest) {
     return this.service.list(q, req.user, true);

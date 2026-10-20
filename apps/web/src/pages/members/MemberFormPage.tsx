@@ -28,6 +28,18 @@ const memberSchema = z.object({
     .string()
     .trim()
     .max(32, 'O telefone deve ter no máximo 32 caracteres.'),
+  iban: z
+    .string()
+    .transform((value) => value.replace(/\s/g, '').toUpperCase())
+    .pipe(
+      z
+        .string()
+        .max(34, 'O IBAN deve ter no máximo 34 caracteres.')
+        .regex(
+          /^$|^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/,
+          'Informe um IBAN válido.',
+        ),
+    ),
   status: z.enum(['ACTIVE', 'INACTIVE']),
   birthDate: z.union([z.literal(''), z.iso.date('Informe uma data válida.')]),
   notes: z
@@ -38,13 +50,20 @@ const memberSchema = z.object({
 
 type MemberFields = z.infer<typeof memberSchema>;
 
-const OPTIONAL_FIELDS = ['email', 'phone', 'birthDate', 'notes'] as const;
+const OPTIONAL_FIELDS = [
+  'email',
+  'phone',
+  'iban',
+  'birthDate',
+  'notes',
+] as const;
 
 function toFields(member?: Member): MemberFields {
   return {
     name: member?.name ?? '',
     email: member?.email ?? '',
     phone: member?.phone ?? '',
+    iban: member?.iban ?? '',
     status: member?.status ?? 'ACTIVE',
     birthDate: member?.birthDate?.slice(0, 10) ?? '',
     notes: member?.notes ?? '',
@@ -145,6 +164,12 @@ function MemberForm({
                 error={Boolean(formState.errors.phone)}
                 helperText={formState.errors.phone?.message}
                 {...register('phone')}
+              />
+              <TextField
+                label="IBAN"
+                error={Boolean(formState.errors.iban)}
+                helperText={formState.errors.iban?.message}
+                {...register('iban')}
               />
               <TextField
                 label="Data de nascimento"

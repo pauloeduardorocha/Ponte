@@ -436,7 +436,7 @@ function ReimbursementDetail({
         {row.beneficiaryName || 'Beneficiário por preencher'} ·{' '}
         {money(row.amount, row.currency)}
       </Typography>
-      <Typography>{row.contact || 'Contacto por preencher'}</Typography>
+      <Typography>IBAN: {row.iban || 'Por preencher'}</Typography>
       <Typography>{row.purpose || 'Finalidade por preencher'}</Typography>
       {!row.paidAt && (
         <Button onClick={() => setEditing(true)}>
@@ -452,7 +452,7 @@ function ReimbursementDetail({
         <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
           <TextField
             type="date"
-            label="Data do pagamento MB WAY"
+            label="Data da transferência bancária"
             value={paidAt}
             onChange={(event) => setPaidAt(event.target.value)}
             slotProps={{ inputLabel: { shrink: true } }}

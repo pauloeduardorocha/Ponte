@@ -194,6 +194,7 @@ export function MemberDetailPage() {
             </Box>
             <Field label="E-mail" value={data.email ?? '—'} />
             <Field label="Telefone" value={data.phone ?? '—'} />
+            <Field label="IBAN" value={data.iban ?? '—'} />
             <Field
               label="Data de nascimento"
               value={formatDateOnly(data.birthDate)}

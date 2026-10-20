@@ -42,7 +42,7 @@ export function ReimbursementDocuments({
           ...file,
           caption:
             file.kind === 'PAYMENT'
-              ? 'Comprovativo MB WAY'
+              ? 'Comprovativo de transferência bancária'
               : 'Documento da despesa',
           path: `/reimbursements/${row.id}/attachments/${file.id}/download`,
         }))}
@@ -52,7 +52,7 @@ export function ReimbursementDocuments({
           {(manager ? ['DOCUMENT', 'PAYMENT'] : ['DOCUMENT']).map((kind) => (
             <Button component="label" key={kind} disabled={upload.isPending}>
               {kind === 'PAYMENT'
-                ? 'Anexar comprovativo MB WAY'
+                ? 'Anexar comprovativo de transferência bancária'
                 : 'Juntar documento'}
               <input
                 type="file"

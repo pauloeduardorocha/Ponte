@@ -91,7 +91,7 @@ export type Reimbursement = {
   submittedBy?: string | null;
   deletedAt?: string | null;
   beneficiaryName: string;
-  contact: string;
+  iban: string;
   purpose: string;
   amount: string | null;
   currency: string;

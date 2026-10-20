@@ -11125,6 +11125,13 @@
             "type": "string",
             "nullable": true,
             "maxLength": 2000
+          },
+          "iban": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 34,
+            "format": "iban",
+            "description": "IBAN normalizado sem espacos; opcional."
           }
         },
         "required": ["name"]
@@ -11161,6 +11168,13 @@
             "type": "string",
             "nullable": true,
             "maxLength": 2000
+          },
+          "iban": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 34,
+            "format": "iban",
+            "description": "IBAN normalizado sem espacos; opcional."
           }
         }
       },

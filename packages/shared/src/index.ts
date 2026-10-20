@@ -217,6 +217,7 @@ export interface Member {
   name: string;
   email: string | null;
   phone: string | null;
+  iban?: string | null;
   status: 'ACTIVE' | 'INACTIVE';
   birthDate: string | null;
   notes: string | null;

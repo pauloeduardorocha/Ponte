@@ -29,7 +29,7 @@ export function reimbursementStatus(row: {
   bankTransactionId: string | null;
   paidAt: Date | null;
   beneficiaryName: string;
-  contact: string;
+  iban: string;
   purpose: string;
   amount: Prisma.Decimal | null;
   attachments: { kind: string }[];
@@ -37,7 +37,7 @@ export function reimbursementStatus(row: {
   if (row.bankTransactionId) return 'LINKED';
   if (row.paidAt) return 'PAID';
   return row.beneficiaryName.trim() &&
-    row.contact.trim() &&
+    row.iban.trim() &&
     row.purpose.trim() &&
     row.amount?.gt(0) &&
     row.attachments.some((f) => f.kind === 'DOCUMENT')
@@ -50,6 +50,37 @@ export class ReimbursementsService {
     private readonly db: PrismaService,
     private readonly storage: StorageService,
   ) {}
+  async profile(user: CurrentUser) {
+    return this.db.member.findFirst({
+      where: { user: { id: user.id }, anonymizedAt: null },
+      select: { name: true, iban: true },
+    });
+  }
+  private async saveMemberIban(
+    tx: Prisma.TransactionClient,
+    row: { beneficiaryName: string; iban: string; submittedBy: string | null },
+    user?: CurrentUser,
+  ) {
+    if (!user || row.submittedBy !== user.id || !row.iban) return;
+    const member = await tx.member.findFirst({
+      where: { user: { id: user.id }, anonymizedAt: null },
+      select: { id: true, name: true },
+    });
+    if (
+      !member ||
+      member.name.trim().toLocaleLowerCase() !==
+        row.beneficiaryName.trim().toLocaleLowerCase()
+    )
+      return;
+    await tx.member.updateMany({
+      where: {
+        id: member.id,
+        anonymizedAt: null,
+        OR: [{ iban: null }, { iban: '' }],
+      },
+      data: { iban: row.iban },
+    });
+  }
   private view(row: RecordWithFiles) {
     return { ...row, status: reimbursementStatus(row) };
   }
@@ -114,7 +145,7 @@ export class ReimbursementsService {
   async list(q: ReimbursementQuery, user: CurrentUser, mine = false) {
     const ready: Prisma.ReimbursementWhereInput = {
       beneficiaryName: { not: '' },
-      contact: { not: '' },
+      iban: { not: '' },
       purpose: { not: '' },
       amount: { gt: 0 },
       attachments: { some: { kind: 'DOCUMENT' } },
@@ -135,7 +166,7 @@ export class ReimbursementsService {
       ...status,
       ...(q.search
         ? {
-            OR: ['beneficiaryName', 'purpose', 'contact'].map((field) => ({
+            OR: ['beneficiaryName', 'purpose', 'iban'].map((field) => ({
               [field]: { contains: q.search, mode: 'insensitive' },
             })),
           }
@@ -193,6 +224,7 @@ export class ReimbursementsService {
           },
           include,
         });
+        await this.saveMemberIban(tx, saved, user);
         await this.audit(tx, 'CREATE', saved.id, user);
         return saved;
       });
@@ -213,7 +245,7 @@ export class ReimbursementsService {
       throw new BadRequestException('O valor deve ser positivo');
     return {
       beneficiaryName: dto.beneficiaryName?.trim(),
-      contact: dto.contact?.trim(),
+      iban: dto.iban?.trim(),
       purpose: dto.purpose?.trim(),
       amount: dto.amount,
     };
@@ -232,6 +264,7 @@ export class ReimbursementsService {
         data: this.fields(dto),
         include,
       });
+      await this.saveMemberIban(tx, saved, user);
       await this.audit(tx, 'UPDATE', id, user);
       return this.view(saved);
     });

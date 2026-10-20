@@ -1,6 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsIBAN,
   IsDateString,
   IsEmail,
   IsIn,
@@ -70,6 +71,15 @@ export class CreateMemberDto {
   @MaxLength(32)
   @IsOptional()
   phone?: string | null;
+
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string'
+      ? value.replace(/\s/g, '').toUpperCase() || null
+      : value,
+  )
+  @IsIBAN()
+  @IsOptional()
+  iban?: string | null;
 
   @IsIn(['ACTIVE', 'INACTIVE'])
   @ValidateIf((_object, value) => value !== undefined)

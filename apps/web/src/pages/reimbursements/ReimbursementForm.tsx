@@ -8,7 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../../lib/api';
 import { useAuth } from '../../auth/auth-context';
 import { DocumentGallery } from '../../components/DocumentGallery';
@@ -29,7 +29,17 @@ export function ReimbursementForm({
   const [beneficiaryName, setName] = useState(
     initial?.beneficiaryName ?? user?.name ?? '',
   );
-  const [contact, setContact] = useState(initial?.contact ?? '');
+  const queryClient = useQueryClient();
+  const profile = useQuery({
+    queryKey: ['reimbursement-profile', user?.id],
+    queryFn: () =>
+      apiRequest<{ name: string; iban: string | null } | null>(
+        '/reimbursements/profile',
+      ),
+    enabled: Boolean(user),
+  });
+  const [enteredIban, setIban] = useState<string>();
+  const iban = enteredIban ?? initial?.iban ?? profile.data?.iban ?? '';
   const [purpose, setPurpose] = useState(initial?.purpose ?? '');
   const [amount, setAmount] = useState(initial?.amount ?? '');
   const [files, setFiles] = useState<File[]>([]);
@@ -43,20 +53,20 @@ export function ReimbursementForm({
   const save = useMutation({
     mutationFn: async ({
       beneficiaryName,
-      contact,
+      iban,
       purpose,
       amount,
       files,
     }: {
       beneficiaryName: string;
-      contact: string;
+      iban: string;
       purpose: string;
       amount: string;
       files: File[];
     }) => {
       const values = {
         beneficiaryName,
-        contact,
+        iban,
         purpose,
         ...(amount ? { amount: amount.replace(',', '.') } : {}),
       };
@@ -77,7 +87,12 @@ export function ReimbursementForm({
         possibleDuplicate?: boolean;
       }>;
     },
-    onSuccess: onSaved,
+    onSuccess: (receipt) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['reimbursement-profile', user?.id],
+      });
+      onSaved(receipt);
+    },
   });
   async function addFiles(selected: FileList | null) {
     if (save.isPending || preparingRef.current || !selected?.length) return;
@@ -110,12 +125,12 @@ export function ReimbursementForm({
       onSubmit={(event) => {
         event.preventDefault();
         if (!busy)
-          save.mutate({ beneficiaryName, contact, purpose, amount, files });
+          save.mutate({ beneficiaryName, iban, purpose, amount, files });
       }}
     >
       <Typography variant="body2">
         Pode guardar já os documentos e completar os restantes dados depois.
-        Para outra pessoa, altere o beneficiário e o contacto MB WAY.
+        Para outra pessoa, altere o beneficiário e o IBAN.
       </Typography>
       {!initial && (
         <>
@@ -258,10 +273,17 @@ export function ReimbursementForm({
         disabled={save.isPending}
       />
       <TextField
-        label="Contacto / número MB WAY do beneficiário"
-        value={contact}
-        onChange={(e) => setContact(e.target.value)}
-        slotProps={{ htmlInput: { maxLength: 120 } }}
+        label="IBAN do beneficiário"
+        value={iban}
+        onChange={(e) =>
+          setIban(e.target.value.replace(/\s/g, '').toUpperCase())
+        }
+        slotProps={{
+          htmlInput: {
+            maxLength: 34,
+            pattern: '[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}',
+          },
+        }}
         disabled={save.isPending}
       />
       <TextField

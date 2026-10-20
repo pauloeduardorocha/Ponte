@@ -15,7 +15,7 @@ const row = {
   submittedBy: 'user-1',
   deletedAt: null,
   beneficiaryName: 'Maria',
-  contact: '912345678',
+  iban: 'PT50000201231234567890154',
   purpose: 'Material para crianças',
   amount: '25.10',
   currency: 'EUR',
@@ -158,6 +158,43 @@ describe('Reimbursements', () => {
     ).toBeEnabled();
     expect(screen.getByText('recibo.pdf')).toBeInTheDocument();
   });
+  it('prefills the authenticated member IBAN and submits it', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      'GET /reimbursements/profile': {
+        body: { name: 'Ana Souza', iban: row.iban },
+      },
+      'POST /reimbursements': { body: { id: 'iban-receipt' } },
+    });
+    renderApp('/pedir-reembolso');
+    await waitFor(() =>
+      expect(screen.getByLabelText('IBAN do beneficiário')).toHaveValue(
+        row.iban,
+      ),
+    );
+    fireEvent.drop(
+      screen.getByRole('button', { name: 'Carregar documentos' }),
+      {
+        dataTransfer: {
+          files: [
+            new File(['%PDF-test'], 'recibo.pdf', { type: 'application/pdf' }),
+          ],
+        },
+      },
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole('button', { name: 'Guardar pedido' }),
+      ).toBeEnabled(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }));
+    await screen.findByText(/Referência: iban-receipt/);
+    const submission = vi
+      .mocked(fetch)
+      .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
+    expect((submission[1]?.body as FormData).get('iban')).toBe(row.iban);
+    expect((submission[1]?.body as FormData).has('contact')).toBe(false);
+  });
   it('allows an authenticated member to submit for another person', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
@@ -207,7 +244,7 @@ describe('Reimbursements', () => {
       screen.queryByText('Corrigir registo de pagamento'),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByText('Anexar comprovativo MB WAY'),
+      screen.queryByText('Anexar comprovativo de transferência bancária'),
     ).not.toBeInTheDocument();
     expect(requests.some((request) => request.path === '/reimbursements')).toBe(
       false,
@@ -228,7 +265,7 @@ describe('Reimbursements', () => {
             id: 'bank-1',
             date: '2026-10-14',
             amount: '25.10',
-            description: 'MB WAY Maria',
+            description: 'transferência bancária Maria',
           },
         ],
       },

@@ -34,6 +34,7 @@ export interface MemberInput {
   name: string;
   email?: string | null;
   phone?: string | null;
+  iban?: string | null;
   status?: MemberStatus;
   birthDate?: string | null;
   notes?: string | null;

@@ -263,6 +263,7 @@ model Member {
   name                String                @db.VarChar(120)
   email               String?               @db.VarChar(320)
   phone               String?               @db.VarChar(32)
+  iban                String?               @db.VarChar(34)
   status              MemberStatus          @default(ACTIVE)
   birthDate           DateTime?             @map("birth_date") @db.Date
   notes               String?               @db.VarChar(2000)
@@ -737,7 +738,8 @@ model Reimbursement {
   id                String   @id @default(uuid()) @db.Uuid
   submittedBy       String?  @db.Uuid
   beneficiaryName   String   @default("") @db.VarChar(120)
-  contact           String   @default("") @db.VarChar(120)
+  iban              String   @default("") @db.VarChar(34)
+  legacyContact     String   @default("") @map("contact") @db.VarChar(120) @ignore
   purpose           String   @default("") @db.VarChar(2000)
   amount            Decimal? @db.Decimal(14, 2)
   currency          String   @default("EUR") @db.VarChar(3)

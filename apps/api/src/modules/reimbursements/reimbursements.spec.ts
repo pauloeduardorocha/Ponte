@@ -16,7 +16,7 @@ const row = {
   id: 'request',
   deletedAt: null,
   beneficiaryName: 'Maria',
-  contact: '912345678',
+  iban: 'PT50000201231234567890154',
   purpose: 'Material para crianças',
   amount: new Prisma.Decimal('25.10'),
   currency: 'EUR',
@@ -58,6 +58,10 @@ function setup() {
       count: jest.fn().mockResolvedValue(0),
       findFirst: jest.fn().mockResolvedValue({ storageKey: 'key' }),
     },
+    member: {
+      findFirst: jest.fn().mockResolvedValue(null),
+      updateMany: jest.fn(),
+    },
     auditLog: { create: jest.fn() },
   };
   const db = { ...tx, $transaction: jest.fn(async (callback) => callback(tx)) };
@@ -78,6 +82,51 @@ function setup() {
   };
 }
 describe('Reimbursement lifecycle and access', () => {
+  it('reads only the authenticated member profile', async () => {
+    const { service, tx } = setup();
+    await service.profile(user);
+    expect(tx.member.findFirst).toHaveBeenCalledWith({
+      where: { user: { id: user.id }, anonymizedAt: null },
+      select: { name: true, iban: true },
+    });
+  });
+  it.each(['create', 'update'] as const)(
+    'saves a missing member IBAN on %s of their own request',
+    async (operation) => {
+      const { service, tx } = setup();
+      tx.member.findFirst.mockResolvedValue({ id: 'member', name: 'Maria' });
+      if (operation === 'create')
+        await service.create({ iban: row.iban }, [file], user);
+      else await service.update(row.id, { iban: row.iban }, user);
+      expect(tx.member.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: 'member',
+          anonymizedAt: null,
+          OR: [{ iban: null }, { iban: '' }],
+        },
+        data: { iban: row.iban },
+      });
+    },
+  );
+  it('does not persist the IBAN of a different beneficiary in the member profile', async () => {
+    const { service, tx } = setup();
+    tx.member.findFirst.mockResolvedValue({
+      id: 'member',
+      name: 'Outra pessoa',
+    });
+    await service.create({ iban: row.iban }, [file], user);
+    expect(tx.member.updateMany).not.toHaveBeenCalled();
+  });
+  it('does not persist a beneficiary IBAN when a manager edits someone else’s request', async () => {
+    const { service, tx } = setup();
+    await service.update(
+      row.id,
+      { iban: row.iban },
+      { ...manager, id: 'treasurer' },
+    );
+    expect(tx.member.findFirst).not.toHaveBeenCalled();
+    expect(tx.member.updateMany).not.toHaveBeenCalled();
+  });
   it('allows the authenticated author to delete their request and audits it', async () => {
     const { service, tx, storage } = setup();
     await expect(service.remove('request', user)).resolves.toEqual({
@@ -145,7 +194,7 @@ describe('Reimbursement lifecycle and access', () => {
     ).rejects.toThrow();
   });
   it('distinguishes incomplete, ready, paid and linked requests', () => {
-    expect(reimbursementStatus({ ...row, contact: '' })).toBe('INCOMPLETE');
+    expect(reimbursementStatus({ ...row, iban: '' })).toBe('INCOMPLETE');
     expect(
       reimbursementStatus({ ...row, attachments: [{ kind: 'PAYMENT' }] }),
     ).toBe('INCOMPLETE');

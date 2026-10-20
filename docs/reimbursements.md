@@ -6,10 +6,10 @@ Cada pedido representa um pagamento integral em EUR e pode ser associado a um ú
 
 - `/pedir-reembolso`: formulário público, sem conta. Guarda os documentos mesmo quando os restantes dados ainda estão em falta. Com sessão iniciada, identifica o autor do pedido; o beneficiário pode ser outra pessoa.
 - `/reimbursements`: os pedidos submetidos pelo utilizador autenticado.
-- `/finance?tab=reimbursements`: gestão pela tesouraria, com pesquisa, filtros, edição, documentos, registo de pagamento MB WAY e associação ao banco.
+- `/finance?tab=reimbursements`: gestão pela tesouraria, com pesquisa, filtros, edição, documentos, registo de pagamento por transferência bancária e associação ao banco.
 - No painel de anexos do movimento bancário aparecem os documentos do pedido associado. Para movimentos compatíveis, a tesouraria também pode confirmar a associação nesse painel.
 
-Estados: **Por completar**, **Pronto para pagamento**, **Pago · a aguardar movimento**, **Associado ao banco**. Para registar o pagamento é necessário beneficiário, contacto, finalidade, valor positivo e pelo menos um documento da despesa. O comprovativo MB WAY é um anexo distinto e pode ser adicionado antes ou depois do registo do pagamento.
+Estados: **Por completar**, **Pronto para pagamento**, **Pago · a aguardar movimento**, **Associado ao banco**. Para registar o pagamento é necessário beneficiário, IBAN, finalidade, valor positivo e pelo menos um documento da despesa. O comprovativo de transferência bancária é um anexo distinto e pode ser adicionado antes ou depois do registo do pagamento.
 
 O autor autenticado e a tesouraria podem excluir um pedido mediante confirmação. Pedidos enviados sem login só podem ser excluídos pela tesouraria. A exclusão é lógica e auditada: retira o pedido das listas e das sugestões, impede novas alterações ou pagamentos e preserva os documentos e a associação bancária existentes. Pagamentos efetuados não são anulados. Os documentos continuam acessíveis pelo movimento bancário associado.
 
@@ -27,10 +27,20 @@ O envio público tem um limite de cinco pedidos por minuto por endereço, além 
 
 ## Ativação
 
-A migração `20261015160000_reimbursements` cria as duas tabelas e a relação com movimentos bancários. Aplicar pelo processo habitual de deployment após verificar as outras migrações pendentes no projeto. Não é necessário configurar uma integração MB WAY: os pagamentos são feitos pela tesoureira e o comprovativo é anexado manualmente.
+A migração `20261015160000_reimbursements` cria as duas tabelas e a relação com movimentos bancários. Aplicar pelo processo habitual de deployment após verificar as outras migrações pendentes no projeto. Não é necessário configurar uma integração por transferência bancária: os pagamentos são feitos pela tesoureira e o comprovativo é anexado manualmente.
 
-Esta versão não inclui OCR, receção automática de WhatsApp/email ou execução automática de pagamentos MB WAY.
+Esta versão não inclui OCR, receção automática de WhatsApp/email ou execução automática de pagamentos por transferência bancária.
 
 ## Validação
 
 Os testes da API cobrem privacidade, pedidos anónimos, autor versus beneficiário, integridade do pagamento, correspondência de valor/moeda, exclusividade da associação, auditoria e limpeza em falhas. Os testes web cobrem envio público, nova tentativa após erro, pedidos para terceiros, lista pessoal e confirmação da associação pela tesouraria.
+
+## Contrato IBAN
+
+`POST /members` e `PATCH /members/:id` aceitam `iban` opcional (ou `null` para limpar). A API normaliza os valores e valida o IBAN, incluindo o checksum.
+
+Os pedidos de reembolso usam `iban` em vez de `contact`, tanto em multipart no envio como em JSON ao editar. O campo pode ficar vazio enquanto o pedido estiver incompleto. `GET /reimbursements/profile` exige login e devolve apenas `{ name, iban }` do membro autenticado, ou `null` quando a conta estiver sem membro associado. O campo no novo pedido recebe esse IBAN sem substituir valores editados ou guardados no pedido.
+
+Ao criar ou editar um pedido do membro autenticado com o seu nome como beneficiário, o IBAN fica guardado no membro se estiver vazio, na mesma transação. Pedidos para terceiros ou enviados sem login e pedidos de outros autores editados pela tesouraria preservam o IBAN do cadastro. Um IBAN existente nunca é substituído automaticamente.
+
+Aplicar a migração `20261020180000_reimbursement_member_iban`. Os contactos antigos ficam preservados como dados legados; pedidos ainda por pagar precisam de IBAN para ficarem prontos para pagamento.
