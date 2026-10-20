@@ -154,11 +154,6 @@ export class BankingController {
   ) {
     return this.banking.upload(dto.accountId, file, req.user);
   }
-  @Get('coverage')
-  coverage(@Query() q: BankQuery) {
-    return this.banking.coverage(q);
-  }
-
   @Get('imports') imports(@Query() q: BankQuery) {
     return this.banking.imports(q);
   }
