@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -170,7 +171,7 @@ export function InvoicesPage() {
           <TableBody>
             {invoices.data?.items.map((invoice) => (
               <TableRow key={invoice.id}>
-                <TableCell>{invoice.date.slice(0, 10)}</TableCell>
+                <TableCell>{formatDateOnly(invoice.date)}</TableCell>
                 <TableCell>{invoice.issuerName}</TableCell>
                 <TableCell>{invoice.issuerTaxId}</TableCell>
                 <TableCell>{invoice.number}</TableCell>

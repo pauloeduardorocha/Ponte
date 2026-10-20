@@ -1,3 +1,4 @@
+import { formatDate } from '../lib/format';
 import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -182,7 +183,7 @@ export function YouTubeCarousel() {
                       variant="body2"
                       color="text.secondary"
                     >
-                      {new Date(video.publishedAt).toLocaleDateString('pt-PT')}
+                      {formatDate(video.publishedAt)}
                     </Typography>
                   </CardContent>
                 </CardActionArea>

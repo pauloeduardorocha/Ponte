@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
+import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useDebouncedValue } from '../lib/use-debounced-value';
@@ -27,7 +29,6 @@ import {
   Stack,
   Tab,
   Tabs,
-  TextField,
   Typography,
 } from '@mui/material';
 import type { Page, Permission } from '@church/shared';
@@ -643,7 +644,7 @@ function FinanceManagementPage() {
                   </Typography>
                 )}
                 <Typography>
-                  {item.currency} {item.date?.slice(0, 10)}{' '}
+                  {item.currency} {formatDateOnly(item.date ?? null)}{' '}
                   {route === 'accounts' && item.status && (
                     <StatusChip status={item.status} />
                   )}{' '}
@@ -679,10 +680,10 @@ function FinanceManagementPage() {
                 )}
                 {route === 'expenses' && (
                   <Typography variant="body2">
-                    Vencimento: {String(item.dueDate ?? '').slice(0, 10)} ·
+                    Vencimento: {formatDateOnly(String(item.dueDate ?? ''))} ·
                     Pagamento:{' '}
                     {item.paidAt
-                      ? String(item.paidAt).slice(0, 10)
+                      ? formatDateOnly(String(item.paidAt))
                       : 'Pendente'}
                   </Typography>
                 )}

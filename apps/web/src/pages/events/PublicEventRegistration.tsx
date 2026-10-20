@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../lib/format';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -96,8 +97,7 @@ export function PublicEventRegistration() {
           <>
             <Typography>{event.data.description}</Typography>
             <Typography>
-              {new Date(event.data.startsAt).toLocaleString('pt-PT')} ·{' '}
-              {event.data.location}
+              {formatDateTime(event.data.startsAt)} · {event.data.location}
             </Typography>
             <Typography>
               {event.data.isPaid

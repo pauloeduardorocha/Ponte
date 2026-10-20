@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -212,8 +213,8 @@ export function ExpenseInvoices({
             }
           >
             <Typography>
-              {invoice.date.slice(0, 10)} · {invoice.amount} {invoice.currency}{' '}
-              · NIF {invoice.issuerTaxId}
+              {formatDateOnly(invoice.date)} · {invoice.amount}{' '}
+              {invoice.currency} · NIF {invoice.issuerTaxId}
             </Typography>
             {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
               invoice.currency !== currency) && (
@@ -286,7 +287,7 @@ export function ExpenseInvoices({
               {invoice.amount} {invoice.currency}
             </Typography>
             <Typography variant="caption">
-              NIF {invoice.issuerTaxId} · {invoice.date.slice(0, 10)} ·
+              NIF {invoice.issuerTaxId} · {formatDateOnly(invoice.date)} ·
               Associada por {invoice.associatedBy}
             </Typography>
           </RecordRow>

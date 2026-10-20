@@ -5,6 +5,7 @@ export function OperationsDashboardPage() {
   const { user } = useAuth();
   return user?.permissions.some((p) =>
     [
+      'MEMBER_READ',
       'VISITOR_READ',
       'FOLLOWUP_READ',
       'SMALL_GROUP_READ',

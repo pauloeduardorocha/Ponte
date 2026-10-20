@@ -1,3 +1,4 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
@@ -24,7 +25,6 @@ import {
   Stack,
   Tab,
   Tabs,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useAuth } from '../../auth/auth-context';

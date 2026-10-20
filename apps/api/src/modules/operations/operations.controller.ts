@@ -59,6 +59,7 @@ export class OperationsController {
     if (
       !r.user.permissions.some((p) =>
         [
+          'MEMBER_READ',
           'VISITOR_READ',
           'FOLLOWUP_READ',
           'SMALL_GROUP_READ',

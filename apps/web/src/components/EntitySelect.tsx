@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { TextField, type TextFieldProps } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import type { Page } from '@church/shared';
@@ -25,7 +26,7 @@ function label(entity: Entity) {
     entity.name ??
     [
       entity.description,
-      entity.date?.slice(0, 10),
+      entity.date ? formatDateOnly(entity.date) : undefined,
       entity.amount,
       entity.account?.currency,
     ]

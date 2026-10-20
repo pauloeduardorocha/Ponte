@@ -1,3 +1,4 @@
+import { formatDateTime } from '../../lib/format';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -80,7 +81,7 @@ export function InboxPage() {
             summary={
               <>
                 <Typography variant="caption" color="text.secondary">
-                  {new Date(m.sentAt).toLocaleString('pt-PT')}
+                  {formatDateTime(m.sentAt)}
                 </Typography>
               </>
             }

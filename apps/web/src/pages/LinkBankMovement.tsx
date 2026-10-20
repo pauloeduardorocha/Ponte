@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -70,7 +71,7 @@ export function LinkBankMovement({
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography>
               Escolha um registro concluído com a mesma conta, data (
-              {date.slice(0, 10)}) e valor ({amount}). O vínculo preserva a
+              {formatDateOnly(date)}) e valor ({amount}). O vínculo preserva a
               categoria e as associações existentes, sem cadastrar outro
               registro financeiro.
             </Typography>

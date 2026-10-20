@@ -528,7 +528,7 @@ describe('Bank statement review', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Buscar faturas no e-Fatura' }),
     );
-    await screen.findByText('Período: 2026-08-01 a 2026-10-07');
+    await screen.findByText('Período: 01/08/2026 a 07/10/2026');
     fireEvent.change(screen.getByRole('textbox', { name: /^NIF/ }), {
       target: { value: '123456789' },
     });

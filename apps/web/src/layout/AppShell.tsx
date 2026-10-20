@@ -90,6 +90,7 @@ const navigation: NavigationItem[] = [
     to: '/operations',
     icon: DashboardRounded,
     anyPermissions: [
+      'MEMBER_READ',
       'VISITOR_READ',
       'FOLLOWUP_READ',
       'SMALL_GROUP_READ',

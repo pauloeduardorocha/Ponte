@@ -1,3 +1,4 @@
+import { formatDateOnly, formatDateTime } from '../../lib/format';
 import { ScheduleDocuments } from './ScheduleDocuments';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
@@ -144,7 +145,9 @@ export function OperationDetail({
               <>
                 <Typography>
                   Primeira visita:{' '}
-                  {String(entry.visitedAt ?? entry.firstVisitDate).slice(0, 10)}
+                  {formatDateOnly(
+                    String(entry.visitedAt ?? entry.firstVisitDate),
+                  )}
                 </Typography>
                 <Stack direction="row" gap={1} flexWrap="wrap">
                   {hasPermission('FOLLOWUP_CREATE') &&
@@ -451,7 +454,7 @@ export function OperationDetail({
                             } as Record<string, string>
                           )[k]
                         }
-                        : {new Date(String(row[k])).toLocaleString('pt-PT')}
+                        : {formatDateTime(String(row[k]))}
                       </Typography>
                     ) : null,
                   )}

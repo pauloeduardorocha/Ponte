@@ -1,3 +1,4 @@
+import { formatDateTime } from '../lib/format';
 import { useAuth } from '../auth/auth-context';
 import { useState } from 'react';
 
@@ -184,8 +185,7 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
 
                 {entry.startsAt && (
                   <Typography>
-                    {new Date(entry.startsAt).toLocaleString('pt-PT')} ·{' '}
-                    {entry.location}
+                    {formatDateTime(entry.startsAt)} · {entry.location}
                   </Typography>
                 )}
 

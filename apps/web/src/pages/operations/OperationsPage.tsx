@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
+import { formatDateTime } from '../../lib/format';
 import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
@@ -14,7 +16,6 @@ import {
   Skeleton,
   Stack,
   TablePagination,
-  TextField,
   Typography,
 } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -226,8 +227,8 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         </Stack>
       </Stack>
       <Typography color="text.secondary">
-        Organize a vida de A Ponte e acompanhe cada atividade. O acesso
-        respeita suas responsabilidades.
+        Organize a vida de A Ponte e acompanhe cada atividade. O acesso respeita
+        suas responsabilidades.
       </Typography>
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
@@ -456,7 +457,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                       } as Record<string, string>
                     )[k]
                   }
-                  : {new Date(String(e[k])).toLocaleString('pt-PT')}
+                  : {formatDateTime(String(e[k]))}
                 </Typography>
               ) : null,
             )}

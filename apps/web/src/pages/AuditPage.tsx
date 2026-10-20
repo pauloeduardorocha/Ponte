@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
+import { formatDateTime } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -15,7 +17,6 @@ import {
   TableHead,
   TablePagination,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useAuth } from '../auth/auth-context';
@@ -135,7 +136,7 @@ export function AuditPage() {
             {logs.data?.items.map((log) => (
               <TableRow key={log.id}>
                 <TableCell data-sort-value={log.createdAt}>
-                  {new Date(log.createdAt).toLocaleString('pt-PT')}
+                  {formatDateTime(log.createdAt)}
                 </TableCell>
                 <TableCell>{log.userId ?? 'Sistema'}</TableCell>
                 <TableCell>{log.action}</TableCell>

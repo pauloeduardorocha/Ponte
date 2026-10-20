@@ -1,3 +1,5 @@
+import { formatDateOnly } from '../lib/format';
+import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -15,7 +17,6 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useAuth } from '../auth/auth-context';
@@ -414,8 +415,9 @@ export function ReportsPage() {
             {reports.find(([kind]) => kind === result.data.report)?.[1]}
           </Typography>
           <Typography>
-            Período: {result.data.filters.start} a {result.data.filters.end} ·{' '}
-            {result.data.count} registros
+            Período: {formatDateOnly(result.data.filters.start)} a{' '}
+            {formatDateOnly(result.data.filters.end)} · {result.data.count}{' '}
+            registros
           </Typography>
           {result.data.member && (
             <Typography>Membro: {result.data.member.name}</Typography>
@@ -472,7 +474,9 @@ export function ReportsPage() {
                 {g.sourceIds.map((id) => (
                   <Button key={id} component="a" href={`#source-${id}`}>
                     Localizar lançamento{' '}
-                    {result.data.rows.find((r) => r.id === id)?.date}
+                    {formatDateOnly(
+                      result.data.rows.find((r) => r.id === id)?.date ?? null,
+                    )}
                   </Button>
                 ))}
               </details>
@@ -497,8 +501,8 @@ export function ReportsPage() {
                   component={Link}
                   to={`?tab=${source.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${source.id}`}
                 >
-                  Origem do saldo inicial: {source.date} · {source.amount}{' '}
-                  {b.currency}
+                  Origem do saldo inicial: {formatDateOnly(source.date)} ·{' '}
+                  {source.amount} {b.currency}
                 </Button>
               ))}
             </Stack>
@@ -525,7 +529,7 @@ export function ReportsPage() {
               <TableBody>
                 {result.data.rows.map((r) => (
                   <TableRow key={r.kind + r.id} id={`source-${r.id}`}>
-                    <TableCell>{r.date}</TableCell>
+                    <TableCell>{formatDateOnly(r.date)}</TableCell>
                     <TableCell>
                       {names[r.contributionType] ??
                         (r.direction === 'CREDIT' ? 'Receita' : 'Despesa')}

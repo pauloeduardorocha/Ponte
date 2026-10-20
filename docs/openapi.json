@@ -1153,7 +1153,39 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "activeMembers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Current active members (MEMBER_READ). Not filtered by visit period."
+                    },
+                    "activeMembersWithoutGroup": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Current active members without an active membership in an active family group (MEMBER_READ and SMALL_GROUP_READ)."
+                    },
+                    "followedVisitors": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Distinct visitors in the selected visit period with an IN_PROGRESS, WAITING or COMPLETED follow-up visible to the caller (VISITOR_READ and FOLLOWUP_READ)."
+                    },
+                    "visitors": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Visitors in the selected visit period (VISITOR_READ)."
+                    },
+                    "activeVolunteers": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Distinct active members currently volunteering in active ministries within caller scope (MINISTRY_READ)."
+                    },
+                    "integrating": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "description": "Visitors in integration within the selected visit period (VISITOR_READ)."
+                    }
+                  }
                 }
               }
             }

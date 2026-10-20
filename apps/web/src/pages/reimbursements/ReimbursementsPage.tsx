@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
+import { formatDate } from '../../lib/format';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -12,7 +14,6 @@ import {
   MenuItem,
   Stack,
   TablePagination,
-  TextField,
   Typography,
 } from '@mui/material';
 import { Link, useSearchParams } from 'react-router-dom';
@@ -228,8 +229,8 @@ export function ReimbursementsPage({
           >
             <Typography>{row.purpose || 'Finalidade por preencher'}</Typography>
             <Typography variant="caption">
-              Recebido em {new Date(row.createdAt).toLocaleDateString('pt-PT')}{' '}
-              · {row.attachments.length} documento(s)
+              Recebido em {formatDate(row.createdAt)} · {row.attachments.length}{' '}
+              documento(s)
             </Typography>
           </RecordRow>
         ))}
@@ -464,11 +465,7 @@ function ReimbursementDetail({
           </Button>
         </Stack>
       )}
-      {row.paidAt && (
-        <Typography>
-          Pago em {new Date(row.paidAt).toLocaleDateString('pt-PT')}
-        </Typography>
-      )}
+      {row.paidAt && <Typography>Pago em {formatDate(row.paidAt)}</Typography>}
       {management && row.status === 'PAID' && (
         <Button
           disabled={action.isPending}
@@ -504,8 +501,8 @@ function ReimbursementDetail({
               alignItems="center"
             >
               <Typography sx={{ flex: 1 }}>
-                {new Date(item.date).toLocaleDateString('pt-PT')} ·{' '}
-                {money(item.amount)} · {item.description || item.reference}
+                {formatDate(item.date)} · {money(item.amount)} ·{' '}
+                {item.description || item.reference}
               </Typography>
               <Button
                 disabled={action.isPending}

@@ -1,14 +1,8 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  Alert,
-  Button,
-  MenuItem,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Alert, Button, MenuItem, Stack, Typography } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../auth/auth-context';
 import { apiRequest } from '../../lib/api';

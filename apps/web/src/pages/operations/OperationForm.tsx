@@ -1,3 +1,4 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { useState } from 'react';
 import { useForm, Controller, type Control } from 'react-hook-form';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -13,7 +14,6 @@ import {
   FormControlLabel,
   MenuItem,
   Stack,
-  TextField,
 } from '@mui/material';
 import { useAuth } from '../../auth/auth-context';
 import { apiRequest } from '../../lib/api';

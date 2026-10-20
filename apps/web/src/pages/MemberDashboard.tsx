@@ -1,3 +1,4 @@
+import { formatDateTime } from '../lib/format';
 import { useQuery } from '@tanstack/react-query';
 import {
   Button,
@@ -55,7 +56,7 @@ type Dashboard = {
     loan: { bookCopy: { book: Book } };
   }[];
 };
-const date = (value: string) => new Date(value).toLocaleString('pt-PT');
+const date = (value: string) => formatDateTime(value);
 const days = [
   'Domingo',
   'Segunda-feira',

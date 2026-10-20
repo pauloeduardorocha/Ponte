@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
+import { formatDateTime, last30Days } from '../../lib/format';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
@@ -8,7 +10,6 @@ import {
   CardContent,
   Skeleton,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -17,6 +18,9 @@ import { apiRequest } from '../../lib/api';
 import { MetricCard } from '../../components/DataPresentation';
 import { entryName, type Entry } from './operation-config';
 type Dashboard = {
+  activeMembers?: number;
+  activeMembersWithoutGroup?: number;
+  followedVisitors?: number;
   scheduleConflicts?: number;
   visitors?: number;
   newVisitors?: number;
@@ -35,11 +39,12 @@ type Dashboard = {
 };
 export function OperationalDashboard() {
   const { user } = useAuth(),
-    [start, setStart] = useState(''),
-    [end, setEnd] = useState('');
+    [period, setPeriod] = useState(last30Days);
+  const { start, end } = period;
   const enabled =
     user?.permissions.some((p) =>
       [
+        'MEMBER_READ',
         'VISITOR_READ',
         'FOLLOWUP_READ',
         'SMALL_GROUP_READ',
@@ -56,31 +61,46 @@ export function OperationalDashboard() {
     staleTime: 30000,
   });
   if (!enabled) return null;
-  const metrics: [keyof Dashboard, string, string][] = [
-    ['visitors', 'Visitantes no período', '/visitors'],
-    ['newVisitors', 'Novos visitantes', '/visitors?status=NEW'],
-    ['pendingFollowUps', 'Aguardando contato', '/follow-ups?status=PENDING'],
-    ['overdueContacts', 'Contatos atrasados', '/follow-ups'],
-    [
-      'activeFollowUps',
-      'Acompanhamentos em andamento',
-      '/follow-ups?status=IN_PROGRESS',
-    ],
-    [
-      'completedFollowUps',
-      'Acompanhamentos concluídos',
-      '/follow-ups?status=COMPLETED',
-    ],
-    ['integrating', 'Pessoas em integração', '/visitors?status=INTEGRATING'],
-    ['scheduleConflicts', 'Conflitos de escala', '/schedules'],
-    ['activeGroups', 'Grupos familiares ativas', '/small-groups'],
-    [
-      'groupParticipants',
-      'Participantes em grupos familiares',
-      '/small-groups',
-    ],
-    ['activeMinistries', 'Ministérios ativos', '/ministries'],
-    ['activeVolunteers', 'Voluntários ativos', '/ministries'],
+  const d = data.data;
+  const metrics = [
+    {
+      key: 'activeMembers',
+      label: 'Membros ativos',
+      value: d?.activeMembers,
+      to: '/members?status=ACTIVE',
+    },
+    {
+      key: 'followedVisitors',
+      label: 'Visitantes acompanhados/visitantes no período',
+      value:
+        typeof d?.followedVisitors === 'number' &&
+        typeof d.visitors === 'number'
+          ? `${d.followedVisitors}/${d.visitors}`
+          : undefined,
+      to: '/visitors',
+    },
+    {
+      key: 'activeMembersWithoutGroup',
+      label: 'Membros ativos sem grupo familiar',
+      value: d?.activeMembersWithoutGroup,
+    },
+    {
+      key: 'activeVolunteers',
+      label: 'Voluntários/membros',
+      value:
+        typeof d?.activeVolunteers === 'number' &&
+        typeof d.activeMembers === 'number'
+          ? `${d.activeVolunteers}/${d.activeMembers}`
+          : undefined,
+      detail: `${d?.activeVolunteers} voluntários de ${d?.activeMembers} membros ativos`,
+      to: '/ministries',
+    },
+    {
+      key: 'integrating',
+      label: 'Pessoas em integração',
+      value: d?.integrating,
+      to: '/visitors?status=INTEGRATING',
+    },
   ];
   return (
     <Stack spacing={2}>
@@ -91,22 +111,21 @@ export function OperationalDashboard() {
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={start}
-          onChange={(e) => setStart(e.target.value)}
+          onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
         />
         <TextField
           label="Período: até"
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={end}
-          onChange={(e) => setEnd(e.target.value)}
+          onChange={(e) => setPeriod((p) => ({ ...p, end: e.target.value }))}
         />
         <Button
           onClick={() => {
-            setStart('');
-            setEnd('');
+            setPeriod(last30Days());
           }}
         >
-          Todo o período
+          Últimos 30 dias
         </Button>
       </Stack>
       {data.isPending && <Skeleton height={180} />}
@@ -125,12 +144,13 @@ export function OperationalDashboard() {
       {data.data && (
         <>
           <div className="metric-grid">
-            {metrics.map(([key, label, to]) =>
-              typeof data.data?.[key] === 'number' ? (
+            {metrics.map(({ key, label, value, detail, to }) =>
+              value !== undefined ? (
                 <MetricCard
                   key={key}
                   label={label}
-                  value={String(data.data[key])}
+                  value={value}
+                  detail={detail}
                   href={to}
                 />
               ) : null,
@@ -162,14 +182,14 @@ export function OperationalDashboard() {
                               primary={<Typography>{entryName(e)}</Typography>}
                             >
                               <Typography variant="body2">
-                                {String(
-                                  e.nextContactAt ??
-                                    e.startsAt ??
-                                    e.date ??
-                                    'Sem data',
-                                )
-                                  .slice(0, 16)
-                                  .replace('T', ' ')}
+                                {formatDateTime(
+                                  String(
+                                    e.nextContactAt ??
+                                      e.startsAt ??
+                                      e.date ??
+                                      'Sem data',
+                                  ),
+                                )}
                               </Typography>
                             </RecordRow>
                           ))}

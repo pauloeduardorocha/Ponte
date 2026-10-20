@@ -1833,10 +1833,44 @@ export class OperationsService {
     const p = user.permissions,
       result: Record<string, unknown> = {};
     const now = new Date();
+    if (p.includes('MEMBER_READ')) {
+      result.activeMembers = await this.db.member.count({
+        where: { status: 'ACTIVE' },
+      });
+      if (p.includes('SMALL_GROUP_READ'))
+        result.activeMembersWithoutGroup = await this.db.member.count({
+          where: {
+            status: 'ACTIVE',
+            groupMemberships: {
+              none: {
+                active: true,
+                leftAt: null,
+                smallGroup: { active: true },
+              },
+            },
+          },
+        });
+    }
     if (p.includes('VISITOR_READ')) {
       const scope = await this.visitorScope(user),
         where = { AND: [scope, { visitedAt: this.range(q) }] };
       result.visitors = await this.db.visitor.count({ where });
+      if (p.includes('FOLLOWUP_READ'))
+        result.followedVisitors = await this.db.visitor.count({
+          where: {
+            AND: [
+              where,
+              {
+                followUps: {
+                  some: {
+                    ...(this.all(user) ? {} : { assignedToUserId: user.id }),
+                    status: { in: ['IN_PROGRESS', 'WAITING', 'COMPLETED'] },
+                  },
+                },
+              },
+            ],
+          },
+        });
       result.newVisitors = await this.db.visitor.count({
         where: { AND: [where, { status: 'NEW' }] },
       });
@@ -1884,7 +1918,12 @@ export class OperationsService {
         where: { AND: [scope, { active: true }] },
       });
       const volunteers = await this.db.ministryMember.groupBy({
-        where: { active: true, ministry: scope },
+        where: {
+          active: true,
+          leftAt: null,
+          member: { status: 'ACTIVE' },
+          ministry: { AND: [scope, { active: true }] },
+        },
         by: ['memberId'],
       });
       result.activeVolunteers = volunteers.length;

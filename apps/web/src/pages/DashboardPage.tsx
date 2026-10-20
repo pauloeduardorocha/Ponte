@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from '../lib/format';
 import { MemberDashboard } from './MemberDashboard';
 import { BirthdaysCard } from '../components/BirthdaysCard';
 import { YouTubeCarousel } from '../components/YouTubeCarousel';
@@ -55,11 +56,7 @@ export function DashboardPage() {
     <Stack spacing={4}>
       <Box>
         <Typography variant="overline" color="primary.main">
-          {new Date().toLocaleDateString('pt-PT', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-          })}
+          {formatDate(new Date().toISOString())}
         </Typography>
         <Typography variant="h4" component="h1">
           Bom dia, A Ponte
@@ -223,8 +220,7 @@ export function DashboardPage() {
                       }
                     >
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(e.startsAt).toLocaleString('pt-PT')} ·{' '}
-                        {e.location}
+                        {formatDateTime(e.startsAt)} · {e.location}
                       </Typography>
                     </RecordRow>
                   ))}

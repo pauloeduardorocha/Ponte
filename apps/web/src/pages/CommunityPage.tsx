@@ -1,3 +1,5 @@
+import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
+import { formatDateOnly, formatDateTime } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -13,7 +15,6 @@ import {
   Skeleton,
   Stack,
   TablePagination,
-  TextField,
   Typography,
 } from '@mui/material';
 import { useAuth } from '../auth/auth-context';
@@ -234,8 +235,8 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
           >
             <Typography variant="body2">
               {kind === 'events'
-                ? new Date(item.startsAt!).toLocaleString('pt-PT')
-                : item.visitedAt?.slice(0, 10)}
+                ? formatDateTime(item.startsAt!)
+                : formatDateOnly(item.visitedAt ?? null)}
             </Typography>
             <Typography variant="body2" color="text.secondary">
               {kind === 'events'

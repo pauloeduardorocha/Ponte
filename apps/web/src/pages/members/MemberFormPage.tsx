@@ -1,3 +1,4 @@
+import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,7 +13,6 @@ import {
   CircularProgress,
   MenuItem,
   Stack,
-  TextField,
 } from '@mui/material';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { PageHeader, QueryError } from '../../components/PageParts';

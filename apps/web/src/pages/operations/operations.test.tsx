@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   makeUser,
   mockApi,
@@ -9,6 +9,73 @@ import {
 } from '../../test/utils';
 describe('Operational workflows', () => {
   beforeEach(resetTestState);
+  it('shows the five meaningful indicators and defaults and resets to 30 calendar days', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-20T12:00:00Z'));
+    try {
+      const requests = mockApi({
+        ...sessionRoutes(
+          makeUser([
+            'MEMBER_READ',
+            'VISITOR_READ',
+            'FOLLOWUP_READ',
+            'SMALL_GROUP_READ',
+            'MINISTRY_READ',
+          ]),
+        ),
+        'GET /operations/dashboard': {
+          body: {
+            activeMembers: 329,
+            activeMembersWithoutGroup: 100,
+            followedVisitors: 0,
+            visitors: 2,
+            activeVolunteers: 11,
+            integrating: 3,
+            pendingFollowUps: 5,
+            activeGroups: 4,
+          },
+        },
+      });
+      renderApp('/operations');
+      expect(
+        await screen.findByRole('link', {
+          name: 'Voluntários/membros: 11/329. Abrir lista',
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('11 voluntários de 329 membros ativos'),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole('link', {
+          name: 'Visitantes acompanhados/visitantes no período: 0/2. Abrir lista',
+        }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Membros ativos sem grupo familiar'),
+      ).toBeInTheDocument();
+      expect(screen.queryByText('Aguardando contato')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Grupos familiares ativas'),
+      ).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Período: de')).toHaveValue('21/09/2026');
+      expect(screen.getByLabelText('Período: até')).toHaveValue('20/10/2026');
+      const first = requests.find((r) => r.path === '/operations/dashboard')!;
+      expect(first.query.get('start')).toBe('2026-09-21');
+      expect(first.query.get('end')).toBe('2026-10-20');
+      fireEvent.change(screen.getByLabelText('Período: de'), {
+        target: { value: '01/09/2026' },
+      });
+      await waitFor(() =>
+        expect(
+          requests.some((r) => r.query.get('start') === '2026-09-01'),
+        ).toBe(true),
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Últimos 30 dias' }));
+      expect(screen.getByLabelText('Período: de')).toHaveValue('21/09/2026');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
   it('opens the personal inbox without management permission or a client-selected recipient', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser([])),
@@ -46,12 +113,12 @@ describe('Operational workflows', () => {
           'FINANCE_CONTRIBUTION_READ',
         ]),
       ),
-      'GET /operations/dashboard': { body: { pendingFollowUps: 1 } },
+      'GET /operations/dashboard': { body: { integrating: 1 } },
     });
     renderApp('/operations');
     expect(
       await screen.findByRole('link', {
-        name: 'Aguardando contato: 1. Abrir lista',
+        name: 'Pessoas em integração: 1. Abrir lista',
       }),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/finance'))).toBe(false);
@@ -105,7 +172,9 @@ describe('Operational workflows', () => {
       },
     });
     renderApp('/small-groups');
-    expect(await screen.findByText('Grupo familiar Esperança')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Grupo familiar Esperança'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: 'Financeiro' }),
     ).not.toBeInTheDocument();
@@ -213,7 +282,7 @@ describe('Operational workflows', () => {
       'GET /operations/dashboard': {
         body: {
           pendingFollowUps: 2,
-          overdueContacts: 1,
+          integrating: 1,
           activeGroups: 3,
           nextContacts: [],
         },
@@ -222,7 +291,7 @@ describe('Operational workflows', () => {
     renderApp('/');
     expect(
       await screen.findByRole('link', {
-        name: 'Contatos atrasados: 1. Abrir lista',
+        name: 'Pessoas em integração: 1. Abrir lista',
       }),
     ).toBeInTheDocument();
     expect(screen.queryByText('Receitas')).not.toBeInTheDocument();

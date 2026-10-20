@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -110,7 +111,8 @@ export function EfaturaFetch({
             </Typography>
             {period?.start && period.end && (
               <Typography variant="body2">
-                Período: {period.start} a {period.end}
+                Período: {formatDateOnly(period.start)} a{' '}
+                {formatDateOnly(period.end)}
               </Typography>
             )}
             <Typography variant="body2" color="text.secondary">

@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -40,7 +41,7 @@ export function ExpenseDocumentContent({ expense }: { expense: Expense }) {
     <Stack spacing={2}>
       <Typography fontWeight={600}>
         {expense.description} · {expense.amount} {expense.account?.currency} ·{' '}
-        {expense.date?.slice(0, 10)}
+        {formatDateOnly(expense.date ?? null)}
       </Typography>
       <MovementAttachments
         expenseId={expense.id}

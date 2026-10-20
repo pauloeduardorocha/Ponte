@@ -1,3 +1,4 @@
+import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useState } from 'react';
@@ -626,7 +627,7 @@ export function BankingPage({
                     {currentMovement.import.account.currency}
                   </Typography>
                   <Typography variant="body2">
-                    {currentMovement.date.slice(0, 10)} · Referência:{' '}
+                    {formatDateOnly(currentMovement.date)} · Referência:{' '}
                     {currentMovement.reference || 'Não informada'}
                   </Typography>
                   {currentMovement.status === 'POSSIBLE_DUPLICATE' && (
@@ -891,7 +892,7 @@ export function BankingPage({
                   }
                 >
                   <Typography>
-                    {i.account?.name} · {i.createdAt?.slice(0, 10)} ·{' '}
+                    {i.account?.name} · {formatDateOnly(i.createdAt ?? null)} ·{' '}
                     {statusNames[i.status]} · {i._count.transactions} movimentos
                   </Typography>
                 </RecordRow>

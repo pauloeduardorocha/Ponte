@@ -1,3 +1,4 @@
+import { formatDateOnly, formatDateTime } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -265,9 +266,7 @@ export function FinancialDashboardPanel() {
                     </Typography>
                     {data.data.latestImport.createdAt && (
                       <Typography variant="caption">
-                        {new Date(
-                          data.data.latestImport.createdAt,
-                        ).toLocaleString('pt-PT')}
+                        {formatDateTime(data.data.latestImport.createdAt)}
                       </Typography>
                     )}
                     <StatusChip status={data.data.latestImport.status} />
@@ -322,7 +321,7 @@ export function FinancialDashboardPanel() {
                   }
                 >
                   <Typography variant="caption" color="text.secondary">
-                    {t.date.slice(0, 10)} ·{' '}
+                    {formatDateOnly(t.date)} ·{' '}
                     {t.kind === 'INCOME' ? 'Receita' : 'Despesa'}
                   </Typography>
                   <Typography
