@@ -22,12 +22,10 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import {
-  AddRounded,
-  EditRounded,
-  SearchRounded,
-  VisibilityRounded,
-} from '@mui/icons-material';
+import AddRounded from '@mui/icons-material/AddRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
+import SearchRounded from '@mui/icons-material/SearchRounded';
+import VisibilityRounded from '@mui/icons-material/VisibilityRounded';
 import {
   Link as RouterLink,
   useLocation,

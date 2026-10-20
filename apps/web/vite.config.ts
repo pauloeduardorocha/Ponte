@@ -55,28 +55,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (!id.includes('node_modules')) {
-              return;
-            }
-            if (id.includes('@mui') || id.includes('@emotion')) {
-              return 'ui';
-            }
-            if (
-              id.includes('react-dom') ||
-              id.includes('react-router') ||
-              id.includes('/react/')
-            ) {
-              return 'react';
-            }
-            if (id.includes('@tanstack')) {
-              return 'query';
-            }
-          },
-        },
-      },
+      manifest: true,
+      // Let Rollup share modules by usage so lazy-only UI stays with its routes.
     },
     test: {
       maxWorkers: 2,

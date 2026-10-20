@@ -13,25 +13,61 @@ import { LinearProgress } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import { PublicOnly, RequireAuth, RequirePermission } from './auth/guards';
-import { AppShell } from './layout/AppShell';
+const AppShell = lazy(() =>
+  import('./layout/AppShell').then((m) => ({ default: m.AppShell })),
+);
 const AccountPage = lazy(() =>
   import('./pages/AccountPage').then((m) => ({ default: m.AccountPage })),
 );
-import { DashboardPage } from './pages/DashboardPage';
-import { PublicEventRegistration } from './pages/events/PublicEventRegistration';
-import { EventWorkspace } from './pages/events/EventWorkspace';
-import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
+const DashboardPage = lazy(() =>
+  import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+);
+const PublicEventRegistration = lazy(() =>
+  import('./pages/events/PublicEventRegistration').then((m) => ({
+    default: m.PublicEventRegistration,
+  })),
+);
+const EventWorkspace = lazy(() =>
+  import('./pages/events/EventWorkspace').then((m) => ({
+    default: m.EventWorkspace,
+  })),
+);
+const ForgotPasswordPage = lazy(() =>
+  import('./pages/ForgotPasswordPage').then((m) => ({
+    default: m.ForgotPasswordPage,
+  })),
+);
 import { LoginPage } from './pages/LoginPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { ResetPasswordPage } from './pages/ResetPasswordPage';
+const RegisterPage = lazy(() =>
+  import('./pages/RegisterPage').then((m) => ({ default: m.RegisterPage })),
+);
+const ResetPasswordPage = lazy(() =>
+  import('./pages/ResetPasswordPage').then((m) => ({
+    default: m.ResetPasswordPage,
+  })),
+);
 
-import { MemberDetailPage } from './pages/members/MemberDetailPage';
-import {
-  MemberCreatePage,
-  MemberEditPage,
-} from './pages/members/MemberFormPage';
-import { MembersListPage } from './pages/members/MembersListPage';
+const MemberDetailPage = lazy(() =>
+  import('./pages/members/MemberDetailPage').then((m) => ({
+    default: m.MemberDetailPage,
+  })),
+);
+const MemberCreatePage = lazy(() =>
+  import('./pages/members/MemberFormPage').then((m) => ({
+    default: m.MemberCreatePage,
+  })),
+);
+const MemberEditPage = lazy(() =>
+  import('./pages/members/MemberFormPage').then((m) => ({
+    default: m.MemberEditPage,
+  })),
+);
+const MembersListPage = lazy(() =>
+  import('./pages/members/MembersListPage').then((m) => ({
+    default: m.MembersListPage,
+  })),
+);
 const FinancePage = lazy(() =>
   import('./pages/FinancePage').then((m) => ({ default: m.FinancePage })),
 );

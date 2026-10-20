@@ -4,6 +4,9 @@ node_modules
 **/dist-seed
 **/coverage
 .git
+.vercel
+tmp
+.neon
 .env
 .env.*
 !.env.example

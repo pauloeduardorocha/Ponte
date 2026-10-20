@@ -1,5 +1,10 @@
 # Revisão de segurança e auditoria — 7 de outubro de 2026
 
+Atualização operacional de 16 de outubro: acesso limitado aplicado em produção,
+credenciais antigas arquivadas com encriptação e ensaio de restauro concluído.
+Consultar [segurança da base de dados](database-security.md) para evidências,
+limitações do plano gratuito e procedimentos atuais de migração.
+
 ## Escopo e resultado
 
 Revisão do código da API, frontend, autenticação, RBAC, consultas de membros,

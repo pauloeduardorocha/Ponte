@@ -52,3 +52,12 @@ A suíte completa da API contra a cópia temporária do Postgres terminou com 22
 - Antes da promoção: login 200, health 200 com API e banco disponíveis, endpoint de aniversariantes 401 sem login.
 - Após promoção: mesmas verificações aprovadas no domínio público; bundle confirmado com o card e a chamada ao endpoint.
 - Sem migrações ou seeds. Publicação do diretório de trabalho sobre `daf6293`, sem novo commit. Visualização autenticada em produção não verificada manualmente.
+
+## Cards pessoais responsivos
+
+- Deploy `dpl_6FKpvKNV7KkBMtZFMDyrZA8reTcT` promovido para https://ponte-umber.vercel.app.
+- Aniversariantes e cards pessoais compartilham uma grade de duas colunas a partir de 1200 px; uma coluna abaixo disso.
+- TypeScript e ESLint aprovados; build remoto aprovado. Login 200 e API/banco saudáveis antes/depois da promoção.
+- Chrome headless sobre os assets publicados, com sessão e dados de membro simulados por interceptação local: duas colunas em 1440 px, uma coluna em 1024/768/390 px, sem overflow horizontal. Não utilizou credenciais nem alterou dados reais.
+- Reexecução dos testes Vitest da página inicial ficou sem resposta e foi interrompida; a verificação de layout no navegador passou.
+- Sem migrações ou seeds; publicação do diretório de trabalho sem novo commit.

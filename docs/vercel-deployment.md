@@ -1,5 +1,9 @@
 # Vercel + Neon deployment
 
+For current database credentials, migrations and recovery procedures, see
+[database security](database-security.md). The API must use the restricted
+`church_app` login; keep the migration owner outside its runtime environment.
+
 Deploy the React frontend and NestJS backend as two Vercel projects, and use
 Neon Free for PostgreSQL. Vercel Hobby is for personal, non-commercial use only.
 Keep all services on free plans; do not enable paid upgrades or add-ons.
@@ -15,8 +19,10 @@ environment settings, never in Git or chat.
 Run migrations once against the new database before publishing the API:
 
 ```powershell
-# Set DATABASE_URL securely to the Neon direct connection string in this shell.
+# Supply the owner's direct connection securely as ADMIN_DATABASE_URL.
 npm run db:deploy --workspace @church/api
+# Bootstrap is an administrative operation in this shell only.
+$env:DATABASE_URL = $env:ADMIN_DATABASE_URL
 $env:NODE_ENV = 'production'
 npm run build --workspace @church/shared
 npm run db:bootstrap:production
@@ -45,7 +51,7 @@ Set these environment variables for Production:
 | Variable                 | Value                                                      |
 | ------------------------ | ---------------------------------------------------------- |
 | `NODE_ENV`               | `production`                                               |
-| `DATABASE_URL`           | Neon pooled connection string                              |
+| `DATABASE_URL`           | Neon pooled connection string for restricted `church_app`  |
 | `JWT_ACCESS_SECRET`      | Random secret, at least 32 characters                      |
 | `JWT_REFRESH_SECRET`     | Different random secret, at least 32 characters            |
 | `CORS_ORIGIN`            | Exact frontend origin, e.g. `https://ponte-web.vercel.app` |
