@@ -14,6 +14,11 @@ RUN npm ci
 COPY apps/api apps/api
 COPY packages/shared packages/shared
 
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV EFATURA_CHROMIUM_NO_SANDBOX=true
+RUN apk add --no-cache chromium
+
 RUN npm run db:generate --workspace @church/api \
   && npm run build --workspace @church/shared \
   && npm run build --workspace @church/api \
@@ -38,6 +43,7 @@ COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
 COPY --from=build --chown=node:node /app/apps/api/dist-seed ./apps/api/dist-seed
 COPY --from=build --chown=node:node /app/apps/api/prisma ./apps/api/prisma
 COPY --from=build --chown=node:node /app/apps/api/prisma.config.ts ./apps/api/prisma.config.ts
+COPY --from=build --chown=node:node /app/apps/api/scripts/database-security.cjs ./apps/api/scripts/database-security.cjs
 COPY --from=build --chown=node:node /app/packages/shared/package.json ./packages/shared/package.json
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
 
@@ -46,4 +52,4 @@ RUN mkdir -p /app/private-storage && chown node:node /app/private-storage && chm
 USER node
 EXPOSE 3000
 
-CMD ["sh", "-c", "npm run db:deploy --workspace @church/api && npm run start:prod --workspace @church/api"]
+CMD ["npm", "run", "start:prod", "--workspace", "@church/api"]

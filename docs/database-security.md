@@ -53,6 +53,12 @@ senha existente; rotações precisam de uma passagem coordenada para a nova
 credencial. Nenhum destes comandos carrega automaticamente `.env` ou imprime
 credenciais. A alteração de privilégios e a criação do login são transacionais.
 
+No Docker Compose, o serviço administrativo `db-init` executa a ação `bootstrap`:
+aplica migrations e privilégios e cria `church_app` apenas se não existir.
+A senha existente nunca é substituída. A API aguarda esse serviço e recebe
+somente a ligação limitada. O comando padrão da imagem da API apenas inicia
+o servidor; tarefas administrativas são executadas separadamente.
+
 ## Cofre local Windows
 
 `apps/api/scripts/protect-local-secrets.ps1` arquiva as cópias antigas

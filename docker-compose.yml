@@ -16,6 +16,18 @@ services:
       timeout: 5s
       retries: 10
 
+  db-init:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    command: ['node', 'apps/api/scripts/database-security.cjs', 'bootstrap']
+    environment:
+      ADMIN_DATABASE_URL: postgresql://${POSTGRES_USER:-church}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
+      RUNTIME_DATABASE_PASSWORD: ${RUNTIME_DATABASE_PASSWORD:?Configure a random RUNTIME_DATABASE_PASSWORD with at least 48 base64url characters}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build:
       context: .
@@ -25,7 +37,7 @@ services:
       NODE_ENV: production
       API_PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
-      DATABASE_URL: postgresql://${POSTGRES_USER:-church}:${POSTGRES_PASSWORD:?Configure POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
+      DATABASE_URL: postgresql://church_app:${RUNTIME_DATABASE_PASSWORD:?Configure RUNTIME_DATABASE_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
       PRIVATE_STORAGE_PATH: /app/private-storage
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Configure JWT_ACCESS_SECRET in .env}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Configure JWT_REFRESH_SECRET in .env}
@@ -34,8 +46,8 @@ services:
     volumes:
       - financial_storage:/app/private-storage
     depends_on:
-      postgres:
-        condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [

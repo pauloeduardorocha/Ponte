@@ -28,7 +28,7 @@ packages/
 
 ```powershell
 Copy-Item .env.example .env
-# Configure DATABASE_URL e os dois segredos aleatórios distintos em .env.
+# Configure DATABASE_URL, ADMIN_DATABASE_URL e os segredos do exemplo em .env.
 npm install
 docker compose up -d postgres
 npm run db:generate
@@ -47,7 +47,9 @@ de desenvolvimento, o Vite encaminha `/api` para `http://localhost:3000`.
 
 ## Docker Compose
 
-Após criar `.env` a partir do exemplo e configurar `POSTGRES_PASSWORD`, inicie
+Após criar `.env` a partir do exemplo, configure `POSTGRES_PASSWORD`, os dois
+segredos JWT e `RUNTIME_DATABASE_PASSWORD` com pelo menos 48 caracteres aleatórios
+base64url. Use senhas diferentes para o proprietário e o login da API. Inicie
 toda a stack:
 
 ```bash
@@ -56,9 +58,12 @@ docker compose up -d
 docker compose up -d --build
 ```
 
-O Compose aguarda o PostgreSQL ficar saudável antes de iniciar a API. A API
-aplica as migrations de produção (`prisma migrate deploy`) e o frontend aguarda
-o health check da API. O frontend é servido pelo Nginx e encaminha requisições
+O serviço `db-init` aguarda o PostgreSQL, aplica as migrations e os privilégios e
+cria `church_app` se o login ainda não existir. A preparação pode ser repetida;
+não altera senhas existentes. Depois, a API inicia com o login limitado, sem
+credencial administrativa, e o frontend aguarda o health check da API.
+Em volumes existentes, conserve a senha já atribuída ao login limitado; uma
+senha diferente exige uma rotação explícita. O frontend é servido pelo Nginx e encaminha requisições
 `/api/` para a API sem expor o hostname interno dos containers ao navegador.
 
 ```bash
@@ -87,7 +92,8 @@ npm run db:studio
 ```
 
 `db:migrate` é o fluxo de desenvolvimento (`prisma migrate dev`). `db:deploy`
-aplica migrations existentes sem criá-las, como esperado em produção.
+exige a ligação direta do proprietário em `ADMIN_DATABASE_URL`, aplica migrations
+existentes e reaplica os privilégios. A API usa o login limitado em `DATABASE_URL`.
 
 ### Seed explicitamente de desenvolvimento
 

@@ -6,8 +6,8 @@ const { spawnSync } = require('node:child_process');
 
 async function main() {
   const action = process.argv[2];
-  if (!['apply', 'provision', 'deploy'].includes(action)) {
-    throw new Error('Usage: database-security.cjs apply|provision|deploy');
+  if (!['apply', 'provision', 'deploy', 'bootstrap'].includes(action)) {
+    throw new Error('Usage: database-security.cjs apply|provision|deploy|bootstrap');
   }
   const connection = process.env.ADMIN_DATABASE_URL;
   if (!connection) throw new Error('Supply ADMIN_DATABASE_URL explicitly');
@@ -16,14 +16,14 @@ async function main() {
     throw new Error('Use a direct administrative connection');
   const password = process.env.RUNTIME_DATABASE_PASSWORD;
   if (
-    action === 'provision' &&
+    ['provision', 'bootstrap'].includes(action) &&
     (!password || !/^[A-Za-z0-9_-]{48,}$/.test(password))
   ) {
     throw new Error(
       'Supply a random RUNTIME_DATABASE_PASSWORD with at least 48 base64url characters',
     );
   }
-  if (action === 'deploy') {
+  if (['deploy', 'bootstrap'].includes(action)) {
     // Migrations always use the owner, never the runtime DATABASE_URL.
     // Capture diagnostics to avoid emitting credentials from engine failures.
     const migrated = spawnSync(
@@ -44,13 +44,15 @@ async function main() {
   }
   const db = new PrismaClient({ datasources: { db: { url: connection } } });
   try {
-    if (action === 'provision') {
+    let createRuntime = false;
+    if (['provision', 'bootstrap'].includes(action)) {
       const existing =
         await db.$queryRaw`SELECT 1 FROM pg_roles WHERE rolname='church_app'`;
-      if (existing.length)
+      if (existing.length && action === 'provision')
         throw new Error(
           'church_app already exists; password rotation requires a separate planned cutover',
         );
+      createRuntime = existing.length === 0;
     }
     await db.$transaction(
       async (tx) => {
@@ -60,7 +62,7 @@ async function main() {
             'utf8',
           ),
         );
-        if (action === 'provision') {
+        if (createRuntime) {
           // Validated alphabet above; PostgreSQL role passwords cannot be bind parameters.
           await tx.$executeRawUnsafe(
             `CREATE ROLE church_app LOGIN INHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS PASSWORD '${password}'`,
