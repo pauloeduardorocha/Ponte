@@ -44,6 +44,10 @@ describe('Passkeys in login and account', () => {
       id: 'credential',
     } as never);
     renderApp('/account');
+    await screen.findByRole('button', {
+      name: 'Entrar com biometria ou passkey',
+    });
+    expect(startAuthentication).not.toHaveBeenCalled();
     fireEvent.click(
       await screen.findByRole('button', {
         name: 'Entrar com biometria ou passkey',
@@ -56,6 +60,96 @@ describe('Passkeys in login and account', () => {
     expect(
       requests.find((r) => r.path === '/auth/passkeys/login/verify')?.body,
     ).toEqual({ challengeId: 'challenge', response: { id: 'credential' } });
+  });
+
+  function useMobileViewport() {
+    vi.mocked(window.matchMedia).mockImplementation((media: string) => ({
+      matches: false,
+      media,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  }
+
+  it('automatically signs in on mobile and returns to the requested page', async () => {
+    useMobileViewport();
+    const user = makeUser();
+    mockApi({
+      ...anonymousRoutes,
+      'POST /auth/passkeys/login/options': {
+        body: { challengeId: 'challenge', options: { challenge: 'nonce' } },
+      },
+      'POST /auth/passkeys/login/verify': {
+        body: { accessToken: 'mobile-session', user },
+      },
+      'GET /auth/passkeys': { body: [] },
+    });
+    vi.mocked(startAuthentication).mockResolvedValue({
+      id: 'credential',
+    } as never);
+    renderApp('/account');
+
+    expect(
+      await screen.findByRole('heading', { name: 'Minha conta' }),
+    ).toBeInTheDocument();
+    expect(startAuthentication).toHaveBeenCalledTimes(1);
+    expect(getAccessToken()).toBe('mobile-session');
+    expect(
+      screen.queryByRole('button', { name: 'Entrar com biometria ou passkey' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('allows password login after cancelling the automatic mobile prompt without reopening it', async () => {
+    useMobileViewport();
+    const user = makeUser();
+    mockApi({
+      ...anonymousRoutes,
+      'POST /auth/passkeys/login/options': {
+        body: { challengeId: 'challenge', options: {} },
+      },
+      'POST /auth/login': { body: { accessToken: 'password-session', user } },
+      'GET /auth/me': { body: user },
+      'GET /auth/passkeys': { body: [] },
+    });
+    vi.mocked(startAuthentication).mockRejectedValue(
+      new DOMException('Cancelled', 'NotAllowedError'),
+    );
+    renderApp('/account');
+
+    await screen.findByText(/Operação cancelada ou expirada/);
+    expect(
+      screen.queryByRole('button', { name: 'Entrar com biometria ou passkey' }),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: user.email },
+    });
+    fireEvent.change(screen.getByLabelText('Senha'), {
+      target: { value: 'current-password' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Minha conta' }),
+    ).toBeInTheDocument();
+    expect(getAccessToken()).toBe('password-session');
+    expect(startAuthentication).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps password login available on mobile without passkey support', async () => {
+    useMobileViewport();
+    vi.stubGlobal('PublicKeyCredential', undefined);
+    const requests = mockApi(anonymousRoutes);
+    renderApp('/login');
+
+    expect(await screen.findByRole('button', { name: 'Entrar' })).toBeEnabled();
+    expect(startAuthentication).not.toHaveBeenCalled();
+    expect(
+      requests.some((r) => r.path === '/auth/passkeys/login/options'),
+    ).toBe(false);
   });
 
   it('keeps password login available when the device prompt is cancelled', async () => {

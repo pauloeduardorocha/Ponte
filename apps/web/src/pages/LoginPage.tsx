@@ -1,8 +1,16 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Box, Button, Link, Stack, TextField } from '@mui/material';
+import {
+  Box,
+  Button,
+  Link,
+  Stack,
+  TextField,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { AuthCard } from '../components/AuthCard';
@@ -26,22 +34,44 @@ interface LoginLocationState {
 export function LoginPage() {
   const { login, loginWithPasskey, signOutNotice, sessionError } = useAuth();
   const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const autoPasskeyStarted = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const state = (location.state ?? {}) as LoginLocationState;
+  const target = state.from
+    ? `${state.from.pathname}${state.from.search ?? ''}`
+    : '/';
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState } = useForm<LoginFields>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
 
+  const onPasskeyLogin = useCallback(async () => {
+    setError(null);
+    setPasskeyBusy(true);
+    try {
+      await loginWithPasskey();
+      navigate(target, { replace: true });
+    } catch (err) {
+      setError(passkeyError(err));
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }, [loginWithPasskey, navigate, target]);
+
+  useEffect(() => {
+    if (isDesktop || !passkeysSupported() || autoPasskeyStarted.current) return;
+    autoPasskeyStarted.current = true;
+    void onPasskeyLogin();
+  }, [isDesktop, onPasskeyLogin]);
+
   const onSubmit = handleSubmit(async ({ email, password }) => {
     setError(null);
     try {
       await login(email, password);
-      const target = state.from
-        ? `${state.from.pathname}${state.from.search ?? ''}`
-        : '/';
       navigate(target, { replace: true });
     } catch (err) {
       setError(
@@ -97,28 +127,12 @@ export function LoginPage() {
           >
             Entrar
           </Button>
-          {passkeysSupported() && (
+          {isDesktop && passkeysSupported() && (
             <Button
               variant="outlined"
               size="large"
               disabled={formState.isSubmitting || passkeyBusy}
-              onClick={async () => {
-                setError(null);
-                setPasskeyBusy(true);
-                try {
-                  await loginWithPasskey();
-                  navigate(
-                    state.from
-                      ? `${state.from.pathname}${state.from.search ?? ''}`
-                      : '/',
-                    { replace: true },
-                  );
-                } catch (err) {
-                  setError(passkeyError(err));
-                } finally {
-                  setPasskeyBusy(false);
-                }
-              }}
+              onClick={onPasskeyLogin}
             >
               {passkeyBusy ? 'A confirmar…' : 'Entrar com biometria ou passkey'}
             </Button>
