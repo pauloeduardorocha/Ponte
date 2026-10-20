@@ -326,14 +326,8 @@ describe('Permissions', () => {
       within(nav)
         .getAllByRole('button')
         .map((el) => el.textContent),
-    ).toEqual([
-      'Pessoas',
-      'Grupos e ministérios',
-      'Operação',
-      'Recursos',
-      'Comunicação',
-    ]);
-    expect(within(nav).getAllByRole('link')).toHaveLength(1);
+    ).toEqual(['Pessoas', 'Grupos e ministérios', 'Operação', 'Comunicação']);
+    expect(within(nav).getAllByRole('link')).toHaveLength(5);
     for (const button of within(nav).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(button);
@@ -349,7 +343,7 @@ describe('Permissions', () => {
       expect(button).toHaveAttribute('aria-expanded', 'false');
     }
     await waitFor(() =>
-      expect(within(nav).getAllByRole('link')).toHaveLength(1),
+      expect(within(nav).getAllByRole('link')).toHaveLength(5),
     );
   });
 
@@ -360,11 +354,7 @@ describe('Permissions', () => {
       name: 'Navegação principal',
     });
     // Personal reimbursements are available to every authenticated account.
-    expect(within(nav).queryAllByRole('button')).toHaveLength(1);
-    expect(
-      within(nav).getByRole('button', { name: 'Recursos' }),
-    ).toBeInTheDocument();
-    fireEvent.click(within(nav).getByRole('button', { name: 'Recursos' }));
+    expect(within(nav).queryAllByRole('button')).toHaveLength(0);
     expect(
       await within(nav).findByRole('link', { name: 'Meus reembolsos' }),
     ).toBeInTheDocument();
@@ -396,7 +386,6 @@ describe('Permissions', () => {
     const active = nav.querySelectorAll('[aria-current="page"]');
     expect(active).toHaveLength(1);
     expect(active[0]).toHaveTextContent(label);
-    fireEvent.click(within(nav).getByRole('button', { name: 'Recursos' }));
     expect(
       await within(nav).findByRole('link', { name: 'Gestão de eventos' }),
     ).toHaveAttribute('href', '/my-events');

@@ -53,7 +53,9 @@ const navigationGroups = [
   'Pessoas',
   'Grupos e ministérios',
   'Operação',
-  'Recursos',
+  'Eventos',
+  'Financeiro',
+  'Biblioteca',
   'Comunicação',
   'Administração',
 ] as const;
@@ -72,14 +74,8 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
-    label: 'Meus reembolsos',
-    group: 'Recursos',
-    to: '/reimbursements',
-    icon: AccountBalanceRounded,
-  },
-  {
     label: 'Gestão de eventos',
-    group: 'Recursos',
+    group: 'Eventos',
     to: '/my-events',
     icon: CalendarMonthRounded,
     permission: 'EVENT_READ',
@@ -116,7 +112,7 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Agenda de eventos',
-    group: 'Recursos',
+    group: 'Eventos',
     to: '/events?view=community',
     icon: CalendarMonthRounded,
     anyPermissions: ['EVENT_READ', 'COMMUNITY_READ'],
@@ -165,17 +161,23 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Biblioteca',
-    group: 'Recursos',
+    group: 'Biblioteca',
     to: '/library',
     icon: MenuBookRounded,
     permissionPrefix: 'LIBRARY_',
   },
   {
     label: 'Financeiro',
-    group: 'Recursos',
+    group: 'Financeiro',
     to: '/finance',
     icon: AccountBalanceRounded,
     permissionPrefix: 'FINANCE_',
+  },
+  {
+    label: 'Meus reembolsos',
+    group: 'Financeiro',
+    to: '/reimbursements',
+    icon: AccountBalanceRounded,
   },
 ];
 
@@ -245,11 +247,17 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {navigationGroups.map((group) => {
           const groupItems = items.filter((item) => item.group === group);
           if (!groupItems.length) return null;
-          const expanded = group === 'Início' || expandedGroups.includes(group);
+          const headerless = [
+            'Início',
+            'Eventos',
+            'Financeiro',
+            'Biblioteca',
+          ].includes(group);
+          const expanded = headerless || expandedGroups.includes(group);
           const groupId = `navigation-group-${navigationGroups.indexOf(group)}`;
           return (
             <Box key={group}>
-              {group !== 'Início' && (
+              {!headerless && (
                 <ListItemButton
                   onClick={() => toggleGroup(group)}
                   aria-expanded={expanded}
@@ -284,7 +292,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                 <List
                   disablePadding
                   aria-label={group}
-                  sx={{ pl: group === 'Início' ? 0 : 1 }}
+                  sx={{ pl: headerless ? 0 : 1 }}
                 >
                   {groupItems.map(({ label, to, icon: Icon }) => (
                     <ListItemButton
