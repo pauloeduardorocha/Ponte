@@ -20,11 +20,9 @@ import {
   Typography,
   TextField,
 } from '@mui/material';
-import {
-  ArrowBackRounded,
-  DeleteRounded,
-  EditRounded,
-} from '@mui/icons-material';
+import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
+import DeleteRounded from '@mui/icons-material/DeleteRounded';
+import EditRounded from '@mui/icons-material/EditRounded';
 import {
   Link as RouterLink,
   useLocation,

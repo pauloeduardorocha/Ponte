@@ -4,6 +4,7 @@ dist/
 dist-seed/
 coverage/
 *.tsbuildinfo
+tmp/
 .env
 .env.*
 !.env.example
@@ -12,3 +13,6 @@ apps/api/prisma/*.db
 
 private-storage/
 .neon
+
+.vercel
+.env*

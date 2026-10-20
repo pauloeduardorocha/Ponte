@@ -22,20 +22,18 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import {
-  AccountBalanceRounded,
-  AdminPanelSettingsRounded,
-  CalendarMonthRounded,
-  DashboardRounded,
-  ExpandMoreRounded,
-  ExpandLessRounded,
-  LogoutRounded,
-  ManageAccountsRounded,
-  MenuRounded,
-  NotificationsNoneRounded,
-  PeopleAltRounded,
-  MenuBookRounded,
-} from '@mui/icons-material';
+import AccountBalanceRounded from '@mui/icons-material/AccountBalanceRounded';
+import AdminPanelSettingsRounded from '@mui/icons-material/AdminPanelSettingsRounded';
+import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
+import DashboardRounded from '@mui/icons-material/DashboardRounded';
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
+import LogoutRounded from '@mui/icons-material/LogoutRounded';
+import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
+import MenuRounded from '@mui/icons-material/MenuRounded';
+import NotificationsNoneRounded from '@mui/icons-material/NotificationsNoneRounded';
+import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
+import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import {
   Link,
   NavLink,

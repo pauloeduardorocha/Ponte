@@ -13,7 +13,9 @@
     "test:watch": "jest --watch",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "db:deploy": "node scripts/database-security.cjs deploy",
+    "db:security:apply": "node scripts/database-security.cjs apply",
+    "db:security:provision": "node scripts/database-security.cjs provision",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio"
   },

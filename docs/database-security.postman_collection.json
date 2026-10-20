@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "Ponte database security smoke checks",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "https://ponte-umber.vercel.app" }],
+  "item": [
+    {
+      "name": "API and database are healthy",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/health" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Database up', () => pm.expect(pm.response.json().services.database).to.eql('up'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Members require authentication",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/members" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+              "pm.test('No member data', () => pm.expect(pm.response.json()).to.have.property('statusCode', 401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Audit requires authentication",
+      "request": { "method": "GET", "url": "{{baseUrl}}/api/v1/audit" },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 401', () => pm.response.to.have.status(401));",
+              "pm.test('No audit data', () => pm.expect(pm.response.json()).to.have.property('statusCode', 401));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

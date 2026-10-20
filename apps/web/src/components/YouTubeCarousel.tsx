@@ -12,12 +12,10 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import {
-  ChevronLeft,
-  ChevronRight,
-  PlayCircleOutline,
-  YouTube,
-} from '@mui/icons-material';
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
+import PlayCircleOutline from '@mui/icons-material/PlayCircleOutline';
+import YouTube from '@mui/icons-material/YouTube';
 import { apiRequest } from '../lib/api';
 
 type Video = {
