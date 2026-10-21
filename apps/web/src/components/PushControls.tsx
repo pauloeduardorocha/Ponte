@@ -1,49 +1,33 @@
 import { Alert, Button, Stack, Typography } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '../lib/api';
-import {
-  browserSubscription,
-  disablePush,
-  enablePush,
-  supportsPush,
-} from '../lib/push';
-import { useAuth } from '../auth/auth-context';
+import { usePushNotifications } from '../lib/use-push-notifications';
 
 export function PushControls() {
-  const { user } = useAuth();
-  const client = useQueryClient();
-  const supported = supportsPush();
-  const config = useQuery({
-    queryKey: ['push-config', user?.id],
-    queryFn: () =>
-      apiRequest<{ enabled: boolean; publicKey: string | null }>(
-        '/operations/push/config',
-      ),
-    enabled: supported,
-    retry: false,
-  });
-  const subscription = useQuery({
-    queryKey: ['push-subscription', user?.id],
-    queryFn: browserSubscription,
-    enabled: supported,
-    retry: false,
-  });
-  const action = useMutation({
-    mutationFn: () =>
-      subscription.data ? disablePush() : enablePush(config.data!.publicKey!),
-    onSettled: () =>
-      client.invalidateQueries({ queryKey: ['push-subscription'] }),
-  });
+  const { supported, permission, config, subscription, action, active } =
+    usePushNotifications();
   if (!supported)
     return (
       <Alert severity="info">
         Este navegador não disponibiliza notificações push. No iPhone/iPad,
         adicione a aplicação ao ecrã principal e abra-a pelo ícone para ativar
-        os alertas. As mensagens continuam disponíveis aqui.
+        os alertas. As mensagens continuam disponíveis aqui. As notificações são
+        importantes para ficar por dentro dos avisos e novidades da igreja.
       </Alert>
     );
   return (
     <Stack spacing={1} alignItems="flex-start">
+      {!active && (permission !== 'granted' || subscription.isSuccess) && (
+        <Alert severity="warning">
+          Ative as notificações para ficar por dentro das novidades da igreja.
+          Elas são importantes para acompanhar os avisos, eventos e novidades de
+          A Ponte.
+          {permission === 'denied' &&
+            ' As notificações estão bloqueadas neste navegador. Permita-as nas definições do site e volte a esta página para ativar os alertas.'}
+          {permission === 'granted' &&
+            !subscription.isPending &&
+            !subscription.data &&
+            ' A permissão já foi concedida; falta ativar os alertas neste dispositivo.'}
+        </Alert>
+      )}
       <Typography color="text.secondary">
         Receba um alerta neste dispositivo quando chegar uma mensagem, mesmo com
         a aplicação fechada.
@@ -76,7 +60,7 @@ export function PushControls() {
           subscription.isError ||
           (!subscription.data && !config.data?.enabled)
         }
-        onClick={() => action.mutate()}
+        onClick={() => action.mutate(subscription.data ? 'disable' : 'enable')}
       >
         {action.isPending
           ? 'Aguarde…'

@@ -33,6 +33,11 @@ const PasskeyEnrollment = lazy(() =>
     default: module.PasskeyEnrollment,
   })),
 );
+const PushPermissionPrompt = lazy(() =>
+  import('../components/PushPermissionPrompt').then((module) => ({
+    default: module.PushPermissionPrompt,
+  })),
+);
 
 interface AuthState {
   status: AuthStatus;
@@ -161,6 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={value}>
       {children}
+      {state.status === 'authenticated' && state.user && (
+        <Suspense fallback={null}>
+          <PushPermissionPrompt
+            key={state.user.id}
+            userId={state.user.id}
+            blocked={!!enrollment}
+          />
+        </Suspense>
+      )}
       {enrollment &&
         state.status === 'authenticated' &&
         state.user?.id === enrollment.userId && (

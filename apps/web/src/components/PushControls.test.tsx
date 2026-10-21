@@ -12,6 +12,7 @@ describe('Push controls in the personal inbox', () => {
   const requestPermission = vi.fn();
   const unsubscribe = vi.fn();
   let subscribed = false;
+  let permission: NotificationPermission = 'default';
   const subscription = {
     endpoint: 'https://fcm.googleapis.com/test',
     options: {},
@@ -25,7 +26,12 @@ describe('Push controls in the personal inbox', () => {
   beforeEach(() => {
     resetTestState();
     subscribed = false;
-    requestPermission.mockReset().mockResolvedValue('granted');
+    permission = 'default';
+    localStorage.setItem('ponte:push-invitation:v1:user-1', 'seen');
+    requestPermission.mockReset().mockImplementation(async () => {
+      permission = 'granted';
+      return permission;
+    });
     unsubscribe.mockReset().mockImplementation(async () => {
       subscribed = false;
       return true;
@@ -35,7 +41,12 @@ describe('Push controls in the personal inbox', () => {
       return subscription;
     });
     vi.stubGlobal('isSecureContext', true);
-    vi.stubGlobal('Notification', { requestPermission });
+    vi.stubGlobal('Notification', {
+      requestPermission,
+      get permission() {
+        return permission;
+      },
+    });
     vi.stubGlobal('PushManager', class {});
     Object.defineProperty(navigator, 'serviceWorker', {
       configurable: true,
@@ -96,6 +107,12 @@ describe('Push controls in the personal inbox', () => {
       name: 'Ativar notificações neste dispositivo',
     });
     expect(unsubscribe).toHaveBeenCalledOnce();
+    expect(
+      screen.getByText(
+        'Ative as notificações para ficar por dentro das novidades da igreja.',
+        { exact: false },
+      ),
+    ).toBeInTheDocument();
   });
   it('keeps opt-in disabled when the server has no VAPID configuration', async () => {
     mockApi(routes(false));
@@ -125,5 +142,40 @@ describe('Push controls in the personal inbox', () => {
           r.method === 'POST' && r.path === '/operations/push/subscriptions',
       ),
     ).toBe(false);
+  });
+  it('keeps an explanation visible when permission is blocked', async () => {
+    permission = 'denied';
+    mockApi(routes());
+    renderApp('/inbox');
+    expect(
+      await screen.findByText(
+        /As notificações estão bloqueadas neste navegador/,
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Elas são importantes para acompanhar os avisos/),
+    ).toBeInTheDocument();
+    expect(requestPermission).not.toHaveBeenCalled();
+  });
+  it('removes the reminder after activation and restores it after permission is revoked', async () => {
+    permission = 'granted';
+    subscribed = true;
+    mockApi(routes());
+    renderApp('/inbox');
+    await screen.findByRole('button', {
+      name: 'Desativar notificações neste dispositivo',
+    });
+    await waitFor(() =>
+      expect(
+        screen.queryByText(/Ative as notificações para ficar por dentro/),
+      ).not.toBeInTheDocument(),
+    );
+    permission = 'denied';
+    fireEvent(window, new Event('focus'));
+    expect(
+      await screen.findByText(
+        /As notificações estão bloqueadas neste navegador/,
+      ),
+    ).toBeInTheDocument();
   });
 });

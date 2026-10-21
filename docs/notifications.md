@@ -24,6 +24,8 @@ As alterações de notificações devem estar versionadas no Git antes da public
 
 Push exige HTTPS (localhost é exceção) e consentimento explícito em cada navegador/dispositivo. Em iOS/iPadOS 16.4+, instalar no ecrã principal e abrir a aplicação instalada antes de ativar. A opção de desativar e o logout removem a inscrição deste navegador. Entrega pelo serviço do navegador é best effort; aceitação do push não comprova exibição ou leitura.
 
+No primeiro acesso autenticado em um dispositivo compatível, a aplicação convida a ativar notificações para acompanhar os avisos, eventos e novidades da igreja. O pedido nativo ocorre ao clicar em “Ativar notificações”. O convite espera qualquer cadastro de passkey terminar e respeita “Agora não”, guardado por usuário neste navegador. Na caixa de notificações, o aviso continua visível enquanto os alertas não estiverem ativos, incluindo instruções quando a permissão estiver bloqueada. Permissões já negadas não geram novos pedidos nativos automáticos.
+
 ## Verificação
 
 `apps/api/test/notifications.e2e-spec.ts` verifica a migration e os fluxos HTTP com PostgreSQL real. Por segurança exige `TEST_DATABASE_URL` de um banco descartável chamado `ponte_push_test_<hex>`; o responsável pela execução deve remover esse banco depois. Os serviços push externos são simulados nos testes: validar a entrega real requer configurar VAPID, publicar em HTTPS e ativar em um navegador/dispositivo real.
