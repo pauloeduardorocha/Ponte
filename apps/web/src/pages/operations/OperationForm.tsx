@@ -56,9 +56,16 @@ export function LookupField({
       }),
     enabled: permitted,
   });
-  const relation = field.key
-    .replace(/Id$/, '')
-    .replace(/^recipient/, 'recipient');
+  const relation =
+    (
+      {
+        invitedByMemberId: 'invitedBy',
+        leaderMemberId: 'leader',
+        coLeaderMemberId: 'coLeader',
+        hostMemberId: 'host',
+        assignedToUserId: 'assignedTo',
+      } as Record<string, string>
+    )[field.key] ?? field.key.replace(/Id$/, '');
   const initialEntry = initial?.[relation] as Entry | undefined;
   const options = data.data?.items ?? [];
   return (
@@ -238,11 +245,47 @@ export function OperationForm({
                       />
                     )}
                   />
+                ) : f.options ? (
+                  <Controller
+                    key={f.key}
+                    name={f.key}
+                    control={form.control}
+                    rules={{
+                      required: f.required ? 'Preencha este campo' : false,
+                    }}
+                    render={({ field, fieldState }) => (
+                      <TextField
+                        select
+                        label={f.label}
+                        required={f.required}
+                        name={field.name}
+                        value={field.value}
+                        onChange={field.onChange}
+                        onBlur={field.onBlur}
+                        inputRef={field.ref}
+                        error={!!fieldState.error}
+                        helperText={fieldState.error?.message}
+                        slotProps={{ inputLabel: { shrink: true } }}
+                      >
+                        {!f.required && (
+                          <MenuItem value="">Não informado</MenuItem>
+                        )}
+                        {f.options?.map((o) => (
+                          <MenuItem key={o} value={o}>
+                            {f.key === 'meetingDay'
+                              ? dayLabels[Number(o)]
+                              : (f.optionLabels?.[o] ??
+                                operationLabels[o] ??
+                                o)}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+                  />
                 ) : (
                   <TextField
                     key={f.key}
                     label={f.label}
-                    select={!!f.options}
                     required={f.required}
                     type={f.type === 'textarea' ? undefined : f.type}
                     multiline={f.type === 'textarea'}
@@ -269,18 +312,7 @@ export function OperationForm({
                     })}
                     error={!!form.formState.errors[f.key]}
                     helperText={form.formState.errors[f.key]?.message}
-                  >
-                    {f.options && !f.required && (
-                      <MenuItem value="">Não informado</MenuItem>
-                    )}
-                    {f.options?.map((o) => (
-                      <MenuItem key={o} value={o}>
-                        {f.key === 'meetingDay'
-                          ? dayLabels[Number(o)]
-                          : (f.optionLabels?.[o] ?? operationLabels[o] ?? o)}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  />
                 ),
               )}
             </Stack>

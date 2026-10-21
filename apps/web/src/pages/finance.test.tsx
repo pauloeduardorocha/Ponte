@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   makeUser,
@@ -9,6 +9,50 @@ import {
 } from '../test/utils';
 describe('Finance permissions and dashboard', () => {
   beforeEach(resetTestState);
+
+  it('restores account status, saves a changed selection and displays it on reopening', async () => {
+    let account = {
+      id: 'account-1',
+      bank: 'Banco teste',
+      name: 'Conta teste',
+      currency: 'EUR',
+      openingBalance: '0.00',
+      status: 'INACTIVE',
+    };
+    const requests = mockApi({
+      ...sessionRoutes(
+        makeUser(['FINANCE_ACCOUNT_READ', 'FINANCE_ACCOUNT_WRITE']),
+      ),
+      'GET /finance/accounts': () => ({ body: { items: [account], total: 1 } }),
+      'PATCH /finance/accounts/account-1': (r) => {
+        account = { ...account, ...(r.body as object) };
+        return { body: account };
+      },
+    });
+    renderApp('/finance?tab=accounts');
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(dialog.getByRole('combobox', { name: 'Status' })).toHaveTextContent(
+      'Inativo',
+    );
+    fireEvent.mouseDown(dialog.getByRole('combobox', { name: 'Status' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Ativo' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
+        status: 'ACTIVE',
+      }),
+    );
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Editar' }));
+    expect(
+      within(screen.getByRole('dialog')).getByRole('combobox', {
+        name: 'Status',
+      }),
+    ).toHaveTextContent('Ativo');
+  });
   it.each(['incomes', 'expenses'])(
     'removes status from %s lists and forms',
     async (route) => {

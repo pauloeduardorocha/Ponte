@@ -204,6 +204,29 @@ describe('Members', () => {
     });
   });
 
+  it('restores an inactive member status and preserves it when saving other fields', async () => {
+    const saved = { ...member, status: 'INACTIVE' };
+    const requests = mockApi({
+      ...sessionRoutes(makeUser(SECRETARY_PERMISSIONS)),
+      'GET /members/m1': { body: saved },
+      'PATCH /members/m1': { body: saved },
+    });
+    renderApp('/members/m1/edit');
+    expect(
+      await screen.findByRole('combobox', { name: 'Status' }),
+    ).toHaveTextContent('Inativo');
+    fireEvent.change(screen.getByLabelText(/^Nome/), {
+      target: { value: 'Maria atualizada' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'PATCH')?.body).toMatchObject({
+        name: 'Maria atualizada',
+        status: 'INACTIVE',
+      }),
+    );
+  });
+
   it('edits a member and clears optional fields with null', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser(SECRETARY_PERMISSIONS)),
