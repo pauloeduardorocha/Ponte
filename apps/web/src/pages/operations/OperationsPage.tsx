@@ -125,7 +125,10 @@ export function OperationsPage({ resource }: { resource: Resource }) {
               : [];
   const [form, setForm] = useState<FormSpec>(),
     [detail, setDetail] = useState<Entry>(),
-    [notice, setNotice] = useState('');
+    [notice, setNotice] = useState<{
+      text: string;
+      severity: 'success' | 'error';
+    }>();
   const [confirm, setConfirm] = useState<{ path: string; text: string }>();
   const client = useQueryClient();
   const data = useQuery({
@@ -169,7 +172,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     mutationFn: (path: string) => apiRequest(path, { method: 'POST' }),
     onSuccess: () => {
       setConfirm(undefined);
-      setNotice('Operação concluída.');
+      setNotice({ text: 'Operação concluída.', severity: 'success' });
       void client.invalidateQueries({ queryKey: ['operations'] });
       void client.invalidateQueries({ queryKey: ['community'] });
     },
@@ -237,8 +240,8 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         </Alert>
       )}
       {notice && (
-        <Alert severity="success" onClose={() => setNotice('')}>
-          {notice}
+        <Alert severity={notice.severity} onClose={() => setNotice(undefined)}>
+          {notice.text}
         </Alert>
       )}
       {action.isError && <Alert severity="error">{action.error.message}</Alert>}
@@ -550,9 +553,23 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           key={form.path}
           {...form}
           onClose={() => setForm(undefined)}
-          onSaved={() => {
+          onSaved={(result) => {
             setForm(undefined);
-            setNotice('Cadastro salvo com sucesso.');
+            const status = (result as Entry | undefined)?.status;
+            setNotice({
+              text:
+                resource !== 'notifications'
+                  ? 'Cadastro salvo com sucesso.'
+                  : status === 'SENT'
+                    ? 'Notificação enviada.'
+                    : status === 'FAILED'
+                      ? 'Não foi possível enviar a notificação. Consulte a situação do envio.'
+                      : 'Notificação salva com agendamento.',
+              severity:
+                resource === 'notifications' && status === 'FAILED'
+                  ? 'error'
+                  : 'success',
+            });
           }}
         />
       )}

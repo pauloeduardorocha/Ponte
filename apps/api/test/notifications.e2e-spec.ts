@@ -209,17 +209,93 @@ describe('Notifications on disposable PostgreSQL', () => {
         content: `${channel}-message`,
         channel,
       }).expect(201);
-      const sent = await call(
-        'post',
-        `/notifications/${created.body.id}/send`,
-      ).expect(201);
-      expect(sent.body.status).toBe('SENT');
+      expect(created.body.status).toBe('SENT');
+      expect(created.body.sentAt).toBeTruthy();
       await call('post', `/notifications/${created.body.id}/send`).expect(409);
     }
     expect(send).toHaveBeenCalledTimes(2);
     const inbox = await call('get', '/inbox').expect(200);
     expect(inbox.body.items).toHaveLength(3);
     await call('post', '/inbox/read-all').expect(201, { count: 2 });
+  });
+  it('keeps scheduled messages pending and prevents sending them before their date', async () => {
+    const scheduledAt = new Date(Date.now() + 86400000).toISOString();
+    const send = jest.mocked(webPush.sendNotification);
+    send.mockClear();
+    const created = await call('post', '/notifications', {
+      recipientMemberId: memberId,
+      channel: 'INTERNAL',
+      content: 'Future message',
+      scheduledAt,
+    }).expect(201);
+    expect(created.body).toMatchObject({
+      status: 'PENDING',
+      scheduledAt,
+      sentAt: null,
+    });
+    await call('post', `/notifications/${created.body.id}/send`).expect(409);
+    expect(send).not.toHaveBeenCalled();
+    await call('delete', `/inbox/${created.body.id}`).expect(404);
+  });
+  it('rejects immediate channels without providers and persists delivery failures', async () => {
+    const count = await db.notification.count();
+    await call('post', '/notifications', {
+      recipientMemberId: memberId,
+      channel: 'EMAIL',
+      content: 'Unsupported',
+    }).expect(409);
+    expect(await db.notification.count()).toBe(count);
+    jest
+      .mocked(webPush.sendNotification)
+      .mockRejectedValue({ statusCode: 503 });
+    const failed = await call('post', '/notifications', {
+      recipientMemberId: memberId,
+      channel: 'PUSH',
+      content: 'Failed push',
+    }).expect(201);
+    expect(failed.body).toMatchObject({ status: 'FAILED', sentAt: null });
+    await call('post', `/notifications/${failed.body.id}/send`).expect(409);
+  });
+  it('deletes only personal sent messages, updates unread counts and preserves the administrative history', async () => {
+    const created = await call('post', '/notifications', {
+      recipientMemberId: memberId,
+      channel: 'INTERNAL',
+      content: 'Remove me',
+    }).expect(201);
+    const unread = await call('get', '/inbox/unread').expect(200);
+    await call('delete', `/inbox/${otherMessageId}`).expect(404);
+    // The recipient needs no notification management permission to remove a message.
+    const permissions = own.permissions;
+    own.permissions = [];
+    try {
+      await call('delete', `/inbox/${created.body.id}`).expect(200, {
+        count: 1,
+      });
+    } finally {
+      own.permissions = permissions;
+    }
+    await call('get', '/inbox/unread').expect(200, {
+      count: unread.body.count - 1,
+    });
+    const inbox = await call('get', '/inbox').expect(200);
+    expect(inbox.body.items.map((n: { id: string }) => n.id)).not.toContain(
+      created.body.id,
+    );
+    await call('post', `/inbox/${created.body.id}/read`).expect(404);
+    await call('delete', `/inbox/${created.body.id}`).expect(404);
+    await call('delete', `/inbox/${messageId}`).expect(200, { count: 1 });
+    const row = await db.notification.findUniqueOrThrow({
+      where: { id: created.body.id },
+    });
+    expect(row.inboxDeletedAt).toBeInstanceOf(Date);
+    expect(row.status).toBe('SENT');
+    expect(
+      (
+        await db.notification.findUniqueOrThrow({
+          where: { id: otherMessageId },
+        })
+      ).inboxDeletedAt,
+    ).toBeNull();
   });
   it('delivers event messages after commit and preserves them when push fails', async () => {
     const event = await db.communityEvent.create({

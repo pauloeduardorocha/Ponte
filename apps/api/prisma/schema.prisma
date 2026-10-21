@@ -1083,6 +1083,7 @@ model Notification {
   scheduledAt        DateTime? @db.Timestamptz(6)
   sentAt             DateTime? @db.Timestamptz(6)
   readAt             DateTime? @db.Timestamptz(6)
+  inboxDeletedAt     DateTime? @db.Timestamptz(6)
   error              String?   @db.VarChar(500)
   createdByUserId    String    @db.Uuid
   creator            User      @relation("NotificationCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "notification_creator_fk")

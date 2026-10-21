@@ -91,4 +91,120 @@ describe('Personal notification inbox', () => {
       ).toBe(true),
     );
   });
+  it('removes a personal message and refreshes the inbox and unread badge', async () => {
+    let deleted = false;
+    const message = {
+      id: 'message',
+      subject: 'Aviso',
+      content: 'Mensagem a apagar',
+      sentAt: '2026-10-20T12:00:00Z',
+      readAt: null,
+    };
+    const requests = mockApi({
+      ...sessionRoutes(makeUser([])),
+      'GET /operations/inbox': () => ({
+        body: { items: deleted ? [] : [message], total: deleted ? 0 : 1 },
+      }),
+      'GET /operations/inbox/unread': () => ({
+        body: { count: deleted ? 0 : 1 },
+      }),
+      'DELETE /operations/inbox/message': () => {
+        deleted = true;
+        return { body: { count: 1 } };
+      },
+    });
+    renderApp('/inbox');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Apagar mensagem: Aviso' }),
+    );
+    expect(
+      await screen.findByText('Você ainda não tem mensagens internas.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText('Mensagem a apagar')).not.toBeInTheDocument();
+    expect(requests.find((r) => r.method === 'DELETE')).toMatchObject({
+      path: '/operations/inbox/message',
+      body: undefined,
+    });
+    await waitFor(() =>
+      expect(
+        requests.filter((r) => r.path === '/operations/inbox/unread').length,
+      ).toBeGreaterThan(1),
+    );
+  });
+  it('keeps a message visible and allows retry if deletion fails', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser([])),
+      'GET /operations/inbox': {
+        body: {
+          items: [
+            {
+              id: 'message',
+              subject: 'Aviso',
+              content: 'Preservar mensagem',
+              sentAt: '2026-10-20T12:00:00Z',
+              readAt: null,
+            },
+          ],
+          total: 1,
+        },
+      },
+      'GET /operations/inbox/unread': { body: { count: 1 } },
+      'DELETE /operations/inbox/message': {
+        status: 500,
+        body: { message: 'Falha ao apagar' },
+      },
+    });
+    renderApp('/inbox');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Apagar mensagem: Aviso' }),
+    );
+    expect(await screen.findByText('Falha ao apagar')).toBeInTheDocument();
+    expect(screen.getByText('Preservar mensagem')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Apagar mensagem: Aviso' }),
+    ).toBeEnabled();
+  });
+  it('returns to the previous page after deleting the last message on a page', async () => {
+    let deleted = false;
+    const requests = mockApi({
+      ...sessionRoutes(makeUser([])),
+      'GET /operations/inbox': (request) => ({
+        body: {
+          items: [
+            {
+              id: request.query.get('page') === '2' ? 'last' : 'first',
+              subject:
+                request.query.get('page') === '2' ? 'Última' : 'Primeira',
+              content: 'Mensagem',
+              sentAt: '2026-10-20T12:00:00Z',
+              readAt: null,
+            },
+          ],
+          total: deleted ? 25 : 26,
+        },
+      }),
+      'GET /operations/inbox/unread': { body: { count: 26 } },
+      'DELETE /operations/inbox/last': () => {
+        deleted = true;
+        return { body: { count: 1 } };
+      },
+    });
+    renderApp('/inbox');
+    await screen.findByText('Primeira');
+    fireEvent.click(
+      screen.getByRole('button', { name: /próxima página|next page/i }),
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Apagar mensagem: Última' }),
+    );
+    expect(await screen.findByText('Primeira')).toBeInTheDocument();
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((r) => r.path === '/operations/inbox')
+          .at(-1)
+          ?.query.get('page'),
+      ).toBe('1'),
+    );
+  });
 });

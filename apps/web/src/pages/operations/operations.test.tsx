@@ -9,6 +9,61 @@ import {
 } from '../../test/utils';
 describe('Operational workflows', () => {
   beforeEach(resetTestState);
+  it.each([
+    ['SENT', 'Notificação enviada.', 'success'],
+    [
+      'FAILED',
+      'Não foi possível enviar a notificação. Consulte a situação do envio.',
+      'error',
+    ],
+  ])(
+    'reports the immediate notification outcome %s after creation',
+    async (status, notice, severity) => {
+      const requests = mockApi({
+        ...sessionRoutes(makeUser(['NOTIFICATION_READ', 'NOTIFICATION_SEND'])),
+        'GET /operations/notifications': { body: { items: [], total: 0 } },
+        'GET /operations/people': {
+          body: { items: [{ id: 'member', name: 'Destinatária' }] },
+        },
+        'GET /operations/visitors': { body: { items: [] } },
+        'POST /operations/notifications': { body: { id: 'n1', status } },
+      });
+      renderApp('/notifications');
+      fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
+      const recipient = await screen.findByRole('combobox', {
+        name: 'Destinatário: membro',
+      });
+      fireEvent.mouseDown(recipient);
+      fireEvent.click(
+        await screen.findByRole('option', { name: 'Destinatária' }),
+      );
+      fireEvent.change(screen.getByLabelText(/Mensagem/), {
+        target: { value: 'Comunicado' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      expect(
+        (await screen.findByText(notice)).closest('[role="alert"]'),
+      ).toHaveClass(
+        `MuiAlert-standard${severity[0]!.toUpperCase()}${severity.slice(1)}`,
+      );
+      expect(
+        requests.filter(
+          (r) =>
+            r.method === 'POST' &&
+            r.path.startsWith('/operations/notifications'),
+        ),
+      ).toEqual([
+        expect.objectContaining({
+          path: '/operations/notifications',
+          body: {
+            recipientMemberId: 'member',
+            channel: 'INTERNAL',
+            content: 'Comunicado',
+          },
+        }),
+      ]);
+    },
+  );
   it('shows the five meaningful indicators and defaults and resets to 30 calendar days', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date('2026-10-20T12:00:00Z'));
@@ -133,12 +188,14 @@ describe('Operational workflows', () => {
       ),
     ).toBeInTheDocument();
     expect(
-      requests.some(
+      requests.filter(
         (r) =>
           r.path.startsWith('/operations') &&
-          r.path !== '/operations/inbox/unread',
+          !['/operations/inbox/unread', '/operations/push/config'].includes(
+            r.path,
+          ),
       ),
-    ).toBe(false);
+    ).toEqual([]);
     expect(
       screen.queryByRole('link', { name: 'Acompanhamento' }),
     ).not.toBeInTheDocument();

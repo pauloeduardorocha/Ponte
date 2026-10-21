@@ -113,8 +113,14 @@ const LocalizedDateInput = forwardRef<
   );
 });
 
-export function LocalizedTextField(props: TextFieldProps) {
-  if (props.type !== 'date' && props.type !== 'datetime-local')
+export function LocalizedTextField({
+  nativePicker,
+  ...props
+}: TextFieldProps & { nativePicker?: boolean }) {
+  if (
+    nativePicker ||
+    (props.type !== 'date' && props.type !== 'datetime-local')
+  )
     return <TextField {...props} />;
   return (
     <TextField

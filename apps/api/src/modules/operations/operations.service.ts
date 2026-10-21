@@ -1717,6 +1717,7 @@ export class OperationsService {
     return {
       channel: { in: ['INTERNAL', 'PUSH'] },
       status: 'SENT',
+      inboxDeletedAt: null,
       OR: [{ recipientMemberId: memberId }, { recipientVisitor: { memberId } }],
     };
   }
@@ -1739,6 +1740,17 @@ export class OperationsService {
         where: { ...where, readAt: null },
         data: { readAt: new Date() },
       });
+    });
+  }
+  async deleteInbox(user: CurrentUser, id: string) {
+    const where = { ...(await this.inboxWhere(user)), id };
+    return this.write(async (tx) => {
+      const result = await tx.notification.updateMany({
+        where,
+        data: { inboxDeletedAt: new Date() },
+      });
+      if (!result.count) throw new NotFoundException();
+      return result;
     });
   }
   async inbox(q: D.OperationQuery, user: CurrentUser) {
@@ -1767,7 +1779,14 @@ export class OperationsService {
     return this.page(items, total, q);
   }
   async sendNotification(dto: D.NotificationDto, user: CurrentUser) {
-    return this.write(async (tx) => {
+    if (
+      !dto.scheduledAt &&
+      !this.providers.some((p) => p.channel === dto.channel)
+    )
+      throw new ConflictException(
+        'Canal preparado; configure um provedor antes de enviar.',
+      );
+    const created = await this.write(async (tx) => {
       await this.accessiblePerson(
         tx,
         { memberId: dto.recipientMemberId, visitorId: dto.recipientVisitorId },
@@ -1781,6 +1800,9 @@ export class OperationsService {
         },
       });
     });
+    return dto.scheduledAt
+      ? created
+      : this.notificationAction(created.id, user);
   }
   async notificationAction(id: string, user: CurrentUser, cancel = false) {
     const result = await this.write(async (tx) => {

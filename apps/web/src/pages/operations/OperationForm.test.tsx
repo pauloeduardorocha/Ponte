@@ -15,7 +15,7 @@ vi.mock('../../auth/auth-context', () => ({
   useAuth: () => ({ hasPermission: () => true }),
 }));
 
-function show(fields: Field[], initial?: Entry) {
+function show(fields: Field[], initial?: Entry, notification = false) {
   return render(
     <QueryClientProvider
       client={
@@ -26,8 +26,10 @@ function show(fields: Field[], initial?: Entry) {
     >
       <OperationForm
         title="Editar registro"
-        path="/operations/visitors/v1"
-        method="PATCH"
+        path={
+          notification ? '/operations/notifications' : '/operations/visitors/v1'
+        }
+        method={notification ? 'POST' : 'PATCH'}
         fields={fields}
         initial={initial}
         onClose={vi.fn()}
@@ -44,6 +46,62 @@ function select(label: string, option: string) {
 
 describe('Operation form selections', () => {
   beforeEach(resetTestState);
+
+  it('uses a native date and time picker and submits the selected local time in UTC', async () => {
+    const requests = mockApi({
+      'POST /operations/notifications': {
+        body: { id: 'n1', status: 'PENDING' },
+      },
+    });
+    show(
+      configs.notifications.fields.filter((f) =>
+        ['content', 'scheduledAt'].includes(f.key),
+      ),
+      undefined,
+      true,
+    );
+    const picker = screen.getByLabelText('Agendamento');
+    expect(picker).toHaveAttribute('type', 'datetime-local');
+    fireEvent.change(picker, { target: { value: '2026-12-25T18:30' } });
+    fireEvent.change(screen.getByLabelText(/Mensagem/), {
+      target: { value: 'Aviso agendado' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+        content: 'Aviso agendado',
+        scheduledAt: new Date('2026-12-25T18:30').toISOString(),
+      }),
+    );
+  });
+
+  it('leaves scheduling optional and creates an immediate notification in one request', async () => {
+    const requests = mockApi({
+      'POST /operations/notifications': { body: { id: 'n1', status: 'SENT' } },
+    });
+    show(
+      configs.notifications.fields.filter((f) =>
+        ['content', 'scheduledAt'].includes(f.key),
+      ),
+      undefined,
+      true,
+    );
+    expect(
+      screen.getByText(
+        /Sem agendamento, a notificação será enviada imediatamente/,
+      ),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/Mensagem/), {
+      target: { value: 'Enviar agora' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+        content: 'Enviar agora',
+      }),
+    );
+    expect(requests.filter((r) => r.method === 'POST')).toHaveLength(1);
+  });
 
   it.each(
     Object.entries(configs).flatMap(([resource, config]) =>

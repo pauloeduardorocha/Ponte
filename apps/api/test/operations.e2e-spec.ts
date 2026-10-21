@@ -602,12 +602,13 @@ describe('Church operations with isolated PostgreSQL', () => {
       /amount|contribution|income|passwordHash|PRIVATE ADMIN NOTES/,
     );
   });
-  it('keeps unsupported notification channels pending and delivers internal messages only once', async () => {
+  it('keeps scheduled unsupported channels pending and delivers immediate messages only once', async () => {
     const n = (
       await post('/notifications', {
         recipientMemberId: leaderId,
         channel: 'EMAIL',
         content: 'Hello',
+        scheduledAt: '2026-01-01T00:00:00Z',
       }).expect(201)
     ).body as { id: string };
     await post('/notifications/' + n.id + '/send', {}).expect(409);
@@ -622,7 +623,6 @@ describe('Church operations with isolated PostgreSQL', () => {
         content: 'Internal',
       })
     ).body as { id: string };
-    await post('/notifications/' + internal.id + '/send', {}).expect(201);
     await post('/notifications/' + internal.id + '/send', {}).expect(409);
     await db.notification.create({
       data: {
@@ -647,13 +647,9 @@ describe('Church operations with isolated PostgreSQL', () => {
         channel: 'SMS',
         content: 'Test failure',
       })
-    ).body as { id: string };
-    const failed = await post(
-      '/notifications/' + failing.id + '/send',
-      {},
-    ).expect(201);
-    expect(failed.body.status).toBe('FAILED');
-    expect(failed.body.error).not.toContain('Sensitive provider credential');
+    ).body as { id: string; status: string; error: string };
+    expect(failing.status).toBe('FAILED');
+    expect(failing.error).not.toContain('Sensitive provider credential');
     await get('/notifications', normalToken).expect(403);
   });
 });

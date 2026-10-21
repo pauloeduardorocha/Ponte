@@ -66,6 +66,7 @@ function setup() {
       deleteMany: jest.fn(),
     },
     notification: {
+      create: jest.fn().mockResolvedValue(message),
       count: jest.fn().mockResolvedValue(2),
       findFirst: jest.fn().mockResolvedValue(message),
       update: jest
@@ -250,6 +251,7 @@ describe('Push delivery and ownership', () => {
       where: {
         channel: { in: ['INTERNAL', 'PUSH'] },
         status: 'SENT',
+        inboxDeletedAt: null,
         readAt: null,
         OR: [
           { recipientMemberId: 'member' },
@@ -322,6 +324,9 @@ describe('Notification HTTP contract', () => {
     await request(app.getHttpServer())
       .post('/api/v1/operations/inbox/read-all')
       .expect(401);
+    await request(app.getHttpServer())
+      .delete(`/api/v1/operations/inbox/${user.id}`)
+      .expect(401);
   });
   it('accepts a browser subscription and rejects injected identity or malformed nested keys', async () => {
     await request(app.getHttpServer())
@@ -355,5 +360,32 @@ describe('Notification HTTP contract', () => {
       .post('/api/v1/operations/inbox/not-a-uuid/read')
       .auth('valid', { type: 'bearer' })
       .expect(400);
+  });
+  it('allows personal deletion, validates UUIDs and reports missing messages', async () => {
+    await request(app.getHttpServer())
+      .delete(`/api/v1/operations/inbox/${user.id}`)
+      .auth('valid', { type: 'bearer' })
+      .expect(200, { count: 1 });
+    expect(services.db.notification.updateMany).toHaveBeenLastCalledWith({
+      where: expect.objectContaining({
+        id: user.id,
+        status: 'SENT',
+        inboxDeletedAt: null,
+        OR: [
+          { recipientMemberId: 'member' },
+          { recipientVisitor: { memberId: 'member' } },
+        ],
+      }),
+      data: { inboxDeletedAt: expect.any(Date) },
+    });
+    await request(app.getHttpServer())
+      .delete('/api/v1/operations/inbox/not-a-uuid')
+      .auth('valid', { type: 'bearer' })
+      .expect(400);
+    services.db.notification.updateMany.mockResolvedValueOnce({ count: 0 });
+    await request(app.getHttpServer())
+      .delete(`/api/v1/operations/inbox/${user.id}`)
+      .auth('valid', { type: 'bearer' })
+      .expect(404);
   });
 });

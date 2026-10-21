@@ -24,6 +24,17 @@ type Message = {
 };
 export function InboxPage() {
   const client = useQueryClient();
+  const remove = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest(`/operations/inbox/${id}`, { method: 'DELETE' }),
+    onSuccess: async () => {
+      if (data.data?.items.length === 1 && page > 0) setPage(page - 1);
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['operations', 'inbox'] }),
+        client.invalidateQueries({ queryKey: ['notifications'] }),
+      ]);
+    },
+  });
   const read = useMutation({
     mutationFn: (id?: string) =>
       apiRequest(
@@ -63,6 +74,7 @@ export function InboxPage() {
         Marcar todas como lidas
       </Button>
       {read.isError && <Alert severity="error">{read.error.message}</Alert>}
+      {remove.isError && <Alert severity="error">{remove.error.message}</Alert>}
       <TextField
         label="Pesquisar por assunto"
         value={search}
@@ -129,6 +141,14 @@ export function InboxPage() {
                 Marcar como lida
               </Button>
             )}
+            <Button
+              color="error"
+              disabled={remove.isPending}
+              aria-label={`Apagar mensagem: ${m.subject ?? 'Mensagem de A Ponte'}`}
+              onClick={() => remove.mutate(m.id)}
+            >
+              Apagar
+            </Button>
           </RecordRow>
         ))}
       </RecordTable>

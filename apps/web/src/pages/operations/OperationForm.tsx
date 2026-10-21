@@ -286,6 +286,7 @@ export function OperationForm({
                   <TextField
                     key={f.key}
                     label={f.label}
+                    nativePicker={f.key === 'scheduledAt'}
                     required={f.required}
                     type={f.type === 'textarea' ? undefined : f.type}
                     multiline={f.type === 'textarea'}
@@ -311,7 +312,12 @@ export function OperationForm({
                         'Preencha este campo',
                     })}
                     error={!!form.formState.errors[f.key]}
-                    helperText={form.formState.errors[f.key]?.message}
+                    helperText={
+                      form.formState.errors[f.key]?.message ??
+                      (f.key === 'scheduledAt'
+                        ? 'Sem agendamento, a notificação será enviada imediatamente. Horário deste dispositivo.'
+                        : undefined)
+                    }
                   />
                 ),
               )}

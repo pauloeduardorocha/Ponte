@@ -28,6 +28,7 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiNotFoundResponse,
+  ApiOperation,
 } from '@nestjs/swagger';
 import { Permission, PermissionAny } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
@@ -69,6 +70,19 @@ export class OperationsController {
   })
   read(@Param('id', ParseUUIDPipe) id: string, @Req() r: AuthRequest) {
     return this.service.readInbox(r.user, id);
+  }
+  @Delete('inbox/:id')
+  @ApiOperation({
+    summary: 'Remover mensagem da própria caixa de entrada',
+    description:
+      'Preserva o histórico administrativo e atualiza a contagem de não lidas. Apenas mensagens enviadas ao usuário autenticado podem ser removidas.',
+  })
+  @ApiOkResponse({ type: NotificationCountDto })
+  @ApiNotFoundResponse({
+    description: 'Mensagem não encontrada na caixa pessoal.',
+  })
+  deleteInbox(@Param('id', ParseUUIDPipe) id: string, @Req() r: AuthRequest) {
+    return this.service.deleteInbox(r.user, id);
   }
   @Post('schedules/:id/assignments/:assignmentId/respond')
   @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
@@ -502,10 +516,14 @@ export class OperationsController {
   ) {
     return this.service.notifications(q, r.user);
   }
-  @Post('notifications') @Permission('NOTIFICATION_SEND') notify(
-    @Body() dto: D.NotificationDto,
-    @Req() r: AuthRequest,
-  ) {
+  @Post('notifications')
+  @ApiOperation({
+    summary: 'Criar uma notificação',
+    description:
+      'Sem scheduledAt, tenta enviar imediatamente e retorna SENT ou FAILED. Com scheduledAt, cria PENDING para envio manual após a data. Um canal sem provedor retorna 409 antes da criação de um envio imediato.',
+  })
+  @Permission('NOTIFICATION_SEND')
+  notify(@Body() dto: D.NotificationDto, @Req() r: AuthRequest) {
     return this.service.sendNotification(dto, r.user);
   }
   @Post('notifications/:id/send') @Permission('NOTIFICATION_SEND') dispatch(

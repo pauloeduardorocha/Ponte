@@ -33,6 +33,7 @@ import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import NotificationsNoneRounded from '@mui/icons-material/NotificationsNoneRounded';
 import { NotificationBell } from '../components/NotificationBell';
+import { PushPermissionBanner } from '../components/PushPermissionBanner';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import {
@@ -395,6 +396,7 @@ function ProfileMenu() {
 }
 
 export function AppShell({ children }: { children?: ReactNode }) {
+  const { user } = useAuth();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -462,7 +464,10 @@ export function AppShell({ children }: { children?: ReactNode }) {
           minWidth: 0,
         }}
       >
-        <Toolbar className="header-spacer" />
+        <Box component="header">
+          <Toolbar className="header-spacer" />
+          {user && <PushPermissionBanner key={user.id} userId={user.id} />}
+        </Box>
         <Container maxWidth="xl" className="dashboard-content">
           <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
             {children ?? <Outlet />}
