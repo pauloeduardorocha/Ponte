@@ -12,6 +12,30 @@ import * as webPush from 'web-push';
 import { PrismaService } from '../../database/prisma.service';
 import { PushSubscriptionDto } from './push.dto';
 
+export function notificationPushPayload(notification: Notification) {
+  const payload = {
+    title: notification.subject?.trim() || 'A Ponte',
+    body: notification.content,
+    tag: notification.id,
+    url: '/inbox',
+  };
+  if (Buffer.byteLength(JSON.stringify(payload), 'utf8') > 3000) {
+    // Bound encrypted push size using serialized UTF-8 bytes, preserving Unicode.
+    const characters = Array.from(notification.content);
+    let low = 0,
+      high = characters.length;
+    while (low < high) {
+      const length = Math.ceil((low + high) / 2);
+      payload.body = characters.slice(0, length).join('') + '…';
+      if (Buffer.byteLength(JSON.stringify(payload), 'utf8') <= 3000)
+        low = length;
+      else high = length - 1;
+    }
+    payload.body = characters.slice(0, low).join('') + '…';
+  }
+  return JSON.stringify(payload);
+}
+
 // Endpoints are client input. Never allow arbitrary outbound requests or redirects.
 export function validatePushEndpoint(endpoint: string) {
   let url: URL;
@@ -147,12 +171,7 @@ export class PushService {
                 endpoint: subscription.endpoint,
                 keys: { p256dh: subscription.p256dh, auth: subscription.auth },
               },
-              JSON.stringify({
-                title: 'A Ponte',
-                body: 'Você tem uma nova mensagem. Abra a caixa de notificações.',
-                tag: notification.id,
-                url: '/inbox',
-              }),
+              notificationPushPayload(notification),
               { vapidDetails, TTL: 86400, timeout: 5000 },
             );
             return 1;

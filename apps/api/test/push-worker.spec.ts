@@ -31,7 +31,7 @@ describe('Push service worker', () => {
     );
     return { worker, client, handlers };
   }
-  it('always displays a generic visible alert and signals open tabs', async () => {
+  it('displays the notification subject and message and signals open tabs', async () => {
     const { worker, client, handlers } = setup();
     let completion: Promise<void> = Promise.resolve();
     handlers.push!({
@@ -48,12 +48,13 @@ describe('Push service worker', () => {
     });
     await completion;
     expect(worker.registration.showNotification).toHaveBeenCalledWith(
-      'A Ponte',
-      expect.objectContaining({ tag: 'id', data: { url: '/inbox' } }),
+      'Private title',
+      expect.objectContaining({
+        body: 'Private content',
+        tag: 'id',
+        data: { url: '/inbox' },
+      }),
     );
-    expect(
-      JSON.stringify(worker.registration.showNotification.mock.calls),
-    ).not.toMatch(/Private title|Private content/);
     expect(client.postMessage).toHaveBeenCalledWith({
       type: 'PONTE_NOTIFICATION',
     });
@@ -73,4 +74,30 @@ describe('Push service worker', () => {
     expect(client.navigate).toHaveBeenCalledWith('https://ponte.example/inbox');
     expect(client.focus).toHaveBeenCalled();
   });
+  it.each([
+    () => undefined,
+    () => ({ title: 7, body: [] }),
+    () => {
+      throw new SyntaxError('Invalid JSON');
+    },
+  ])(
+    'keeps a visible fallback for missing or invalid notification text',
+    async (json) => {
+      const { worker, handlers } = setup();
+      let completion: Promise<void> = Promise.resolve();
+      handlers.push!({
+        data: { json },
+        waitUntil: (promise: Promise<void>) => {
+          completion = promise;
+        },
+      });
+      await completion;
+      expect(worker.registration.showNotification).toHaveBeenCalledWith(
+        'A Ponte',
+        expect.objectContaining({
+          body: 'Você tem uma nova mensagem. Abra a caixa de notificações.',
+        }),
+      );
+    },
+  );
 });

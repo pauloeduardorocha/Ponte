@@ -1,17 +1,23 @@
 /* global self, URL */
 self.addEventListener('push', (event) => {
-  // Never render arbitrary data or navigate to a URL supplied by a push sender.
+  // Text is displayed by the Notifications API; navigation stays same-origin.
   let tag = 'ponte-message';
+  let title = 'A Ponte';
+  let body = 'Você tem uma nova mensagem. Abra a caixa de notificações.';
   try {
     const payload = event.data?.json();
     if (typeof payload?.tag === 'string') tag = payload.tag;
+    if (typeof payload?.title === 'string' && payload.title.trim())
+      title = payload.title;
+    if (typeof payload?.body === 'string' && payload.body.trim())
+      body = payload.body;
   } catch {
     /* Still show a useful notification for an empty/invalid payload. */
   }
   event.waitUntil(
     (async () => {
-      await self.registration.showNotification('A Ponte', {
-        body: 'Você tem uma nova mensagem. Abra a caixa de notificações.',
+      await self.registration.showNotification(title, {
+        body,
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag,

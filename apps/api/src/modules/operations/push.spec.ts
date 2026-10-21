@@ -14,7 +14,11 @@ import { OperationsController } from './operations.controller';
 import { OperationsService } from './operations.service';
 import { InternalNotificationProvider } from './notification.provider';
 import { PushController } from './push.controller';
-import { PushService, validatePushEndpoint } from './push.service';
+import {
+  PushService,
+  validatePushEndpoint,
+  notificationPushPayload,
+} from './push.service';
 
 jest.mock('web-push', () => ({
   ...jest.requireActual('web-push'),
@@ -161,7 +165,7 @@ describe('Push delivery and ownership', () => {
     ).rejects.toThrow('Chaves push inválidas');
     expect(db.pushSubscription.create).not.toHaveBeenCalled();
   });
-  it('sends generic alerts only to active recipient accounts and prunes expired endpoints', async () => {
+  it('sends the subject and message only to active recipient accounts and prunes expired endpoints', async () => {
     const { push, db } = setup();
     const subscription = {
       id: 'expired',
@@ -187,9 +191,28 @@ describe('Push delivery and ownership', () => {
       where: { id: 'expired', updatedAt: subscription.updatedAt },
     });
     const payload = send.mock.calls[1]![1]!;
-    expect(payload).not.toMatch(/Private subject|Private content/);
-    expect(JSON.parse(payload as string).url).toBe('/inbox');
+    expect(JSON.parse(payload as string)).toMatchObject({
+      title: message.subject,
+      body: message.content,
+      url: '/inbox',
+    });
   });
+  it('uses the church name when no subject is provided', () => {
+    expect(
+      JSON.parse(notificationPushPayload({ ...message, subject: null })),
+    ).toMatchObject({ title: 'A Ponte', body: message.content });
+  });
+  it.each(['😀'.repeat(2000), '\n"\\'.repeat(1600)])(
+    'bounds long message payloads by serialized UTF-8 bytes',
+    (content) => {
+      const serialized = notificationPushPayload({ ...message, content });
+      const body = JSON.parse(serialized).body as string;
+      expect(Buffer.byteLength(serialized, 'utf8')).toBeLessThanOrEqual(3000);
+      expect(body.endsWith('…')).toBe(true);
+      expect(content.startsWith(body.slice(0, -1))).toBe(true);
+      expect(JSON.parse(serialized).title).toBe(message.subject);
+    },
+  );
   it('resolves converted visitor recipients and does not broadcast unlinked visitors', async () => {
     const { push, db } = setup();
     const visitorMessage = {
