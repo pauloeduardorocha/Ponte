@@ -7878,6 +7878,7 @@
     "/api/v1/finance/dashboard": {
       "get": {
         "operationId": "FinanceController_dashboard",
+        "description": "Inclui bankDataThrough (YYYY-MM-DD ou null): maior data dos movimentos dos extratos READY_FOR_REVIEW ou CONFIRMED, respeitando accountId quando informado. Disponível também com FINANCE_SUMMARY_READ, sem expor detalhes bancários. Independente do mês consultado e da data de upload.",
         "parameters": [
           {
             "name": "month",

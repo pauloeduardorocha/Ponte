@@ -4,6 +4,7 @@ import {
   ApiConsumes,
   ApiBody,
   ApiProduces,
+  ApiOperation,
 } from '@nestjs/swagger';
 import {
   Body,
@@ -207,6 +208,10 @@ export class FinanceController {
   }
 
   @Get('dashboard')
+  @ApiOperation({
+    description:
+      'Inclui bankDataThrough (YYYY-MM-DD ou null): maior data dos movimentos dos extratos READY_FOR_REVIEW ou CONFIRMED, respeitando accountId quando informado. Disponível também com FINANCE_SUMMARY_READ, sem expor detalhes bancários. Independente do mês consultado e da data de upload.',
+  })
   @PermissionAny('FINANCE_DASHBOARD_READ', 'FINANCE_SUMMARY_READ')
   dashboard(@Req() req: AuthRequest, @Query() query: DashboardQuery) {
     return this.finance.dashboard(req.user, query);

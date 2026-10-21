@@ -820,9 +820,23 @@ export class FinanceService {
           COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',income::text) ORDER BY category_name,category_id) FILTER (WHERE kind='INCOME'),'[]'::jsonb) AS "incomeCategories",
           COALESCE(jsonb_agg(jsonb_build_object('id',category_id,'name',category_name,'amount',expenses::text) ORDER BY category_name,category_id) FILTER (WHERE kind='EXPENSE'),'[]'::jsonb) AS "expenseCategories"
         FROM categories GROUP BY month,currency ORDER BY month,currency`;
+        // Match the statement period shown in banking: the last movement date,
+        // never the upload time (an older statement can be uploaded later).
+        const bankCoverage = await tx.bankTransaction.aggregate({
+          where: {
+            import: {
+              accountId: q.accountId,
+              status: { in: ['READY_FOR_REVIEW', 'CONFIRMED'] },
+            },
+          },
+          _max: { date: true },
+        });
+        const bankDataThrough =
+          bankCoverage._max.date?.toISOString().slice(0, 10) ?? null;
         if (summaryOnly)
           return {
             month,
+            bankDataThrough,
             balances,
             trend: trend.map(({ month, currency, income, expenses }) => ({
               month,
@@ -867,6 +881,7 @@ export class FinanceService {
             : undefined;
         return {
           month,
+          bankDataThrough,
           balances,
           trend,
           unreconciled,

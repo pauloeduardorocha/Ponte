@@ -8,6 +8,47 @@ import {
   sessionRoutes,
 } from '../test/utils';
 describe('Finance permissions and dashboard', () => {
+  it.each(['FINANCE_SUMMARY_READ', 'FINANCE_DASHBOARD_READ'] as const)(
+    'shows the bank coverage date with only %s permission',
+    async (permission) => {
+      const requests = mockApi({
+        ...sessionRoutes(makeUser([permission])),
+        'GET /finance/dashboard': {
+          body: {
+            month: '2026-10',
+            bankDataThrough: '2026-09-30',
+            balances: [
+              { currency: 'EUR', income: '100', expenses: '20', balance: '80' },
+            ],
+            latestTransactions: [],
+          },
+        },
+      });
+      renderApp('/');
+      expect(
+        await screen.findByText(/Última atualização dos valores: 30\/09\/2026/),
+      ).toBeVisible();
+      expect(requests.some((r) => r.path.startsWith('/banking'))).toBe(false);
+      expect(screen.queryByText('Última importação')).not.toBeInTheDocument();
+    },
+  );
+  it('explains when no bank coverage date is available', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['FINANCE_SUMMARY_READ'])),
+      'GET /finance/dashboard': {
+        body: {
+          month: '2026-10',
+          bankDataThrough: null,
+          balances: [],
+          latestTransactions: [],
+        },
+      },
+    });
+    renderApp('/');
+    expect(
+      await screen.findByText(/Ainda não há data de atualização disponível/),
+    ).toBeVisible();
+  });
   beforeEach(resetTestState);
 
   it('restores account status, saves a changed selection and displays it on reopening', async () => {

@@ -32,6 +32,7 @@ type Balance = {
 };
 export interface FinancialDashboard {
   month: string;
+  bankDataThrough?: string | null;
   balances: Balance[];
   trend?: {
     month: string;
@@ -169,6 +170,13 @@ export function FinancialDashboardPanel() {
       {accounts.isError && (
         <Alert severity="warning">
           Não foi possível carregar o filtro de contas.
+        </Alert>
+      )}
+      {data.data && (
+        <Alert severity="info">
+          {data.data.bankDataThrough
+            ? `Última atualização dos valores: ${formatDateOnly(data.data.bankDataThrough)} (última data coberta pelos extratos bancários importados).`
+            : 'Ainda não há data de atualização disponível a partir dos extratos bancários importados.'}
         </Alert>
       )}
       {data.data?.balances.length === 0 && (
