@@ -1,4 +1,6 @@
 import {
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useMemo,
@@ -8,7 +10,15 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { onSessionExpired, refreshSession, setAccessToken } from '../lib/api';
 import * as authApi from '../lib/auth-api';
-import { loginWithPasskey as passkeyLogin } from '../lib/passkeys';
+import {
+  loginWithPasskey as passkeyLogin,
+  passkeysSupported,
+} from '../lib/passkeys';
+import {
+  pauseAutomaticPasskeyLogin,
+  resumeAutomaticPasskeyLogin,
+  shouldOfferPasskey,
+} from '../lib/passkey-preferences';
 import type { CurrentUser, Permission } from '../lib/types';
 import { errorMessage } from '../lib/errors';
 import {
@@ -16,6 +26,12 @@ import {
   type AuthContextValue,
   type AuthStatus,
 } from './auth-context';
+
+const PasskeyEnrollment = lazy(() =>
+  import('../components/PasskeyEnrollment').then((module) => ({
+    default: module.PasskeyEnrollment,
+  })),
+);
 
 interface AuthState {
   status: AuthStatus;
@@ -33,6 +49,11 @@ const ANONYMOUS: AuthState = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const [enrollment, setEnrollment] = useState<{
+    userId: string;
+    password: string;
+  } | null>(null);
+  const closeEnrollment = useCallback(() => setEnrollment(null), []);
   const [state, setState] = useState<AuthState>({
     status: 'loading',
     user: null,
@@ -42,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(
     (notice?: string) => {
+      setEnrollment(null);
       setAccessToken(null);
       queryClient.clear();
       setState({ ...ANONYMOUS, signOutNotice: notice ?? null });
@@ -81,6 +103,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.login(email, password);
     try {
       const user = await authApi.fetchCurrentUser();
+      resumeAutomaticPasskeyLogin();
+      setEnrollment(
+        passkeysSupported() && shouldOfferPasskey(user.id)
+          ? { userId: user.id, password }
+          : null,
+      );
       setState({ ...ANONYMOUS, status: 'authenticated', user });
     } catch (error) {
       setAccessToken(null);
@@ -90,11 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginWithPasskey = useCallback(async () => {
     const session = await passkeyLogin();
+    setEnrollment(null);
     queryClient.clear();
     setState({ ...ANONYMOUS, status: 'authenticated', user: session.user });
   }, [queryClient]);
 
   const logout = useCallback(async () => {
+    pauseAutomaticPasskeyLogin();
     try {
       await authApi.logout();
       clearSession();
@@ -125,5 +155,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [state, login, loginWithPasskey, logout, clearSession, hasPermission],
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {enrollment &&
+        state.status === 'authenticated' &&
+        state.user?.id === enrollment.userId && (
+          <Suspense fallback={null}>
+            <PasskeyEnrollment {...enrollment} onClose={closeEnrollment} />
+          </Suspense>
+        )}
+    </AuthContext.Provider>
+  );
 }

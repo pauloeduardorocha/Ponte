@@ -2,15 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import {
-  Box,
-  Button,
-  Link,
-  Stack,
-  TextField,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Box, Button, Link, Stack, TextField } from '@mui/material';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { AuthCard } from '../components/AuthCard';
@@ -18,6 +10,10 @@ import { ApiError } from '../lib/api';
 import { errorMessage } from '../lib/errors';
 import { emailSchema } from '../lib/validation';
 import { passkeysSupported, passkeyError } from '../lib/passkeys';
+import {
+  pauseAutomaticPasskeyLogin,
+  shouldStartPasskeyLogin,
+} from '../lib/passkey-preferences';
 
 const loginSchema = z.object({
   email: emailSchema,
@@ -34,8 +30,8 @@ interface LoginLocationState {
 export function LoginPage() {
   const { login, loginWithPasskey, signOutNotice, sessionError } = useAuth();
   const [passkeyBusy, setPasskeyBusy] = useState(false);
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const [automaticPasskey] = useState(shouldStartPasskeyLogin);
+  const [passkeyFailed, setPasskeyFailed] = useState(false);
   const autoPasskeyStarted = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +52,8 @@ export function LoginPage() {
       await loginWithPasskey();
       navigate(target, { replace: true });
     } catch (err) {
+      pauseAutomaticPasskeyLogin();
+      setPasskeyFailed(true);
       setError(passkeyError(err));
     } finally {
       setPasskeyBusy(false);
@@ -63,10 +61,11 @@ export function LoginPage() {
   }, [loginWithPasskey, navigate, target]);
 
   useEffect(() => {
-    if (isDesktop || !passkeysSupported() || autoPasskeyStarted.current) return;
+    if (!automaticPasskey || !passkeysSupported() || autoPasskeyStarted.current)
+      return;
     autoPasskeyStarted.current = true;
     void onPasskeyLogin();
-  }, [isDesktop, onPasskeyLogin]);
+  }, [automaticPasskey, onPasskeyLogin]);
 
   const onSubmit = handleSubmit(async ({ email, password }) => {
     setError(null);
@@ -104,7 +103,7 @@ export function LoginPage() {
           <TextField
             label="E-mail"
             type="email"
-            autoComplete="email"
+            autoComplete="username"
             fullWidth
             error={Boolean(formState.errors.email)}
             helperText={formState.errors.email?.message}
@@ -127,7 +126,7 @@ export function LoginPage() {
           >
             Entrar
           </Button>
-          {isDesktop && passkeysSupported() && (
+          {passkeysSupported() && (!automaticPasskey || passkeyFailed) && (
             <Button
               variant="outlined"
               size="large"

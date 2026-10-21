@@ -16,8 +16,11 @@ import {
   registerPasskey,
   removePasskey,
 } from '../lib/passkeys';
+import { useAuth } from '../auth/auth-context';
+import { forgetPasskey, rememberPasskey } from '../lib/passkey-preferences';
 
 export function PasskeySettings() {
+  const { user } = useAuth();
   const client = useQueryClient();
   const keys = useQuery({ queryKey: ['passkeys'], queryFn: listPasskeys });
   const [password, setPassword] = useState('');
@@ -75,10 +78,10 @@ export function PasskeySettings() {
                 disabled={busy}
                 aria-label={`Remover ${key.name}`}
                 onClick={() =>
-                  void perform(
-                    () => removePasskey(key.id),
-                    'Passkey removida. Este método já não permite novos acessos.',
-                  )
+                  void perform(async () => {
+                    await removePasskey(key.id);
+                    if (user) forgetPasskey(user.id, key.id);
+                  }, 'Passkey removida. Este método já não permite novos acessos.')
                 }
               >
                 Remover
@@ -92,10 +95,10 @@ export function PasskeySettings() {
               onSubmit={(event) => {
                 event.preventDefault();
                 if (password && name.trim())
-                  void perform(
-                    () => registerPasskey(password, name.trim()),
-                    'Passkey ativada. Já pode utilizá-la no próximo acesso.',
-                  );
+                  void perform(async () => {
+                    const id = await registerPasskey(password, name.trim());
+                    if (user) rememberPasskey(user.id, id);
+                  }, 'Passkey ativada. Já pode utilizá-la no próximo acesso.');
               }}
             >
               <TextField

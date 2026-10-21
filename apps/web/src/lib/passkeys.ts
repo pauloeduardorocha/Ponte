@@ -4,11 +4,21 @@ import type {
 } from '@simplewebauthn/browser';
 import { apiRequest, setAccessToken } from './api';
 import type { AuthSession } from './types';
+import { rememberPasskey } from './passkey-preferences';
 
 export const passkeysSupported = () =>
   typeof window !== 'undefined' &&
   window.isSecureContext &&
   typeof window.PublicKeyCredential !== 'undefined';
+
+export async function platformPasskeysSupported() {
+  if (!passkeysSupported()) return false;
+  try {
+    return await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+  } catch {
+    return false;
+  }
+}
 
 export interface Passkey {
   id: string;
@@ -36,7 +46,11 @@ export function passkeyError(error: unknown) {
     : 'Não foi possível utilizar a passkey.';
 }
 
-export async function registerPasskey(password: string, name: string) {
+export async function registerPasskey(
+  password: string,
+  name: string,
+  onThisDevice = false,
+) {
   const { startRegistration } = await import('@simplewebauthn/browser');
   const { challengeId, options } = await apiRequest<{
     challengeId: string;
@@ -46,12 +60,23 @@ export async function registerPasskey(password: string, name: string) {
     body: { password },
     skipAuthRefresh: true,
   });
-  const response = await startRegistration({ optionsJSON: options });
+  const response = await startRegistration({
+    optionsJSON: onThisDevice
+      ? {
+          ...options,
+          authenticatorSelection: {
+            ...options.authenticatorSelection,
+            authenticatorAttachment: 'platform',
+          },
+        }
+      : options,
+  });
   await apiRequest('/auth/passkeys/register/verify', {
     method: 'POST',
     body: { challengeId, response, name },
     skipAuthRefresh: true,
   });
+  return response.id;
 }
 
 export async function loginWithPasskey() {
@@ -67,5 +92,6 @@ export async function loginWithPasskey() {
     skipAuthRefresh: true,
   });
   setAccessToken(session.accessToken);
+  rememberPasskey(session.user.id, response.id);
   return session;
 }

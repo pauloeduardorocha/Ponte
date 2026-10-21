@@ -13,6 +13,10 @@ import {
   sessionRoutes,
 } from '../test/utils';
 import { getAccessToken } from '../lib/api';
+import {
+  rememberPasskey,
+  shouldStartPasskeyLogin,
+} from '../lib/passkey-preferences';
 
 vi.mock('@simplewebauthn/browser', () => ({
   startAuthentication: vi.fn(),
@@ -23,6 +27,8 @@ describe('Passkeys in login and account', () => {
   beforeEach(() => {
     vi.resetAllMocks();
     resetTestState();
+    localStorage.clear();
+    sessionStorage.clear();
     vi.stubGlobal('isSecureContext', true);
     vi.stubGlobal('PublicKeyCredential', class {});
   });
@@ -78,6 +84,7 @@ describe('Passkeys in login and account', () => {
   it('automatically signs in on mobile and returns to the requested page', async () => {
     useMobileViewport();
     const user = makeUser();
+    rememberPasskey(user.id, 'credential');
     mockApi({
       ...anonymousRoutes,
       'POST /auth/passkeys/login/options': {
@@ -106,6 +113,7 @@ describe('Passkeys in login and account', () => {
   it('allows password login after cancelling the automatic mobile prompt without reopening it', async () => {
     useMobileViewport();
     const user = makeUser();
+    rememberPasskey(user.id, 'credential');
     mockApi({
       ...anonymousRoutes,
       'POST /auth/passkeys/login/options': {
@@ -123,7 +131,7 @@ describe('Passkeys in login and account', () => {
     await screen.findByText(/Operação cancelada ou expirada/);
     expect(
       screen.queryByRole('button', { name: 'Entrar com biometria ou passkey' }),
-    ).not.toBeInTheDocument();
+    ).toBeEnabled();
     fireEvent.change(screen.getByLabelText('E-mail'), {
       target: { value: user.email },
     });
@@ -212,6 +220,7 @@ describe('Passkeys in login and account', () => {
       screen.getByRole('button', { name: 'Ativar biometria / criar passkey' }),
     );
     await screen.findByText(/Passkey ativada/);
+    expect(shouldStartPasskeyLogin()).toBe(true);
     await waitFor(() =>
       expect(
         screen.getByLabelText('Senha atual para ativar', { exact: false }),
@@ -224,5 +233,6 @@ describe('Passkeys in login and account', () => {
       await screen.findByRole('button', { name: 'Remover O meu dispositivo' }),
     );
     expect(await screen.findByText(/Passkey removida/)).toBeInTheDocument();
+    expect(shouldStartPasskeyLogin()).toBe(false);
   });
 });
