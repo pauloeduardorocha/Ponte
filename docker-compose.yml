@@ -37,6 +37,9 @@ services:
       NODE_ENV: production
       API_PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      WEB_PUSH_PUBLIC_KEY: ${WEB_PUSH_PUBLIC_KEY:-}
+      WEB_PUSH_PRIVATE_KEY: ${WEB_PUSH_PRIVATE_KEY:-}
+      WEB_PUSH_SUBJECT: ${WEB_PUSH_SUBJECT:-}
       DATABASE_URL: postgresql://church_app:${RUNTIME_DATABASE_PASSWORD:?Configure RUNTIME_DATABASE_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-church_management}?schema=public
       PRIVATE_STORAGE_PATH: /app/private-storage
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Configure JWT_ACCESS_SECRET in .env}

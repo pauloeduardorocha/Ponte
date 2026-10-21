@@ -101,6 +101,7 @@ enum UserStatus {
 }
 
 model User {
+  pushSubscriptions     PushSubscription[]
   passkeys              Passkey[]
   managedEvents         EventManagerAssignment[] @relation("EventManager")
   assignedEventManagers EventManagerAssignment[] @relation("EventAssigner")
@@ -1081,6 +1082,7 @@ model Notification {
   status             String    @default("PENDING") @db.VarChar(20)
   scheduledAt        DateTime? @db.Timestamptz(6)
   sentAt             DateTime? @db.Timestamptz(6)
+  readAt             DateTime? @db.Timestamptz(6)
   error              String?   @db.VarChar(500)
   createdByUserId    String    @db.Uuid
   creator            User      @relation("NotificationCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "notification_creator_fk")
@@ -1090,6 +1092,20 @@ model Notification {
   @@index([recipientMemberId, createdAt])
   @@index([recipientVisitorId, createdAt])
   @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique @db.VarChar(2048)
+  p256dh    String   @db.VarChar(87)
+  auth      String   @db.VarChar(22)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model NotificationTemplate {

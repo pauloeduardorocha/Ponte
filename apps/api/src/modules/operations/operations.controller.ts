@@ -22,15 +22,25 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiTags,
+  ApiOkResponse,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
 import { Permission, PermissionAny } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { OperationsService } from './operations.service';
 import {
   InternalNotificationProvider,
+  PushNotificationProvider,
   NOTIFICATION_PROVIDERS,
 } from './notification.provider';
 import * as D from './operations.dto';
+import { PushService } from './push.service';
+import { PushController } from './push.controller';
+import { NotificationCountDto } from './push.dto';
 @ApiTags('Operacao da igreja')
 @ApiBearerAuth()
 @Controller('operations')
@@ -41,6 +51,24 @@ export class OperationsController {
   }
   @Get('identity') identity(@Req() r: AuthRequest) {
     return this.service.identity(r.user);
+  }
+  @Get('inbox/unread')
+  @ApiOkResponse({ type: NotificationCountDto })
+  unread(@Req() r: AuthRequest) {
+    return this.service.unread(r.user);
+  }
+  @Post('inbox/read-all')
+  @ApiCreatedResponse({ type: NotificationCountDto })
+  readAll(@Req() r: AuthRequest) {
+    return this.service.readInbox(r.user);
+  }
+  @Post('inbox/:id/read')
+  @ApiCreatedResponse({ type: NotificationCountDto })
+  @ApiNotFoundResponse({
+    description: 'Mensagem não encontrada na caixa pessoal.',
+  })
+  read(@Param('id', ParseUUIDPipe) id: string, @Req() r: AuthRequest) {
+    return this.service.readInbox(r.user, id);
   }
   @Post('schedules/:id/assignments/:assignmentId/respond')
   @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
@@ -514,14 +542,19 @@ export class OperationsController {
   }
 }
 @Module({
-  controllers: [OperationsController],
+  controllers: [OperationsController, PushController],
   providers: [
     OperationsService,
     InternalNotificationProvider,
+    PushService,
+    PushNotificationProvider,
     {
       provide: NOTIFICATION_PROVIDERS,
-      useFactory: (internal: InternalNotificationProvider) => [internal],
-      inject: [InternalNotificationProvider],
+      useFactory: (
+        internal: InternalNotificationProvider,
+        push: PushNotificationProvider,
+      ) => [internal, push],
+      inject: [InternalNotificationProvider, PushNotificationProvider],
     },
   ],
   exports: [OperationsService],

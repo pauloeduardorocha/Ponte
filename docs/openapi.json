@@ -932,7 +932,8 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": ["Operacao da igreja"],
+        "description": "Caixa pessoal dos canais INTERNAL e PUSH com status SENT. Cada mensagem inclui readAt (data/hora ou null); o destinatário deriva da sessão autenticada."
       }
     },
     "/api/v1/operations/identity": {
@@ -10052,6 +10053,189 @@
           }
         ]
       }
+    },
+    "/api/v1/operations/inbox/unread": {
+      "get": {
+        "operationId": "OperationsController_unread",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Operacao da igreja"]
+      }
+    },
+    "/api/v1/operations/inbox/read-all": {
+      "post": {
+        "operationId": "OperationsController_readAll",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCountDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Operacao da igreja"]
+      }
+    },
+    "/api/v1/operations/inbox/{id}/read": {
+      "post": {
+        "operationId": "OperationsController_read",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationCountDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Mensagem não encontrada na caixa pessoal."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Operacao da igreja"]
+      }
+    },
+    "/api/v1/operations/push/config": {
+      "get": {
+        "operationId": "PushController_settings",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Notificacoes push"]
+      }
+    },
+    "/api/v1/operations/push/subscriptions": {
+      "post": {
+        "operationId": "PushController_subscribe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushSubscriptionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushStatusDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Endpoint ou chaves inválidos."
+          },
+          "409": {
+            "description": "Endpoint de outra conta ou limite de dispositivos."
+          },
+          "503": {
+            "description": "Push não configurado."
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Notificacoes push"]
+      },
+      "delete": {
+        "operationId": "PushController_unsubscribe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PushEndpointDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PushStatusDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Notificacoes push"]
+      }
     }
   },
   "info": {
@@ -12168,6 +12352,77 @@
             "maxLength": 80
           }
         }
+      },
+      "NotificationCountDto": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "required": ["count"]
+      },
+      "PushConfigDto": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "publicKey": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["enabled", "publicKey"]
+      },
+      "PushKeysDto": {
+        "type": "object",
+        "properties": {
+          "p256dh": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{87}$"
+          },
+          "auth": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]{22}$"
+          }
+        },
+        "required": ["p256dh", "auth"]
+      },
+      "PushSubscriptionDto": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Endpoint HTTPS emitido por um serviço Web Push suportado."
+          },
+          "keys": {
+            "$ref": "#/components/schemas/PushKeysDto"
+          }
+        },
+        "required": ["endpoint", "keys"]
+      },
+      "PushStatusDto": {
+        "type": "object",
+        "properties": {
+          "subscribed": {
+            "type": "boolean"
+          }
+        },
+        "required": ["subscribed"]
+      },
+      "PushEndpointDto": {
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Endpoint HTTPS emitido por um serviço Web Push suportado."
+          }
+        },
+        "required": ["endpoint"]
       }
     }
   }

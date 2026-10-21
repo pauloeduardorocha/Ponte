@@ -5,6 +5,7 @@ import {
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from '@nestjs/common';
 import type { CurrentUser } from '@church/shared';
 import { Prisma } from '@prisma/client';
@@ -12,6 +13,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import * as D from './operations.dto';
 import { initialPasswordHash } from '../members/member-identity';
+import { PushService } from './push.service';
 import type { PrivateUpload } from '../finance/storage.service';
 import { randomUUID } from 'node:crypto';
 import { occupiedRegistrations } from '../events/registration-capacity';
@@ -69,6 +71,7 @@ export class OperationsService {
     private readonly db: PrismaService,
     @Inject(NOTIFICATION_PROVIDERS)
     private readonly providers: NotificationProvider[],
+    @Optional() private readonly push?: PushService,
   ) {}
   all(user: CurrentUser) {
     return user.permissions.includes('OPERATION_SCOPE_ALL');
@@ -1707,12 +1710,40 @@ export class OperationsService {
     ]);
     return this.page(items, total, q);
   }
-  async inbox(q: D.OperationQuery, user: CurrentUser) {
+  private async inboxWhere(
+    user: CurrentUser,
+  ): Promise<Prisma.NotificationWhereInput> {
     const memberId = await this.memberId(user);
-    const where: Prisma.NotificationWhereInput = {
-      channel: 'INTERNAL',
+    return {
+      channel: { in: ['INTERNAL', 'PUSH'] },
       status: 'SENT',
       OR: [{ recipientMemberId: memberId }, { recipientVisitor: { memberId } }],
+    };
+  }
+  async unread(user: CurrentUser) {
+    return {
+      count: await this.db.notification.count({
+        where: { ...(await this.inboxWhere(user)), readAt: null },
+      }),
+    };
+  }
+  async readInbox(user: CurrentUser, id?: string) {
+    const where = { ...(await this.inboxWhere(user)), ...(id ? { id } : {}) };
+    return this.write(async (tx) => {
+      if (
+        id &&
+        !(await tx.notification.findFirst({ where, select: { id: true } }))
+      )
+        throw new NotFoundException();
+      return tx.notification.updateMany({
+        where: { ...where, readAt: null },
+        data: { readAt: new Date() },
+      });
+    });
+  }
+  async inbox(q: D.OperationQuery, user: CurrentUser) {
+    const where: Prisma.NotificationWhereInput = {
+      ...(await this.inboxWhere(user)),
       subject: q.search
         ? { contains: q.search, mode: 'insensitive' }
         : undefined,
@@ -1725,6 +1756,7 @@ export class OperationsService {
           subject: true,
           content: true,
           sentAt: true,
+          readAt: true,
           createdAt: true,
         },
         ...this.pagination(q),
@@ -1751,7 +1783,7 @@ export class OperationsService {
     });
   }
   async notificationAction(id: string, user: CurrentUser, cancel = false) {
-    return this.write(async (tx) => {
+    const result = await this.write(async (tx) => {
       await tx.$queryRaw`SELECT id FROM notifications WHERE id=${id}::uuid FOR UPDATE`;
       const n = await tx.notification.findFirst({
         where: { id, ...(!this.all(user) ? { createdByUserId: user.id } : {}) },
@@ -1787,6 +1819,14 @@ export class OperationsService {
         data: { status: 'SENT', sentAt: new Date(), error: null },
       });
     });
+    if (!cancel && result.channel === 'INTERNAL' && result.status === 'SENT')
+      await this.notifyInternal(result);
+    return result;
+  }
+  async notifyInternal(
+    notification: Parameters<PushService['notifyInternal']>[0],
+  ) {
+    await this.push?.notifyInternal(notification);
   }
   async templates(q: D.OperationQuery) {
     const where = {

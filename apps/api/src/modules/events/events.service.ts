@@ -409,28 +409,41 @@ export class EventsService {
       },
     );
   }
-  notify(id: string, dto: D.EventMessageDto, user: CurrentUser) {
-    return this.write(id, user, 'EVENT_NOTIFICATION_SENT', async (tx) => {
-      const recipients = await tx.eventRegistration.findMany({
-        where: {
-          eventId: id,
-          status: { in: ['REGISTERED', 'APPROVED'] },
-          communicationConsent: true,
-        },
-      });
-      return tx.notification.createMany({
-        data: recipients.map((r) => ({
-          recipientMemberId: r.memberId,
-          recipientVisitorId: r.visitorId,
-          channel: 'INTERNAL',
-          status: 'SENT',
-          sentAt: new Date(),
-          createdByUserId: user.id,
-          subject: dto.subject,
-          content: dto.content,
-        })),
-      });
-    });
+  async notify(id: string, dto: D.EventMessageDto, user: CurrentUser) {
+    const messages = await this.write(
+      id,
+      user,
+      'EVENT_NOTIFICATION_SENT',
+      async (tx) => {
+        const recipients = await tx.eventRegistration.findMany({
+          where: {
+            eventId: id,
+            status: { in: ['REGISTERED', 'APPROVED'] },
+            communicationConsent: true,
+          },
+        });
+        return tx.notification.createManyAndReturn({
+          data: recipients.map((r) => ({
+            recipientMemberId: r.memberId,
+            recipientVisitorId: r.visitorId,
+            channel: 'INTERNAL',
+            status: 'SENT',
+            sentAt: new Date(),
+            createdByUserId: user.id,
+            subject: dto.subject,
+            content: dto.content,
+          })),
+        });
+      },
+    );
+    for (let offset = 0; offset < messages.length; offset += 5) {
+      await Promise.all(
+        messages
+          .slice(offset, offset + 5)
+          .map((message) => this.operations.notifyInternal(message)),
+      );
+    }
+    return { count: messages.length };
   }
   async report(id: string, user: CurrentUser, exporting = false) {
     await this.operations.event(id, user);

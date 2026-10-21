@@ -21,6 +21,7 @@ import {
 } from '../lib/passkey-preferences';
 import type { CurrentUser, Permission } from '../lib/types';
 import { errorMessage } from '../lib/errors';
+import { disablePush, stopBrowserPush } from '../lib/push';
 import {
   AuthContext,
   type AuthContextValue,
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearSession = useCallback(
     (notice?: string) => {
       setEnrollment(null);
+      void stopBrowserPush().catch(() => undefined);
       setAccessToken(null);
       queryClient.clear();
       setState({ ...ANONYMOUS, signOutNotice: notice ?? null });
@@ -126,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     pauseAutomaticPasskeyLogin();
     try {
+      await disablePush().catch(() => stopBrowserPush().catch(() => undefined));
       await authApi.logout();
       clearSession();
     } catch (error) {

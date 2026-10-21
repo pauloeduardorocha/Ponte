@@ -1,10 +1,11 @@
 import { formatDateTime } from '../../lib/format';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Button,
+  Chip,
   Skeleton,
   Stack,
   TablePagination,
@@ -13,17 +14,34 @@ import {
 } from '@mui/material';
 import { apiRequest } from '../../lib/api';
 import { useDebouncedValue } from '../../lib/use-debounced-value';
+import { PushControls } from '../../components/PushControls';
 type Message = {
   id: string;
   subject: string | null;
   content: string;
   sentAt: string;
+  readAt: string | null;
 };
 export function InboxPage() {
+  const client = useQueryClient();
+  const read = useMutation({
+    mutationFn: (id?: string) =>
+      apiRequest(
+        id ? `/operations/inbox/${id}/read` : '/operations/inbox/read-all',
+        { method: 'POST' },
+      ),
+    onSuccess: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['operations', 'inbox'] }),
+        client.invalidateQueries({ queryKey: ['notifications'] }),
+      ]);
+    },
+  });
   const [page, setPage] = useState(0),
     [search, setSearch] = useState(''),
     debounced = useDebouncedValue(search);
   const data = useQuery({
+    refetchInterval: 60_000,
     queryKey: ['operations', 'inbox', page, debounced],
     queryFn: () =>
       apiRequest<{ items: Message[]; total: number }>('/operations/inbox', {
@@ -36,6 +54,15 @@ export function InboxPage() {
       <Typography color="text.secondary">
         Mensagens internas enviadas para o seu cadastro de membro.
       </Typography>
+      <PushControls />
+      <Button
+        sx={{ alignSelf: 'flex-start' }}
+        disabled={read.isPending || !data.data?.items.length}
+        onClick={() => read.mutate(undefined)}
+      >
+        Marcar todas como lidas
+      </Button>
+      {read.isError && <Alert severity="error">{read.error.message}</Alert>}
       <TextField
         label="Pesquisar por assunto"
         value={search}
@@ -74,6 +101,9 @@ export function InboxPage() {
                 <Typography variant="h6">
                   {m.subject ?? 'Mensagem de A Ponte'}
                 </Typography>
+                {!m.readAt && (
+                  <Chip size="small" color="primary" label="Não lida" />
+                )}
               </>
             }
             hasActions={false}
@@ -91,6 +121,14 @@ export function InboxPage() {
             >
               {m.content}
             </Typography>
+            {!m.readAt && (
+              <Button
+                disabled={read.isPending}
+                onClick={() => read.mutate(m.id)}
+              >
+                Marcar como lida
+              </Button>
+            )}
           </RecordRow>
         ))}
       </RecordTable>

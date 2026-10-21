@@ -299,6 +299,9 @@ export class PrivacyService {
             'Conta administrativa exige tratamento separado',
           );
         if (member.user) {
+          await tx.pushSubscription.deleteMany({
+            where: { userId: member.user.id },
+          });
           await tx.user.update({
             where: { id: member.user.id },
             data: {

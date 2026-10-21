@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
           ],
         },
         workbox: {
+          importScripts: ['/push-worker.js'],
           globPatterns: ['**/*.{js,css,html,png,jpg,svg,woff2}'],
           navigateFallbackDenylist: [/^\/api(?:\/|$)/],
           // Only the public application shell is cached, never authenticated API data.

@@ -261,6 +261,10 @@ export const configs: Record<Resource, Config> = {
         key: 'channel',
         label: 'Canal',
         options: ['INTERNAL', 'EMAIL', 'SMS', 'WHATSAPP', 'PUSH'],
+        optionLabels: {
+          INTERNAL: 'Interna (com alerta push para quem ativou)',
+          PUSH: 'Push (exige um dispositivo inscrito)',
+        },
         required: true,
       },
       { key: 'subject', label: 'Assunto' },

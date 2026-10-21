@@ -32,6 +32,7 @@ import LogoutRounded from '@mui/icons-material/LogoutRounded';
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
 import MenuRounded from '@mui/icons-material/MenuRounded';
 import NotificationsNoneRounded from '@mui/icons-material/NotificationsNoneRounded';
+import { NotificationBell } from '../components/NotificationBell';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import {
@@ -429,7 +430,7 @@ export function AppShell({ children }: { children?: ReactNode }) {
               to="/inbox"
               aria-label="Notificações"
             >
-              <NotificationsNoneRounded />
+              <NotificationBell />
             </IconButton>
           </Tooltip>
           <ProfileMenu />

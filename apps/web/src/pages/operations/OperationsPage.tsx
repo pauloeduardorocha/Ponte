@@ -230,6 +230,12 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         Organize a vida de A Ponte e acompanhe cada atividade. O acesso respeita
         suas responsabilidades.
       </Typography>
+      {resource === 'notifications' && (
+        <Alert severity="info">
+          As mensagens internas ficam na caixa do destinatário e também geram um
+          alerta nos dispositivos em que ele ativou as notificações.
+        </Alert>
+      )}
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
           {notice}

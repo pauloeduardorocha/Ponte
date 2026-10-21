@@ -694,10 +694,11 @@ O seed existente acrescenta exemplos operacionais sem trocar senhas ou apagar
 registros. Para gestores de liderança, configure também o vínculo User.memberId.
 
 Consulte [os módulos, permissões, endpoints e fluxos](docs/CHURCH_OPERATIONS.md).
-Swagger e docs/openapi.json incluem os novos contratos. Adaptadores de email,
-SMS, WhatsApp e push estão preparados para integração futura; nesta etapa o
-sistema persiste notificações internas e mantém canais externos sem provedor
-pendentes, sem simular envio.
+Swagger e docs/openapi.json incluem os novos contratos. Notificações internas
+incluem caixa pessoal, contador de não lidas e Web Push com consentimento por
+dispositivo, tanto no navegador como na PWA. Consulte a [configuração de push,
+contratos e limitações](docs/notifications.md). Email, SMS e WhatsApp continuam
+dependendo de provedores externos.
 
 ## Faturas do e-fatura
 

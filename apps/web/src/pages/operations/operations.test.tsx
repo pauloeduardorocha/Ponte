@@ -132,7 +132,13 @@ describe('Operational workflows', () => {
         'Você não tem permissão para acessar este módulo.',
       ),
     ).toBeInTheDocument();
-    expect(requests.some((r) => r.path.startsWith('/operations'))).toBe(false);
+    expect(
+      requests.some(
+        (r) =>
+          r.path.startsWith('/operations') &&
+          r.path !== '/operations/inbox/unread',
+      ),
+    ).toBe(false);
     expect(
       screen.queryByRole('link', { name: 'Acompanhamento' }),
     ).not.toBeInTheDocument();
