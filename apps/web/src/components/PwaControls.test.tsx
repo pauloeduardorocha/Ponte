@@ -8,21 +8,22 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PwaControls } from './PwaControls';
+import { applyPwaUpdate } from '../lib/pwa-update';
 
 const sw = vi.hoisted(() => ({
   refresh: false,
-  update: vi.fn(),
   dismiss: vi.fn(),
 }));
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: () => ({
     needRefresh: [sw.refresh, sw.dismiss],
-    updateServiceWorker: sw.update,
   }),
 }));
+vi.mock('../lib/pwa-update', () => ({ applyPwaUpdate: vi.fn() }));
 
 beforeEach(() => {
   sw.refresh = false;
+  vi.mocked(applyPwaUpdate).mockReset().mockResolvedValue(undefined);
   vi.stubGlobal(
     'matchMedia',
     vi.fn(() => ({ matches: false })),
@@ -76,10 +77,42 @@ describe('PWA installation and updates', () => {
 
   it('waits for user confirmation before applying an update', () => {
     sw.refresh = true;
-    sw.update.mockClear();
     render(<PwaControls />);
-    expect(sw.update).not.toHaveBeenCalled();
+    expect(applyPwaUpdate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
-    expect(sw.update).toHaveBeenCalledWith(true);
+    expect(applyPwaUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('shows progress and prevents duplicate update requests', async () => {
+    sw.refresh = true;
+    let finish!: () => void;
+    vi.mocked(applyPwaUpdate).mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    render(<PwaControls />);
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+    expect(screen.getByRole('button', { name: 'A atualizar…' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'A atualizar…' }));
+    expect(applyPwaUpdate).toHaveBeenCalledOnce();
+    await act(async () => finish());
+  });
+
+  it('reports update errors and lets the user retry', async () => {
+    sw.refresh = true;
+    vi.mocked(applyPwaUpdate).mockRejectedValueOnce(
+      new Error('A atualização foi interrompida. Tente novamente.'),
+    );
+    render(<PwaControls />);
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+    expect(
+      await screen.findByText(
+        'A atualização foi interrompida. Tente novamente.',
+      ),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+    await waitFor(() => expect(applyPwaUpdate).toHaveBeenCalledTimes(2));
   });
 });

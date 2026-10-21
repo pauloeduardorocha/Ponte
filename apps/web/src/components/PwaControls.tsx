@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Box,
@@ -10,6 +10,7 @@ import {
   Snackbar,
 } from '@mui/material';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import { applyPwaUpdate } from '../lib/pwa-update';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -21,6 +22,9 @@ export function PwaControls() {
     null,
   );
   const [instructions, setInstructions] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const updateInProgress = useRef(false);
   const [installed, setInstalled] = useState(
     () =>
       window.matchMedia('(display-mode: standalone)').matches ||
@@ -31,8 +35,29 @@ export function PwaControls() {
     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const {
     needRefresh: [needRefresh, setNeedRefresh],
-    updateServiceWorker,
-  } = useRegisterSW();
+  } = useRegisterSW({
+    // Reloading is handled after explicit acceptance, including cross-tab updates.
+    onNeedReload: () => undefined,
+  });
+
+  async function update() {
+    if (updateInProgress.current) return;
+    updateInProgress.current = true;
+    setUpdating(true);
+    setUpdateError(null);
+    try {
+      await applyPwaUpdate();
+    } catch (error) {
+      setUpdateError(
+        error instanceof Error
+          ? error.message
+          : 'Não foi possível atualizar. Tente novamente.',
+      );
+    } finally {
+      updateInProgress.current = false;
+      setUpdating(false);
+    }
+  }
 
   useEffect(() => {
     const onPrompt = (event: Event) => {
@@ -94,18 +119,26 @@ export function PwaControls() {
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
-          severity="info"
-          onClose={() => setNeedRefresh(false)}
+          severity={updateError ? 'error' : 'info'}
+          onClose={updating ? undefined : () => setNeedRefresh(false)}
           action={
             <Button
               color="inherit"
-              onClick={() => void updateServiceWorker(true)}
+              disabled={updating}
+              onClick={() => void update()}
             >
-              Atualizar
+              {updating
+                ? 'A atualizar…'
+                : updateError
+                  ? 'Tentar novamente'
+                  : 'Atualizar'}
             </Button>
           }
         >
-          Nova versão disponível. Guarde as alterações antes de atualizar.
+          {updateError ??
+            (updating
+              ? 'A aplicar a nova versão…'
+              : 'Nova versão disponível. Guarde as alterações antes de atualizar.')}
         </Alert>
       </Snackbar>
     </>
