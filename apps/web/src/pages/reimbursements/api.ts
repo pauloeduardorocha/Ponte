@@ -87,6 +87,8 @@ export type ReimbursementFile = {
   size: number;
 };
 export type Reimbursement = {
+  categoryId: string | null;
+  category: { id: string; name: string } | null;
   id: string;
   submittedBy?: string | null;
   deletedAt?: string | null;

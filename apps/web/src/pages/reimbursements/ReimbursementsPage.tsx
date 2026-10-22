@@ -26,7 +26,7 @@ import { type Reimbursement, statuses, money } from './api';
 import { ReimbursementForm } from './ReimbursementForm';
 import { ReimbursementDocuments } from './ReimbursementDocuments';
 
-export function PublicReimbursementPage() {
+export function ReimbursementRequestPage() {
   const [receipt, setReceipt] = useState<string>();
   const { status } = useAuth();
   return (
@@ -52,12 +52,6 @@ export function PublicReimbursementPage() {
           </>
         ) : (
           <>
-            {status === 'anonymous' && (
-              <Typography>
-                Pode enviar sem conta ou <Link to="/login">iniciar sessão</Link>{' '}
-                antes de enviar para acompanhar o pedido na sua conta.
-              </Typography>
-            )}
             <ReimbursementForm onSaved={(result) => setReceipt(result.id)} />
           </>
         )}
@@ -142,15 +136,15 @@ export function ReimbursementsPage({
               void navigator.clipboard
                 .writeText(`${window.location.origin}/pedir-reembolso`)
                 .then(
-                  () => setNotice('Link público copiado.'),
+                  () => setNotice('Link para membros copiado.'),
                   () =>
                     setNotice(
-                      `Link público: ${window.location.origin}/pedir-reembolso`,
+                      `Link para membros: ${window.location.origin}/pedir-reembolso`,
                     ),
                 );
             }}
           >
-            Copiar link público
+            Copiar link para membros
           </Button>
         )}
       </Stack>
@@ -435,6 +429,9 @@ function ReimbursementDetail({
       <Typography variant="h6">
         {row.beneficiaryName || 'Beneficiário por preencher'} ·{' '}
         {money(row.amount, row.currency)}
+      </Typography>
+      <Typography>
+        Categoria: {row.category?.name || 'Por preencher'}
       </Typography>
       <Typography>IBAN: {row.iban || 'Por preencher'}</Typography>
       <Typography>{row.purpose || 'Finalidade por preencher'}</Typography>

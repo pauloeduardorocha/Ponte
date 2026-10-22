@@ -655,6 +655,10 @@ export function BankingPage({
                 <MovementAttachments
                   key={currentMovement.id}
                   transactionId={currentMovement.id}
+                  onReimbursementLinked={(categoryId) => {
+                    setCategoryId(categoryId);
+                    setClassification('EXPENSE');
+                  }}
                 />
                 {[
                   'PENDING_REVIEW',

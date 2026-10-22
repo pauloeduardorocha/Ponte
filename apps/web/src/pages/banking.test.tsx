@@ -93,6 +93,58 @@ async function uploadStatement() {
 }
 describe('Bank statement review', () => {
   beforeEach(resetTestState);
+  it('prefills the expense category when a reimbursement is linked during review', async () => {
+    let linked = false;
+    const reimbursement = {
+      id: 'request-1',
+      categoryId: 'expense-category',
+      category: { id: 'expense-category', name: 'Material' },
+      beneficiaryName: 'Maria',
+      purpose: 'Material',
+      attachments: [],
+    };
+    mockApi({
+      ...routes(),
+      'GET /finance/banking/transactions': {
+        body: page([
+          {
+            ...row,
+            direction: 'DEBIT',
+            status: 'PENDING_REVIEW',
+            category: null,
+          },
+        ]),
+      },
+      'GET /finance/categories': {
+        body: page([
+          { id: 'expense-category', name: 'Material', kind: 'EXPENSE' },
+        ]),
+      },
+      'GET /finance/banking/transactions/transaction-1/attachments': {
+        body: [],
+      },
+      'GET /reimbursements/movement/transaction-1': () => ({
+        body: linked ? reimbursement : null,
+      }),
+      'GET /reimbursements/movement/transaction-1/suggestions': {
+        body: [reimbursement],
+      },
+      'POST /reimbursements/request-1/link': () => {
+        linked = true;
+        return { body: reimbursement };
+      },
+    });
+    renderApp('/finance?tab=banking');
+    await uploadStatement();
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Associar reembolso' }),
+    );
+    await waitFor(() =>
+      expect(
+        screen.getByRole('combobox', { name: 'Categoria' }),
+      ).toHaveTextContent('Material'),
+    );
+  });
   it('does not offer invoice associations while categorizing expenses', async () => {
     const requests = mockApi({
       ...routes(),

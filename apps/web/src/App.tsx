@@ -4,9 +4,9 @@ const ReimbursementsPage = lazy(() =>
     default: m.ReimbursementsPage,
   })),
 );
-const PublicReimbursementPage = lazy(() =>
+const ReimbursementRequestPage = lazy(() =>
   import('./pages/reimbursements/ReimbursementsPage').then((m) => ({
-    default: m.PublicReimbursementPage,
+    default: m.ReimbursementRequestPage,
   })),
 );
 import { LinearProgress } from '@mui/material';
@@ -101,10 +101,6 @@ export function App({ children }: { children?: ReactNode }) {
       <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
         <Routes>
           <Route
-            path="/pedir-reembolso"
-            element={<PublicReimbursementPage />}
-          />
-          <Route
             path="/events/:id/register"
             element={<PublicEventRegistration />}
           />
@@ -116,6 +112,10 @@ export function App({ children }: { children?: ReactNode }) {
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           <Route element={<RequireAuth />}>
+            <Route
+              path="/pedir-reembolso"
+              element={<ReimbursementRequestPage />}
+            />
             <Route element={<AppShell />}>
               <Route index element={<DashboardPage />} />
               <Route path="operations" element={<OperationsDashboardPage />} />

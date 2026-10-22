@@ -10,6 +10,7 @@ describe('IBAN input validation', () => {
     'normalizes and validates %p',
     async (Dto) => {
       const input = plainToInstance(Dto, {
+        categoryId: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
         name: 'Maria',
         email: 'maria@example.com',
         iban: 'pt50 0002 0123 1234 5678 9015 4',
@@ -19,7 +20,7 @@ describe('IBAN input validation', () => {
     },
   );
 
-  it.each(['912345678', 'PT50000201231234567890155', null])(
+  it.each(['912345678', 'PT50000201231234567890155', null, '', undefined])(
     'rejects an invalid reimbursement IBAN: %p',
     async (value) => {
       const errors = await validate(
@@ -29,12 +30,15 @@ describe('IBAN input validation', () => {
     },
   );
 
-  it.each(['', undefined])(
-    'allows incomplete requests with IBAN %p',
-    async (value) => {
-      expect(
-        await validate(plainToInstance(ReimbursementDto, { iban: value })),
-      ).toEqual([]);
+  it.each(['', undefined, null, 'invalid'])(
+    'requires a category UUID: %p',
+    async (categoryId) => {
+      const errors = await validate(
+        plainToInstance(ReimbursementDto, { iban, categoryId }),
+      );
+      expect(errors.some((error) => error.property === 'categoryId')).toBe(
+        true,
+      );
     },
   );
 

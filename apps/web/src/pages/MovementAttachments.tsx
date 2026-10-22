@@ -47,11 +47,13 @@ export function MovementAttachments({
   expenseId,
   canWrite = true,
   canRead = true,
+  onReimbursementLinked,
 }: {
   transactionId?: string;
   expenseId?: string;
   canWrite?: boolean;
   canRead?: boolean;
+  onReimbursementLinked?: (categoryId: string) => void;
 }) {
   const client = useQueryClient();
   const mobile = useMediaQuery('(pointer: coarse)');
@@ -152,7 +154,10 @@ export function MovementAttachments({
   return (
     <Stack spacing={1}>
       {transactionId && canRead && (
-        <MovementReimbursement transactionId={transactionId} />
+        <MovementReimbursement
+          transactionId={transactionId}
+          onLinked={onReimbursementLinked}
+        />
       )}
       <Typography variant="subtitle2">
         Anexos ({attachments.data?.length ?? 0}

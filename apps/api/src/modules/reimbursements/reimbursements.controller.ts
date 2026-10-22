@@ -17,9 +17,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
-import { Permission, Public } from '../auth/permission.decorator';
+import { Permission } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { StorageService, PrivateUpload } from '../finance/storage.service';
 import { ReimbursementsService } from './reimbursements.service';
@@ -31,20 +30,10 @@ import {
   ReimbursementQuery,
 } from './reimbursements.dto';
 
-const limits = { fileSize: 2 * 1024 * 1024, files: 3, fields: 4 };
+const limits = { fileSize: 2 * 1024 * 1024, files: 3, fields: 5 };
 @Controller('reimbursements')
 export class ReimbursementsController {
   constructor(private readonly service: ReimbursementsService) {}
-  @Public()
-  @Post('public')
-  @Throttle({ default: { limit: 5, ttl: 60_000 } })
-  @UseInterceptors(FilesInterceptor('files', 3, { limits }))
-  createPublic(
-    @Body() dto: ReimbursementDto,
-    @UploadedFiles() files: PrivateUpload[],
-  ) {
-    return this.service.create(dto, files);
-  }
   @Post()
   @UseInterceptors(FilesInterceptor('files', 3, { limits }))
   create(
@@ -58,6 +47,10 @@ export class ReimbursementsController {
   @Permission('FINANCE_TRANSACTION_READ', 'FINANCE_TRANSACTION_UPDATE')
   list(@Query() q: ReimbursementQuery, @Req() req: AuthRequest) {
     return this.service.list(q, req.user);
+  }
+  @Get('categories')
+  categories(@Req() req: AuthRequest) {
+    return this.service.categories(req.user);
   }
   @Get('profile')
   profile(@Req() req: AuthRequest) {

@@ -17,6 +17,7 @@ const row = {
   deletedAt: null,
   beneficiaryName: 'Maria',
   iban: 'PT50000201231234567890154',
+  categoryId: 'category',
   purpose: 'Material para crianças',
   amount: new Prisma.Decimal('25.10'),
   currency: 'EUR',
@@ -42,7 +43,14 @@ function setup() {
       update: jest.fn().mockResolvedValue(row),
       create: jest.fn().mockResolvedValue(row),
     },
+    financialCategory: {
+      findUnique: jest
+        .fn()
+        .mockResolvedValue({ id: 'category', kind: 'EXPENSE' }),
+      findMany: jest.fn(),
+    },
     bankTransaction: {
+      update: jest.fn(),
       findUnique: jest.fn().mockResolvedValue({
         id: 'bank',
         direction: 'DEBIT',
@@ -59,7 +67,7 @@ function setup() {
       findFirst: jest.fn().mockResolvedValue({ storageKey: 'key' }),
     },
     member: {
-      findFirst: jest.fn().mockResolvedValue(null),
+      findFirst: jest.fn().mockResolvedValue({ id: 'member', name: 'Maria' }),
       updateMany: jest.fn(),
     },
     auditLog: { create: jest.fn() },
@@ -82,6 +90,15 @@ function setup() {
   };
 }
 describe('Reimbursement lifecycle and access', () => {
+  it('lists the same expense categories for members without finance permissions', async () => {
+    const { service, tx } = setup();
+    await service.categories(user);
+    expect(tx.financialCategory.findMany).toHaveBeenCalledWith({
+      where: { kind: 'EXPENSE' },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  });
   it('reads only the authenticated member profile', async () => {
     const { service, tx } = setup();
     await service.profile(user);
@@ -96,8 +113,17 @@ describe('Reimbursement lifecycle and access', () => {
       const { service, tx } = setup();
       tx.member.findFirst.mockResolvedValue({ id: 'member', name: 'Maria' });
       if (operation === 'create')
-        await service.create({ iban: row.iban }, [file], user);
-      else await service.update(row.id, { iban: row.iban }, user);
+        await service.create(
+          { iban: row.iban, categoryId: row.categoryId },
+          [file],
+          user,
+        );
+      else
+        await service.update(
+          row.id,
+          { iban: row.iban, categoryId: row.categoryId },
+          user,
+        );
       expect(tx.member.updateMany).toHaveBeenCalledWith({
         where: {
           id: 'member',
@@ -114,14 +140,18 @@ describe('Reimbursement lifecycle and access', () => {
       id: 'member',
       name: 'Outra pessoa',
     });
-    await service.create({ iban: row.iban }, [file], user);
+    await service.create(
+      { iban: row.iban, categoryId: row.categoryId },
+      [file],
+      user,
+    );
     expect(tx.member.updateMany).not.toHaveBeenCalled();
   });
   it('does not persist a beneficiary IBAN when a manager edits someone else’s request', async () => {
     const { service, tx } = setup();
     await service.update(
       row.id,
-      { iban: row.iban },
+      { iban: row.iban, categoryId: row.categoryId },
       { ...manager, id: 'treasurer' },
     );
     expect(tx.member.findFirst).not.toHaveBeenCalled();
@@ -190,10 +220,17 @@ describe('Reimbursement lifecycle and access', () => {
       service.pay('request', '2026-01-01', manager),
     ).rejects.toThrow();
     await expect(
-      service.update('request', { amount: '10' }, user),
+      service.update(
+        'request',
+        { iban: row.iban, categoryId: row.categoryId, amount: '10' },
+        user,
+      ),
     ).rejects.toThrow();
   });
   it('distinguishes incomplete, ready, paid and linked requests', () => {
+    expect(reimbursementStatus({ ...row, categoryId: null })).toBe(
+      'INCOMPLETE',
+    );
     expect(reimbursementStatus({ ...row, iban: '' })).toBe('INCOMPLETE');
     expect(
       reimbursementStatus({ ...row, attachments: [{ kind: 'PAYMENT' }] }),
@@ -220,16 +257,49 @@ describe('Reimbursement lifecycle and access', () => {
     ).rejects.toThrow();
     expect(storage.get).not.toHaveBeenCalled();
   });
-  it('returns only a receipt for anonymous submissions', async () => {
+  it('rejects anonymous submissions and accounts without a member before storing files', async () => {
+    const { service, tx, storage } = setup();
+    await expect(
+      service.create({ iban: row.iban, categoryId: row.categoryId }, [file]),
+    ).rejects.toThrow();
+    tx.member.findFirst.mockResolvedValueOnce(null!);
+    await expect(
+      service.create(
+        { iban: row.iban, categoryId: row.categoryId },
+        [file],
+        user,
+      ),
+    ).rejects.toThrow('exclusivo');
+    expect(storage.put).not.toHaveBeenCalled();
+  });
+  it('requires IBAN and a valid expense category', async () => {
     const { service, tx } = setup();
-    expect(await service.create({}, [file])).toEqual({ id: 'request' });
-    expect(
-      tx.reimbursement.create.mock.calls[0]![0].data.submittedBy,
-    ).toBeUndefined();
+    await expect(
+      service.create({ iban: '', categoryId: row.categoryId }, [file], user),
+    ).rejects.toThrow('IBAN');
+    tx.financialCategory.findUnique.mockResolvedValueOnce({
+      id: 'category',
+      kind: 'INCOME',
+    });
+    await expect(
+      service.create(
+        { iban: row.iban, categoryId: row.categoryId },
+        [file],
+        user,
+      ),
+    ).rejects.toThrow('categoria');
   });
   it('stores the authenticated submitter separately from the beneficiary', async () => {
     const { service, tx } = setup();
-    await service.create({ beneficiaryName: 'Outra pessoa' }, [file], user);
+    await service.create(
+      {
+        beneficiaryName: 'Outra pessoa',
+        iban: row.iban,
+        categoryId: row.categoryId,
+      },
+      [file],
+      user,
+    );
     expect(tx.reimbursement.create.mock.calls[0]![0].data).toMatchObject({
       submittedBy: user.id,
       beneficiaryName: 'Outra pessoa',
@@ -237,13 +307,19 @@ describe('Reimbursement lifecycle and access', () => {
   });
   it('requires a document and cleans files when persistence fails', async () => {
     const { service, tx, storage } = setup();
-    await expect(service.create({}, [])).rejects.toThrow('documento');
+    await expect(
+      service.create({ iban: row.iban, categoryId: row.categoryId }, [], user),
+    ).rejects.toThrow('documento');
     tx.reimbursement.create.mockRejectedValueOnce(
       new Error('database unavailable'),
     );
-    await expect(service.create({}, [file])).rejects.toThrow(
-      'database unavailable',
-    );
+    await expect(
+      service.create(
+        { iban: row.iban, categoryId: row.categoryId },
+        [file],
+        user,
+      ),
+    ).rejects.toThrow('database unavailable');
     expect(storage.remove).toHaveBeenCalledWith('key');
   });
   it('does not mark an incomplete request as paid', async () => {
@@ -289,6 +365,14 @@ describe('Reimbursement lifecycle and access', () => {
       paidAt: new Date('2026-01-01'),
     });
     await service.link('request', 'bank', manager);
+    expect(tx.bankTransaction.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          categoryId: row.categoryId,
+          classification: 'EXPENSE',
+        }),
+      }),
+    );
     expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
     expect(tx.reimbursement.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { bankTransactionId: 'bank' } }),
@@ -310,6 +394,26 @@ describe('Reimbursement lifecycle and access', () => {
       'já está associado',
     );
   });
+  it.each([true, false])(
+    'preserves reconciled accounting and rejects category mismatch: %s',
+    async (matches) => {
+      const { service, tx } = setup();
+      tx.reimbursement.findUnique.mockResolvedValue({
+        ...row,
+        paidAt: new Date('2026-01-01'),
+      });
+      const movement = await tx.bankTransaction.findUnique();
+      tx.bankTransaction.findUnique.mockResolvedValue({
+        ...movement,
+        status: 'RECONCILED',
+        categoryId: matches ? row.categoryId : 'other',
+      });
+      const result = service.link(row.id, 'bank', manager);
+      if (matches) await expect(result).resolves.toBeDefined();
+      else await expect(result).rejects.toThrow('categoria');
+      expect(tx.bankTransaction.update).not.toHaveBeenCalled();
+    },
+  );
   it('blocks changes to paid requests and payment evidence uploaded by a member', async () => {
     const { service, tx, storage } = setup();
     tx.reimbursement.findUniqueOrThrow.mockResolvedValue({
@@ -317,7 +421,11 @@ describe('Reimbursement lifecycle and access', () => {
       paidAt: new Date(),
     });
     await expect(
-      service.update('request', { amount: '99' }, user),
+      service.update(
+        'request',
+        { iban: row.iban, categoryId: row.categoryId, amount: '99' },
+        user,
+      ),
     ).rejects.toThrow('pago');
     await expect(
       service.attach('request', file, 'PAYMENT', user),

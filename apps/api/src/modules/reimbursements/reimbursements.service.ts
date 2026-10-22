@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { isIBAN } from 'class-validator';
 import { Prisma } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
 import { createHash } from 'node:crypto';
@@ -14,6 +16,7 @@ import { auditRequestFields, bindAudit } from '../audit/audit-context';
 import { ReimbursementDto, ReimbursementQuery } from './reimbursements.dto';
 
 const include = {
+  category: { select: { id: true, name: true } },
   attachments: {
     select: { id: true, filename: true, mime: true, size: true, kind: true },
     orderBy: { createdAt: 'asc' as const },
@@ -30,6 +33,7 @@ export function reimbursementStatus(row: {
   paidAt: Date | null;
   beneficiaryName: string;
   iban: string;
+  categoryId: string | null;
   purpose: string;
   amount: Prisma.Decimal | null;
   attachments: { kind: string }[];
@@ -38,6 +42,7 @@ export function reimbursementStatus(row: {
   if (row.paidAt) return 'PAID';
   return row.beneficiaryName.trim() &&
     row.iban.trim() &&
+    row.categoryId &&
     row.purpose.trim() &&
     row.amount?.gt(0) &&
     row.attachments.some((f) => f.kind === 'DOCUMENT')
@@ -50,6 +55,35 @@ export class ReimbursementsService {
     private readonly db: PrismaService,
     private readonly storage: StorageService,
   ) {}
+  private async requireMember(user?: CurrentUser) {
+    if (!user) throw new UnauthorizedException();
+    const member = await this.db.member.findFirst({
+      where: { user: { id: user.id }, anonymizedAt: null },
+      select: { id: true },
+    });
+    if (!member)
+      throw new ForbiddenException(
+        'O cadastro de reembolsos é exclusivo para membros.',
+      );
+  }
+  async categories(user: CurrentUser) {
+    await this.requireMember(user);
+    return this.db.financialCategory.findMany({
+      where: { kind: 'EXPENSE' },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+  private async validateCategory(
+    tx: Prisma.TransactionClient,
+    categoryId: string,
+  ) {
+    const category = await tx.financialCategory.findUnique({
+      where: { id: categoryId },
+    });
+    if (category?.kind !== 'EXPENSE')
+      throw new BadRequestException('Escolha uma categoria de despesa válida');
+  }
   async profile(user: CurrentUser) {
     return this.db.member.findFirst({
       where: { user: { id: user.id }, anonymizedAt: null },
@@ -146,6 +180,7 @@ export class ReimbursementsService {
     const ready: Prisma.ReimbursementWhereInput = {
       beneficiaryName: { not: '' },
       iban: { not: '' },
+      categoryId: { not: null },
       purpose: { not: '' },
       amount: { gt: 0 },
       attachments: { some: { kind: 'DOCUMENT' } },
@@ -191,6 +226,8 @@ export class ReimbursementsService {
     files: PrivateUpload[],
     user?: CurrentUser,
   ) {
+    await this.requireMember(user);
+    const fields = this.fields(dto);
     if (!files?.length)
       throw new BadRequestException('Anexe pelo menos um documento da despesa');
     files.forEach((file) => this.validate(file));
@@ -208,9 +245,10 @@ export class ReimbursementsService {
           : false;
       const row = await this.db.$transaction(async (tx) => {
         await bindAudit(tx);
+        await this.validateCategory(tx, dto.categoryId);
         const saved = await tx.reimbursement.create({
           data: {
-            ...this.fields(dto),
+            ...fields,
             submittedBy: user?.id,
             attachments: {
               create: files.map((file, i) => ({
@@ -228,16 +266,18 @@ export class ReimbursementsService {
         await this.audit(tx, 'CREATE', saved.id, user);
         return saved;
       });
-      // Anonymous submissions receive only a receipt, never private records.
-      return user
-        ? { ...this.view(row), possibleDuplicate: duplicate }
-        : { id: row.id };
+      return { ...this.view(row), possibleDuplicate: duplicate };
     } catch (error) {
       await Promise.allSettled(keys.map((key) => this.storage.remove(key)));
       throw error;
     }
   }
   private fields(dto: ReimbursementDto) {
+    const iban = dto.iban?.replace(/\s/g, '').toUpperCase();
+    if (!iban || !isIBAN(iban))
+      throw new BadRequestException('Indique um IBAN válido');
+    if (!dto.categoryId)
+      throw new BadRequestException('Escolha uma categoria de despesa');
     if (
       dto.amount !== undefined &&
       (!dto.amount || !new Prisma.Decimal(dto.amount).gt(0))
@@ -245,7 +285,8 @@ export class ReimbursementsService {
       throw new BadRequestException('O valor deve ser positivo');
     return {
       beneficiaryName: dto.beneficiaryName?.trim(),
-      iban: dto.iban?.trim(),
+      iban,
+      categoryId: dto.categoryId,
       purpose: dto.purpose?.trim(),
       amount: dto.amount,
     };
@@ -259,9 +300,11 @@ export class ReimbursementsService {
       if (row.deletedAt) throw new NotFoundException('Pedido excluído');
       if (row.paidAt || row.bankTransactionId)
         throw new ConflictException('Um pedido pago não pode ser alterado');
+      const fields = this.fields(dto);
+      await this.validateCategory(tx, dto.categoryId);
       const saved = await tx.reimbursement.update({
         where: { id },
-        data: this.fields(dto),
+        data: fields,
         include,
       });
       await this.saveMemberIban(tx, saved, user);
@@ -401,6 +444,28 @@ export class ReimbursementsService {
         throw new BadRequestException(
           'Selecione uma saída bancária na mesma moeda e com o valor exato do pedido pago',
         );
+      if (row.categoryId) {
+        await this.validateCategory(tx, row.categoryId);
+        if (
+          movement.status === 'RECONCILED' &&
+          movement.categoryId !== row.categoryId
+        )
+          throw new ConflictException(
+            'A categoria do movimento conciliado difere da categoria do reembolso',
+          );
+        if (movement.status !== 'RECONCILED')
+          await tx.bankTransaction.update({
+            where: { id: transactionId },
+            data: {
+              categoryId: row.categoryId,
+              classification: 'EXPENSE',
+              status: 'CLASSIFIED',
+              classifiedBy: user.id,
+              memberId: null,
+              contributionType: null,
+            },
+          });
+      }
       const saved = await tx.reimbursement.update({
         where: { id },
         data: { bankTransactionId: transactionId },

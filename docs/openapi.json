@@ -11172,6 +11172,166 @@
         "summary": "Índice de categorias da biblioteca",
         "description": "Exige LIBRARY_BOOK_READ. Lista códigos textuais, nomes e parentCode, incluindo categorias ainda sem livros. page e pageSize limitam a consulta no banco."
       }
+    },
+    "/api/v1/reimbursements": {
+      "post": {
+        "operationId": "ReimbursementsController_create",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "description": "Cadastro exclusivo para membros autenticados. Requer IBAN, categoria de despesa e pelo menos um documento.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "iban",
+                  "categoryId",
+                  "files"
+                ],
+                "properties": {
+                  "iban": {
+                    "type": "string",
+                    "format": "iban"
+                  },
+                  "categoryId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Categoria existente de despesas (EXPENSE)"
+                  },
+                  "beneficiaryName": {
+                    "type": "string",
+                    "maxLength": 120
+                  },
+                  "purpose": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "amount": {
+                    "type": "string",
+                    "pattern": "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
+                  },
+                  "files": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 3,
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pedido criado"
+          },
+          "400": {
+            "description": "IBAN ou categoria de despesa inválidos"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "403": {
+            "description": "Conta sem membro associado"
+          }
+        }
+      }
+    },
+    "/api/v1/reimbursements/categories": {
+      "get": {
+        "operationId": "ReimbursementsController_categories",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Categorias de despesas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "403": {
+            "description": "Conta sem membro associado"
+          }
+        }
+      }
+    },
+    "/api/v1/reimbursements/{id}": {
+      "patch": {
+        "operationId": "ReimbursementsController_update",
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReimbursementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pedido atualizado"
+          },
+          "400": {
+            "description": "IBAN ou categoria de despesa inválidos"
+          },
+          "401": {
+            "description": "Sessão obrigatória"
+          },
+          "403": {
+            "description": "Conta sem membro associado"
+          },
+          "409": {
+            "description": "Pedido já pago ou associado"
+          }
+        }
+      }
     }
   },
   "info": {
@@ -13766,6 +13926,36 @@
       "ReserveBookDto": {
         "type": "object",
         "properties": {}
+      },
+      "ReimbursementDto": {
+        "type": "object",
+        "required": [
+          "iban",
+          "categoryId"
+        ],
+        "properties": {
+          "iban": {
+            "type": "string",
+            "format": "iban"
+          },
+          "categoryId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Categoria existente de despesas (EXPENSE)"
+          },
+          "beneficiaryName": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "purpose": {
+            "type": "string",
+            "maxLength": 2000
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
+          }
+        }
       }
     }
   }

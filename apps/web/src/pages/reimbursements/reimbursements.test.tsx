@@ -16,6 +16,8 @@ const row = {
   deletedAt: null,
   beneficiaryName: 'Maria',
   iban: 'PT50000201231234567890154',
+  categoryId: 'category',
+  category: { id: 'category', name: 'Material' },
   purpose: 'Material para crianças',
   amount: '25.10',
   currency: 'EUR',
@@ -31,6 +33,20 @@ const page = { items: [row], total: 1, page: 1, pageSize: 20 };
 vi.mock('../../components/PdfPreview', () => ({ PdfPreview: () => null }));
 describe('Reimbursements', () => {
   beforeEach(resetTestState);
+  const memberFormRoutes = {
+    'GET /reimbursements/profile': {
+      body: { name: 'Ana Souza', iban: row.iban },
+    },
+    'GET /reimbursements/categories': {
+      body: [{ id: 'category', name: 'Material' }],
+    },
+  };
+  async function chooseCategory() {
+    fireEvent.mouseDown(
+      await screen.findByRole('combobox', { name: /Categoria da despesa/ }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: 'Material' }));
+  }
   it.each([
     {
       role: 'author',
@@ -94,47 +110,22 @@ describe('Reimbursements', () => {
       ).toBe(true);
     },
   );
-  it('submits dropped documents without login and displays a receipt', async () => {
-    mockApi({
-      ...anonymousRoutes,
-      'POST /reimbursements/public': { body: { id: 'receipt-1' } },
-    });
+  it('redirects visitors to login without showing the form', async () => {
+    const requests = mockApi(anonymousRoutes);
     renderApp('/pedir-reembolso');
-    await screen.findByLabelText('Quem recebe o reembolso?');
+    await screen.findByRole('button', { name: 'Entrar' });
     expect(
-      screen.getByRole('button', { name: 'Guardar pedido' }),
-    ).toBeDisabled();
-    fireEvent.drop(
-      screen.getByRole('button', { name: 'Carregar documentos' }),
-      {
-        dataTransfer: {
-          files: [
-            new File(['%PDF-test'], 'recibo.pdf', { type: 'application/pdf' }),
-          ],
-        },
-      },
-    );
-    await waitFor(() =>
-      expect(
-        screen.getByRole('button', { name: 'Guardar pedido' }),
-      ).toBeEnabled(),
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }));
+      screen.queryByLabelText('Quem recebe o reembolso?'),
+    ).not.toBeInTheDocument();
     expect(
-      await screen.findByText(/Referência: receipt-1/),
-    ).toBeInTheDocument();
-    const calls = vi.mocked(fetch).mock.calls;
-    const submission = calls.find(([path]) =>
-      String(path).endsWith('/reimbursements/public'),
-    )!;
-    const body = submission[1]?.body as FormData;
-    expect(body.getAll('files')).toHaveLength(1);
-    expect(submission[1]?.headers).not.toHaveProperty('Authorization');
+      requests.some((request) => request.path.startsWith('/reimbursements')),
+    ).toBe(false);
   });
   it('preserves the document after a server error and permits retry', async () => {
     mockApi({
-      ...anonymousRoutes,
-      'POST /reimbursements/public': {
+      ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
+      'POST /reimbursements': {
         status: 400,
         body: { message: 'Formato inválido' },
       },
@@ -146,6 +137,7 @@ describe('Reimbursements', () => {
         files: [new File(['test'], 'recibo.pdf', { type: 'application/pdf' })],
       },
     });
+    await chooseCategory();
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: 'Guardar pedido' }),
@@ -158,9 +150,50 @@ describe('Reimbursements', () => {
     ).toBeEnabled();
     expect(screen.getByText('recibo.pdf')).toBeInTheDocument();
   });
+  it('requires both IBAN and category before saving', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
+      'GET /reimbursements/profile': {
+        body: { name: 'Ana Souza', iban: null },
+      },
+    });
+    const view = renderApp('/pedir-reembolso');
+    const iban = await screen.findByLabelText(/IBAN do beneficiário/);
+    expect(iban).toBeRequired();
+    fireEvent.change(view.container.querySelector('input[type=file]')!, {
+      target: {
+        files: [new File(['test'], 'recibo.pdf', { type: 'application/pdf' })],
+      },
+    });
+    await screen.findByText('recibo.pdf');
+    const save = screen.getByRole('button', { name: 'Guardar pedido' });
+    expect(save).toBeDisabled();
+    await chooseCategory();
+    expect(save).toBeDisabled();
+    fireEvent.change(iban, { target: { value: row.iban } });
+    await waitFor(() => expect(save).toBeEnabled());
+    fireEvent.change(iban, { target: { value: '' } });
+    expect(save).toBeDisabled();
+  });
+  it('blocks submission when the account has no member profile', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
+      'GET /reimbursements/profile': { body: null },
+    });
+    renderApp('/pedir-reembolso');
+    await screen.findByText(
+      'O cadastro de reembolsos é exclusivo para membros.',
+    );
+    expect(
+      screen.getByRole('button', { name: 'Guardar pedido' }),
+    ).toBeDisabled();
+  });
   it('prefills the authenticated member IBAN and submits it', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
       'GET /reimbursements/profile': {
         body: { name: 'Ana Souza', iban: row.iban },
       },
@@ -168,7 +201,7 @@ describe('Reimbursements', () => {
     });
     renderApp('/pedir-reembolso');
     await waitFor(() =>
-      expect(screen.getByLabelText('IBAN do beneficiário')).toHaveValue(
+      expect(screen.getByLabelText(/IBAN do beneficiário/)).toHaveValue(
         row.iban,
       ),
     );
@@ -182,6 +215,7 @@ describe('Reimbursements', () => {
         },
       },
     );
+    await chooseCategory();
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: 'Guardar pedido' }),
@@ -193,11 +227,15 @@ describe('Reimbursements', () => {
       .mocked(fetch)
       .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
     expect((submission[1]?.body as FormData).get('iban')).toBe(row.iban);
+    expect((submission[1]?.body as FormData).get('categoryId')).toBe(
+      'category',
+    );
     expect((submission[1]?.body as FormData).has('contact')).toBe(false);
   });
   it('allows an authenticated member to submit for another person', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
       'POST /reimbursements': { body: { id: 'receipt-2' } },
     });
     const view = renderApp('/pedir-reembolso');
@@ -212,6 +250,7 @@ describe('Reimbursements', () => {
         files: [new File(['test'], 'recibo.pdf', { type: 'application/pdf' })],
       },
     });
+    await chooseCategory();
     await waitFor(() =>
       expect(
         screen.getByRole('button', { name: 'Guardar pedido' }),
@@ -233,6 +272,7 @@ describe('Reimbursements', () => {
   it('shows a member only their own list and no payment actions', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser()),
+      ...memberFormRoutes,
       'GET /reimbursements/mine': { body: page },
       'GET /reimbursements/request-1': { body: row },
     });

@@ -2,6 +2,7 @@ import { useId, useRef, useState } from 'react';
 import {
   Alert,
   Box,
+  MenuItem,
   Button,
   Stack,
   TextField,
@@ -38,6 +39,13 @@ export function ReimbursementForm({
       ),
     enabled: Boolean(user),
   });
+  const categories = useQuery({
+    queryKey: ['reimbursement-categories', user?.id],
+    queryFn: () =>
+      apiRequest<{ id: string; name: string }[]>('/reimbursements/categories'),
+    enabled: Boolean(user),
+  });
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [enteredIban, setIban] = useState<string>();
   const iban = enteredIban ?? initial?.iban ?? profile.data?.iban ?? '';
   const [purpose, setPurpose] = useState(initial?.purpose ?? '');
@@ -54,12 +62,14 @@ export function ReimbursementForm({
     mutationFn: async ({
       beneficiaryName,
       iban,
+      categoryId,
       purpose,
       amount,
       files,
     }: {
       beneficiaryName: string;
       iban: string;
+      categoryId: string;
       purpose: string;
       amount: string;
       files: File[];
@@ -67,6 +77,7 @@ export function ReimbursementForm({
       const values = {
         beneficiaryName,
         iban,
+        categoryId,
         purpose,
         ...(amount ? { amount: amount.replace(',', '.') } : {}),
       };
@@ -78,10 +89,7 @@ export function ReimbursementForm({
       const body = new FormData();
       Object.entries(values).forEach(([key, value]) => body.append(key, value));
       files.forEach((file) => body.append('files', file));
-      const response = await reimbursementFileRequest(
-        user ? '' : '/public',
-        body,
-      );
+      const response = await reimbursementFileRequest('', body);
       return response.json() as Promise<{
         id: string;
         possibleDuplicate?: boolean;
@@ -125,12 +133,19 @@ export function ReimbursementForm({
       onSubmit={(event) => {
         event.preventDefault();
         if (!busy)
-          save.mutate({ beneficiaryName, iban, purpose, amount, files });
+          save.mutate({
+            beneficiaryName,
+            iban,
+            categoryId,
+            purpose,
+            amount,
+            files,
+          });
       }}
     >
       <Typography variant="body2">
-        Pode guardar já os documentos e completar os restantes dados depois.
-        Para outra pessoa, altere o beneficiário e o IBAN.
+        Indique o IBAN e a categoria da despesa para guardar o pedido. Para
+        outra pessoa, altere o beneficiário e o IBAN.
       </Typography>
       {!initial && (
         <>
@@ -273,6 +288,7 @@ export function ReimbursementForm({
         disabled={save.isPending}
       />
       <TextField
+        required
         label="IBAN do beneficiário"
         value={iban}
         onChange={(e) =>
@@ -286,6 +302,29 @@ export function ReimbursementForm({
         }}
         disabled={save.isPending}
       />
+      <TextField
+        select
+        required
+        label="Categoria da despesa"
+        value={categoryId}
+        onChange={(event) => setCategoryId(event.target.value)}
+        disabled={save.isPending || categories.isPending}
+      >
+        {categories.data?.map((category) => (
+          <MenuItem key={category.id} value={category.id}>
+            {category.name}
+          </MenuItem>
+        ))}
+      </TextField>
+      {categories.error && (
+        <Alert severity="error">{categories.error.message}</Alert>
+      )}
+      {profile.error && <Alert severity="error">{profile.error.message}</Alert>}
+      {profile.isSuccess && !profile.data && (
+        <Alert severity="warning">
+          O cadastro de reembolsos é exclusivo para membros.
+        </Alert>
+      )}
       <TextField
         label="Valor total (€)"
         value={amount}
@@ -312,7 +351,13 @@ export function ReimbursementForm({
       <Button
         type="submit"
         variant="contained"
-        disabled={busy || (!initial && !files.length)}
+        disabled={
+          busy ||
+          !iban ||
+          !categoryId ||
+          !profile.data ||
+          (!initial && !files.length)
+        }
       >
         {save.isPending
           ? 'A guardar…'

@@ -551,6 +551,7 @@ model CostCenter {
 }
 
 model FinancialCategory {
+  reimbursements Reimbursement[]
   id               String              @id @default(uuid()) @db.Uuid
   name             String              @db.VarChar(120)
   kind             FinancialKind
@@ -770,6 +771,8 @@ model BankTransaction {
 }
 
 model Reimbursement {
+  categoryId String? @db.Uuid
+  category FinancialCategory? @relation(fields: [categoryId], references: [id], onDelete: Restrict)
   deletedAt         DateTime?
   id                String                    @id @default(uuid()) @db.Uuid
   submittedBy       String?                   @db.Uuid

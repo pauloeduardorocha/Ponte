@@ -75,8 +75,10 @@ export function ReimbursementDocuments({
 
 export function MovementReimbursement({
   transactionId,
+  onLinked,
 }: {
   transactionId: string;
+  onLinked?: (categoryId: string) => void;
 }) {
   const { hasPermission } = useAuth();
   const client = useQueryClient();
@@ -101,11 +103,12 @@ export function MovementReimbursement({
   });
   const link = useMutation({
     mutationFn: (id: string) =>
-      apiRequest(`/reimbursements/${id}/link`, {
+      apiRequest<Reimbursement>(`/reimbursements/${id}/link`, {
         method: 'POST',
         body: { transactionId },
       }),
-    onSuccess: async () => {
+    onSuccess: async (row) => {
+      if (row.categoryId) onLinked?.(row.categoryId);
       await Promise.all([
         client.invalidateQueries({ queryKey: ['reimbursements'] }),
         client.invalidateQueries({ queryKey: ['finance'] }),
