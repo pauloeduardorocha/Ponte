@@ -140,6 +140,13 @@ export type LibraryFilters = Record<string, string | number | undefined>;
 const root = '/library';
 export const listBooks = (query: LibraryFilters = {}) =>
   apiRequest<Page<Book>>(`${root}/books`, { query });
+export const getBook = (id: string) => apiRequest<Book>(`${root}/books/${id}`);
+export type BookLoanHistory = Pick<
+  Loan,
+  'id' | 'borrowedAt' | 'dueAt' | 'returnedAt' | 'status' | 'renewedCount'
+>;
+export const getBookHistory = (id: string, query: LibraryFilters = {}) =>
+  apiRequest<Page<BookLoanHistory>>(`${root}/books/${id}/history`, { query });
 export const createBook = (body: BookInput) =>
   apiRequest<Book>(`${root}/books`, { method: 'POST', body });
 export const updateBook = (id: string, body: Partial<BookInput>) =>

@@ -10236,6 +10236,133 @@
         ],
         "tags": ["Notificacoes push"]
       }
+    },
+    "/api/v1/library/books/{id}/history": {
+      "get": {
+        "operationId": "LibraryController_bookHistory",
+        "tags": ["Biblioteca"],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Histórico paginado de circulação do livro",
+        "description": "Exige LIBRARY_BOOK_READ. Inclui empréstimos de todos os exemplares, mais recentes primeiro, sem dados pessoais, multas ou observações.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Página de empréstimos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["items", "total", "page", "pageSize"],
+                  "properties": {
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "id",
+                          "borrowedAt",
+                          "dueAt",
+                          "returnedAt",
+                          "status",
+                          "renewedCount"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "borrowedAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "dueAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "returnedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "ACTIVE",
+                              "RETURNED",
+                              "OVERDUE",
+                              "LOST",
+                              "CANCELLED"
+                            ]
+                          },
+                          "renewedCount": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "UUID ou paginação inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem LIBRARY_BOOK_READ"
+          },
+          "404": {
+            "description": "Livro não encontrado"
+          }
+        }
+      }
     }
   },
   "info": {

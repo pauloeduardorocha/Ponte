@@ -1,3 +1,4 @@
+import { BookCatalogDetails, BookCover } from './library/BookCatalogDetails';
 import { formatDateTime } from '../lib/format';
 import { useAuth } from '../auth/auth-context';
 import { useState } from 'react';
@@ -35,6 +36,9 @@ type Entry = {
   name?: string;
   title?: string;
   author?: string;
+  cover?: string | null;
+  quantity?: number;
+  available?: number;
   description?: string;
   location?: string;
   startsAt?: string;
@@ -66,6 +70,11 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
   const [search, setSearch] = useState('');
 
   const debounced = useDebouncedValue(search);
+
+  const [selectedBook, setSelectedBook] = useState<{
+    id: string;
+    historyOnly: boolean;
+  }>();
 
   const [groupId, setGroupId] = useState<string>();
 
@@ -136,10 +145,19 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
             <Typography>Nenhum registro encontrado.</Typography>
           )}
 
-          <RecordTable>
+          <RecordTable imageLabel={resource === 'books' ? 'Capa' : undefined}>
             {data.data.items.map((entry) => (
               <RecordRow
                 key={entry.id}
+                image={
+                  resource === 'books' ? (
+                    <BookCover
+                      key={entry.cover}
+                      title={entry.title ?? ''}
+                      cover={entry.cover}
+                    />
+                  ) : undefined
+                }
                 primary={
                   <Typography fontWeight={600}>
                     {entry.name ?? entry.title}
@@ -165,13 +183,35 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                     )}
 
                     {resource === 'books' && (
-                      <Button
-                        disabled={reserve.isPending}
-                        onClick={() => reserve.mutate(entry.id)}
-                      >
-                        Reservar
-                      </Button>
+                      <>
+                        <Button
+                          onClick={() =>
+                            setSelectedBook({
+                              id: entry.id,
+                              historyOnly: false,
+                            })
+                          }
+                        >
+                          Ver detalhes
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            setSelectedBook({ id: entry.id, historyOnly: true })
+                          }
+                        >
+                          Histórico de empréstimos
+                        </Button>
+                      </>
                     )}
+                    {resource === 'books' &&
+                      hasPermission('LIBRARY_SELF_RESERVE') && (
+                        <Button
+                          disabled={reserve.isPending}
+                          onClick={() => reserve.mutate(entry.id)}
+                        >
+                          Reservar
+                        </Button>
+                      )}
 
                     {entry.canViewDetails && (
                       <Button onClick={() => setGroupId(entry.id)}>
@@ -181,6 +221,12 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                   </>
                 }
               >
+                {resource === 'books' && (
+                  <Typography>
+                    Exemplares: {entry.quantity ?? 0} · Disponíveis:{' '}
+                    {entry.available ?? 0}
+                  </Typography>
+                )}
                 {entry.author && <Typography>{entry.author}</Typography>}
 
                 {entry.startsAt && (
@@ -220,6 +266,13 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
         </>
       )}
 
+      {selectedBook && (
+        <BookCatalogDetails
+          key={selectedBook.id}
+          {...selectedBook}
+          close={() => setSelectedBook(undefined)}
+        />
+      )}
       <Dialog open={!!groupId} onClose={() => setGroupId(undefined)} fullWidth>
         <DialogTitle>{detail.data?.name ?? 'Meu grupo familiar'}</DialogTitle>
 

@@ -353,6 +353,33 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     );
   }
 
+  bookHistory(id: string, query: PageQuery) {
+    return this.transaction(async (tx) => {
+      await tx.book.findUniqueOrThrow({ where: { id }, select: { id: true } });
+      const where: Prisma.LoanWhereInput = { bookCopy: { bookId: id } };
+      const items = await tx.loan.findMany({
+        where,
+        select: {
+          id: true,
+          borrowedAt: true,
+          dueAt: true,
+          returnedAt: true,
+          status: true,
+          renewedCount: true,
+        },
+        orderBy: [{ borrowedAt: 'desc' }, { id: 'desc' }],
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      });
+      return {
+        items,
+        total: await tx.loan.count({ where }),
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
   createBook(dto: BookDto, actor: string) {
     return this.transaction(async (tx) => {
       await bindAudit(tx);

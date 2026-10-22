@@ -35,3 +35,14 @@ Os totais e saldos continuam a representar todo o acervo.
 
 As permissões dos históricos e das listas existentes mantêm-se. Não são
 necessárias alterações ao esquema ou migrações.
+
+## Histórico de circulação no catálogo
+
+`GET /api/v1/library/books/:id/history` exige `LIBRARY_BOOK_READ` e aceita
+`page` e `pageSize` (padrão 20, máximo 100). Responde com
+`{ items, total, page, pageSize }`. Cada item contém apenas `id`, `borrowedAt`,
+`dueAt`, `returnedAt`, `status` e `renewedCount`. Inclui todos os exemplares do
+livro, ordenados por empréstimo mais recente e id decrescente para desempate.
+Não inclui membros, operadores, observações, multas ou identificadores de leitores.
+Livro inexistente retorna 404; UUID ou paginação inválidos retornam 400.
+Os detalhes bibliográficos usam o endpoint existente `GET /api/v1/library/books/:id`.

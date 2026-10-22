@@ -63,6 +63,15 @@ export class LibraryController {
     return this.library.getBook(id);
   }
 
+  @Get('books/:id/history')
+  @Permission('LIBRARY_BOOK_READ')
+  bookHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PageQuery,
+  ) {
+    return this.library.bookHistory(id, query);
+  }
+
   @Post('books')
   @Permission('LIBRARY_BOOK_CREATE')
   createBook(@Body() dto: BookDto, @Req() req: AuthRequest) {

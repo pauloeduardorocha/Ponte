@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { MEMBER_PERMISSIONS } from '@church/shared';
 import {
@@ -41,6 +41,161 @@ describe('Basic member experience', () => {
       requests.find((r) => r.path === '/member-portal/reservations')?.body,
     ).toEqual({ bookId: 'b1' });
     expect(requests.some((r) => r.path === '/library/members')).toBe(false);
+  });
+  it('shows book covers, full details and paginated circulation for catalog readers', async () => {
+    const book = {
+      id: 'b1',
+      title: 'Livro completo',
+      author: 'Autora',
+      cover: 'https://example.com/cover.jpg',
+      quantity: 2,
+      available: 1,
+      subtitle: 'Subtítulo',
+      description: 'Descrição completa',
+      isbn: '123456',
+      publisher: 'Editora Ponte',
+      edition: '2',
+      year: 2026,
+      language: 'pt',
+      pages: 150,
+      category: 'Ficção',
+      keywords: ['leitura'],
+    };
+    const requests = mockApi({
+      ...sessionRoutes(makeUser(['LIBRARY_BOOK_READ'])),
+      'GET /library/books': { body: { items: [book], total: 1 } },
+      'GET /library/books/b1': { body: book },
+      'GET /library/books/b1/history': ({ query }) => ({
+        body: {
+          items: [
+            {
+              id: 'l1',
+              borrowedAt: '2026-10-01T12:00:00Z',
+              dueAt: '2026-10-15T12:00:00Z',
+              returnedAt: null,
+              status: 'ACTIVE',
+              renewedCount: 1,
+            },
+          ],
+          total: 21,
+          page: Number(query.get('page')),
+          pageSize: 20,
+        },
+      }),
+    });
+    renderApp('/library');
+    expect(
+      await screen.findByRole('img', { name: 'Capa de Livro completo' }),
+    ).toHaveAttribute('src', book.cover);
+    expect(
+      screen.getByText('Exemplares: 2 · Disponíveis: 1'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Reservar' }),
+    ).not.toBeInTheDocument();
+    expect(requests.some((r) => r.path.endsWith('/history'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Ver detalhes' }));
+    const dialog = within(screen.getByRole('dialog'));
+    expect(await dialog.findByText('Editora Ponte')).toBeInTheDocument();
+    expect(dialog.getByText('123456')).toBeInTheDocument();
+    expect(dialog.getByText('150')).toBeInTheDocument();
+    expect(await dialog.findByText('Renovações: 1')).toBeInTheDocument();
+    fireEvent.click(
+      dialog.getByRole('button', { name: 'Próxima página do histórico' }),
+    );
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((r) => r.path.endsWith('/history'))
+          .at(-1)
+          ?.query.get('page'),
+      ).toBe('2'),
+    );
+    fireEvent.click(dialog.getByRole('button', { name: 'Fechar' }));
+    await waitFor(() =>
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Histórico de empréstimos' }),
+    );
+    expect(
+      await within(screen.getByRole('dialog')).findByText('Renovações: 1'),
+    ).toBeInTheDocument();
+    expect(
+      requests.some((r) =>
+        ['/library/loans', '/library/members', '/library/copies'].includes(
+          r.path,
+        ),
+      ),
+    ).toBe(false);
+  });
+  it('handles missing and broken covers and an empty loan history', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['LIBRARY_BOOK_READ'])),
+      'GET /library/books': {
+        body: {
+          items: [
+            { id: 'b1', title: 'Sem imagem' },
+            {
+              id: 'b2',
+              title: 'Imagem quebrada',
+              cover: 'https://example.com/broken.jpg',
+            },
+          ],
+          total: 2,
+        },
+      },
+      'GET /library/books/b1': { body: { id: 'b1', title: 'Sem imagem' } },
+      'GET /library/books/b1/history': {
+        body: { items: [], total: 0, page: 1, pageSize: 20 },
+      },
+    });
+    renderApp('/library');
+    expect(await screen.findByText('Sem capa')).toBeInTheDocument();
+    fireEvent.error(
+      screen.getByRole('img', { name: 'Capa de Imagem quebrada' }),
+    );
+    expect(screen.getAllByText('Sem capa')).toHaveLength(2);
+    fireEvent.click(
+      screen.getAllByRole('button', { name: 'Ver detalhes' })[0]!,
+    );
+    expect(
+      await within(screen.getByRole('dialog')).findByText(
+        'Este livro ainda não possui empréstimos.',
+      ),
+    ).toBeInTheDocument();
+  });
+  it('lets readers retry a failed history request without losing book details', async () => {
+    let attempts = 0;
+    mockApi({
+      ...sessionRoutes(makeUser(['LIBRARY_BOOK_READ'])),
+      'GET /library/books': {
+        body: { items: [{ id: 'b1', title: 'Livro' }], total: 1 },
+      },
+      'GET /library/books/b1': {
+        body: { id: 'b1', title: 'Livro', isbn: 'ISBN-RETRY' },
+      },
+      'GET /library/books/b1/history': () =>
+        ++attempts === 1
+          ? {
+              status: 503,
+              body: { message: 'Histórico temporariamente indisponível' },
+            }
+          : { body: { items: [], total: 0, page: 1, pageSize: 20 } },
+    });
+    renderApp('/library');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Ver detalhes' }),
+    );
+    const dialog = within(screen.getByRole('dialog'));
+    expect(
+      await dialog.findByText('Histórico temporariamente indisponível'),
+    ).toBeInTheDocument();
+    expect(dialog.getByText('ISBN-RETRY')).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole('button', { name: 'Tentar novamente' }));
+    expect(
+      await dialog.findByText('Este livro ainda não possui empréstimos.'),
+    ).toBeInTheDocument();
   });
   it('shows group participants and details only for the own group', async () => {
     const requests = mockApi({
