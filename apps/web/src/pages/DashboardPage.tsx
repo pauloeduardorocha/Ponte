@@ -149,14 +149,14 @@ export function DashboardPage() {
                     value:
                       d.members.find((m) => m.status === 'ACTIVE')?._count
                         ._all ?? 0,
-                    color: '#24754c',
+                    color: 'success.main',
                   },
                   {
                     label: 'Inativos',
                     value:
                       d.members.find((m) => m.status === 'INACTIVE')?._count
                         ._all ?? 0,
-                    color: '#64748b',
+                    color: 'text.secondary',
                   },
                 ]}
               />
@@ -170,21 +170,21 @@ export function DashboardPage() {
                     value:
                       d.visitors.find((v) => v.status === 'NEW')?._count._all ??
                       0,
-                    color: '#a85d08',
+                    color: 'warning.main',
                   },
                   {
                     label: 'Contactados',
                     value:
                       d.visitors.find((v) => v.status === 'CONTACTED')?._count
                         ._all ?? 0,
-                    color: '#24754c',
+                    color: 'success.main',
                   },
                   {
                     label: 'Arquivados',
                     value:
                       d.visitors.find((v) => v.status === 'ARCHIVED')?._count
                         ._all ?? 0,
-                    color: '#64748b',
+                    color: 'text.secondary',
                   },
                 ]}
               />

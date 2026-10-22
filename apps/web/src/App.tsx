@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 const ReimbursementsPage = lazy(() =>
   import('./pages/reimbursements/ReimbursementsPage').then((m) => ({
     default: m.ReimbursementsPage,
@@ -95,7 +95,7 @@ const LibraryPage = lazy(() =>
   })),
 );
 
-export function App() {
+export function App({ children }: { children?: ReactNode }) {
   return (
     <AuthProvider>
       <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
@@ -217,6 +217,7 @@ export function App() {
           </Route>
         </Routes>
       </Suspense>
+      {children}
     </AuthProvider>
   );
 }

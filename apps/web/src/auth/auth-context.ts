@@ -14,6 +14,7 @@ export interface AuthContextValue {
   logout: () => Promise<void>;
   /** Drops the local session without calling the API (e.g. after revocation). */
   clearSession: (notice?: string) => void;
+  updateColorMode: (mode: 'system' | 'light' | 'dark') => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
 }
 

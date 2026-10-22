@@ -164,7 +164,7 @@ export function BreakdownChart({
                   mt: 0.5,
                   height: 10,
                   borderRadius: 4,
-                  bgcolor: 'grey.100',
+                  bgcolor: 'action.hover',
                   '& .MuiLinearProgress-bar': {
                     bgcolor: i.color,
                     borderRadius: 4,

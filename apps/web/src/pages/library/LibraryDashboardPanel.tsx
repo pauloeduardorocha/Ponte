@@ -81,7 +81,7 @@ export function LibraryDashboardPanel() {
             href: hasPermission('LIBRARY_FINE_READ')
               ? '/library?tab=fines'
               : undefined,
-            color: 'warning.dark',
+            color: 'warning.main',
           },
         ].map((i) => (
           <MetricCard key={i.label} {...i} />
@@ -91,13 +91,13 @@ export function LibraryDashboardPanel() {
         <BreakdownChart
           title="Circulação do acervo"
           items={[
-            { label: 'Disponíveis', value: d.available, color: '#24754c' },
+            { label: 'Disponíveis', value: d.available, color: 'success.main' },
             {
               label: 'Emprestados em dia',
               value: Math.max(0, d.loaned - d.overdue),
-              color: '#2863a4',
+              color: 'info.main',
             },
-            { label: 'Em atraso', value: d.overdue, color: '#ba3646' },
+            { label: 'Em atraso', value: d.overdue, color: 'error.main' },
           ]}
         />
         <Card variant="outlined">

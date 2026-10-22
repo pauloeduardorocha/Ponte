@@ -34,6 +34,13 @@ export function fetchCurrentUser(): Promise<CurrentUser> {
   return apiRequest<CurrentUser>('/auth/me');
 }
 
+export function updatePreferences(colorMode: 'system' | 'light' | 'dark') {
+  return apiRequest<{ colorMode: 'system' | 'light' | 'dark' }>('/auth/preferences', {
+    method: 'PATCH',
+    body: { colorMode },
+  });
+}
+
 export async function logout(): Promise<void> {
   try {
     await apiRequest<void>('/auth/logout', {

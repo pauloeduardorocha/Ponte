@@ -101,6 +101,7 @@ enum UserStatus {
 }
 
 model User {
+  colorMode             String                @default("system") @map("color_mode") @db.VarChar(6)
   pushSubscriptions     PushSubscription[]
   passkeys              Passkey[]
   managedEvents         EventManagerAssignment[] @relation("EventManager")

@@ -309,7 +309,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                       sx={{
                         '&.active': {
                           color: 'primary.main',
-                          backgroundColor: 'rgba(36, 91, 74, 0.09)',
+                          backgroundColor: 'action.selected',
                           '& .MuiListItemIcon-root': { color: 'primary.main' },
                         },
                       }}

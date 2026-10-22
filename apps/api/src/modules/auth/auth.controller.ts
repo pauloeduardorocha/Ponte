@@ -21,6 +21,7 @@ import {
   LoginDto,
   RegisterDto,
   ResetPasswordDto,
+  UpdatePreferencesDto,
 } from './auth.dto';
 import { AuthRequest } from './auth.guard';
 import { Public } from './permission.decorator';
@@ -115,6 +116,17 @@ export class AuthController {
   me(@Req() req: AuthRequest, @Res({ passthrough: true }) res: Response) {
     res.setHeader('Cache-Control', 'no-store');
     return req.user;
+  }
+
+  @ApiBearerAuth()
+  @Patch('preferences')
+  preferences(
+    @Req() req: AuthRequest,
+    @Body() dto: UpdatePreferencesDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    res.setHeader('Cache-Control', 'no-store');
+    return this.auth.updatePreferences(req.user.id, dto.colorMode);
   }
 
   @ApiBearerAuth()

@@ -79,6 +79,19 @@ the API if the project name differs. Use separate databases and environment
 variables for previews; do not attach preview deployments to production data.
 Preview login requires explicitly adding that preview origin to `CORS_ORIGIN`.
 
+For the current `ponte` project, the production `CORS_ORIGIN` is a comma-separated
+list with no trailing slashes:
+
+```text
+https://ponte-umber.vercel.app,https://igrejaponte.com,https://www.igrejaponte.com
+```
+
+This list controls CORS, authentication origin checks and passkey validation.
+After changing it in Vercel, redeploy the existing production deployment to
+activate the new value. Keep development and preview settings separate.
+Passkeys registered on the old hostname must be registered again on the new
+hostname; use the password to sign in first.
+
 ## Verification and initial access
 
 Visit `/api/v1/health` through the frontend and directly on the API. Both should

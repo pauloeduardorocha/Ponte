@@ -240,7 +240,7 @@ function FullDocument({
         sx={{
           flex: 1,
           overflow: 'auto',
-          bgcolor: 'grey.100',
+          bgcolor: 'action.hover',
           p: { xs: 1, sm: 3 },
         }}
       >
@@ -310,7 +310,7 @@ export function DocumentGallery({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: 'grey.100',
+                  bgcolor: 'action.hover',
                   p: 1,
                   overflow: 'hidden',
                 }}

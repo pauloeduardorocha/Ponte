@@ -109,7 +109,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auditoria"]
+        "tags": [
+          "Auditoria"
+        ]
       }
     },
     "/api/v1/audit/{id}": {
@@ -135,7 +137,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Auditoria"]
+        "tags": [
+          "Auditoria"
+        ]
       }
     },
     "/api/v1/privacy/me": {
@@ -152,7 +156,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/me/requests": {
@@ -169,7 +175,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       },
       "post": {
         "operationId": "PrivacyController_request",
@@ -194,7 +202,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/me/consents": {
@@ -221,7 +231,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/me/export": {
@@ -234,7 +246,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -248,7 +263,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/members/{id}/export": {
@@ -269,7 +286,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -283,7 +303,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/requests": {
@@ -340,7 +362,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/requests/{id}": {
@@ -376,7 +400,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/retention": {
@@ -400,7 +426,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       },
       "post": {
         "operationId": "PrivacyController_policy",
@@ -425,7 +453,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/members/{id}/legal-hold": {
@@ -461,7 +491,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/privacy/members/{id}/anonymize": {
@@ -497,7 +529,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Privacidade"]
+        "tags": [
+          "Privacidade"
+        ]
       }
     },
     "/api/v1/community/dashboard": {
@@ -514,7 +548,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       }
     },
     "/api/v1/community/visitors": {
@@ -580,7 +616,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       },
       "post": {
         "operationId": "CommunityController_visitor",
@@ -605,7 +643,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       }
     },
     "/api/v1/community/visitors/{id}": {
@@ -641,7 +681,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       }
     },
     "/api/v1/community/events": {
@@ -707,7 +749,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       },
       "post": {
         "operationId": "CommunityController_event",
@@ -732,7 +776,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       }
     },
     "/api/v1/community/events/{id}": {
@@ -768,7 +814,9 @@
             "bearer": []
           }
         ],
-        "tags": ["A Ponte"]
+        "tags": [
+          "A Ponte"
+        ]
       }
     },
     "/api/v1/operations/inbox": {
@@ -908,7 +956,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -932,7 +983,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"],
+        "tags": [
+          "Operacao da igreja"
+        ],
         "description": "Caixa pessoal dos canais INTERNAL e PUSH com status SENT. Cada mensagem inclui readAt (data/hora ou null); o destinatário deriva da sessão autenticada."
       }
     },
@@ -950,7 +1003,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}/respond": {
@@ -994,7 +1049,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/dashboard": {
@@ -1134,7 +1191,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -1197,7 +1257,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/people": {
@@ -1337,7 +1399,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -1361,7 +1426,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/assignees": {
@@ -1501,7 +1568,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -1525,7 +1595,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/visitors": {
@@ -1665,7 +1737,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -1689,7 +1764,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createVisitor",
@@ -1714,7 +1791,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/visitors/{id}": {
@@ -1750,7 +1829,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/follow-ups": {
@@ -1890,7 +1971,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -1914,7 +1998,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createFollowUp",
@@ -1939,7 +2025,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/follow-ups/{id}": {
@@ -1975,7 +2063,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/small-groups": {
@@ -2115,7 +2205,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -2139,7 +2232,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createGroup",
@@ -2164,7 +2259,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/small-groups/{id}": {
@@ -2200,7 +2297,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/ministries": {
@@ -2340,7 +2439,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -2364,7 +2466,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createMinistry",
@@ -2389,7 +2493,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/ministries/{id}": {
@@ -2425,7 +2531,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/events": {
@@ -2565,7 +2673,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -2589,7 +2700,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createEvent",
@@ -2614,7 +2727,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/events/{id}": {
@@ -2650,7 +2765,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules": {
@@ -2790,7 +2907,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -2814,7 +2934,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createSchedule",
@@ -2839,7 +2961,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules/{id}": {
@@ -2875,7 +2999,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/visitors/{id}/convert": {
@@ -2911,7 +3037,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/visitors/{id}/history": {
@@ -3059,7 +3187,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -3083,7 +3214,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/follow-ups/{id}/interactions": {
@@ -3231,7 +3364,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -3255,7 +3391,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_interact",
@@ -3289,7 +3427,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/small-groups/{id}/participants": {
@@ -3437,7 +3577,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -3468,7 +3611,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_joingroup",
@@ -3509,7 +3654,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/small-groups/{id}/participants/{participantId}/leave": {
@@ -3550,7 +3697,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/ministries/{id}/participants": {
@@ -3698,7 +3847,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -3729,7 +3881,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_joinministry",
@@ -3770,7 +3924,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/ministries/{id}/participants/{participantId}/leave": {
@@ -3811,7 +3967,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/events/{id}/registrations": {
@@ -3959,7 +4117,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -3983,7 +4144,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_register",
@@ -4017,7 +4180,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/events/{id}/registrations/{registrationId}/cancel": {
@@ -4051,7 +4216,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments": {
@@ -4199,7 +4366,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -4223,7 +4393,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_assign",
@@ -4257,7 +4429,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}": {
@@ -4301,7 +4475,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/schedules/{id}/assignments/{assignmentId}/replace": {
@@ -4345,7 +4521,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/notifications": {
@@ -4485,7 +4663,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -4509,7 +4690,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_notify",
@@ -4534,7 +4717,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/notifications/{id}/send": {
@@ -4560,7 +4745,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/notifications/{id}/cancel": {
@@ -4586,7 +4773,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/notification-templates": {
@@ -4726,7 +4915,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           },
           {
@@ -4750,7 +4942,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       },
       "post": {
         "operationId": "OperationsController_createTemplate",
@@ -4775,7 +4969,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/notification-templates/{id}": {
@@ -4811,7 +5007,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/health": {
@@ -4839,7 +5037,9 @@
             "description": "API disponível, mas o banco de dados não está acessível."
           }
         },
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/api/v1/auth/login": {
@@ -4861,7 +5061,9 @@
             "description": ""
           }
         },
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/register": {
@@ -4890,7 +5092,9 @@
             }
           }
         },
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/refresh": {
@@ -4907,7 +5111,9 @@
             "refresh_token": []
           }
         ],
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/logout": {
@@ -4924,7 +5130,9 @@
             "refresh_token": []
           }
         ],
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/me": {
@@ -4937,7 +5145,18 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object"
+                  "type": "object",
+                  "properties": {
+                    "colorMode": {
+                      "type": "string",
+                      "enum": [
+                        "system",
+                        "light",
+                        "dark"
+                      ],
+                      "default": "system"
+                    }
+                  }
                 }
               }
             }
@@ -4948,7 +5167,65 @@
             "bearer": []
           }
         ],
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
+      }
+    },
+    "/api/v1/auth/preferences": {
+      "patch": {
+        "operationId": "AuthController_preferences",
+        "summary": "Save the authenticated account appearance preference",
+        "tags": [
+          "Autenticacao"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved account preference",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "colorMode"
+                  ],
+                  "properties": {
+                    "colorMode": {
+                      "type": "string",
+                      "enum": [
+                        "system",
+                        "light",
+                        "dark"
+                      ],
+                      "default": "system"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, invalid color mode or unexpected property"
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
       }
     },
     "/api/v1/auth/password": {
@@ -4975,7 +5252,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -4997,7 +5276,9 @@
             "description": ""
           }
         },
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/auth/reset-password": {
@@ -5019,7 +5300,9 @@
             "description": ""
           }
         },
-        "tags": ["Autenticacao"]
+        "tags": [
+          "Autenticacao"
+        ]
       }
     },
     "/api/v1/members": {
@@ -5071,7 +5354,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["ACTIVE", "INACTIVE"]
+              "enum": [
+                "ACTIVE",
+                "INACTIVE"
+              ]
             }
           },
           {
@@ -5081,7 +5367,11 @@
             "schema": {
               "default": "name",
               "type": "string",
-              "enum": ["name", "email", "createdAt"]
+              "enum": [
+                "name",
+                "email",
+                "createdAt"
+              ]
             }
           },
           {
@@ -5091,7 +5381,10 @@
             "schema": {
               "default": "asc",
               "type": "string",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           }
         ],
@@ -5105,7 +5398,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Membros"]
+        "tags": [
+          "Membros"
+        ]
       },
       "post": {
         "operationId": "MembersController_create",
@@ -5130,7 +5425,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Membros"]
+        "tags": [
+          "Membros"
+        ]
       }
     },
     "/api/v1/members/{id}": {
@@ -5156,7 +5453,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Membros"]
+        "tags": [
+          "Membros"
+        ]
       },
       "patch": {
         "operationId": "MembersController_update",
@@ -5190,7 +5489,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Membros"]
+        "tags": [
+          "Membros"
+        ]
       },
       "delete": {
         "operationId": "MembersController_delete",
@@ -5214,7 +5515,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Membros"]
+        "tags": [
+          "Membros"
+        ]
       }
     },
     "/api/v1/users": {
@@ -5271,7 +5574,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Usuarios"]
+        "tags": [
+          "Usuarios"
+        ]
       },
       "post": {
         "operationId": "UsersController_create",
@@ -5303,7 +5608,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Usuarios"]
+        "tags": [
+          "Usuarios"
+        ]
       }
     },
     "/api/v1/users/{id}/status": {
@@ -5339,7 +5646,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Usuarios"]
+        "tags": [
+          "Usuarios"
+        ]
       }
     },
     "/api/v1/users/{id}/roles": {
@@ -5375,7 +5684,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Usuarios"]
+        "tags": [
+          "Usuarios"
+        ]
       }
     },
     "/api/v1/users/{id}/member": {
@@ -5411,7 +5722,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Usuarios"]
+        "tags": [
+          "Usuarios"
+        ]
       }
     },
     "/api/v1/library/books": {
@@ -5481,7 +5794,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -5495,7 +5811,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "post": {
         "operationId": "LibraryController_createBook",
@@ -5520,7 +5838,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/books/{id}": {
@@ -5546,7 +5866,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "patch": {
         "operationId": "LibraryController_updateBook",
@@ -5580,7 +5902,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "delete": {
         "operationId": "LibraryController_deleteBook",
@@ -5604,7 +5928,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/copies": {
@@ -5687,7 +6013,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/copies/{id}/history": {
@@ -5752,7 +6080,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/books/{id}/copies": {
@@ -5795,7 +6125,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/copies/{id}": {
@@ -5838,7 +6170,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/loans": {
@@ -5890,7 +6224,13 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["ACTIVE", "RETURNED", "OVERDUE", "LOST", "CANCELLED"]
+              "enum": [
+                "ACTIVE",
+                "RETURNED",
+                "OVERDUE",
+                "LOST",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -5922,7 +6262,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "post": {
         "operationId": "LibraryController_borrow",
@@ -5954,7 +6296,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/loans/{id}/return": {
@@ -5987,7 +6331,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/loans/{id}/renew": {
@@ -6020,7 +6366,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/loans/{id}/close": {
@@ -6063,7 +6411,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/members/{id}/history": {
@@ -6128,7 +6478,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/members": {
@@ -6203,7 +6555,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/reservations": {
@@ -6278,7 +6632,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "post": {
         "operationId": "LibraryController_reserve",
@@ -6310,7 +6666,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/reservations/{id}/cancel": {
@@ -6343,7 +6701,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/settings": {
@@ -6360,7 +6720,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       },
       "patch": {
         "operationId": "LibraryController_updateSettings",
@@ -6385,7 +6747,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/fines": {
@@ -6460,7 +6824,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/fines/{id}/payments": {
@@ -6496,7 +6862,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/fines/{id}/adjustments": {
@@ -6539,7 +6907,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/dashboard": {
@@ -6596,7 +6966,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/finance/members": {
@@ -6648,7 +7020,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -6702,7 +7079,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -6716,7 +7097,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/categories": {
@@ -6768,7 +7151,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -6822,7 +7210,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -6836,7 +7228,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createCategory",
@@ -6861,7 +7255,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/categories/{id}": {
@@ -6897,7 +7293,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/accounts": {
@@ -6949,7 +7347,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -7003,7 +7406,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -7017,7 +7424,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createAccount",
@@ -7042,7 +7451,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/accounts/{id}": {
@@ -7078,7 +7489,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/suppliers": {
@@ -7130,7 +7543,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -7184,7 +7602,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -7198,7 +7620,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createSupplier",
@@ -7223,7 +7647,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/suppliers/{id}": {
@@ -7259,7 +7685,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/incomes": {
@@ -7311,7 +7739,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -7365,7 +7798,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -7379,7 +7816,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createIncome",
@@ -7411,7 +7850,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/incomes/{id}": {
@@ -7454,7 +7895,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/expenses": {
@@ -7506,7 +7949,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -7560,7 +8008,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -7574,7 +8026,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createExpense",
@@ -7599,7 +8053,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/expenses/{id}": {
@@ -7635,7 +8091,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/contributions": {
@@ -7687,7 +8145,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -7741,7 +8204,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           }
         ],
@@ -7755,7 +8222,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_createContribution",
@@ -7780,7 +8249,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/contributions/{id}": {
@@ -7816,7 +8287,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/dashboard": {
@@ -7853,7 +8326,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/expenses/{id}/attachments": {
@@ -7879,7 +8354,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       },
       "post": {
         "operationId": "FinanceController_upload",
@@ -7899,7 +8376,9 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["file"],
+                "required": [
+                  "file"
+                ],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -7921,7 +8400,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/attachments/{id}/download": {
@@ -7947,7 +8428,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/reports/lookups": {
@@ -7960,7 +8443,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["accounts", "categories", "members", "suppliers"]
+              "enum": [
+                "accounts",
+                "categories",
+                "members",
+                "suppliers"
+              ]
             }
           },
           {
@@ -7983,7 +8471,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/reports": {
@@ -8083,7 +8573,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -8106,7 +8600,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -8156,7 +8655,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/reports/export": {
@@ -8256,7 +8757,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -8279,7 +8784,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -8324,7 +8834,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["csv", "xlsx", "pdf"]
+              "enum": [
+                "csv",
+                "xlsx",
+                "pdf"
+              ]
             }
           }
         ],
@@ -8338,7 +8852,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Financeiro"]
+        "tags": [
+          "Financeiro"
+        ]
       }
     },
     "/api/v1/finance/banking/imports": {
@@ -8356,7 +8872,9 @@
                   },
                   {
                     "type": "object",
-                    "required": ["file"],
+                    "required": [
+                      "file"
+                    ],
                     "properties": {
                       "file": {
                         "type": "string",
@@ -8380,7 +8898,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       },
       "get": {
         "operationId": "BankingController_imports",
@@ -8430,7 +8950,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -8484,7 +9009,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -8493,7 +9022,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["CREDIT", "DEBIT"]
+              "enum": [
+                "CREDIT",
+                "DEBIT"
+              ]
             }
           },
           {
@@ -8535,7 +9067,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -8549,7 +9084,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/imports/{id}": {
@@ -8575,7 +9112,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/imports/{id}/confirm": {
@@ -8601,7 +9140,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/transactions": {
@@ -8653,7 +9194,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -8707,7 +9253,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -8716,7 +9266,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["CREDIT", "DEBIT"]
+              "enum": [
+                "CREDIT",
+                "DEBIT"
+              ]
             }
           },
           {
@@ -8758,7 +9311,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -8772,7 +9328,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/members": {
@@ -8824,7 +9382,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -8878,7 +9441,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -8887,7 +9454,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["CREDIT", "DEBIT"]
+              "enum": [
+                "CREDIT",
+                "DEBIT"
+              ]
             }
           },
           {
@@ -8929,7 +9499,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -8943,7 +9516,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/transactions/{id}/suggestions": {
@@ -8969,7 +9544,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/classify": {
@@ -8996,7 +9573,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/reconcile": {
@@ -9023,7 +9602,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/undo": {
@@ -9050,7 +9631,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/banking/imports/{id}/download": {
@@ -9076,7 +9659,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Importacoes bancarias"]
+        "tags": [
+          "Importacoes bancarias"
+        ]
       }
     },
     "/api/v1/finance/invoices": {
@@ -9128,7 +9713,12 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+              "enum": [
+                "TITHE",
+                "OFFERING",
+                "DONATION",
+                "OTHER"
+              ]
             }
           },
           {
@@ -9182,7 +9772,11 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+              "enum": [
+                "PENDING",
+                "COMPLETED",
+                "CANCELLED"
+              ]
             }
           },
           {
@@ -9191,7 +9785,10 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "enum": ["true", "false"]
+              "enum": [
+                "true",
+                "false"
+              ]
             }
           }
         ],
@@ -9205,7 +9802,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       }
     },
     "/api/v1/finance/invoices/imports": {
@@ -9218,7 +9817,9 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": ["file"],
+                "required": [
+                  "file"
+                ],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -9239,7 +9840,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       }
     },
     "/api/v1/finance/invoices/suggestions/{transactionId}": {
@@ -9265,7 +9868,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       }
     },
     "/api/v1/finance/invoices/{id}/association": {
@@ -9301,7 +9906,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       },
       "delete": {
         "operationId": "InvoicesController_unlink",
@@ -9325,7 +9932,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       }
     },
     "/api/v1/finance/invoices/imports/{id}/download": {
@@ -9351,7 +9960,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Faturas e-fatura"]
+        "tags": [
+          "Faturas e-fatura"
+        ]
       }
     },
     "/api/v1/member-portal/dashboard": {
@@ -9434,7 +10045,9 @@
             "description": "Membro ativo não encontrado"
           }
         },
-        "tags": ["MemberPortal"],
+        "tags": [
+          "MemberPortal"
+        ],
         "security": [
           {
             "bearer": []
@@ -9496,7 +10109,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/book-options/categories": {
@@ -9553,13 +10168,17 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/auth/passkeys": {
       "get": {
         "operationId": "PasskeysController_list",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [
           {
             "bearer": []
@@ -9612,7 +10231,9 @@
     "/api/v1/auth/passkeys/register/options": {
       "post": {
         "operationId": "PasskeysController_options",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [
           {
             "bearer": []
@@ -9636,7 +10257,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["challengeId", "options"],
+                  "required": [
+                    "challengeId",
+                    "options"
+                  ],
                   "properties": {
                     "challengeId": {
                       "type": "string",
@@ -9679,7 +10303,9 @@
     "/api/v1/auth/passkeys/register/verify": {
       "post": {
         "operationId": "PasskeysController_register",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [
           {
             "bearer": []
@@ -9740,7 +10366,9 @@
     "/api/v1/auth/passkeys/login/options": {
       "post": {
         "operationId": "PasskeysController_loginOptions",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [],
         "parameters": [
           {
@@ -9760,7 +10388,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["challengeId", "options"],
+                  "required": [
+                    "challengeId",
+                    "options"
+                  ],
                   "properties": {
                     "challengeId": {
                       "type": "string",
@@ -9790,7 +10421,9 @@
     "/api/v1/auth/passkeys/login/verify": {
       "post": {
         "operationId": "PasskeysController_login",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [],
         "parameters": [
           {
@@ -9810,7 +10443,10 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["accessToken", "user"],
+                  "required": [
+                    "accessToken",
+                    "user"
+                  ],
                   "properties": {
                     "accessToken": {
                       "type": "string"
@@ -9852,7 +10488,9 @@
     "/api/v1/auth/passkeys/{id}": {
       "delete": {
         "operationId": "PasskeysController_remove",
-        "tags": ["Autenticacao"],
+        "tags": [
+          "Autenticacao"
+        ],
         "security": [
           {
             "bearer": []
@@ -9908,7 +10546,10 @@
                   "type": "array",
                   "items": {
                     "type": "object",
-                    "required": ["id", "name"],
+                    "required": [
+                      "id",
+                      "name"
+                    ],
                     "properties": {
                       "id": {
                         "type": "string",
@@ -9927,7 +10568,9 @@
             "description": "Autenticação necessária"
           }
         },
-        "tags": ["A Ponte"],
+        "tags": [
+          "A Ponte"
+        ],
         "security": [
           {
             "bearer": []
@@ -9956,7 +10599,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/inbox/read-all": {
@@ -9980,7 +10625,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/inbox/{id}/read": {
@@ -10016,7 +10663,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Operacao da igreja"]
+        "tags": [
+          "Operacao da igreja"
+        ]
       }
     },
     "/api/v1/operations/push/config": {
@@ -10040,7 +10689,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Notificacoes push"]
+        "tags": [
+          "Notificacoes push"
+        ]
       }
     },
     "/api/v1/operations/push/subscriptions": {
@@ -10083,7 +10734,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Notificacoes push"]
+        "tags": [
+          "Notificacoes push"
+        ]
       },
       "delete": {
         "operationId": "PushController_unsubscribe",
@@ -10115,7 +10768,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Notificacoes push"]
+        "tags": [
+          "Notificacoes push"
+        ]
       }
     },
     "/api/v1/library/books/{id}/history": {
@@ -10177,7 +10832,12 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "required": ["items", "total", "page", "pageSize"],
+                  "required": [
+                    "items",
+                    "total",
+                    "page",
+                    "pageSize"
+                  ],
                   "properties": {
                     "total": {
                       "type": "integer"
@@ -10258,7 +10918,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"]
+        "tags": [
+          "Biblioteca"
+        ]
       }
     },
     "/api/v1/library/categories": {
@@ -10315,7 +10977,9 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
+        "tags": [
+          "Biblioteca"
+        ],
         "summary": "Índice de categorias da biblioteca",
         "description": "Exige LIBRARY_BOOK_READ. Lista códigos textuais, nomes e parentCode, incluindo categorias ainda sem livros. page e pageSize limitam a consulta no banco."
       }
@@ -10338,6 +11002,24 @@
       }
     },
     "schemas": {
+      "UpdatePreferencesDto": {
+        "type": "object",
+        "required": [
+          "colorMode"
+        ],
+        "properties": {
+          "colorMode": {
+            "type": "string",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ],
+            "default": "system"
+          }
+        },
+        "additionalProperties": false
+      },
       "Object": {
         "type": "object",
         "properties": {}
@@ -10347,7 +11029,11 @@
         "properties": {
           "kind": {
             "type": "string",
-            "enum": ["EXPORT", "RECTIFICATION", "ANONYMIZATION"]
+            "enum": [
+              "EXPORT",
+              "RECTIFICATION",
+              "ANONYMIZATION"
+            ]
           },
           "details": {
             "type": "string",
@@ -10355,7 +11041,10 @@
             "maxLength": 2000
           }
         },
-        "required": ["kind", "details"]
+        "required": [
+          "kind",
+          "details"
+        ]
       },
       "ConsentDto": {
         "type": "object",
@@ -10374,14 +11063,21 @@
             "type": "boolean"
           }
         },
-        "required": ["purpose", "policyVersion", "granted"]
+        "required": [
+          "purpose",
+          "policyVersion",
+          "granted"
+        ]
       },
       "ResolvePrivacyDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["COMPLETED", "REJECTED"]
+            "enum": [
+              "COMPLETED",
+              "REJECTED"
+            ]
           },
           "resolution": {
             "type": "string",
@@ -10389,7 +11085,10 @@
             "maxLength": 2000
           }
         },
-        "required": ["status", "resolution"]
+        "required": [
+          "status",
+          "resolution"
+        ]
       },
       "RetentionDto": {
         "type": "object",
@@ -10415,7 +11114,11 @@
             "maxLength": 2000
           }
         },
-        "required": ["dataClass", "minimumMonths", "legalBasis"]
+        "required": [
+          "dataClass",
+          "minimumMonths",
+          "legalBasis"
+        ]
       },
       "LegalHoldDto": {
         "type": "object",
@@ -10424,7 +11127,9 @@
             "type": "boolean"
           }
         },
-        "required": ["legalHold"]
+        "required": [
+          "legalHold"
+        ]
       },
       "AnonymizeDto": {
         "type": "object",
@@ -10434,7 +11139,9 @@
             "format": "uuid"
           }
         },
-        "required": ["requestId"]
+        "required": [
+          "requestId"
+        ]
       },
       "VisitorDto": {
         "type": "object",
@@ -10461,7 +11168,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["NEW", "CONTACTED", "ARCHIVED"]
+            "enum": [
+              "NEW",
+              "CONTACTED",
+              "ARCHIVED"
+            ]
           },
           "notes": {
             "type": "string",
@@ -10469,7 +11180,10 @@
             "maxLength": 2000
           }
         },
-        "required": ["name", "visitedAt"]
+        "required": [
+          "name",
+          "visitedAt"
+        ]
       },
       "VisitorPatch": {
         "type": "object",
@@ -10496,7 +11210,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["NEW", "CONTACTED", "ARCHIVED"]
+            "enum": [
+              "NEW",
+              "CONTACTED",
+              "ARCHIVED"
+            ]
           },
           "notes": {
             "type": "string",
@@ -10523,7 +11241,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           },
           "description": {
             "type": "string",
@@ -10531,7 +11253,11 @@
             "maxLength": 2000
           }
         },
-        "required": ["name", "startsAt", "location"]
+        "required": [
+          "name",
+          "startsAt",
+          "location"
+        ]
       },
       "EventPatch": {
         "type": "object",
@@ -10551,7 +11277,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           },
           "description": {
             "type": "string",
@@ -10565,10 +11295,15 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["CONFIRMED", "DECLINED"]
+            "enum": [
+              "CONFIRMED",
+              "DECLINED"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "OperationalVisitorDto": {
         "type": "object",
@@ -10601,7 +11336,12 @@
           "gender": {
             "type": "string",
             "nullable": true,
-            "enum": ["FEMALE", "MALE", "OTHER", "UNDISCLOSED"]
+            "enum": [
+              "FEMALE",
+              "MALE",
+              "OTHER",
+              "UNDISCLOSED"
+            ]
           },
           "firstVisitDate": {
             "type": "string",
@@ -10635,7 +11375,10 @@
             ]
           }
         },
-        "required": ["firstName", "firstVisitDate"]
+        "required": [
+          "firstName",
+          "firstVisitDate"
+        ]
       },
       "OperationalVisitorPatch": {
         "type": "object",
@@ -10668,7 +11411,12 @@
           "gender": {
             "type": "string",
             "nullable": true,
-            "enum": ["FEMALE", "MALE", "OTHER", "UNDISCLOSED"]
+            "enum": [
+              "FEMALE",
+              "MALE",
+              "OTHER",
+              "UNDISCLOSED"
+            ]
           },
           "firstVisitDate": {
             "type": "string",
@@ -10739,7 +11487,9 @@
             "maxLength": 2000
           }
         },
-        "required": ["assignedToUserId"]
+        "required": [
+          "assignedToUserId"
+        ]
       },
       "FollowUpPatch": {
         "type": "object",
@@ -10899,7 +11649,10 @@
             "type": "boolean"
           }
         },
-        "required": ["name", "leaderMemberId"]
+        "required": [
+          "name",
+          "leaderMemberId"
+        ]
       },
       "MinistryPatch": {
         "type": "object",
@@ -10978,7 +11731,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           }
         },
         "required": [
@@ -11045,7 +11802,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["SCHEDULED", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "SCHEDULED",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           }
         }
       },
@@ -11074,10 +11835,19 @@
           },
           "status": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "CANCELLED",
+              "COMPLETED"
+            ]
           }
         },
-        "required": ["eventId", "title", "date"]
+        "required": [
+          "eventId",
+          "title",
+          "date"
+        ]
       },
       "SchedulePatch": {
         "type": "object",
@@ -11104,7 +11874,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["DRAFT", "PUBLISHED", "CANCELLED", "COMPLETED"]
+            "enum": [
+              "DRAFT",
+              "PUBLISHED",
+              "CANCELLED",
+              "COMPLETED"
+            ]
           }
         }
       },
@@ -11122,7 +11897,13 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["PHONE", "WHATSAPP", "EMAIL", "IN_PERSON", "OTHER"]
+            "enum": [
+              "PHONE",
+              "WHATSAPP",
+              "EMAIL",
+              "IN_PERSON",
+              "OTHER"
+            ]
           },
           "interactionDate": {
             "type": "string"
@@ -11136,7 +11917,11 @@
             "type": "string"
           }
         },
-        "required": ["type", "interactionDate", "notes"]
+        "required": [
+          "type",
+          "interactionDate",
+          "notes"
+        ]
       },
       "ParticipantDto": {
         "type": "object",
@@ -11147,10 +11932,17 @@
           },
           "role": {
             "type": "string",
-            "enum": ["LEADER", "CO_LEADER", "HOST", "MEMBER"]
+            "enum": [
+              "LEADER",
+              "CO_LEADER",
+              "HOST",
+              "MEMBER"
+            ]
           }
         },
-        "required": ["memberId"]
+        "required": [
+          "memberId"
+        ]
       },
       "PersonDto": {
         "type": "object",
@@ -11186,17 +11978,27 @@
             "maxLength": 2000
           }
         },
-        "required": ["memberId", "function"]
+        "required": [
+          "memberId",
+          "function"
+        ]
       },
       "AssignmentStatusDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["CONFIRMED", "DECLINED", "COMPLETED", "ABSENT"]
+            "enum": [
+              "CONFIRMED",
+              "DECLINED",
+              "COMPLETED",
+              "ABSENT"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "NotificationDto": {
         "type": "object",
@@ -11211,7 +12013,13 @@
           },
           "channel": {
             "type": "string",
-            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WHATSAPP",
+              "PUSH",
+              "INTERNAL"
+            ]
           },
           "subject": {
             "type": "string",
@@ -11226,7 +12034,10 @@
             "type": "string"
           }
         },
-        "required": ["channel", "content"]
+        "required": [
+          "channel",
+          "content"
+        ]
       },
       "TemplateDto": {
         "type": "object",
@@ -11238,7 +12049,13 @@
           },
           "channel": {
             "type": "string",
-            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WHATSAPP",
+              "PUSH",
+              "INTERNAL"
+            ]
           },
           "subject": {
             "type": "string",
@@ -11253,7 +12070,11 @@
             "type": "boolean"
           }
         },
-        "required": ["name", "channel", "content"]
+        "required": [
+          "name",
+          "channel",
+          "content"
+        ]
       },
       "TemplatePatch": {
         "type": "object",
@@ -11265,7 +12086,13 @@
           },
           "channel": {
             "type": "string",
-            "enum": ["EMAIL", "SMS", "WHATSAPP", "PUSH", "INTERNAL"]
+            "enum": [
+              "EMAIL",
+              "SMS",
+              "WHATSAPP",
+              "PUSH",
+              "INTERNAL"
+            ]
           },
           "subject": {
             "type": "string",
@@ -11295,7 +12122,10 @@
             "maxLength": 128
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "RegisterDto": {
         "type": "object",
@@ -11316,7 +12146,11 @@
             "maxLength": 120
           }
         },
-        "required": ["email", "password", "name"]
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
       },
       "ChangePasswordDto": {
         "type": "object",
@@ -11332,7 +12166,10 @@
             "maxLength": 128
           }
         },
-        "required": ["currentPassword", "newPassword"]
+        "required": [
+          "currentPassword",
+          "newPassword"
+        ]
       },
       "ForgotPasswordDto": {
         "type": "object",
@@ -11343,7 +12180,9 @@
             "format": "email"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "ResetPasswordDto": {
         "type": "object",
@@ -11359,7 +12198,10 @@
             "maxLength": 128
           }
         },
-        "required": ["token", "newPassword"]
+        "required": [
+          "token",
+          "newPassword"
+        ]
       },
       "CreateMemberDto": {
         "type": "object",
@@ -11382,7 +12224,10 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "INACTIVE"]
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
           },
           "birthDate": {
             "type": "string",
@@ -11402,7 +12247,9 @@
             "description": "IBAN normalizado sem espacos; opcional."
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateMemberDto": {
         "type": "object",
@@ -11424,7 +12271,10 @@
             "maxLength": 32
           },
           "status": {
-            "enum": ["ACTIVE", "INACTIVE"],
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
             "type": "string"
           },
           "birthDate": {
@@ -11451,10 +12301,15 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "DISABLED"]
+            "enum": [
+              "ACTIVE",
+              "DISABLED"
+            ]
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "UserRolesDto": {
         "type": "object",
@@ -11468,7 +12323,9 @@
             }
           }
         },
-        "required": ["roleIds"]
+        "required": [
+          "roleIds"
+        ]
       },
       "LinkMemberDto": {
         "type": "object",
@@ -11583,7 +12440,9 @@
             }
           }
         },
-        "required": ["title"]
+        "required": [
+          "title"
+        ]
       },
       "UpdateBookDto": {
         "type": "object",
@@ -11731,7 +12590,10 @@
             "maxLength": 4000
           }
         },
-        "required": ["assetCode", "location"]
+        "required": [
+          "assetCode",
+          "location"
+        ]
       },
       "UpdateCopyDto": {
         "type": "object",
@@ -11790,7 +12652,9 @@
             "pattern": "\\S"
           }
         },
-        "required": ["justification"]
+        "required": [
+          "justification"
+        ]
       },
       "LoanDto": {
         "type": "object",
@@ -11808,14 +12672,20 @@
             "maxLength": 4000
           }
         },
-        "required": ["memberId", "bookCopyId"]
+        "required": [
+          "memberId",
+          "bookCopyId"
+        ]
       },
       "CloseLoanDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "enum": ["LOST", "CANCELLED"]
+            "enum": [
+              "LOST",
+              "CANCELLED"
+            ]
           },
           "justification": {
             "type": "string",
@@ -11823,7 +12693,10 @@
             "pattern": "\\S"
           }
         },
-        "required": ["status", "justification"]
+        "required": [
+          "status",
+          "justification"
+        ]
       },
       "ReservationDto": {
         "type": "object",
@@ -11837,7 +12710,10 @@
             "format": "uuid"
           }
         },
-        "required": ["memberId", "bookId"]
+        "required": [
+          "memberId",
+          "bookId"
+        ]
       },
       "SettingsDto": {
         "type": "object",
@@ -11903,14 +12779,21 @@
             "format": "uuid"
           }
         },
-        "required": ["amount", "idempotencyKey"]
+        "required": [
+          "amount",
+          "idempotencyKey"
+        ]
       },
       "AdjustmentDto": {
         "type": "object",
         "properties": {
           "kind": {
             "type": "string",
-            "enum": ["DISCOUNT", "FORGIVE", "CANCEL"]
+            "enum": [
+              "DISCOUNT",
+              "FORGIVE",
+              "CANCEL"
+            ]
           },
           "amount": {
             "type": "string",
@@ -11922,7 +12805,10 @@
             "pattern": "\\S"
           }
         },
-        "required": ["kind", "justification"]
+        "required": [
+          "kind",
+          "justification"
+        ]
       },
       "CategoryDto": {
         "type": "object",
@@ -11934,7 +12820,10 @@
           },
           "kind": {
             "type": "string",
-            "enum": ["INCOME", "EXPENSE"]
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ]
           },
           "parentId": {
             "type": "string",
@@ -11942,7 +12831,10 @@
             "format": "uuid"
           }
         },
-        "required": ["name", "kind"]
+        "required": [
+          "name",
+          "kind"
+        ]
       },
       "CategoryPatch": {
         "type": "object",
@@ -11953,7 +12845,10 @@
             "pattern": "\\S"
           },
           "kind": {
-            "enum": ["INCOME", "EXPENSE"],
+            "enum": [
+              "INCOME",
+              "EXPENSE"
+            ],
             "type": "string"
           },
           "parentId": {
@@ -12001,10 +12896,18 @@
           },
           "status": {
             "type": "string",
-            "enum": ["ACTIVE", "INACTIVE"]
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
           }
         },
-        "required": ["bank", "name", "currency", "openingBalance"]
+        "required": [
+          "bank",
+          "name",
+          "currency",
+          "openingBalance"
+        ]
       },
       "AccountPatch": {
         "type": "object",
@@ -12043,7 +12946,10 @@
             "pattern": "^-?(?:0|[1-9]\\d{0,11})(?:\\.\\d{1,2})?$"
           },
           "status": {
-            "enum": ["ACTIVE", "INACTIVE"],
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ],
             "type": "string"
           }
         }
@@ -12073,7 +12979,9 @@
             "maxLength": 32
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "SupplierPatch": {
         "type": "object",
@@ -12152,7 +13060,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           }
         },
         "required": [
@@ -12194,7 +13106,11 @@
             "maxLength": 120
           },
           "status": {
-            "enum": ["PENDING", "COMPLETED", "CANCELLED"],
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "CANCELLED"
+            ],
             "type": "string"
           },
           "origin": {
@@ -12269,7 +13185,11 @@
           },
           "status": {
             "type": "string",
-            "enum": ["PENDING", "COMPLETED", "CANCELLED"]
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "CANCELLED"
+            ]
           }
         },
         "required": [
@@ -12311,7 +13231,11 @@
             "maxLength": 120
           },
           "status": {
-            "enum": ["PENDING", "COMPLETED", "CANCELLED"],
+            "enum": [
+              "PENDING",
+              "COMPLETED",
+              "CANCELLED"
+            ],
             "type": "string"
           },
           "dueDate": {
@@ -12348,10 +13272,19 @@
           },
           "type": {
             "type": "string",
-            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+            "enum": [
+              "TITHE",
+              "OFFERING",
+              "DONATION",
+              "OTHER"
+            ]
           }
         },
-        "required": ["incomeId", "memberId", "type"]
+        "required": [
+          "incomeId",
+          "memberId",
+          "type"
+        ]
       },
       "ContributionPatch": {
         "type": "object",
@@ -12365,7 +13298,12 @@
             "format": "uuid"
           },
           "type": {
-            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"],
+            "enum": [
+              "TITHE",
+              "OFFERING",
+              "DONATION",
+              "OTHER"
+            ],
             "type": "string"
           }
         }
@@ -12378,14 +13316,20 @@
             "format": "uuid"
           }
         },
-        "required": ["accountId"]
+        "required": [
+          "accountId"
+        ]
       },
       "ClassifyBankDto": {
         "type": "object",
         "properties": {
           "classification": {
             "type": "string",
-            "enum": ["INCOME", "EXPENSE", "IGNORE"]
+            "enum": [
+              "INCOME",
+              "EXPENSE",
+              "IGNORE"
+            ]
           },
           "categoryId": {
             "type": "string",
@@ -12401,7 +13345,12 @@
           },
           "contributionType": {
             "type": "string",
-            "enum": ["TITHE", "OFFERING", "DONATION", "OTHER"]
+            "enum": [
+              "TITHE",
+              "OFFERING",
+              "DONATION",
+              "OTHER"
+            ]
           },
           "acceptDuplicate": {
             "type": "boolean"
@@ -12417,7 +13366,10 @@
             }
           }
         },
-        "required": ["classification", "ids"]
+        "required": [
+          "classification",
+          "ids"
+        ]
       },
       "ReconcileBankDto": {
         "type": "object",
@@ -12441,7 +13393,9 @@
             }
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "UndoBankDto": {
         "type": "object",
@@ -12462,7 +13416,10 @@
             }
           }
         },
-        "required": ["reason", "ids"]
+        "required": [
+          "reason",
+          "ids"
+        ]
       },
       "InvoiceAssociationDto": {
         "type": "object",
@@ -12472,11 +13429,15 @@
             "format": "uuid"
           }
         },
-        "required": ["transactionId"]
+        "required": [
+          "transactionId"
+        ]
       },
       "PasskeyOptionsDto": {
         "type": "object",
-        "required": ["password"],
+        "required": [
+          "password"
+        ],
         "properties": {
           "password": {
             "type": "string",
@@ -12487,7 +13448,10 @@
       },
       "PasskeyVerifyDto": {
         "type": "object",
-        "required": ["challengeId", "response"],
+        "required": [
+          "challengeId",
+          "response"
+        ],
         "properties": {
           "challengeId": {
             "type": "string",
@@ -12502,7 +13466,11 @@
       },
       "PasskeyRegisterDto": {
         "type": "object",
-        "required": ["challengeId", "response", "name"],
+        "required": [
+          "challengeId",
+          "response",
+          "name"
+        ],
         "properties": {
           "challengeId": {
             "type": "string",
@@ -12528,7 +13496,9 @@
             "minimum": 0
           }
         },
-        "required": ["count"]
+        "required": [
+          "count"
+        ]
       },
       "PushConfigDto": {
         "type": "object",
@@ -12541,7 +13511,10 @@
             "nullable": true
           }
         },
-        "required": ["enabled", "publicKey"]
+        "required": [
+          "enabled",
+          "publicKey"
+        ]
       },
       "PushKeysDto": {
         "type": "object",
@@ -12555,7 +13528,10 @@
             "pattern": "^[A-Za-z0-9_-]{22}$"
           }
         },
-        "required": ["p256dh", "auth"]
+        "required": [
+          "p256dh",
+          "auth"
+        ]
       },
       "PushSubscriptionDto": {
         "type": "object",
@@ -12569,7 +13545,10 @@
             "$ref": "#/components/schemas/PushKeysDto"
           }
         },
-        "required": ["endpoint", "keys"]
+        "required": [
+          "endpoint",
+          "keys"
+        ]
       },
       "PushStatusDto": {
         "type": "object",
@@ -12578,7 +13557,9 @@
             "type": "boolean"
           }
         },
-        "required": ["subscribed"]
+        "required": [
+          "subscribed"
+        ]
       },
       "PushEndpointDto": {
         "type": "object",
@@ -12589,7 +13570,9 @@
             "description": "Endpoint HTTPS emitido por um serviço Web Push suportado."
           }
         },
-        "required": ["endpoint"]
+        "required": [
+          "endpoint"
+        ]
       },
       "ReserveBookDto": {
         "type": "object",

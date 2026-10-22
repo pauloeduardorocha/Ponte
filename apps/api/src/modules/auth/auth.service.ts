@@ -31,6 +31,10 @@ const userInclude = {
 } satisfies Prisma.UserInclude;
 type Identity = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 export const safeUser = (user: Identity): CurrentUser => ({
+  colorMode:
+    user.colorMode === 'light' || user.colorMode === 'dark'
+      ? user.colorMode
+      : 'system',
   roles: user.userRoles.map(({ role }) => role.name),
   memberId: user.memberId,
   id: user.id,
@@ -82,6 +86,20 @@ export class AuthService {
 
   hashToken(token: string) {
     return createHmac('sha256', this.refreshSecret).update(token).digest('hex');
+  }
+
+  async updatePreferences(
+    userId: string,
+    colorMode: 'system' | 'light' | 'dark',
+  ) {
+    return this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      return tx.user.update({
+        where: { id: userId },
+        data: { colorMode },
+        select: { colorMode: true },
+      });
+    });
   }
 
   async register(dto: RegisterDto) {

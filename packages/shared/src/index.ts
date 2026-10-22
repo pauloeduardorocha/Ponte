@@ -192,6 +192,7 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
 };
 
 export interface CurrentUser {
+  colorMode?: 'system' | 'light' | 'dark';
   id: string;
   name: string;
   email: string;

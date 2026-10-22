@@ -253,7 +253,7 @@ export function FinancialDashboardPanel() {
           <MetricCard
             label="Movimentos pendentes de revisão"
             value={data.data.unreconciled ?? 0}
-            color="warning.dark"
+            color="warning.main"
             href={
               banking ? '/finance?tab=banking&unreconciled=true' : undefined
             }

@@ -22,6 +22,7 @@ import {
 import type { CurrentUser, Permission } from '../lib/types';
 import { errorMessage } from '../lib/errors';
 import { disablePush, stopBrowserPush } from '../lib/push';
+import { AccountThemeProvider } from '../theme/AccountThemeProvider';
 import {
   AuthContext,
   type AuthContextValue,
@@ -151,6 +152,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [state.user],
   );
 
+  const updateColorMode = useCallback(
+    async (mode: 'system' | 'light' | 'dark') => {
+      const userId = state.user?.id;
+      if (!userId) return;
+      const preferences = await authApi.updatePreferences(mode);
+      setState((current) =>
+        current.user?.id === userId
+          ? {
+              ...current,
+              user: { ...current.user, colorMode: preferences.colorMode },
+            }
+          : current,
+      );
+    },
+    [state.user?.id],
+  );
+
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
@@ -159,29 +177,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       clearSession,
       hasPermission,
+      updateColorMode,
     }),
-    [state, login, loginWithPasskey, logout, clearSession, hasPermission],
+    [
+      state,
+      login,
+      loginWithPasskey,
+      logout,
+      clearSession,
+      hasPermission,
+      updateColorMode,
+    ],
   );
 
   return (
     <AuthContext.Provider value={value}>
-      {children}
-      {state.status === 'authenticated' && state.user && (
-        <Suspense fallback={null}>
-          <PushPermissionPrompt
-            key={state.user.id}
-            userId={state.user.id}
-            blocked={!!enrollment}
-          />
-        </Suspense>
-      )}
-      {enrollment &&
-        state.status === 'authenticated' &&
-        state.user?.id === enrollment.userId && (
+      <AccountThemeProvider>
+        {children}
+        {state.status === 'authenticated' && state.user && (
           <Suspense fallback={null}>
-            <PasskeyEnrollment {...enrollment} onClose={closeEnrollment} />
+            <PushPermissionPrompt
+              key={state.user.id}
+              userId={state.user.id}
+              blocked={!!enrollment}
+            />
           </Suspense>
         )}
+        {enrollment &&
+          state.status === 'authenticated' &&
+          state.user?.id === enrollment.userId && (
+            <Suspense fallback={null}>
+              <PasskeyEnrollment {...enrollment} onClose={closeEnrollment} />
+            </Suspense>
+          )}
+      </AccountThemeProvider>
     </AuthContext.Provider>
   );
 }

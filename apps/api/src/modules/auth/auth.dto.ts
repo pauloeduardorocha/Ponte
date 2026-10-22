@@ -1,5 +1,12 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+
+export class UpdatePreferencesDto {
+  @ApiProperty({ enum: ['system', 'light', 'dark'], default: 'system' })
+  @IsIn(['system', 'light', 'dark'])
+  colorMode!: 'system' | 'light' | 'dark';
+}
 
 export class LoginDto {
   @Transform(({ value }: { value: unknown }) =>

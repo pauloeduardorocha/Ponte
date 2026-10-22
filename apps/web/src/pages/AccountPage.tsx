@@ -9,6 +9,11 @@ import {
   Card,
   CardContent,
   Chip,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
   Stack,
   TextField,
   Typography,
@@ -34,7 +39,24 @@ const passwordFormSchema = z
 type PasswordFields = z.infer<typeof passwordFormSchema>;
 
 export function AccountPage() {
-  const { user, clearSession } = useAuth();
+  const { user, clearSession, updateColorMode } = useAuth();
+  const [savingAppearance, setSavingAppearance] = useState(false);
+  const [appearanceError, setAppearanceError] = useState<string | null>(null);
+  const [appearanceSaved, setAppearanceSaved] = useState(false);
+
+  async function changeAppearance(mode: 'system' | 'light' | 'dark') {
+    setSavingAppearance(true);
+    setAppearanceError(null);
+    setAppearanceSaved(false);
+    try {
+      await updateColorMode(mode);
+      setAppearanceSaved(true);
+    } catch (err) {
+      setAppearanceError(errorMessage(err));
+    } finally {
+      setSavingAppearance(false);
+    }
+  }
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState } = useForm<PasswordFields>({
     resolver: zodResolver(passwordFormSchema),
@@ -61,7 +83,7 @@ export function AccountPage() {
     <Stack spacing={3}>
       <PageHeader
         title="Minha conta"
-        subtitle="Consulte seus dados e altere sua senha."
+        subtitle="Consulte seus dados, personalize a aparência e altere sua senha."
       />
       <Box className="account-grid">
         <Card variant="outlined">
@@ -141,6 +163,61 @@ export function AccountPage() {
           </CardContent>
         </Card>
       </Box>
+      <Card variant="outlined">
+        <CardContent>
+          <Stack spacing={2}>
+            <Typography variant="h6" fontWeight={700}>
+              Aparência
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Escolha o modo de cores da sua conta. Por padrão, a aparência
+              segue o dispositivo. Sua preferência é salva automaticamente e
+              usada nos seus dispositivos.
+            </Typography>
+            <FormControl disabled={savingAppearance}>
+              <FormLabel id="color-mode-label">Modo de cores</FormLabel>
+              <RadioGroup
+                row
+                aria-labelledby="color-mode-label"
+                value={user?.colorMode ?? 'system'}
+                onChange={(_, value) => {
+                  if (
+                    value === 'system' ||
+                    value === 'light' ||
+                    value === 'dark'
+                  )
+                    void changeAppearance(value);
+                }}
+              >
+                <FormControlLabel
+                  value="system"
+                  control={<Radio />}
+                  label="Seguir o dispositivo"
+                />
+                <FormControlLabel
+                  value="light"
+                  control={<Radio />}
+                  label="Claro"
+                />
+                <FormControlLabel
+                  value="dark"
+                  control={<Radio />}
+                  label="Escuro"
+                />
+              </RadioGroup>
+            </FormControl>
+            {savingAppearance && (
+              <Typography role="status">Salvando preferência…</Typography>
+            )}
+            {appearanceSaved && (
+              <Alert severity="success">Preferência de aparência salva.</Alert>
+            )}
+            {appearanceError && (
+              <Alert severity="error">{appearanceError}</Alert>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
       <PasskeySettings />
     </Stack>
   );
