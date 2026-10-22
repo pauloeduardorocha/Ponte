@@ -1,12 +1,12 @@
 # Paginação da biblioteca
 
 Catálogo, exemplares, empréstimos, multas, reservas e membros usam `page`
-(início em 1) e `pageSize` (padrão 20, máximo 100). A API devolve
+(início em 1) e `pageSize` (padrão 10, máximo 100). A API devolve
 `{ items, total, page, pageSize }`; a seleção da página ocorre no banco.
 
 Os filtros e os seletores dos formulários consultam a API apenas quando o
 dropdown abre. A pesquisa tem um intervalo de 250 ms após a digitação e cada
-pedido traz até 20 opções. Percorrer o dropdown até ao fim pede a página
+pedido traz até 10 opções. Percorrer o dropdown até ao fim pede a página
 seguinte. Uma nova pesquisa começa na página 1. Não há um ciclo a descarregar
 todas as páginas.
 
@@ -39,7 +39,7 @@ necessárias alterações ao esquema ou migrações.
 ## Histórico de circulação no catálogo
 
 `GET /api/v1/library/books/:id/history` exige `LIBRARY_BOOK_READ` e aceita
-`page` e `pageSize` (padrão 20, máximo 100). Responde com
+`page` e `pageSize` (padrão 10, máximo 100). Responde com
 `{ items, total, page, pageSize }`. Cada item contém apenas `id`, `borrowedAt`,
 `dueAt`, `returnedAt`, `status` e `renewedCount`. Inclui todos os exemplares do
 livro, ordenados por empréstimo mais recente e id decrescente para desempate.
@@ -71,7 +71,7 @@ existentes; o novo estado não é contado como disponível nem alocado a reserva
 ## Pagamentos e ajustes de multas
 
 `GET /api/v1/library/fines/:id/history` aceita `page` e `pageSize`
-(padrão 20, máximo 100) e exige `LIBRARY_FINE_READ` ou `LIBRARY_HISTORY_READ`.
+(padrão 10, máximo 100) e exige `LIBRARY_FINE_READ` ou `LIBRARY_HISTORY_READ`.
 Retorna `{ payments, adjustments, totalPayments, totalAdjustments, page, pageSize }`.
 Cada lista é paginada no banco e ordenada por `createdAt desc, id desc`.
 A navegação avança ambas até à última página da maior lista. Multa inexistente
@@ -80,6 +80,16 @@ retorna 404; UUID ou paginação inválidos retornam 400.
 Nas multas e nos históricos de membros e exemplares, “Ver pagamentos e ajustes”
 carrega os movimentos apenas ao abrir e permite navegar sem mudar a página da
 lista principal. Os arrays embutidos mantidos por compatibilidade nesses retornos
-e na resposta de ajuste ficam limitados aos 20 movimentos mais recentes de cada
+e na resposta de ajuste ficam limitados aos 10 movimentos mais recentes de cada
 tipo; o endpoint dedicado permite consultar todos os restantes. Valores totais,
 saldos e operações de pagamento continuam a considerar todos os movimentos.
+
+## Tamanho selecionável
+
+Todas as listas da biblioteca iniciam com 10 registos por página, incluindo o
+catálogo de utilizadores comuns e os seletores de entidades. Nas tabelas e nos
+históricos, o controlo “Por página” permite escolher 10, 20, 50 ou 100. Ao alterar
+o tamanho, a lista regressa à primeira página e mantém os filtros. O painel de
+mais emprestados também oferece essa seleção. Os seletores de entidades mantêm
+carregamento progressivo, com 10 opções por pedido ao percorrer a lista.
+O padrão 10 é exclusivo da biblioteca; as restantes áreas mantêm os seus padrões.

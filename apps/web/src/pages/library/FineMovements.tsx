@@ -15,9 +15,10 @@ import { QueryError } from '../../components/PageParts';
 export function FineMovements({ fineId }: { fineId: string }) {
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const history = useQuery({
-    queryKey: ['library', 'fine-history', fineId, page],
-    queryFn: () => getFineHistory(fineId, { page, pageSize: 20 }),
+    queryKey: ['library', 'fine-history', fineId, page, pageSize],
+    queryFn: () => getFineHistory(fineId, { page, pageSize }),
     enabled: open,
   });
   return (
@@ -58,8 +59,12 @@ export function FineMovements({ fineId }: { fineId: string }) {
               history.data.totalAdjustments,
             )}
             page={page - 1}
-            rowsPerPage={20}
-            rowsPerPageOptions={[20]}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+            onRowsPerPageChange={(event) => {
+              setPageSize(Number(event.target.value));
+              setPage(1);
+            }}
             onPageChange={(_, next) => setPage(next + 1)}
             labelRowsPerPage="Por página em cada lista"
             labelDisplayedRows={() => `Página ${page}`}

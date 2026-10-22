@@ -89,9 +89,10 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
 
 export function MemberLibraryHistory({ memberId }: { memberId: string }) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const history = useQuery({
-    queryKey: ['library', 'member-history', memberId, page],
-    queryFn: () => getMemberLibraryHistory(memberId, { page, pageSize: 20 }),
+    queryKey: ['library', 'member-history', memberId, page, pageSize],
+    queryFn: () => getMemberLibraryHistory(memberId, { page, pageSize }),
   });
   if (history.isPending)
     return <CircularProgress aria-label="Carregando biblioteca" />;
@@ -105,7 +106,14 @@ export function MemberLibraryHistory({ memberId }: { memberId: string }) {
   return (
     <Stack spacing={2}>
       <HistoryContent history={history.data} />
-      <HistoryPagination history={history.data} onPageChange={setPage} />
+      <HistoryPagination
+        history={history.data}
+        onPageChange={setPage}
+        onPageSizeChange={(size) => {
+          setPageSize(size);
+          setPage(1);
+        }}
+      />
     </Stack>
   );
 }
@@ -113,9 +121,11 @@ export function MemberLibraryHistory({ memberId }: { memberId: string }) {
 export function HistoryPagination({
   history,
   onPageChange,
+  onPageSizeChange,
 }: {
   history: LibraryHistory & { totalEvents?: number };
   onPageChange: (page: number) => void;
+  onPageSizeChange: (size: number) => void;
 }) {
   return (
     <TablePagination
@@ -127,7 +137,10 @@ export function HistoryPagination({
       )}
       page={history.page - 1}
       rowsPerPage={history.pageSize}
-      rowsPerPageOptions={[20]}
+      rowsPerPageOptions={[10, 20, 50, 100]}
+      onRowsPerPageChange={(event) =>
+        onPageSizeChange(Number(event.target.value))
+      }
       onPageChange={(_, page) => onPageChange(page + 1)}
       labelRowsPerPage="Por página em cada lista"
       labelDisplayedRows={({ page }) => `Página ${page + 1}`}

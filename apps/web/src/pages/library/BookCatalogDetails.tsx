@@ -64,13 +64,14 @@ export function BookCatalogDetails({
   close: () => void;
 }) {
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
   const book = useQuery({
     queryKey: ['library', 'book', id],
     queryFn: () => getBook(id),
   });
   const history = useQuery({
-    queryKey: ['library', 'book-history', id, page],
-    queryFn: () => getBookHistory(id, { page: page + 1, pageSize: 20 }),
+    queryKey: ['library', 'book-history', id, page, pageSize],
+    queryFn: () => getBookHistory(id, { page: page + 1, pageSize }),
   });
   return (
     <Dialog
@@ -226,8 +227,12 @@ export function BookCatalogDetails({
                 component="div"
                 count={history.data.total}
                 page={page}
-                rowsPerPage={20}
-                rowsPerPageOptions={[20]}
+                rowsPerPage={pageSize}
+                rowsPerPageOptions={[10, 20, 50, 100]}
+                onRowsPerPageChange={(event) => {
+                  setPageSize(Number(event.target.value));
+                  setPage(0);
+                }}
                 labelRowsPerPage="Por página"
                 onPageChange={(_, next) => setPage(next)}
                 getItemAriaLabel={(type) =>

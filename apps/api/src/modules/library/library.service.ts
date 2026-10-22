@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-import { PageQuery } from '../members/member.dto';
+import { LibraryPageQuery as PageQuery } from './library.dto';
 import {
   AdjustmentDto,
   BookDto,
@@ -48,8 +48,8 @@ const reservationInclude = {
 // Embedded movements remain bounded for existing consumers; the full history
 // is available through the independently paginated fine history endpoint.
 const fineMovementsInclude = {
-  payments: { take: 20, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
-  adjustments: { take: 20, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
+  payments: { take: 10, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
+  adjustments: { take: 10, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
 } satisfies Prisma.FineInclude;
 
 const catalogueInclude = {

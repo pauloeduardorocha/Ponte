@@ -72,6 +72,7 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
     books: 'LIBRARY_LOAN_READ',
   } as const;
   const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(resource === 'books' ? 10 : 25);
 
   const [search, setSearch] = useState('');
 
@@ -85,11 +86,11 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
   const [groupId, setGroupId] = useState<string>();
 
   const data = useQuery({
-    queryKey: ['member-portal', resource, page, debounced],
+    queryKey: ['member-portal', resource, page, pageSize, debounced],
     queryFn: () =>
       apiRequest<{ items: Entry[]; total: number }>(
         resource === 'books' ? '/library/books' : `/member-portal/${resource}`,
-        { query: { page: page + 1, pageSize: 25, search: debounced } },
+        { query: { page: page + 1, pageSize, search: debounced } },
       ),
   });
 
@@ -295,8 +296,12 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
             component="div"
             count={data.data.total}
             page={page}
-            rowsPerPage={25}
-            rowsPerPageOptions={[25]}
+            rowsPerPage={pageSize}
+            rowsPerPageOptions={resource === 'books' ? [10, 20, 50, 100] : [25]}
+            onRowsPerPageChange={(event) => {
+              setPageSize(Number(event.target.value));
+              setPage(0);
+            }}
             onPageChange={(_, next) => setPage(next)}
             labelRowsPerPage="Por página"
           />

@@ -5,6 +5,13 @@ import { LibraryService } from '../src/modules/library/library.service';
 import { LibraryController } from '../src/modules/library/library.controller';
 import { PrismaService } from '../src/database/prisma.service';
 import { PageQuery } from '../src/modules/members/member.dto';
+import {
+  LibraryPageQuery,
+  BookQuery,
+  CopyQuery,
+  LoanQuery,
+  LibraryQuery,
+} from '../src/modules/library/library.dto';
 import { PERMISSION_ANY_KEY } from '../src/modules/auth/permission.decorator';
 
 function fixture() {
@@ -73,6 +80,33 @@ describe('Paginated fine movements', () => {
     expect(tx.fineAdjustment.count).toHaveBeenCalledWith({
       where: { fineId: 'fine1' },
     });
+  });
+  it('defaults every library query to 10 and accepts an explicit size without changing other modules', async () => {
+    const pipe = new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    });
+    for (const metatype of [
+      LibraryPageQuery,
+      BookQuery,
+      CopyQuery,
+      LoanQuery,
+      LibraryQuery,
+    ]) {
+      expect(
+        await pipe.transform({}, { type: 'query', metatype }),
+      ).toMatchObject({ page: 1, pageSize: 10 });
+      expect(
+        await pipe.transform({ pageSize: '50' }, { type: 'query', metatype }),
+      ).toMatchObject({ pageSize: 50 });
+      await expect(
+        pipe.transform({ pageSize: '101' }, { type: 'query', metatype }),
+      ).rejects.toThrow();
+    }
+    expect(new PageQuery().pageSize).toBe(20);
+    const { service } = fixture();
+    expect((await service.fineHistory('fine1')).payments).toHaveLength(10);
   });
   it('returns 404 for a missing fine', async () => {
     const { service, tx } = fixture();

@@ -294,11 +294,15 @@ function Paged({
   total,
   page,
   setPage,
+  pageSize,
+  setPageSize,
   children,
 }: {
   total: number;
   page: number;
   setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
   children: ReactNode;
 }) {
   return (
@@ -306,13 +310,32 @@ function Paged({
       {children}
       {!total && <Alert severity="info">Nenhum registro encontrado.</Alert>}
       <Stack direction="row" spacing={2} alignItems="center">
+        <TextField
+          select
+          label="Registos por página"
+          value={pageSize}
+          onChange={(event) => {
+            setPageSize(Number(event.target.value));
+            setPage(1);
+          }}
+          sx={{ minWidth: 110 }}
+        >
+          {[10, 20, 50, 100].map((size) => (
+            <MenuItem key={size} value={size}>
+              {size}
+            </MenuItem>
+          ))}
+        </TextField>
         <Button disabled={page <= 1} onClick={() => setPage(page - 1)}>
           Anterior
         </Button>
         <Typography>
           Página {page} · {total} registros
         </Typography>
-        <Button disabled={page * 20 >= total} onClick={() => setPage(page + 1)}>
+        <Button
+          disabled={page * pageSize >= total}
+          onClick={() => setPage(page + 1)}
+        >
           Próxima
         </Button>
       </Stack>
@@ -322,9 +345,10 @@ function Paged({
 
 function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const history = useQuery({
-    queryKey: ['library', 'copy-history', id, page],
-    queryFn: () => api.getCopyHistory(id, { page, pageSize: 20 }),
+    queryKey: ['library', 'copy-history', id, page, pageSize],
+    queryFn: () => api.getCopyHistory(id, { page, pageSize }),
   });
   return (
     <Dialog open onClose={close} fullWidth maxWidth="md">
@@ -362,7 +386,14 @@ function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
                 </RecordRow>
               ))}
             </RecordTable>
-            <HistoryPagination history={history.data} onPageChange={setPage} />
+            <HistoryPagination
+              history={history.data}
+              onPageChange={setPage}
+              onPageSizeChange={(size) => {
+                setPageSize(size);
+                setPage(1);
+              }}
+            />
           </Stack>
         )}
       </DialogContent>
@@ -413,6 +444,7 @@ function LibraryManagementPage() {
     ? (params.get('tab') ?? chosenTab)
     : allowed[0]?.[0];
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [search, setSearch] = useState(params.get('search') ?? '');
   const [author, setAuthor] = useState('');
   const [category, setCategory] = useState('');
@@ -431,28 +463,38 @@ function LibraryManagementPage() {
   const [detailBook, setDetailBook] = useState<api.Book>();
   const [historyMember, setHistoryMember] = useState<string>();
   const books = useQuery({
-    queryKey: ['library', 'books', page, search, author, category, available],
-    queryFn: () => api.listBooks({ page, search, author, category, available }),
+    queryKey: [
+      'library',
+      'books',
+      page,
+      pageSize,
+      search,
+      author,
+      category,
+      available,
+    ],
+    queryFn: () =>
+      api.listBooks({ page, pageSize, search, author, category, available }),
     enabled: tab === 'catalog',
   });
   const copies = useQuery({
-    queryKey: ['library', 'copies', page, search, bookId, status],
-    queryFn: () => api.listCopies({ page, search, bookId, status }),
+    queryKey: ['library', 'copies', page, pageSize, search, bookId, status],
+    queryFn: () => api.listCopies({ page, pageSize, search, bookId, status }),
     enabled: tab === 'copies',
   });
   const loans = useQuery({
-    queryKey: ['library', 'loans', page, memberId, bookId, status],
-    queryFn: () => api.listLoans({ page, memberId, bookId, status }),
+    queryKey: ['library', 'loans', page, pageSize, memberId, bookId, status],
+    queryFn: () => api.listLoans({ page, pageSize, memberId, bookId, status }),
     enabled: tab === 'loans',
   });
   const fines = useQuery({
-    queryKey: ['library', 'fines', page, memberId, bookId],
-    queryFn: () => api.listFines({ page, memberId, bookId }),
+    queryKey: ['library', 'fines', page, pageSize, memberId, bookId],
+    queryFn: () => api.listFines({ page, pageSize, memberId, bookId }),
     enabled: tab === 'fines',
   });
   const reservations = useQuery({
-    queryKey: ['library', 'reservations', page, memberId, bookId],
-    queryFn: () => api.listReservations({ page, memberId, bookId }),
+    queryKey: ['library', 'reservations', page, pageSize, memberId, bookId],
+    queryFn: () => api.listReservations({ page, pageSize, memberId, bookId }),
     enabled: tab === 'reservations',
   });
   const settings = useQuery({
@@ -461,8 +503,8 @@ function LibraryManagementPage() {
     enabled: tab === 'settings',
   });
   const members = useQuery({
-    queryKey: ['library', 'members', page, search],
-    queryFn: () => api.listLibraryMembers({ page, search }),
+    queryKey: ['library', 'members', page, pageSize, search],
+    queryFn: () => api.listLibraryMembers({ page, pageSize, search }),
     enabled: tab === 'members',
   });
   const current =
@@ -708,7 +750,13 @@ function LibraryManagementPage() {
             />
           )}
           {tab === 'members' && members.data && (
-            <Paged total={members.data.total} page={page} setPage={setPage}>
+            <Paged
+              total={members.data.total}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            >
               <RecordTable
                 primaryLabel="Membro"
                 label={'Membros da biblioteca'}
@@ -740,7 +788,13 @@ function LibraryManagementPage() {
             </Paged>
           )}
           {tab === 'catalog' && books.data && (
-            <Paged total={books.data.total} page={page} setPage={setPage}>
+            <Paged
+              total={books.data.total}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            >
               <Box>
                 <RecordTable
                   primaryLabel="Livro"
@@ -890,7 +944,13 @@ function LibraryManagementPage() {
             </Paged>
           )}
           {tab === 'copies' && copies.data && (
-            <Paged total={copies.data.total} page={page} setPage={setPage}>
+            <Paged
+              total={copies.data.total}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            >
               <RecordTable
                 primaryLabel="Livro / Exemplar"
                 imageLabel="Capa"
@@ -1023,7 +1083,13 @@ function LibraryManagementPage() {
             </Paged>
           )}
           {tab === 'loans' && loans.data && (
-            <Paged total={loans.data.total} page={page} setPage={setPage}>
+            <Paged
+              total={loans.data.total}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            >
               <RecordTable
                 primaryLabel="Livro / Membro"
                 label={'Empréstimos'}
@@ -1121,7 +1187,13 @@ function LibraryManagementPage() {
             </Paged>
           )}
           {tab === 'fines' && fines.data && (
-            <Paged total={fines.data.total} page={page} setPage={setPage}>
+            <Paged
+              total={fines.data.total}
+              page={page}
+              setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
+            >
               <RecordTable
                 primaryLabel="Livro / Membro"
                 label={'Multas'}
@@ -1247,6 +1319,8 @@ function LibraryManagementPage() {
               total={reservations.data.total}
               page={page}
               setPage={setPage}
+              pageSize={pageSize}
+              setPageSize={setPageSize}
             >
               <RecordTable
                 primaryLabel="Livro / Membro"

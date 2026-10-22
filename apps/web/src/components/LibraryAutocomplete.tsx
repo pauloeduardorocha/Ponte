@@ -47,7 +47,7 @@ export function LibraryAutocomplete({
     initialPageParam: 1,
     queryFn: ({ pageParam }) =>
       apiRequest<Page<Option>>(endpoint, {
-        query: { ...query, search: debounced, page: pageParam, pageSize: 20 },
+        query: { ...query, search: debounced, page: pageParam, pageSize: 10 },
       }),
     getNextPageParam: (last) =>
       last.page * last.pageSize < last.total ? last.page + 1 : undefined,

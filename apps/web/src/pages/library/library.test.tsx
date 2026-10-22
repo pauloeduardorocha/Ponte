@@ -82,7 +82,7 @@ const page = (items: unknown[], total = items.length) => ({
   items,
   total,
   page: 1,
-  pageSize: 20,
+  pageSize: 10,
 });
 const staff = PERMISSIONS.filter((code) => code.startsWith('LIBRARY_'));
 function routes() {
@@ -203,6 +203,18 @@ describe('Library frontend', () => {
     await waitFor(() => expect(requests.at(-1)?.query.get('page')).toBe('2'));
     expect(requests.at(-1)?.query.get('search')).toBe('ponte');
     expect(requests.at(-1)?.query.get('author')).toBe('Autora Ponte');
+    expect(requests.at(-1)?.query.get('category')).toBe('Comunidade');
+    expect(requests.at(-1)?.query.get('pageSize')).toBe('10');
+    await screen.findByText(/^Página 2 ·/);
+    fireEvent.mouseDown(
+      screen.getByRole('combobox', { name: 'Registos por página' }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: '50' }));
+    await waitFor(() =>
+      expect(requests.at(-1)?.query.get('pageSize')).toBe('50'),
+    );
+    expect(requests.at(-1)?.query.get('page')).toBe('1');
+    expect(requests.at(-1)?.query.get('search')).toBe('ponte');
     expect(requests.at(-1)?.query.get('category')).toBe('Comunidade');
   });
   it('creates a full book and copy, and surfaces API errors instead of closing the form', async () => {
@@ -428,7 +440,7 @@ describe('Library frontend', () => {
         body: {
           copy,
           page: 1,
-          pageSize: 20,
+          pageSize: 10,
           totalLoans: 21,
           totalReservations: 1,
           totalEvents: 1,
@@ -450,7 +462,7 @@ describe('Library frontend', () => {
           loans: [{ ...loan, fine }],
           reservations: [reservation],
           page: 1,
-          pageSize: 20,
+          pageSize: 10,
           totalLoans: 1,
           totalReservations: 1,
         },
@@ -495,7 +507,7 @@ describe('Library frontend', () => {
           totalLoans: 41,
           totalReservations: 0,
           page: Number(query.get('page')),
-          pageSize: 20,
+          pageSize: 10,
         },
       }),
     });
@@ -536,6 +548,14 @@ describe('Library frontend', () => {
     });
     renderApp('/library');
     await tab(label);
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((r) => r.path === `/library/${endpoint}`)
+          .at(-1)
+          ?.query.get('pageSize'),
+      ).toBe('10'),
+    );
     expect(
       await screen.findByText('Página 1 · 41 registros'),
     ).toBeInTheDocument();
@@ -551,6 +571,18 @@ describe('Library frontend', () => {
     expect(
       requests.filter((r) => r.path === `/library/${endpoint}`),
     ).toHaveLength(2);
+    await screen.findByText(/^Página 2 ·/);
+    fireEvent.mouseDown(
+      screen.getByRole('combobox', { name: 'Registos por página' }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: '50' }));
+    await waitFor(() => {
+      const last = requests
+        .filter((r) => r.path === `/library/${endpoint}`)
+        .at(-1);
+      expect(last?.query.get('page')).toBe('1');
+      expect(last?.query.get('pageSize')).toBe('50');
+    });
   });
   it('loads fine movements only on request and paginates them independently from the fine list', async () => {
     const requests = mockApi({
@@ -569,7 +601,7 @@ describe('Library frontend', () => {
           totalPayments: 43,
           totalAdjustments: 0,
           page: Number(query.get('page')),
-          pageSize: 20,
+          pageSize: 10,
         },
       }),
     });
@@ -594,7 +626,7 @@ describe('Library frontend', () => {
     expect(
       requests
         .filter((r) => r.path.endsWith('/f1/history'))
-        .every((r) => r.query.get('pageSize') === '20'),
+        .every((r) => r.query.get('pageSize') === '10'),
     ).toBe(true);
   });
   it('formats money using integer cents', () => {

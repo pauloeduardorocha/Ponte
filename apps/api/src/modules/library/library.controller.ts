@@ -31,7 +31,7 @@ import {
   UpdateCopyDto,
 } from './library.dto';
 import { LibraryService } from './library.service';
-import { PageQuery } from '../members/member.dto';
+import { LibraryPageQuery as PageQuery } from './library.dto';
 
 @ApiTags('Biblioteca')
 @ApiBearerAuth()

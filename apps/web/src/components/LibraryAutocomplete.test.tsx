@@ -44,7 +44,7 @@ describe('Library autocomplete', () => {
             ],
             total: 60,
             page,
-            pageSize: 20,
+            pageSize: 10,
           },
         };
       },
@@ -55,7 +55,7 @@ describe('Library autocomplete', () => {
     fireEvent.mouseDown(input);
     await screen.findByRole('option', { name: 'Livro 1 · Autora' });
     expect(requests).toHaveLength(1);
-    expect(requests[0]?.query.get('pageSize')).toBe('20');
+    expect(requests[0]?.query.get('pageSize')).toBe('10');
     fireEvent.scroll(screen.getByRole('listbox'));
     await screen.findByRole('option', { name: 'Livro 2 · Autora' });
     expect(requests).toHaveLength(2);
@@ -79,7 +79,7 @@ describe('Library autocomplete', () => {
                 items: [{ id: 'b1', title: 'Recuperado', author: 'Autora' }],
                 total: 1,
                 page: 1,
-                pageSize: 20,
+                pageSize: 10,
               },
             }
           : { status: 503, body: { message: 'Pesquisa indisponível' } },

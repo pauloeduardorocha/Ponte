@@ -19,9 +19,10 @@ import * as api from '../../lib/library-api';
 export function LibraryDashboardPanel() {
   const { hasPermission } = useAuth();
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const dashboard = useQuery({
-    queryKey: ['library', 'dashboard', page],
-    queryFn: () => api.getLibraryDashboard({ page, pageSize: 10 }),
+    queryKey: ['library', 'dashboard', page, pageSize],
+    queryFn: () => api.getLibraryDashboard({ page, pageSize }),
     staleTime: 30000,
   });
   if (dashboard.isPending)
@@ -138,8 +139,12 @@ export function LibraryDashboardPanel() {
               component="div"
               count={d.totalMostBorrowed ?? d.mostBorrowed.length}
               page={page - 1}
-              rowsPerPage={10}
-              rowsPerPageOptions={[10]}
+              rowsPerPage={pageSize}
+              rowsPerPageOptions={[10, 20, 50, 100]}
+              onRowsPerPageChange={(event) => {
+                setPageSize(Number(event.target.value));
+                setPage(1);
+              }}
               onPageChange={(_, next) => setPage(next + 1)}
               labelRowsPerPage="Por página"
               getItemAriaLabel={(type) =>

@@ -104,7 +104,22 @@ describe('Basic member experience', () => {
       screen.queryByRole('button', { name: 'Reservar' }),
     ).not.toBeInTheDocument();
     expect(requests.some((r) => r.path.endsWith('/history'))).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Ver detalhes' }));
+    expect(
+      requests.find((r) => r.path === '/library/books')?.query.get('pageSize'),
+    ).toBe('10');
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Por página' }));
+    fireEvent.click(await screen.findByRole('option', { name: '50' }));
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((r) => r.path === '/library/books')
+          .at(-1)
+          ?.query.get('pageSize'),
+      ).toBe('50'),
+    );
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Ver detalhes' }),
+    );
     const dialog = within(screen.getByRole('dialog'));
     expect(await dialog.findByText('Editora Ponte')).toBeInTheDocument();
     expect(dialog.getByText('123456')).toBeInTheDocument();
@@ -126,6 +141,15 @@ describe('Basic member experience', () => {
           ?.query.get('page'),
       ).toBe('2'),
     );
+    fireEvent.mouseDown(
+      await dialog.findByRole('combobox', { name: 'Por página' }),
+    );
+    fireEvent.click(await screen.findByRole('option', { name: '50' }));
+    await waitFor(() => {
+      const last = requests.filter((r) => r.path.endsWith('/history')).at(-1);
+      expect(last?.query.get('pageSize')).toBe('50');
+      expect(last?.query.get('page')).toBe('1');
+    });
     fireEvent.click(dialog.getByRole('button', { name: 'Fechar' }));
     await waitFor(() =>
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),

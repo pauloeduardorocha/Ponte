@@ -35,7 +35,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -5942,7 +5942,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6148,7 +6148,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6241,7 +6241,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6390,7 +6390,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6639,7 +6639,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6698,7 +6698,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6775,7 +6775,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -6967,7 +6967,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -7127,7 +7127,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -10270,7 +10270,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -10329,7 +10329,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -10996,7 +10996,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"
@@ -11138,7 +11138,7 @@
             "schema": {
               "minimum": 1,
               "maximum": 100,
-              "default": 20,
+              "default": 10,
               "allOf": [
                 {
                   "$ref": "#/components/schemas/Object"

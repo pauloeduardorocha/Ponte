@@ -21,6 +21,10 @@ import {
 } from 'class-validator';
 import { PageQuery } from '../members/member.dto';
 
+export class LibraryPageQuery extends PageQuery {
+  override pageSize = 10;
+}
+
 export const COPY_STATUSES = [
   'PENDING_INVENTORY',
   'AVAILABLE',
@@ -31,7 +35,7 @@ export const COPY_STATUSES = [
   'DISPOSED',
 ] as const;
 
-export class BookQuery extends PageQuery {
+export class BookQuery extends LibraryPageQuery {
   @IsOptional()
   @IsString()
   @MaxLength(200)
@@ -47,7 +51,7 @@ export class BookQuery extends PageQuery {
   available?: string;
 }
 
-export class LibraryQuery extends PageQuery {
+export class LibraryQuery extends LibraryPageQuery {
   @IsOptional()
   @IsUUID()
   memberId?: string;
@@ -312,7 +316,7 @@ export class AdjustmentDto {
   justification!: string;
 }
 
-export class CopyQuery extends PageQuery {
+export class CopyQuery extends LibraryPageQuery {
   @IsOptional()
   @IsIn(COPY_STATUSES)
   status?: (typeof COPY_STATUSES)[number];
