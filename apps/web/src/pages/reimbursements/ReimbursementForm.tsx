@@ -50,6 +50,9 @@ export function ReimbursementForm({
   const iban = enteredIban ?? initial?.iban ?? profile.data?.iban ?? '';
   const [purpose, setPurpose] = useState(initial?.purpose ?? '');
   const [amount, setAmount] = useState(initial?.amount ?? '');
+  const validAmount =
+    /^(?:0|[1-9]\d{0,9})(?:[.,]\d{1,2})?$/.test(amount) &&
+    Number(amount.replace(',', '.')) > 0;
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState('');
   const [preparing, setPreparing] = useState(false);
@@ -79,7 +82,7 @@ export function ReimbursementForm({
         iban,
         categoryId,
         purpose,
-        ...(amount ? { amount: amount.replace(',', '.') } : {}),
+        amount: amount.replace(',', '.'),
       };
       if (initial)
         return apiRequest<{ id: string }>(`/reimbursements/${initial.id}`, {
@@ -132,7 +135,7 @@ export function ReimbursementForm({
       spacing={2}
       onSubmit={(event) => {
         event.preventDefault();
-        if (!busy)
+        if (!busy && validAmount)
           save.mutate({
             beneficiaryName,
             iban,
@@ -144,8 +147,8 @@ export function ReimbursementForm({
       }}
     >
       <Typography variant="body2">
-        Indique o IBAN e a categoria da despesa para guardar o pedido. Para
-        outra pessoa, altere o beneficiário e o IBAN.
+        Indique o valor, o IBAN e a categoria da despesa para guardar o pedido.
+        Para outra pessoa, altere o beneficiário e o IBAN.
       </Typography>
       {!initial && (
         <>
@@ -326,6 +329,7 @@ export function ReimbursementForm({
         </Alert>
       )}
       <TextField
+        required
         label="Valor total (€)"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
@@ -353,6 +357,7 @@ export function ReimbursementForm({
         variant="contained"
         disabled={
           busy ||
+          !validAmount ||
           !iban ||
           !categoryId ||
           !profile.data ||

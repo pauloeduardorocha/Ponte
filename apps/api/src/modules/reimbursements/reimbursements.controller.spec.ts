@@ -55,7 +55,7 @@ describe('Reimbursement submission HTTP contract', () => {
       .expect(404);
     expect(create).not.toHaveBeenCalled();
   });
-  it.each(['iban', 'categoryId'] as const)(
+  it.each(['iban', 'categoryId', 'amount'] as const)(
     'rejects a missing %s',
     async (field) => {
       const body: Record<string, string> = { ...payload };
@@ -64,6 +64,17 @@ describe('Reimbursement submission HTTP contract', () => {
         .post('/reimbursements')
         .set('Authorization', 'Bearer member')
         .send(body)
+        .expect(400);
+      expect(create).not.toHaveBeenCalled();
+    },
+  );
+  it.each(['', null, '0', '0.00', '-1', '1.234', 'abc'])(
+    'rejects invalid amount %p',
+    async (amount) => {
+      await request(app.getHttpServer())
+        .post('/reimbursements')
+        .set('Authorization', 'Bearer member')
+        .send({ ...payload, amount })
         .expect(400);
       expect(create).not.toHaveBeenCalled();
     },

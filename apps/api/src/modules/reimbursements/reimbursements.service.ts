@@ -279,8 +279,9 @@ export class ReimbursementsService {
     if (!dto.categoryId)
       throw new BadRequestException('Escolha uma categoria de despesa');
     if (
-      dto.amount !== undefined &&
-      (!dto.amount || !new Prisma.Decimal(dto.amount).gt(0))
+      !dto.amount ||
+      !/^(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/.test(dto.amount) ||
+      !new Prisma.Decimal(dto.amount).gt(0)
     )
       throw new BadRequestException('O valor deve ser positivo');
     return {

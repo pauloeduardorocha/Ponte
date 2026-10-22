@@ -114,14 +114,14 @@ describe('Reimbursement lifecycle and access', () => {
       tx.member.findFirst.mockResolvedValue({ id: 'member', name: 'Maria' });
       if (operation === 'create')
         await service.create(
-          { iban: row.iban, categoryId: row.categoryId },
+          { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
           [file],
           user,
         );
       else
         await service.update(
           row.id,
-          { iban: row.iban, categoryId: row.categoryId },
+          { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
           user,
         );
       expect(tx.member.updateMany).toHaveBeenCalledWith({
@@ -141,7 +141,7 @@ describe('Reimbursement lifecycle and access', () => {
       name: 'Outra pessoa',
     });
     await service.create(
-      { iban: row.iban, categoryId: row.categoryId },
+      { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
       [file],
       user,
     );
@@ -151,7 +151,7 @@ describe('Reimbursement lifecycle and access', () => {
     const { service, tx } = setup();
     await service.update(
       row.id,
-      { iban: row.iban, categoryId: row.categoryId },
+      { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
       { ...manager, id: 'treasurer' },
     );
     expect(tx.member.findFirst).not.toHaveBeenCalled();
@@ -260,12 +260,15 @@ describe('Reimbursement lifecycle and access', () => {
   it('rejects anonymous submissions and accounts without a member before storing files', async () => {
     const { service, tx, storage } = setup();
     await expect(
-      service.create({ iban: row.iban, categoryId: row.categoryId }, [file]),
+      service.create(
+        { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
+        [file],
+      ),
     ).rejects.toThrow();
     tx.member.findFirst.mockResolvedValueOnce(null!);
     await expect(
       service.create(
-        { iban: row.iban, categoryId: row.categoryId },
+        { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
         [file],
         user,
       ),
@@ -275,7 +278,11 @@ describe('Reimbursement lifecycle and access', () => {
   it('requires IBAN and a valid expense category', async () => {
     const { service, tx } = setup();
     await expect(
-      service.create({ iban: '', categoryId: row.categoryId }, [file], user),
+      service.create(
+        { iban: '', categoryId: row.categoryId, amount: '25.10' },
+        [file],
+        user,
+      ),
     ).rejects.toThrow('IBAN');
     tx.financialCategory.findUnique.mockResolvedValueOnce({
       id: 'category',
@@ -283,7 +290,7 @@ describe('Reimbursement lifecycle and access', () => {
     });
     await expect(
       service.create(
-        { iban: row.iban, categoryId: row.categoryId },
+        { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
         [file],
         user,
       ),
@@ -296,6 +303,7 @@ describe('Reimbursement lifecycle and access', () => {
         beneficiaryName: 'Outra pessoa',
         iban: row.iban,
         categoryId: row.categoryId,
+        amount: '25.10',
       },
       [file],
       user,
@@ -308,14 +316,18 @@ describe('Reimbursement lifecycle and access', () => {
   it('requires a document and cleans files when persistence fails', async () => {
     const { service, tx, storage } = setup();
     await expect(
-      service.create({ iban: row.iban, categoryId: row.categoryId }, [], user),
+      service.create(
+        { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
+        [],
+        user,
+      ),
     ).rejects.toThrow('documento');
     tx.reimbursement.create.mockRejectedValueOnce(
       new Error('database unavailable'),
     );
     await expect(
       service.create(
-        { iban: row.iban, categoryId: row.categoryId },
+        { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
         [file],
         user,
       ),

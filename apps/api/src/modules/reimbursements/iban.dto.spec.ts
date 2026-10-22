@@ -11,6 +11,7 @@ describe('IBAN input validation', () => {
     async (Dto) => {
       const input = plainToInstance(Dto, {
         categoryId: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
+        amount: '25.10',
         name: 'Maria',
         email: 'maria@example.com',
         iban: 'pt50 0002 0123 1234 5678 9015 4',

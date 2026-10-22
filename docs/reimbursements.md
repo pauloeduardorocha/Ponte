@@ -4,7 +4,7 @@ Cada pedido representa um pagamento integral em EUR e pode ser associado a um ú
 
 ## Utilização
 
-- `/pedir-reembolso`: formulário exclusivo para membros com sessão iniciada. IBAN e categoria de despesa são obrigatórios. Guarda os documentos com IBAN e categoria, permitindo completar os restantes dados depois. Com sessão iniciada, identifica o autor do pedido; o beneficiário pode ser outra pessoa.
+- `/pedir-reembolso`: formulário exclusivo para membros com sessão iniciada. Valor positivo, IBAN e categoria de despesa são obrigatórios. Guarda os documentos com IBAN e categoria, permitindo completar os restantes dados depois. Com sessão iniciada, identifica o autor do pedido; o beneficiário pode ser outra pessoa.
 - `/reimbursements`: os pedidos submetidos pelo utilizador autenticado.
 - `/finance?tab=reimbursements`: gestão pela tesouraria, com pesquisa, filtros, edição, documentos, registo de pagamento por transferência bancária e associação ao banco.
 - No painel de anexos do movimento bancário aparecem os documentos do pedido associado. Para movimentos compatíveis, a tesouraria também pode confirmar a associação nesse painel.
@@ -39,7 +39,7 @@ Os testes da API cobrem privacidade, rejeição de novos pedidos anónimos, auto
 
 `POST /members` e `PATCH /members/:id` aceitam `iban` opcional (ou `null` para limpar). A API normaliza os valores e valida o IBAN, incluindo o checksum.
 
-Os pedidos de reembolso usam `iban` em vez de `contact`, tanto em multipart no envio como em JSON ao editar. O IBAN é obrigatório e validado em cada criação e edição, assim como `categoryId`, que deve identificar uma categoria de despesas existente. `GET /reimbursements/categories` lista essas categorias para membros autenticados. `GET /reimbursements/profile` exige login e devolve apenas `{ name, iban }` do membro autenticado, ou `null` quando a conta estiver sem membro associado. O campo no novo pedido recebe esse IBAN sem substituir valores editados ou guardados no pedido.
+Os pedidos de reembolso usam `iban` em vez de `contact`, tanto em multipart no envio como em JSON ao editar. O valor (`amount`) é obrigatório, positivo e com até duas casas decimais. O IBAN é obrigatório e validado em cada criação e edição, assim como `categoryId`, que deve identificar uma categoria de despesas existente. `GET /reimbursements/categories` lista essas categorias para membros autenticados. `GET /reimbursements/profile` exige login e devolve apenas `{ name, iban }` do membro autenticado, ou `null` quando a conta estiver sem membro associado. O campo no novo pedido recebe esse IBAN sem substituir valores editados ou guardados no pedido.
 
 Ao criar ou editar um pedido do membro autenticado com o seu nome como beneficiário, o IBAN fica guardado no membro se estiver vazio, na mesma transação. Pedidos para terceiros ou enviados sem login e pedidos de outros autores editados pela tesouraria preservam o IBAN do cadastro. Um IBAN existente nunca é substituído automaticamente.
 

@@ -11181,7 +11181,7 @@
             "bearer": []
           }
         ],
-        "description": "Cadastro exclusivo para membros autenticados. Requer IBAN, categoria de despesa e pelo menos um documento.",
+        "description": "Cadastro exclusivo para membros autenticados. Requer valor positivo, IBAN, categoria de despesa e pelo menos um documento.",
         "requestBody": {
           "required": true,
           "content": {
@@ -11191,7 +11191,8 @@
                 "required": [
                   "iban",
                   "categoryId",
-                  "files"
+                  "files",
+                  "amount"
                 ],
                 "properties": {
                   "iban": {
@@ -11213,7 +11214,7 @@
                   },
                   "amount": {
                     "type": "string",
-                    "pattern": "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
+                    "pattern": "^(?=.*[1-9])(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
                   },
                   "files": {
                     "type": "array",
@@ -13931,7 +13932,8 @@
         "type": "object",
         "required": [
           "iban",
-          "categoryId"
+          "categoryId",
+          "amount"
         ],
         "properties": {
           "iban": {
@@ -13953,7 +13955,7 @@
           },
           "amount": {
             "type": "string",
-            "pattern": "^(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
+            "pattern": "^(?=.*[1-9])(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
           }
         }
       }

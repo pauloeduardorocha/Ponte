@@ -42,6 +42,9 @@ describe('Reimbursements', () => {
     },
   };
   async function chooseCategory() {
+    fireEvent.change(screen.getByLabelText(/Valor total/), {
+      target: { value: '25,10' },
+    });
     fireEvent.mouseDown(
       await screen.findByRole('combobox', { name: /Categoria da despesa/ }),
     );
@@ -150,7 +153,7 @@ describe('Reimbursements', () => {
     ).toBeEnabled();
     expect(screen.getByText('recibo.pdf')).toBeInTheDocument();
   });
-  it('requires both IBAN and category before saving', async () => {
+  it('requires IBAN, category and a positive amount before saving', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
       ...memberFormRoutes,
@@ -173,6 +176,14 @@ describe('Reimbursements', () => {
     expect(save).toBeDisabled();
     fireEvent.change(iban, { target: { value: row.iban } });
     await waitFor(() => expect(save).toBeEnabled());
+    const amount = screen.getByLabelText(/Valor total/);
+    expect(amount).toBeRequired();
+    for (const value of ['', '0', '-1', '1.234']) {
+      fireEvent.change(amount, { target: { value } });
+      expect(save).toBeDisabled();
+    }
+    fireEvent.change(amount, { target: { value: '0,01' } });
+    expect(save).toBeEnabled();
     fireEvent.change(iban, { target: { value: '' } });
     expect(save).toBeDisabled();
   });
@@ -227,6 +238,7 @@ describe('Reimbursements', () => {
       .mocked(fetch)
       .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
     expect((submission[1]?.body as FormData).get('iban')).toBe(row.iban);
+    expect((submission[1]?.body as FormData).get('amount')).toBe('25.10');
     expect((submission[1]?.body as FormData).get('categoryId')).toBe(
       'category',
     );
