@@ -2,11 +2,23 @@ import type { Page } from '@church/shared';
 import { apiRequest } from './api';
 
 export type CopyStatus =
-  'AVAILABLE' | 'LOANED' | 'RESERVED' | 'MAINTENANCE' | 'LOST' | 'DISPOSED';
+  | 'PENDING_INVENTORY'
+  | 'AVAILABLE'
+  | 'LOANED'
+  | 'RESERVED'
+  | 'MAINTENANCE'
+  | 'LOST'
+  | 'DISPOSED';
 export interface BookInput {
   title: string;
   subtitle?: string | null;
-  author: string;
+  author?: string | null;
+  registrationNumber?: string | null;
+  collection?: string | null;
+  catalogueNotes?: string | null;
+  primaryCategoryCode?: string | null;
+  secondaryCategoryCodes?: string[];
+  classificationReviewed?: boolean;
   isbn?: string | null;
   publisher?: string | null;
   edition?: string | null;
@@ -19,6 +31,14 @@ export interface BookInput {
   keywords?: string[];
 }
 export interface Book extends BookInput {
+  pendingInventory?: number;
+  shelfmarks?: string[];
+  categories?: {
+    categoryCode: string;
+    isPrimary: boolean;
+    reviewedAt: string | null;
+    category: { code: string; name: string; parentCode: string | null };
+  }[];
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -26,6 +46,7 @@ export interface Book extends BookInput {
   available?: number;
 }
 export interface CopyInput {
+  shelfmark?: string | null;
   assetCode: string;
   barcode?: string | null;
   qrCode?: string | null;

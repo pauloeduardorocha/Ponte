@@ -45,6 +45,12 @@ export class LibraryController {
     return this.library.listBooks(query);
   }
 
+  @Get('categories')
+  @Permission('LIBRARY_BOOK_READ')
+  categoryIndex(@Query() query: PageQuery) {
+    return this.library.categories(query);
+  }
+
   @Get('book-options/authors')
   @Permission('LIBRARY_BOOK_READ')
   authors(@Query() query: PageQuery) {

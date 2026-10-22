@@ -1,4 +1,5 @@
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
+import { BookCatalogDetails } from './BookCatalogDetails';
 import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
@@ -62,6 +63,7 @@ const memberField: Field = {
   required: true,
 };
 const copyFields: Field[] = [
+  { name: 'shelfmark', label: 'Cota' },
   { name: 'assetCode', label: 'Código patrimonial', required: true },
   { name: 'barcode', label: 'Código de barras' },
   { name: 'qrCode', label: 'QR code' },
@@ -71,9 +73,26 @@ const copyFields: Field[] = [
   { name: 'notes', label: 'Observações', multiline: true },
 ];
 const bookFields: Field[] = [
+  { name: 'registrationNumber', label: 'Número de registo' },
+  { name: 'collection', label: 'Coleção' },
+  { name: 'catalogueNotes', label: 'Notas de catalogação', multiline: true },
+  {
+    name: 'primaryCategoryCode',
+    label: 'Tema principal',
+    endpoint: '/library/categories',
+  },
+  {
+    name: 'secondaryCategoryCodes',
+    label: 'Outros temas (códigos separados por vírgulas)',
+  },
+  {
+    name: 'classificationReviewed',
+    label: 'Classificação revista',
+    options: ['true', 'false'],
+  },
   { name: 'title', label: 'Título', required: true },
   { name: 'subtitle', label: 'Subtítulo' },
-  { name: 'author', label: 'Autor', required: true },
+  { name: 'author', label: 'Autor' },
   { name: 'isbn', label: 'ISBN' },
   { name: 'publisher', label: 'Editora' },
   { name: 'edition', label: 'Edição' },
@@ -95,7 +114,16 @@ function bookInput(v: Record<string, string>, clearing = false): api.BookInput {
   const blank = clearing ? null : undefined;
   return {
     title: v.title ?? '',
-    author: v.author ?? '',
+    author: v.author || null,
+    registrationNumber: v.registrationNumber || blank,
+    collection: v.collection || blank,
+    catalogueNotes: v.catalogueNotes || blank,
+    primaryCategoryCode: v.primaryCategoryCode || null,
+    secondaryCategoryCodes: (v.secondaryCategoryCodes ?? '')
+      .split(',')
+      .map((code) => code.trim())
+      .filter(Boolean),
+    classificationReviewed: v.classificationReviewed === 'true',
     subtitle: v.subtitle || blank,
     isbn: v.isbn || blank,
     publisher: v.publisher || blank,
@@ -115,6 +143,7 @@ function bookInput(v: Record<string, string>, clearing = false): api.BookInput {
 function copyInput(v: Record<string, string>, clearing = false): api.CopyInput {
   const blank = clearing ? null : undefined;
   return {
+    shelfmark: v.shelfmark || blank,
     assetCode: v.assetCode ?? '',
     location: v.location ?? '',
     barcode: v.barcode || blank,
@@ -228,7 +257,12 @@ function ActionDialog({
                     >
                       {field.options?.map((option) => (
                         <MenuItem key={option} value={option}>
-                          {STATUS_LABELS[option] ?? option}
+                          {STATUS_LABELS[option] ??
+                            (option === 'true'
+                              ? 'Sim'
+                              : option === 'false'
+                                ? 'Não'
+                                : option)}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -804,16 +838,41 @@ function LibraryManagementPage() {
                       }
                       summary={
                         <>
-                          <Typography>
-                            {book.subtitle} · {book.author} ·{' '}
+                          <Box>
+                            {book.subtitle} ·{' '}
+                            {book.author ?? 'Autor não informado'} ·{' '}
                             {book.category ?? 'Sem categoria'}
-                          </Typography>
+                            {book.registrationNumber && (
+                              <Typography variant="body2">
+                                Registo: {book.registrationNumber}
+                              </Typography>
+                            )}
+                            {book.collection && (
+                              <Typography variant="body2">
+                                Coleção: {book.collection}
+                              </Typography>
+                            )}
+                            {book.primaryCategoryCode &&
+                              !book.classificationReviewed && (
+                                <Typography variant="body2">
+                                  Classificação proposta · por rever
+                                </Typography>
+                              )}
+                            {Boolean(book.pendingInventory) && (
+                              <Typography variant="body2">
+                                Por conferir: {book.pendingInventory}
+                              </Typography>
+                            )}
+                          </Box>
                         </>
                       }
                     >
                       <Typography>
                         {book.publisher} · {book.edition} · {book.year} ·{' '}
-                        {book.language} · {book.pages} páginas
+                        {book.language === 'und'
+                          ? 'Idioma não informado'
+                          : book.language}{' '}
+                        · {book.pages ?? '—'} páginas
                       </Typography>
                       <Typography>{book.keywords?.join(', ')}</Typography>
                       <Typography>
@@ -890,6 +949,7 @@ function LibraryManagementPage() {
                                     label: 'Status (vazio mantém atual)',
                                     options: [
                                       '',
+                                      'PENDING_INVENTORY',
                                       'AVAILABLE',
                                       'MAINTENANCE',
                                       'LOST',
@@ -943,7 +1003,10 @@ function LibraryManagementPage() {
                       <>
                         <Typography>
                           {<StatusChip status={copy.status} />} ·{' '}
-                          {copy.condition} · {copy.location} · {copy.notes}
+                          {STATUS_LABELS[copy.condition ?? ''] ??
+                            copy.condition}{' '}
+                          · {copy.location} · Cota:{' '}
+                          {copy.shelfmark ?? 'Por atribuir'} · {copy.notes}
                         </Typography>
                       </>
                     }
@@ -1357,27 +1420,10 @@ function LibraryManagementPage() {
         </>
       )}
       {detailBook && (
-        <Dialog
-          open
-          onClose={() => setDetailBook(undefined)}
-          fullWidth
-          maxWidth="sm"
-          aria-labelledby="book-details-title"
-        >
-          <DialogTitle id="book-details-title">{detailBook.title}</DialogTitle>
-          <DialogContent>
-            <Typography variant="subtitle1">{detailBook.author}</Typography>
-            <Typography variant="h6" sx={{ mt: 2 }}>
-              Descrição
-            </Typography>
-            <Typography sx={{ whiteSpace: 'pre-wrap' }}>
-              {detailBook.description || 'Sem descrição.'}
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setDetailBook(undefined)}>Fechar</Button>
-          </DialogActions>
-        </Dialog>
+        <BookCatalogDetails
+          id={detailBook.id}
+          close={() => setDetailBook(undefined)}
+        />
       )}
       {action && (
         <ActionDialog

@@ -5657,6 +5657,7 @@
             "schema": {
               "type": "string",
               "enum": [
+                "PENDING_INVENTORY",
                 "AVAILABLE",
                 "LOANED",
                 "RESERVED",
@@ -5703,91 +5704,47 @@
           },
           {
             "name": "page",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Histórico paginado; os arrays existentes são preservados e limitados a pageSize.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "loans",
-                    "reservations",
-                    "totalLoans",
-                    "totalReservations",
-                    "page",
-                    "pageSize",
-                    "copy",
-                    "events",
-                    "totalEvents"
-                  ],
-                  "properties": {
-                    "loans": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    },
-                    "reservations": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    },
-                    "totalLoans": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "totalReservations": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "page": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "pageSize": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "copy": {
-                      "type": "object"
-                    },
-                    "events": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    },
-                    "totalEvents": {
-                      "type": "integer",
-                      "minimum": 0
-                    }
-                  }
-                }
-              }
-            }
+            "description": ""
           }
         },
         "security": [
@@ -5795,8 +5752,7 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
-        "description": "Cada lista recebe a mesma página (page/pageSize). Ordenação decrescente por data e id. Totais independentes permitem alcançar todas as páginas."
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/books/{id}/copies": {
@@ -6124,75 +6080,47 @@
           },
           {
             "name": "page",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "Histórico paginado; os arrays existentes são preservados e limitados a pageSize.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": [
-                    "loans",
-                    "reservations",
-                    "totalLoans",
-                    "totalReservations",
-                    "page",
-                    "pageSize"
-                  ],
-                  "properties": {
-                    "loans": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    },
-                    "reservations": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
-                      }
-                    },
-                    "totalLoans": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "totalReservations": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "page": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "pageSize": {
-                      "type": "integer",
-                      "minimum": 1
-                    }
-                  }
-                }
-              }
-            }
+            "description": ""
           }
         },
         "security": [
@@ -6200,8 +6128,7 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
-        "description": "Cada lista recebe a mesma página (page/pageSize). Ordenação decrescente por data e id. Totais independentes permitem alcançar todas as páginas."
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/members": {
@@ -6621,24 +6548,41 @@
         "parameters": [
           {
             "name": "page",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
@@ -6652,8 +6596,7 @@
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
-        "description": "Indicadores agregados no banco. mostBorrowed é paginado por page/pageSize, ordenado por quantidade decrescente e bookId. Inclui totalMostBorrowed, page e pageSize."
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/finance/members": {
@@ -9502,177 +9445,115 @@
     "/api/v1/library/book-options/authors": {
       "get": {
         "operationId": "LibraryController_authors",
-        "summary": "Pesquisar autores",
-        "description": "Pesquisa sem distinção de maiúsculas/minúsculas; valores distintos, ordenados e paginados no banco. Requer LIBRARY_BOOK_READ.",
         "parameters": [
           {
             "name": "page",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "search",
-            "in": "query",
             "required": false,
+            "in": "query",
             "schema": {
-              "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "security": [
           {
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
-        "responses": {
-          "200": {
-            "description": "Uma página de opções; id e name contêm o valor do filtro.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["items", "total", "page", "pageSize"],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": ["id", "name"],
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    },
-                    "total": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "page": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "pageSize": {
-                      "type": "integer",
-                      "minimum": 1
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/library/book-options/categories": {
       "get": {
         "operationId": "LibraryController_categories",
-        "summary": "Pesquisar categorias",
-        "description": "Pesquisa sem distinção de maiúsculas/minúsculas; valores distintos, ordenados e paginados no banco. Requer LIBRARY_BOOK_READ.",
         "parameters": [
           {
             "name": "page",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
-            "required": false,
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "search",
-            "in": "query",
             "required": false,
+            "in": "query",
             "schema": {
-              "type": "string",
-              "maxLength": 120
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
         "security": [
           {
             "bearer": []
           }
         ],
-        "tags": ["Biblioteca"],
-        "responses": {
-          "200": {
-            "description": "Uma página de opções; id e name contêm o valor do filtro.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "required": ["items", "total", "page", "pageSize"],
-                  "properties": {
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "required": ["id", "name"],
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    },
-                    "total": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "page": {
-                      "type": "integer",
-                      "minimum": 1
-                    },
-                    "pageSize": {
-                      "type": "integer",
-                      "minimum": 1
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+        "tags": ["Biblioteca"]
       }
     },
     "/api/v1/auth/passkeys": {
@@ -10240,42 +10121,52 @@
     "/api/v1/library/books/{id}/history": {
       "get": {
         "operationId": "LibraryController_bookHistory",
-        "tags": ["Biblioteca"],
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Histórico paginado de circulação do livro",
-        "description": "Exige LIBRARY_BOOK_READ. Inclui empréstimos de todos os exemplares, mais recentes primeiro, sem dados pessoais, multas ou observações.",
         "parameters": [
           {
             "name": "id",
-            "in": "path",
             "required": true,
+            "in": "path",
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           },
           {
             "name": "page",
+            "required": true,
             "in": "query",
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100000,
-              "default": 1
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
             }
           },
           {
             "name": "pageSize",
+            "required": true,
             "in": "query",
             "schema": {
-              "type": "integer",
               "minimum": 1,
               "maximum": 100,
-              "default": 20
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
             }
           }
         ],
@@ -10361,7 +10252,72 @@
           "404": {
             "description": "Livro não encontrado"
           }
-        }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Biblioteca"]
+      }
+    },
+    "/api/v1/library/categories": {
+      "get": {
+        "operationId": "LibraryController_categoryIndex",
+        "parameters": [
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["Biblioteca"],
+        "summary": "Índice de categorias da biblioteca",
+        "description": "Exige LIBRARY_BOOK_READ. Lista códigos textuais, nomes e parentCode, incluindo categorias ainda sem livros. page e pageSize limitam a consulta no banco."
       }
     }
   },
@@ -11527,6 +11483,39 @@
       "BookDto": {
         "type": "object",
         "properties": {
+          "registrationNumber": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 32,
+            "pattern": "\\S"
+          },
+          "collection": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200
+          },
+          "catalogueNotes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "primaryCategoryCode": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\d{2,3}$"
+          },
+          "secondaryCategoryCodes": {
+            "uniqueItems": true,
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{2,3}$"
+            }
+          },
+          "classificationReviewed": {
+            "type": "boolean"
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -11534,6 +11523,7 @@
           },
           "author": {
             "type": "string",
+            "nullable": true,
             "minLength": 1,
             "maxLength": 200,
             "pattern": "\\S"
@@ -11593,11 +11583,44 @@
             }
           }
         },
-        "required": ["title", "author"]
+        "required": ["title"]
       },
       "UpdateBookDto": {
         "type": "object",
         "properties": {
+          "registrationNumber": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 32,
+            "pattern": "\\S"
+          },
+          "collection": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 200
+          },
+          "catalogueNotes": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 10000
+          },
+          "primaryCategoryCode": {
+            "type": "string",
+            "nullable": true,
+            "pattern": "^\\d{2,3}$"
+          },
+          "secondaryCategoryCodes": {
+            "uniqueItems": true,
+            "maxItems": 30,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{2,3}$"
+            }
+          },
+          "classificationReviewed": {
+            "type": "boolean"
+          },
           "title": {
             "type": "string",
             "minLength": 1,
@@ -11605,6 +11628,7 @@
           },
           "author": {
             "type": "string",
+            "nullable": true,
             "minLength": 1,
             "maxLength": 200,
             "pattern": "\\S"
@@ -11668,6 +11692,11 @@
       "CopyDto": {
         "type": "object",
         "properties": {
+          "shelfmark": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
           "assetCode": {
             "type": "string",
             "minLength": 1,
@@ -11707,6 +11736,11 @@
       "UpdateCopyDto": {
         "type": "object",
         "properties": {
+          "shelfmark": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 100
+          },
           "assetCode": {
             "type": "string",
             "minLength": 1,
@@ -11742,7 +11776,13 @@
           },
           "status": {
             "type": "string",
-            "enum": ["AVAILABLE", "MAINTENANCE", "LOST", "DISPOSED"]
+            "enum": [
+              "PENDING_INVENTORY",
+              "AVAILABLE",
+              "MAINTENANCE",
+              "LOST",
+              "DISPOSED"
+            ]
           },
           "justification": {
             "type": "string",
@@ -12550,6 +12590,10 @@
           }
         },
         "required": ["endpoint"]
+      },
+      "ReserveBookDto": {
+        "type": "object",
+        "properties": {}
       }
     }
   }

@@ -105,9 +105,27 @@ export function BookCatalogDetails({
                 <Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}>
                   <Typography variant="h6">{book.data.title}</Typography>
                   <Typography>{book.data.subtitle}</Typography>
-                  <Typography>{book.data.author}</Typography>
+                  <Typography>
+                    {book.data.author ?? 'Autor não informado'}
+                  </Typography>
                 </Box>
               </Stack>
+              {!historyOnly && book.data.categories?.length ? (
+                <Stack spacing={0.5}>
+                  {book.data.categories.map((item) => (
+                    <Typography key={item.categoryCode} variant="body2">
+                      {item.categoryCode} — {item.category.name} ·{' '}
+                      {item.isPrimary ? 'Tema principal' : 'Outro tema'}
+                      {item.reviewedAt ? ' · Revisto' : ' · Proposta por rever'}
+                    </Typography>
+                  ))}
+                </Stack>
+              ) : null}
+              {Boolean(book.data.pendingInventory) && (
+                <Typography>
+                  Exemplares por conferir: {book.data.pendingInventory}
+                </Typography>
+              )}
               {!historyOnly && (
                 <>
                   <Typography
@@ -126,11 +144,19 @@ export function BookCatalogDetails({
                     }}
                   >
                     {[
+                      ['Número de registo', book.data.registrationNumber],
+                      ['Coleção', book.data.collection],
+                      ['Cotas', book.data.shelfmarks?.join(', ')],
                       ['ISBN', book.data.isbn],
                       ['Editora', book.data.publisher],
                       ['Edição', book.data.edition],
                       ['Ano', book.data.year],
-                      ['Idioma', book.data.language],
+                      [
+                        'Idioma',
+                        book.data.language === 'und'
+                          ? 'Não informado'
+                          : book.data.language,
+                      ],
                       ['Páginas', book.data.pages],
                       ['Categoria', book.data.category],
                       ['Palavras-chave', book.data.keywords?.join(', ')],

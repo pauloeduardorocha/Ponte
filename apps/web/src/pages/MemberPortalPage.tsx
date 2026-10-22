@@ -35,7 +35,13 @@ type Entry = {
   id: string;
   name?: string;
   title?: string;
-  author?: string;
+  author?: string | null;
+  registrationNumber?: string | null;
+  collection?: string | null;
+  pendingInventory?: number;
+  category?: string | null;
+  primaryCategoryCode?: string | null;
+  classificationReviewed?: boolean;
   cover?: string | null;
   quantity?: number;
   available?: number;
@@ -227,7 +233,38 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                     {entry.available ?? 0}
                   </Typography>
                 )}
-                {entry.author && <Typography>{entry.author}</Typography>}
+                {resource === 'books' && (
+                  <>
+                    <Typography>
+                      {entry.author ?? 'Autor não informado'}
+                    </Typography>
+                    {entry.category && (
+                      <Typography>
+                        {entry.category}
+                        {entry.primaryCategoryCode &&
+                        !entry.classificationReviewed
+                          ? ' · Proposta por rever'
+                          : ''}
+                      </Typography>
+                    )}
+                    {entry.registrationNumber && (
+                      <Typography>
+                        Registo: {entry.registrationNumber}
+                      </Typography>
+                    )}
+                    {entry.collection && (
+                      <Typography>Coleção: {entry.collection}</Typography>
+                    )}
+                    {Boolean(entry.pendingInventory) && (
+                      <Typography>
+                        Por conferir: {entry.pendingInventory}
+                      </Typography>
+                    )}
+                  </>
+                )}
+                {resource !== 'books' && entry.author && (
+                  <Typography>{entry.author}</Typography>
+                )}
 
                 {entry.startsAt && (
                   <Typography>

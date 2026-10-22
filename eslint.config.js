@@ -22,7 +22,11 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/api/src/modules/banking/efatura/*.cjs', 'apps/api/scripts/*.cjs'],
+    files: [
+      'apps/api/src/modules/banking/efatura/*.cjs',
+      'apps/api/scripts/*.cjs',
+      'apps/api/prisma/library-production/*.cjs',
+    ],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {

@@ -1,0 +1,4373 @@
+{
+  "version": 1,
+  "sourceFiles": [
+    {
+      "name": "BiblioPonte.xlsx",
+      "sha256": "83ba328064344d2cfeef11cdeaf8c0d50c1644d13035b12a5e368548be335f19"
+    },
+    {
+      "name": "Índice de Categorias.docx",
+      "sha256": "ba12fdece887edc794a5a72f575bd173040706bcfa2d2f408b5f336591570cf4"
+    }
+  ],
+  "sheet": "Folha1",
+  "expected": {
+    "books": 384,
+    "knownCopies": 426,
+    "cachedWorkbookTotal": 426
+  },
+  "categories": [
+    {
+      "code": "00",
+      "name": "Obras de Referência",
+      "parentCode": null
+    },
+    {
+      "code": "01",
+      "name": "Dicionários",
+      "parentCode": "00"
+    },
+    {
+      "code": "02",
+      "name": "Enciclopédias",
+      "parentCode": "00"
+    },
+    {
+      "code": "03",
+      "name": "Atlas",
+      "parentCode": "00"
+    },
+    {
+      "code": "04",
+      "name": "Cronologias e mapas",
+      "parentCode": "00"
+    },
+    {
+      "code": "05",
+      "name": "Manuais e guias",
+      "parentCode": "00"
+    },
+    {
+      "code": "10",
+      "name": "Bíblia e Estudos Bíblicos",
+      "parentCode": null
+    },
+    {
+      "code": "11",
+      "name": "Antigo Testamento",
+      "parentCode": "10"
+    },
+    {
+      "code": "12",
+      "name": "Novo Testamento",
+      "parentCode": "10"
+    },
+    {
+      "code": "13",
+      "name": "Estudos bíblicos",
+      "parentCode": "10"
+    },
+    {
+      "code": "14",
+      "name": "Personagens bíblicas",
+      "parentCode": "10"
+    },
+    {
+      "code": "15",
+      "name": "Hermenêutica e interpretação bíblica",
+      "parentCode": "10"
+    },
+    {
+      "code": "16",
+      "name": "Arqueologia, história e contexto bíblico",
+      "parentCode": "10"
+    },
+    {
+      "code": "20",
+      "name": "Teologia",
+      "parentCode": null
+    },
+    {
+      "code": "21",
+      "name": "Doutrina cristã",
+      "parentCode": "20"
+    },
+    {
+      "code": "22",
+      "name": "Deus e a Trindade",
+      "parentCode": "20"
+    },
+    {
+      "code": "23",
+      "name": "Jesus Cristo",
+      "parentCode": "20"
+    },
+    {
+      "code": "24",
+      "name": "Espírito Santo",
+      "parentCode": "20"
+    },
+    {
+      "code": "25",
+      "name": "Salvação",
+      "parentCode": "20"
+    },
+    {
+      "code": "26",
+      "name": "Igreja e o Reino de Deus",
+      "parentCode": "20"
+    },
+    {
+      "code": "27",
+      "name": "Escatologia",
+      "parentCode": "20"
+    },
+    {
+      "code": "28",
+      "name": "Teologia sistemática",
+      "parentCode": "20"
+    },
+    {
+      "code": "30",
+      "name": "Família Cristã",
+      "parentCode": null
+    },
+    {
+      "code": "31",
+      "name": "Casamento",
+      "parentCode": "30"
+    },
+    {
+      "code": "32",
+      "name": "Educação dos filhos",
+      "parentCode": "30"
+    },
+    {
+      "code": "33",
+      "name": "Juventude e adolescência",
+      "parentCode": "30"
+    },
+    {
+      "code": "34",
+      "name": "Vida familiar",
+      "parentCode": "30"
+    },
+    {
+      "code": "40",
+      "name": "Educação e Formação Cristã",
+      "parentCode": null
+    },
+    {
+      "code": "41",
+      "name": "Escola bíblica",
+      "parentCode": "40"
+    },
+    {
+      "code": "42",
+      "name": "Ensino cristão",
+      "parentCode": "40"
+    },
+    {
+      "code": "43",
+      "name": "Crianças",
+      "parentCode": "40"
+    },
+    {
+      "code": "44",
+      "name": "Jovens",
+      "parentCode": "40"
+    },
+    {
+      "code": "45",
+      "name": "Discipulado",
+      "parentCode": "40"
+    },
+    {
+      "code": "46",
+      "name": "Materiais pedagógicos",
+      "parentCode": "40"
+    },
+    {
+      "code": "50",
+      "name": "Vida Cristã e Relacionamentos",
+      "parentCode": null
+    },
+    {
+      "code": "51",
+      "name": "Vida cristã",
+      "parentCode": "50"
+    },
+    {
+      "code": "52",
+      "name": "Relacionamentos",
+      "parentCode": "50"
+    },
+    {
+      "code": "522",
+      "name": "Namoro, sexualidade, pureza.",
+      "parentCode": "52"
+    },
+    {
+      "code": "524",
+      "name": "Amizade",
+      "parentCode": "52"
+    },
+    {
+      "code": "525",
+      "name": "Conflitos, perdão e reconciliação",
+      "parentCode": "52"
+    },
+    {
+      "code": "54",
+      "name": "Liderança",
+      "parentCode": "50"
+    },
+    {
+      "code": "55",
+      "name": "Serviço cristão",
+      "parentCode": "50"
+    },
+    {
+      "code": "56",
+      "name": "Carácter e crescimento pessoal",
+      "parentCode": "50"
+    },
+    {
+      "code": "57",
+      "name": "Sofrimento, crises e restauração",
+      "parentCode": "50"
+    },
+    {
+      "code": "60",
+      "name": "Mulher Cristã",
+      "parentCode": null
+    },
+    {
+      "code": "61",
+      "name": "Vida da mulher cristã",
+      "parentCode": "60"
+    },
+    {
+      "code": "62",
+      "name": "Estudos e devocionais para mulheres",
+      "parentCode": "60"
+    },
+    {
+      "code": "70",
+      "name": "Homem Cristão",
+      "parentCode": null
+    },
+    {
+      "code": "71",
+      "name": "Vida do homem cristão",
+      "parentCode": "70"
+    },
+    {
+      "code": "72",
+      "name": "Estudos e devocionais para homens",
+      "parentCode": "70"
+    },
+    {
+      "code": "80",
+      "name": "Louvor e Adoração",
+      "parentCode": null
+    },
+    {
+      "code": "81",
+      "name": "Louvor",
+      "parentCode": "80"
+    },
+    {
+      "code": "82",
+      "name": "Adoração",
+      "parentCode": "80"
+    },
+    {
+      "code": "83",
+      "name": "Música cristã",
+      "parentCode": "80"
+    },
+    {
+      "code": "86",
+      "name": "Liturgia e culto cristão",
+      "parentCode": "80"
+    },
+    {
+      "code": "90",
+      "name": "Fé e Vida Espiritual",
+      "parentCode": null
+    },
+    {
+      "code": "91",
+      "name": "Fé",
+      "parentCode": "90"
+    },
+    {
+      "code": "92",
+      "name": "Oração",
+      "parentCode": "90"
+    },
+    {
+      "code": "93",
+      "name": "Milagres",
+      "parentCode": "90"
+    },
+    {
+      "code": "94",
+      "name": "Dons espirituais",
+      "parentCode": "90"
+    },
+    {
+      "code": "95",
+      "name": "Jejum",
+      "parentCode": "90"
+    },
+    {
+      "code": "96",
+      "name": "Santidade e disciplinas espirituais",
+      "parentCode": "90"
+    },
+    {
+      "code": "100",
+      "name": "Igreja e Ministério",
+      "parentCode": null
+    },
+    {
+      "code": "101",
+      "name": "Igreja",
+      "parentCode": "100"
+    },
+    {
+      "code": "102",
+      "name": "Equipa/Liderança pastoral",
+      "parentCode": "100"
+    },
+    {
+      "code": "103",
+      "name": "Pregação",
+      "parentCode": "100"
+    },
+    {
+      "code": "104",
+      "name": "Ensino e ministério",
+      "parentCode": "100"
+    },
+    {
+      "code": "105",
+      "name": "Pequenos grupos",
+      "parentCode": "100"
+    },
+    {
+      "code": "106",
+      "name": "Organização e administração da igreja",
+      "parentCode": "100"
+    },
+    {
+      "code": "107",
+      "name": "Crescimento da igreja",
+      "parentCode": "100"
+    },
+    {
+      "code": "110",
+      "name": "Evangelização e Missões",
+      "parentCode": null
+    },
+    {
+      "code": "111",
+      "name": "Evangelização",
+      "parentCode": "110"
+    },
+    {
+      "code": "112",
+      "name": "Missões",
+      "parentCode": "110"
+    },
+    {
+      "code": "113",
+      "name": "Plantação de igrejas",
+      "parentCode": "110"
+    },
+    {
+      "code": "114",
+      "name": "Ação social e serviço",
+      "parentCode": "110"
+    },
+    {
+      "code": "120",
+      "name": "Apologética e Cristianismo no Mundo",
+      "parentCode": null
+    },
+    {
+      "code": "121",
+      "name": "Apologética cristã",
+      "parentCode": "120"
+    },
+    {
+      "code": "122",
+      "name": "Fé e razão",
+      "parentCode": "120"
+    },
+    {
+      "code": "123",
+      "name": "Cristianismo e ciência",
+      "parentCode": "120"
+    },
+    {
+      "code": "124",
+      "name": "Cristianismo e cultura",
+      "parentCode": "120"
+    },
+    {
+      "code": "125",
+      "name": "Cristianismo e sociedade",
+      "parentCode": "120"
+    },
+    {
+      "code": "126",
+      "name": "Ética cristã",
+      "parentCode": "120"
+    },
+    {
+      "code": "127",
+      "name": "Ateísmo e secularismo",
+      "parentCode": "120"
+    },
+    {
+      "code": "128",
+      "name": "Religiões e seitas",
+      "parentCode": "120"
+    },
+    {
+      "code": "130",
+      "name": "Devocionais, Literatura e Ficção Cristã",
+      "parentCode": null
+    },
+    {
+      "code": "131",
+      "name": "Devocionais",
+      "parentCode": "130"
+    },
+    {
+      "code": "132",
+      "name": "Literatura",
+      "parentCode": "130"
+    },
+    {
+      "code": "133",
+      "name": "Ficção",
+      "parentCode": "130"
+    },
+    {
+      "code": "134",
+      "name": "Poesia",
+      "parentCode": "130"
+    },
+    {
+      "code": "135",
+      "name": "Alegoria",
+      "parentCode": "130"
+    },
+    {
+      "code": "136",
+      "name": "Literatura infantil e juvenil",
+      "parentCode": "130"
+    },
+    {
+      "code": "140",
+      "name": "Biografias e testemunhos",
+      "parentCode": null
+    },
+    {
+      "code": "141",
+      "name": "Biografias",
+      "parentCode": "140"
+    },
+    {
+      "code": "142",
+      "name": "Testemunho cristão",
+      "parentCode": "140"
+    },
+    {
+      "code": "150",
+      "name": "História do Cristianismo",
+      "parentCode": null
+    },
+    {
+      "code": "151",
+      "name": "Igreja Primitiva",
+      "parentCode": "150"
+    },
+    {
+      "code": "152",
+      "name": "História da Igreja",
+      "parentCode": "150"
+    },
+    {
+      "code": "153",
+      "name": "Reforma",
+      "parentCode": "150"
+    },
+    {
+      "code": "154",
+      "name": "Denominações e movimentos",
+      "parentCode": "150"
+    },
+    {
+      "code": "155",
+      "name": "Avivamentos históricos",
+      "parentCode": "150"
+    },
+    {
+      "code": "156",
+      "name": "Cristianismo contemporâneo",
+      "parentCode": "150"
+    },
+    {
+      "code": "157",
+      "name": "História geral",
+      "parentCode": "150"
+    }
+  ],
+  "books": [
+    {
+      "register": "00001",
+      "title": "The Ilustrated guide to bible customs & curiosities",
+      "collection": null,
+      "author": "George W. Knight",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 2
+    },
+    {
+      "register": "00002",
+      "title": "A servant's heart and skilful hands",
+      "collection": "Equipping for apostolic christianity",
+      "author": "Dudley Daniel",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 3
+    },
+    {
+      "register": "00003",
+      "title": "A morte da razão",
+      "collection": null,
+      "author": "Ravi Zacharias",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 4
+    },
+    {
+      "register": "00004",
+      "title": "Ministério de música da igreja",
+      "collection": null,
+      "author": "Moysés Malafaia",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 5
+    },
+    {
+      "register": "00005",
+      "title": "A dinâmica do ministério de música",
+      "collection": null,
+      "author": "Adhemar de Campos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 6
+    },
+    {
+      "register": "00006",
+      "title": "Provérbios de Salomão: o livro",
+      "collection": "A bíblia para hoje",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 7
+    },
+    {
+      "register": "00007",
+      "title": "História da igreja cristã",
+      "collection": null,
+      "author": "Jesse Lyman Hurlbut",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 8
+    },
+    {
+      "register": "00008",
+      "title": "Fé entre o comum e o especial",
+      "collection": null,
+      "author": "Alexis Campos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 9
+    },
+    {
+      "register": "00009",
+      "title": "Forjando vencedores",
+      "collection": null,
+      "author": "Leandro Tarrataca",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 10
+    },
+    {
+      "register": "00010",
+      "title": "Não voltar atrás",
+      "collection": null,
+      "author": "George Verwer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 11
+    },
+    {
+      "register": "00011",
+      "title": "A superior aliança",
+      "collection": null,
+      "author": "Watchman Nee",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 12
+    },
+    {
+      "register": "00012",
+      "title": "Santidade: o alvo de Deus para a sua vida",
+      "collection": null,
+      "author": "Rodrigo Pombo",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 13
+    },
+    {
+      "register": "00013",
+      "title": "O jovem e seus assuntos",
+      "collection": null,
+      "author": "David Wilkeason",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 14
+    },
+    {
+      "register": "00014",
+      "title": "A família do Cristão",
+      "collection": null,
+      "author": "Larry Christenson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 15
+    },
+    {
+      "register": "00015",
+      "title": "Milagres invisíveis: mais do que os olhos podem ver",
+      "collection": null,
+      "author": "Bianca Toledo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 16
+    },
+    {
+      "register": "00016",
+      "title": "Reforma espiritual",
+      "collection": null,
+      "author": "Miguel Thomaz",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 17
+    },
+    {
+      "register": "00017",
+      "title": "A busca da santidade",
+      "collection": null,
+      "author": "Jerry Bridges",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 18
+    },
+    {
+      "register": "00018",
+      "title": "Santos em restauração: a luz que penetra na alma e traz cura interior. Provisão divina para a restauração emocional.",
+      "collection": null,
+      "author": "Pr. Ubirajara Crespo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 19
+    },
+    {
+      "register": "00019",
+      "title": "Every day with God",
+      "collection": null,
+      "author": "Andrew Murray",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 20
+    },
+    {
+      "register": "00020",
+      "title": "Let the living Bible help you",
+      "collection": null,
+      "author": "Alice Zilman Chapin",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 21
+    },
+    {
+      "register": "00021",
+      "title": "Eschatology: the doctrine of last things - understanding the \"end times\"",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 22
+    },
+    {
+      "register": "00022",
+      "title": "The power of a praying parent",
+      "collection": null,
+      "author": "Stormie Omartian",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 23
+    },
+    {
+      "register": "00023",
+      "title": "Exodus II",
+      "collection": null,
+      "author": "NLT",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 24
+    },
+    {
+      "register": "00024",
+      "title": "The NTL bible promisse book for men: apply God's word to your life today!",
+      "collection": null,
+      "author": "Beth Moore",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 25
+    },
+    {
+      "register": "00025",
+      "title": "Paths to power: living in the spirit's fullnes",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 26
+    },
+    {
+      "register": "00026",
+      "title": "A diferença que o pai faz : criando um ambiente para a sexualidade sadia do seu filho",
+      "collection": null,
+      "author": "Josh McDowel; Dr. NormWakefield",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 27
+    },
+    {
+      "register": "00027",
+      "title": "199 treasures of wisdom on talking with God",
+      "collection": null,
+      "author": "Andrew Murray",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 28
+    },
+    {
+      "register": "00028",
+      "title": "Does your tongue need healing? Since dead and life are in the power of the tongue, it is imperative to konw how it may be healed.",
+      "collection": null,
+      "author": "Derek Prince",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 29
+    },
+    {
+      "register": "00029",
+      "title": "Nehemiah : Building the church shoulder to shoulder",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 30
+    },
+    {
+      "register": "00030",
+      "title": "The pilgrim's progress: a modern abridgment",
+      "collection": null,
+      "author": "John Bunyan",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 31
+    },
+    {
+      "register": "00031",
+      "title": "The prayer of Jesus: secrets to real intimacy with God",
+      "collection": null,
+      "author": "Hank Hanegraaff; Lee strobel",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 32
+    },
+    {
+      "register": "00032",
+      "title": "Truth and love in a sexually disordered world",
+      "collection": null,
+      "author": "David Searle",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 33
+    },
+    {
+      "register": "00033",
+      "title": "A divine revelation of hell: time is running out",
+      "collection": null,
+      "author": "Mary K. Baxter",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 34
+    },
+    {
+      "register": "00034",
+      "title": "Our sufficiency in Christ: three deadly influences that undermine your spiritual life",
+      "collection": null,
+      "author": "John MacArthur, Jr.",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 35
+    },
+    {
+      "register": "00035",
+      "title": "The kingdom of self: a fresh, penetrating analysis of your greatest predicament",
+      "collection": null,
+      "author": "Eral Jabay",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 36
+    },
+    {
+      "register": "00036",
+      "title": "Preaching through the bible : Mark",
+      "collection": null,
+      "author": "Michael Eaton",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 37
+    },
+    {
+      "register": "00037",
+      "title": "Choosing your battles",
+      "collection": "Equipping for apostolic christianity",
+      "author": "Dudley Daniel",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 38
+    },
+    {
+      "register": "00038",
+      "title": "A man's strategy for conquering temptation: a 6-week, no-homework bible study",
+      "collection": null,
+      "author": "Bob Vereen",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 39
+    },
+    {
+      "register": "00039",
+      "title": "The practice of happiness",
+      "collection": null,
+      "author": "John Kehoe",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 40
+    },
+    {
+      "register": "00040",
+      "title": "Boa semente",
+      "collection": null,
+      "author": "GBV",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 41
+    },
+    {
+      "register": "00041",
+      "title": "Muito mais do que números",
+      "collection": null,
+      "author": "Dr. Paul Yonggi Cho",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 42
+    },
+    {
+      "register": "00042",
+      "title": "Liberdade em Cristo: um curso de discipulado de 13 semenas para todo o cristão",
+      "collection": "Manual do participante",
+      "author": "Neil T. Anderson; Steve Goss",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 43
+    },
+    {
+      "register": "00043",
+      "title": "Igreja e homossexualismo",
+      "collection": "A caminho do reino reflexão e compromisso",
+      "author": "Valdir Raul Steuernagel; Lindolfo Weingartner; Martin Weingaertner (ed.); et. al.",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 44
+    },
+    {
+      "register": "00044",
+      "title": "Aumentando o seu crédito no banco de Deus",
+      "collection": null,
+      "author": "Cristiano Netto",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 45
+    },
+    {
+      "register": "00045",
+      "title": "Aprenda a viver como um filho do rei: a formula para viver que tem transformado milhões de vidas",
+      "collection": null,
+      "author": "Harold Hill; Irene Harrell",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 46
+    },
+    {
+      "register": "00046",
+      "title": "O melhor da vida",
+      "collection": null,
+      "author": "T. L. Osborn",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 47
+    },
+    {
+      "register": "00047",
+      "title": "The world aflame: guidance from the greatest revival yet and the greater one to come",
+      "collection": null,
+      "author": "Rick Joyner",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 48
+    },
+    {
+      "register": "00048",
+      "title": "Commercial course: complete edition with exercises",
+      "collection": null,
+      "author": "Pitman's Shorthand",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": "tema relacionado ?",
+      "sourceRow": 49
+    },
+    {
+      "register": "00049",
+      "title": "From the stone age to christianity: monotheism and the historical process",
+      "collection": null,
+      "author": "William Foxwell Albright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 50
+    },
+    {
+      "register": "00050",
+      "title": "O que fazer quando a fé parece fraca e a vitória perdida",
+      "collection": null,
+      "author": "Kenneth E. Hagin",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 51
+    },
+    {
+      "register": "00051",
+      "title": "Por que Deus não me cura?",
+      "collection": null,
+      "author": "Ron Dunn",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 52
+    },
+    {
+      "register": "00052",
+      "title": "Declarado inocente",
+      "collection": null,
+      "author": "James Buchanan",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 53
+    },
+    {
+      "register": "00053",
+      "title": "Touchpoints for men: God's answer for your every need",
+      "collection": "Touchpoints",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 54
+    },
+    {
+      "register": "00054",
+      "title": "Exodus :our journey with God",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 55
+    },
+    {
+      "register": "00055",
+      "title": "Victorious: victorious and holy living",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 56
+    },
+    {
+      "register": "00056",
+      "title": "Aceitou Jesus e agora?",
+      "collection": null,
+      "author": "Tiago Pinheiro",
+      "shelfmark": null,
+      "quantity": 7,
+      "notes": null,
+      "sourceRow": 57
+    },
+    {
+      "register": "00057",
+      "title": "Força para viver",
+      "collection": null,
+      "author": "Jamie Buckingham",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 58
+    },
+    {
+      "register": "00058",
+      "title": "Tell it to the mafia",
+      "collection": null,
+      "author": "Joe Donato",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 59
+    },
+    {
+      "register": "00059",
+      "title": "Experiencing God together: God's plan to touch your world",
+      "collection": null,
+      "author": "Henry T. Blackaby; Melvin D. Blackaby",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 60
+    },
+    {
+      "register": "00060",
+      "title": "Diga sim para mudar: deixe Deus fazer de você uma pessoa radicalmente nova, produtiva e feliz",
+      "collection": null,
+      "author": "Luis Palau",
+      "shelfmark": null,
+      "quantity": 3,
+      "notes": null,
+      "sourceRow": 61
+    },
+    {
+      "register": "00061",
+      "title": "Que bom se ele soubesse! - Aos maridos: uma orientação valiosa para conhecer compreender e amar sua esposa",
+      "collection": null,
+      "author": "Gary Smalley",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 62
+    },
+    {
+      "register": "00062",
+      "title": "Como começar a vida cristã: ou que fazer depois de você tornar-se filho de Deus",
+      "collection": null,
+      "author": "Guilherme W. Orr",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 63
+    },
+    {
+      "register": "00063",
+      "title": "Deus, o homem e a bíblia",
+      "collection": null,
+      "author": "João Ferreira de Almeida",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 64
+    },
+    {
+      "register": "00064",
+      "title": "Cura para os traumas emocionais: através da cura interior Deus pode quebrar as correntes que prendem você a experiências dolorosas do passado",
+      "collection": null,
+      "author": "David A. Seamands",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 65
+    },
+    {
+      "register": "00065",
+      "title": "Novo testamento salmos e provérbios",
+      "collection": null,
+      "author": "Sociedade Bíblica do Brasil",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 66
+    },
+    {
+      "register": "00066",
+      "title": "Fundamentos para a fé e obdiência",
+      "collection": "Fundamentos para a fé e obdiência (vol 1)",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 67
+    },
+    {
+      "register": "00067",
+      "title": "Panorama do antigo testamento",
+      "collection": "Adolescentes",
+      "author": "União das igrejas evangélicas congregacionais do Brasil",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 68
+    },
+    {
+      "register": "00068",
+      "title": "As heresias das \"testemunhas de Jeová\" à luz da palavra de Deus",
+      "collection": null,
+      "author": "Thales de Freitas",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 69
+    },
+    {
+      "register": "00069",
+      "title": "Novo testamento: almeida século 21",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 70
+    },
+    {
+      "register": "00070",
+      "title": "Fornada feliz",
+      "collection": null,
+      "author": "Pastor Cláudio Mattos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 71
+    },
+    {
+      "register": "00071",
+      "title": "The man God uses: an encounter with God that will change your life forever",
+      "collection": null,
+      "author": "Henry & Tom Blackaby",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 72
+    },
+    {
+      "register": "00072",
+      "title": "For men only: the dynamics of being a man and succeding at it",
+      "collection": null,
+      "author": "J. Allan Petersen",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 73
+    },
+    {
+      "register": "00073",
+      "title": "Confronting jezebel: discerning and defeating the spirit of control",
+      "collection": null,
+      "author": "Steve Sampson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 74
+    },
+    {
+      "register": "00074",
+      "title": "A alegria de ser mulher",
+      "collection": null,
+      "author": "Ingrid Irobjsch",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 75
+    },
+    {
+      "register": "00075",
+      "title": "Pedro nunca foi papa",
+      "collection": null,
+      "author": "João António Marques",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 76
+    },
+    {
+      "register": "00076",
+      "title": "A pessoa Jesus no antigo testamento",
+      "collection": null,
+      "author": "Jair José Rodrigues",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 77
+    },
+    {
+      "register": "00077",
+      "title": "Anjos: agentes de Deus no mundo",
+      "collection": null,
+      "author": "Billy Graham",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 78
+    },
+    {
+      "register": "00078",
+      "title": "A igreja: o povo de Deus",
+      "collection": null,
+      "author": "Bruce L. Shelley",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 79
+    },
+    {
+      "register": "00079",
+      "title": "O temor do Senhor: descubra a chave para conhecer a Deus com profundidade",
+      "collection": null,
+      "author": "John Bevere",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 80
+    },
+    {
+      "register": "00080",
+      "title": "Now we realy live: tnhe new reformation and the apostolic pattern",
+      "collection": null,
+      "author": "Ian McKellar",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 81
+    },
+    {
+      "register": "00081",
+      "title": "Cum sa initiezi o discutie despre imparatia lui dumnezeu",
+      "collection": null,
+      "author": "Dr. Duke Heller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 82
+    },
+    {
+      "register": "00082",
+      "title": "The purpose driven church: growth without compromising your message & mission",
+      "collection": null,
+      "author": "Rick Warren",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 83
+    },
+    {
+      "register": "00083",
+      "title": "Take your glory Lord: William Duma his life story",
+      "collection": null,
+      "author": "Mary Garnett",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 84
+    },
+    {
+      "register": "00084",
+      "title": "The belove disciple: following John to the heart of Jesus",
+      "collection": null,
+      "author": "Beth Moore",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 85
+    },
+    {
+      "register": "00085",
+      "title": "Romans",
+      "collection": "Spirit-filled life new testment commentary series",
+      "author": "David P. Seemuth",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 86
+    },
+    {
+      "register": "00086",
+      "title": "The victorious christian life: living in grace and walking in the spirit",
+      "collection": null,
+      "author": "Eddie Snipes",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 87
+    },
+    {
+      "register": "00087",
+      "title": "Myutmost for His Highest",
+      "collection": null,
+      "author": "Ôswald Chambers",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 88
+    },
+    {
+      "register": "00088",
+      "title": "Strong's: exhaustive concordance of the bible",
+      "collection": null,
+      "author": "James Strong",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 89
+    },
+    {
+      "register": "00089",
+      "title": "Christ in the tabernacle",
+      "collection": null,
+      "author": "Louis T. Talbot; Charles L. Feinberg",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 90
+    },
+    {
+      "register": "00090",
+      "title": "Biblical mentoring / fathering: a significant key in developing large-capacity leaders",
+      "collection": "Equipping for apostolic christianity",
+      "author": "Dudley Daniel",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 91
+    },
+    {
+      "register": "00091",
+      "title": "Building on apostolic foundations",
+      "collection": "Equipping for apostolic christianity",
+      "author": "Dudley Daniel",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 92
+    },
+    {
+      "register": "00092",
+      "title": "The source of my strength: relving on the life-changing power og Jesus Christ to heal our wounded hearts",
+      "collection": null,
+      "author": "Charles F. Stanley",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 93
+    },
+    {
+      "register": "00093",
+      "title": "It's time to rock the boat : a call to God's people to rise up & preach a confrontational gospel",
+      "collection": null,
+      "author": "Michael L. Brown",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 94
+    },
+    {
+      "register": "00094",
+      "title": "Manners customs of the bible",
+      "collection": null,
+      "author": "James M. Freeman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 95
+    },
+    {
+      "register": "00095",
+      "title": "Leota's garden: a novel",
+      "collection": null,
+      "author": "Francine Rivers",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 96
+    },
+    {
+      "register": "00096",
+      "title": "Out on a limb: a Claire Malloy mystery",
+      "collection": null,
+      "author": "Joan Hess",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 97
+    },
+    {
+      "register": "00097",
+      "title": "Complete concordance to the bible",
+      "collection": "Cruden's",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 98
+    },
+    {
+      "register": "00098",
+      "title": "Hot buttons: insight from God's word on 12 burning issues",
+      "collection": null,
+      "author": "Rick Bundschuh; Annette Parrish; Tom Finley",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 99
+    },
+    {
+      "register": "00099",
+      "title": "Cars, curfews, parties and parents...",
+      "collection": "77 pretty important ideas on family Survival",
+      "author": "Susie Shellemberger; Greg Johnson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 100
+    },
+    {
+      "register": "00100",
+      "title": "Close encounters: unforgettable meetings with Jesus",
+      "collection": null,
+      "author": "Melvin Tinker",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 101
+    },
+    {
+      "register": "00101",
+      "title": "Appointment in Jerusalem: the story of a school-teacher who dared to be led by the Holy Spirit... and of the city where God has hidden the key to the future",
+      "collection": null,
+      "author": "Lydia Prince",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 102
+    },
+    {
+      "register": "00102",
+      "title": "Every day with Jesus",
+      "collection": null,
+      "author": "Selwyn Hughes",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 103
+    },
+    {
+      "register": "00103",
+      "title": "Estudo nas epistolas de João",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 104
+    },
+    {
+      "register": "00104",
+      "title": "Estudo nas epistolas de Pedro",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 105
+    },
+    {
+      "register": "00105",
+      "title": "Estudo na epistola de Hebreus",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 106
+    },
+    {
+      "register": "00106",
+      "title": "Leadership revision_ looking at leadership with a new set of eyes",
+      "collection": null,
+      "author": "Jim Seybert",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 107
+    },
+    {
+      "register": "00107",
+      "title": "Estudo na epistola de Tiago",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 108
+    },
+    {
+      "register": "00108",
+      "title": "Estudo na segunda epistola aos Coríntios",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 109
+    },
+    {
+      "register": "00109",
+      "title": "Nelson's dictionary of christianity: the authoriative resource on the christian world",
+      "collection": null,
+      "author": "George Thomas Kurian (ed.)",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 110
+    },
+    {
+      "register": "00110",
+      "title": "A grande komissão",
+      "collection": null,
+      "author": "Rafael Lopes",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 111
+    },
+    {
+      "register": "00111",
+      "title": "O evangelho segundo João: sete passos para conhecer Deus",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 112
+    },
+    {
+      "register": "00112",
+      "title": "É necessário que os cristãos sofram?",
+      "collection": null,
+      "author": "Kenneth E. Hagin",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 113
+    },
+    {
+      "register": "00113",
+      "title": "Sofrimento e esperança: a mensagem das cartas de pedro",
+      "collection": "Estudos biblicos didaque (vol. 31)",
+      "author": "Didaque",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 114
+    },
+    {
+      "register": "00114",
+      "title": "Como posso compartilhar a minha fé sem discutir?",
+      "collection": "Vida cristã: o testemunho - Serie Discovery",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 115
+    },
+    {
+      "register": "00115",
+      "title": "3 chaves para o livro de Atos",
+      "collection": null,
+      "author": "T. L. Osborn",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 116
+    },
+    {
+      "register": "00116",
+      "title": "Segundo o coração de Deus: nem todos podemos ser reis, como Davi, mas cada um de nós pode ser um cristão segundo o coração de Deus",
+      "collection": null,
+      "author": "Luis Palau",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 117
+    },
+    {
+      "register": "00117",
+      "title": "1 Timóteo buscando a piedade",
+      "collection": null,
+      "author": "Elizabeth George",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 118
+    },
+    {
+      "register": "00118",
+      "title": "Estudos nas epístolas aos Gálatas e aos Efésios",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 119
+    },
+    {
+      "register": "00119",
+      "title": "Spurgeon: a new biography by arnold dallimore",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 120
+    },
+    {
+      "register": "00120",
+      "title": "The violins of change : a prophetic understanding of the process of change",
+      "collection": null,
+      "author": "Ian McKellar",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 121
+    },
+    {
+      "register": "00121",
+      "title": "A tale of three kings: a study in brokenness",
+      "collection": null,
+      "author": "Gene Edwaeds",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 122
+    },
+    {
+      "register": "00122",
+      "title": "Estudo na primeira epistola aos Coríntios",
+      "collection": null,
+      "author": "Ricardo D. Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 123
+    },
+    {
+      "register": "00123",
+      "title": "A provisão de Deus para a cura: a cura é uma das promessas",
+      "collection": "(vol. 60)",
+      "author": "Pastor Cláudio Mattos",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": "Ver coleção destes dois",
+      "sourceRow": 124
+    },
+    {
+      "register": "00124",
+      "title": "Alimento correti",
+      "collection": "(vol.2)",
+      "author": "Pastor Cláudio Mattos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 125
+    },
+    {
+      "register": "00125",
+      "title": "Como podes ser curado?",
+      "collection": null,
+      "author": "Gordon Lindsay",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 126
+    },
+    {
+      "register": "00126",
+      "title": "Rute e Ana: Aprendendo a caminhar pela fé",
+      "collection": "Estudo biblico da série descobrindo a palavra",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 127
+    },
+    {
+      "register": "00127",
+      "title": "Amazing Bible Trivia : book three",
+      "collection": null,
+      "author": "Lowell D. Streiker",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 128
+    },
+    {
+      "register": "00128",
+      "title": "Praying through the 100 gateway cities of the 10/40 window",
+      "collection": null,
+      "author": "C. Peter Wagner; Stephen Peters; Mark Wilson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 129
+    },
+    {
+      "register": "00129",
+      "title": "Anything you ask",
+      "collection": null,
+      "author": "Colin Urquhart",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 130
+    },
+    {
+      "register": "00130",
+      "title": "Jornada Feliz",
+      "collection": "(vol.1)",
+      "author": "Pastor Cláudio Mattos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 131
+    },
+    {
+      "register": "00131",
+      "title": "Valorize mais a sua vida",
+      "collection": null,
+      "author": "A. Ballack",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 132
+    },
+    {
+      "register": "00132",
+      "title": "O poder da visão : como você pode captar a visão de Deus para a sua vida pessoal e ministério cristão",
+      "collection": null,
+      "author": "George Barna",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 133
+    },
+    {
+      "register": "00133",
+      "title": "Como posso entender a bíblia?",
+      "collection": "serie discovery",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 134
+    },
+    {
+      "register": "00134",
+      "title": "Sonhos e descobertas: o mundo da adolescente",
+      "collection": null,
+      "author": "Jill Renich",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 135
+    },
+    {
+      "register": "00135",
+      "title": "Era inferno, agora é céu",
+      "collection": null,
+      "author": "Merlin R. Carothers",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 136
+    },
+    {
+      "register": "00136",
+      "title": "A isca de satanás: saiba como enfrentar e vencer o inimigo",
+      "collection": null,
+      "author": "John Bevere",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 137
+    },
+    {
+      "register": "00137",
+      "title": "Merece confiança o novo testamento?",
+      "collection": null,
+      "author": "F. F. Bruce",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 138
+    },
+    {
+      "register": "00138",
+      "title": "Grupos familiares e o crescimento da igreja",
+      "collection": null,
+      "author": "Paul Yonggi Cho",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 139
+    },
+    {
+      "register": "00139",
+      "title": "Um apelo à razão: criação ou evolução?",
+      "collection": null,
+      "author": "Dave Hunt",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 140
+    },
+    {
+      "register": "00140",
+      "title": "Manual do pastor e da igreja",
+      "collection": null,
+      "author": "Jaziel Guerreiro Martins",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 141
+    },
+    {
+      "register": "00141",
+      "title": "Novo testamento: a boa nova",
+      "collection": "mais além",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 142
+    },
+    {
+      "register": "00142",
+      "title": "Ei, Deus! : milagres de nossos dias na vida de uma família ítalo-americana",
+      "collection": null,
+      "author": "Frank Foglio",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 143
+    },
+    {
+      "register": "00143",
+      "title": "O rei está voltando",
+      "collection": null,
+      "author": "Arno c. Gaebelein",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 144
+    },
+    {
+      "register": "00144",
+      "title": "Por quem cristo morreu?",
+      "collection": null,
+      "author": "John Owen",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 145
+    },
+    {
+      "register": "00145",
+      "title": "Maravilhosa graça",
+      "collection": null,
+      "author": "Philip Yancey",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 146
+    },
+    {
+      "register": "00146",
+      "title": "O totem da paz",
+      "collection": null,
+      "author": "Don Richardson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 147
+    },
+    {
+      "register": "00147",
+      "title": "Interação humana",
+      "collection": null,
+      "author": "Martin Bolt; David G. Myers",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 148
+    },
+    {
+      "register": "00148",
+      "title": "Orando em família: Meditações diárias",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 149
+    },
+    {
+      "register": "00149",
+      "title": "Como Jesus vê as igrejas?",
+      "collection": null,
+      "author": "Alfredo Rosendo Machado",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 150
+    },
+    {
+      "register": "00150",
+      "title": "Cura para os traumas emocionais",
+      "collection": null,
+      "author": "David A. Seamands",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 151
+    },
+    {
+      "register": "00151",
+      "title": "Sexo aqui e agora? Sexo antes do casamento como o jovem encara este papo",
+      "collection": null,
+      "author": "Jamie Kemp",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 152
+    },
+    {
+      "register": "00152",
+      "title": "Pureza Sexual: como vencer a sua guerra interior",
+      "collection": null,
+      "author": "Robert Daniels",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 153
+    },
+    {
+      "register": "00153",
+      "title": "A razão porquê",
+      "collection": null,
+      "author": "Robert A Laidlaw",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 154
+    },
+    {
+      "register": "00154",
+      "title": "Nosso andar diário: a alegria de uma nova vida",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 155
+    },
+    {
+      "register": "00155",
+      "title": "Porque Deus não se esquece de você",
+      "collection": null,
+      "author": "Silas Malafaia",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 156
+    },
+    {
+      "register": "00156",
+      "title": "Instruções de Deus para uma vida vitoriosa",
+      "collection": null,
+      "author": "Silas Malafaia",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 157
+    },
+    {
+      "register": "00157",
+      "title": "O anticristo e o seu reino",
+      "collection": "A verdade sobre",
+      "author": "Thomas Ice; Timothy Denny",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 158
+    },
+    {
+      "register": "00158",
+      "title": "Raízes",
+      "collection": null,
+      "author": "Luís Melancia",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 159
+    },
+    {
+      "register": "00159",
+      "title": "Santificai-vos hoje",
+      "collection": null,
+      "author": "Pr. Eliézer Correa",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 160
+    },
+    {
+      "register": "00160",
+      "title": "Estudos na segunda carta a Timóteo",
+      "collection": null,
+      "author": "Luiz Soares",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 161
+    },
+    {
+      "register": "00161",
+      "title": "managing your time",
+      "collection": null,
+      "author": "Steve Chalke; Penny Relph",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 162
+    },
+    {
+      "register": "00162",
+      "title": "Pequeno manual de relacionamentos pessoais",
+      "collection": null,
+      "author": "John Maxwell",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 163
+    },
+    {
+      "register": "00163",
+      "title": "Biblia sagrada: com concordância",
+      "collection": null,
+      "author": "Sociedade biblica; João Ferreira de Almeida (trad.)",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 164
+    },
+    {
+      "register": "00164",
+      "title": "The bible as history",
+      "collection": null,
+      "author": "Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 165
+    },
+    {
+      "register": "00165",
+      "title": "Biblia do surfista: novo testamento",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 166
+    },
+    {
+      "register": "00166",
+      "title": "Depressa e devagar, aí vamos nós!",
+      "collection": null,
+      "author": "Nova presença",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 167
+    },
+    {
+      "register": "00167",
+      "title": "Autoridade espiritual",
+      "collection": null,
+      "author": "Watchman Nee",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 168
+    },
+    {
+      "register": "00168",
+      "title": "O novo testamento: salmos e provérbios",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 169
+    },
+    {
+      "register": "00169",
+      "title": "Biblia",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": null,
+      "notes": "ver mais informações ( livro capa azul escura?",
+      "sourceRow": 170
+    },
+    {
+      "register": "00170",
+      "title": "Adolescencia: geração sob pressão",
+      "collection": "A psicologia e você",
+      "author": "John Conger",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 171
+    },
+    {
+      "register": "00171",
+      "title": "Bible interpretation: How to read and understand your bible",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 172
+    },
+    {
+      "register": "00172",
+      "title": "Experiencing the cross: your greatest opportunity for victory over sin",
+      "collection": null,
+      "author": "Henry Blackaby",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 173
+    },
+    {
+      "register": "00173",
+      "title": "Hebrews who Jesus realy is and his death changed everything",
+      "collection": "God's word today. yout daily guide to reading scripture",
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 174
+    },
+    {
+      "register": "00174",
+      "title": "A quarta dimensão: o segredo da vida de exito mediante a fé",
+      "collection": null,
+      "author": "Paul Yonggi Cho",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 175
+    },
+    {
+      "register": "00175",
+      "title": "Lord teach me to study the bible in 28 days",
+      "collection": null,
+      "author": "Kay Arthur",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 176
+    },
+    {
+      "register": "00176",
+      "title": "Tive fome: um desafio a servir Deus no mundo",
+      "collection": "Série Lausanne",
+      "author": "Samuel Escobar; John R. W. Stott; Valdir R. Steuernagel; et. al.",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 177
+    },
+    {
+      "register": "00177",
+      "title": "Holy discontent: fueling the fire that ignites personal vision",
+      "collection": null,
+      "author": "Bill Hybels",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 178
+    },
+    {
+      "register": "00178",
+      "title": "Confessions of a reformission rev: hard lessons from an emerging missional church",
+      "collection": "Leadership network innovation series",
+      "author": "Mark Driscoll",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 179
+    },
+    {
+      "register": "00179",
+      "title": "Come out of her my people",
+      "collection": null,
+      "author": "C. J. Koster",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 180
+    },
+    {
+      "register": "00180",
+      "title": "El nuevo testamento: Dios habal hoy",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 181
+    },
+    {
+      "register": "00181",
+      "title": "Existe tempo de desistir?",
+      "collection": null,
+      "author": "Alexis Campos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 182
+    },
+    {
+      "register": "00182",
+      "title": "Worshippers wanted: inspiring and equipping the worshipping church",
+      "collection": null,
+      "author": "Alan Frow",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 183
+    },
+    {
+      "register": "00183",
+      "title": "Projeto febe: estartegias para o trabalho feminino",
+      "collection": null,
+      "author": "Izabel Alcantara Guimarães",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 184
+    },
+    {
+      "register": "00184",
+      "title": "Resolva seus grilos: respostas para perguntas da adolescencia",
+      "collection": null,
+      "author": "Josh Mcdowell; Bill Jones",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 185
+    },
+    {
+      "register": "00185",
+      "title": "Os adolescentes e o sexo: educação sexual com base bíblica",
+      "collection": null,
+      "author": "Mary Kehle m",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 186
+    },
+    {
+      "register": "00186",
+      "title": "Divórcio: como resistir a este mal e conservar a estabilidade na família",
+      "collection": null,
+      "author": "Pr. Glycon Terra Pinto; Pr. Ciro Otávio B. Pinto",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 187
+    },
+    {
+      "register": "00187",
+      "title": "Poder para ser vitorioso",
+      "collection": null,
+      "author": "Rick Warren",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 188
+    },
+    {
+      "register": "00188",
+      "title": "É tempo de conquistar: estratégias espirituais para a vida pessoal e o mundo dos negócios",
+      "collection": null,
+      "author": "Marcos Pinelli",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 189
+    },
+    {
+      "register": "00189",
+      "title": "O caráter do homem de Deus: mestre fiel, bom soldado, atleta coroado, lavrador que trabalha, obreiro que não tem do que se envergonhar",
+      "collection": null,
+      "author": "Dong Yu Lan",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 190
+    },
+    {
+      "register": "00190",
+      "title": "Mananciais no deserto",
+      "collection": null,
+      "author": "Lettie Cowman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 191
+    },
+    {
+      "register": "00191",
+      "title": "Os filhos de Sião",
+      "collection": null,
+      "author": "Augusto Esteves",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 192
+    },
+    {
+      "register": "00192",
+      "title": "O caminho bíblico da Justiça",
+      "collection": null,
+      "author": "José Gallardo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 193
+    },
+    {
+      "register": "00193",
+      "title": "Panorama da história cristã: as intervenções de Deus na história",
+      "collection": null,
+      "author": "Hernandes Dias Lopes",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 194
+    },
+    {
+      "register": "00194",
+      "title": "Introdução à exegese bíblica",
+      "collection": null,
+      "author": "Michael J. Gorman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 195
+    },
+    {
+      "register": "00195",
+      "title": "Mateus 1 - 15: parte 1",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": "ver coleção",
+      "sourceRow": 196
+    },
+    {
+      "register": "00196",
+      "title": "Matreus 16-28 : parte 2",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 197
+    },
+    {
+      "register": "00197",
+      "title": "Marcos",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 198
+    },
+    {
+      "register": "00198",
+      "title": "Lucas",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 199
+    },
+    {
+      "register": "00199",
+      "title": "João 1-10: parte 1",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 200
+    },
+    {
+      "register": "00200",
+      "title": "João 11 - 21: parte 2",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 201
+    },
+    {
+      "register": "00201",
+      "title": "Evangelhos para todos",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 202
+    },
+    {
+      "register": "00202",
+      "title": "A bíblia de Alef a Omega: um guia para entender como a bíblia chegou até nós",
+      "collection": null,
+      "author": "Rodrigo Silva",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 203
+    },
+    {
+      "register": "00203",
+      "title": "Pastoreando o coração da criança",
+      "collection": null,
+      "author": "Tedd Tripp",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 204
+    },
+    {
+      "register": "00204",
+      "title": "História e escatoligia: Jesus e a promessa da teologia natural",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 205
+    },
+    {
+      "register": "00205",
+      "title": "O que a bíblia diz sobre as decisões do dia a dia",
+      "collection": null,
+      "author": "Wayne Grudem",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 206
+    },
+    {
+      "register": "00206",
+      "title": "Biblia Sagrada",
+      "collection": null,
+      "author": "NVI",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 207
+    },
+    {
+      "register": "00207",
+      "title": "Revolução teísta: uma critica científica; filosófica e teológica",
+      "collection": null,
+      "author": "J. P. Moreland; Stephen C. Meyer; Christopher Saw; et. al.",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 208
+    },
+    {
+      "register": "00208",
+      "title": "Fogo estranho: um olhar questionador sobre a operação do Espírito Santo no mundo de hoje",
+      "collection": null,
+      "author": "John MacArthur",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 209
+    },
+    {
+      "register": "00209",
+      "title": "As parábolas de Lucas",
+      "collection": null,
+      "author": "Kenneth E. Bailey",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 210
+    },
+    {
+      "register": "00210",
+      "title": "Você se torna aquilo que adora: uma teologia bíblica da idolatria",
+      "collection": null,
+      "author": "G. K. Beal",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 211
+    },
+    {
+      "register": "00211",
+      "title": "Bible Study Jornal",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 212
+    },
+    {
+      "register": "00212",
+      "title": "Enciclopédia historica da vida de Jesus",
+      "collection": null,
+      "author": "Rodrigo Silva",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 213
+    },
+    {
+      "register": "00213",
+      "title": "Bíblia infantil ilustrada: as historias do livro de Deus para as crianças",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 214
+    },
+    {
+      "register": "00214",
+      "title": "Mulher pode ser pastora?",
+      "collection": "Teologia para todos",
+      "author": "Vik Zalewski Baracy",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 215
+    },
+    {
+      "register": "00215",
+      "title": "Os outros da bíblia: história, fé e cultura dos povos antigos e sua atuação no plano divino",
+      "collection": null,
+      "author": "André Daniel Reinke",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 216
+    },
+    {
+      "register": "00216",
+      "title": "Ekklesia: a revolução começa na igreja",
+      "collection": null,
+      "author": "Ed Silvoso",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 217
+    },
+    {
+      "register": "00217",
+      "title": "Profecia não é adivinhação : como entender o dom da profecia hoje?",
+      "collection": "Teologia para todos",
+      "author": "Guitierres Siqueira",
+      "shelfmark": null,
+      "quantity": 3,
+      "notes": null,
+      "sourceRow": 218
+    },
+    {
+      "register": "00218",
+      "title": "Homem do reino: o destino de todo homem, o sonho de toda mulher",
+      "collection": null,
+      "author": "Tony Evans",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 219
+    },
+    {
+      "register": "00219",
+      "title": "Aqueles da bíblia: história, fé e cultura do povo bíblico de Israel e sua atuação no plano divino",
+      "collection": null,
+      "author": "André Daniel Reinke",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 220
+    },
+    {
+      "register": "00220",
+      "title": "Um coração igual ao de Jesus: lições e exemplos do Filho de Deus para uma vida mais feliz",
+      "collection": null,
+      "author": "Max Lucado",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 221
+    },
+    {
+      "register": "00221",
+      "title": "Quando meu sorvete cai",
+      "collection": null,
+      "author": "Rodrigo Bibo; Phellip Willian;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 222
+    },
+    {
+      "register": "00222",
+      "title": "Mães espirituais : porque você precisa de ma como se tornar uma",
+      "collection": null,
+      "author": "Lisa Bevere",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 223
+    },
+    {
+      "register": "00223",
+      "title": "Jesus puro e simples",
+      "collection": null,
+      "author": "Wayne Cordeiro",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 224
+    },
+    {
+      "register": "00224",
+      "title": "Vem senhor jesus! : um estudo sobre a segunda vinda de Cristo",
+      "collection": null,
+      "author": "John Piper",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 225
+    },
+    {
+      "register": "00225",
+      "title": "Namorar sem errar: uma jornada de escolhas",
+      "collection": null,
+      "author": "Luiz Magalhães",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 226
+    },
+    {
+      "register": "00226",
+      "title": "De um dos evangelistas mais bem-sucedidos de todos os tempos, os segredos para se obter uma vida cheia de espírito",
+      "collection": null,
+      "author": "Charles G. Finney",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 227
+    },
+    {
+      "register": "00227",
+      "title": "O grande divórcio",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 228
+    },
+    {
+      "register": "00228",
+      "title": "Cristianismo puro e simples",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 4,
+      "notes": null,
+      "sourceRow": 229
+    },
+    {
+      "register": "00229",
+      "title": "Você não está aqui por acaso",
+      "collection": null,
+      "author": "Rick Warren",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 230
+    },
+    {
+      "register": "00230",
+      "title": "Sete necessidades básicas das crianças",
+      "collection": null,
+      "author": "John Drescher",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 231
+    },
+    {
+      "register": "00231",
+      "title": "Motivado: 8 segredos do sucesso na criação de filhos",
+      "collection": null,
+      "author": "DR. Peter & Deonna Tan-Chi",
+      "shelfmark": null,
+      "quantity": 7,
+      "notes": null,
+      "sourceRow": 232
+    },
+    {
+      "register": "00232",
+      "title": "Tempo em família: um guia simples e prático para expressar as 5 linguagens do amor com seus filhos",
+      "collection": null,
+      "author": "Gary Chapman & Jen Mickelborough",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 233
+    },
+    {
+      "register": "00233",
+      "title": "Teologia Sistemática completa e atual",
+      "collection": null,
+      "author": "Wayne Grudem",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 234
+    },
+    {
+      "register": "00234",
+      "title": "No coração de Romanos: um mergulho profundo na mais importante carta de Paulo",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 235
+    },
+    {
+      "register": "00235",
+      "title": "Verdadeiro evangelho",
+      "collection": null,
+      "author": "Paul Washer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 236
+    },
+    {
+      "register": "00236",
+      "title": "Faça diferença: o impacto do cristão na cultura e na sociedade",
+      "collection": null,
+      "author": "R. C. Sproul",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 237
+    },
+    {
+      "register": "00237",
+      "title": "Apocalipse: o futuro chegou as coisas que em breve devem acontecer",
+      "collection": "Comentários expositivos Hagnos",
+      "author": "Hernandes Dias Lopes",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 238
+    },
+    {
+      "register": "00238",
+      "title": "Teologia da livre graça: 5 maneiras em que ela diminiui o evangelho",
+      "collection": null,
+      "author": "Wayne Grudem",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 239
+    },
+    {
+      "register": "00239",
+      "title": "A supremacia e a suficiência de Cristo : a mensagem dos colessences para a igreja de hoje",
+      "collection": null,
+      "author": "Augustis Nicodemus",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 240
+    },
+    {
+      "register": "00240",
+      "title": "O ceticismo da fé: Deus, uma dúvida, uma certeza, uma distorção",
+      "collection": null,
+      "author": "Rodrigo Silva",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 241
+    },
+    {
+      "register": "00241",
+      "title": "O cristão pode beber?",
+      "collection": "Teologia para todos",
+      "author": "Guitierres Siqueira",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 242
+    },
+    {
+      "register": "00242",
+      "title": "Qual é o destino eterno dos não evangelizados?",
+      "collection": "Teologia para todos",
+      "author": "Guitierres Siqueira",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 243
+    },
+    {
+      "register": "00243",
+      "title": "Bases da fé Cristã: 20 fundamentos que todo cristão precisa entender",
+      "collection": null,
+      "author": "Wayne Grudem",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 244
+    },
+    {
+      "register": "00244",
+      "title": "Até que nada mais importe: como viver longe de um mundo de performances religiosas e mais proximo do que Deus espera de você",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 245
+    },
+    {
+      "register": "00245",
+      "title": "A abolição do homem",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 246
+    },
+    {
+      "register": "00246",
+      "title": "Os atributos de Deus II: uma viagem ao coração do Pai",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 247
+    },
+    {
+      "register": "00247",
+      "title": "O Deus pródigo: recuperando a essência da fé cristã",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 248
+    },
+    {
+      "register": "00248",
+      "title": "O jejum e a redençao do Brasil",
+      "collection": "Escola de oração (vol.5)",
+      "author": "Valnice Milhomens",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 249
+    },
+    {
+      "register": "00249",
+      "title": "Comunhão e princípios de fé",
+      "collection": "Escola de oração (vol.1)",
+      "author": "Valnice Milhomens",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 250
+    },
+    {
+      "register": "00250",
+      "title": "Café com Deus Pai : aventuras com Jesus",
+      "collection": null,
+      "author": "Junior Rostirola",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 251
+    },
+    {
+      "register": "00251",
+      "title": "Doutrina e devoção: o caminho da verdade na vida em comunidade",
+      "collection": "Bibotalk",
+      "author": "Thomas Nelson Brasil",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 252
+    },
+    {
+      "register": "00252",
+      "title": "Como orar",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 253
+    },
+    {
+      "register": "00253",
+      "title": "Como ser cristão",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 254
+    },
+    {
+      "register": "00254",
+      "title": "A cruz do Rei",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 255
+    },
+    {
+      "register": "00255",
+      "title": "Encontrei um Pai: reconheça quem você é e viva o seu propósito",
+      "collection": null,
+      "author": "Junior Rostirola",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 256
+    },
+    {
+      "register": "00256",
+      "title": "O regresso do peregrino: uma defesa alegórica do cristianismo da razão e do romantismo",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 257
+    },
+    {
+      "register": "00257",
+      "title": "Maturidade: o acesso à herança plena",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 258
+    },
+    {
+      "register": "00258",
+      "title": "5 linguagens do amor dos adolescentes: como expressar um compromisso de amor a seu filho adolescente",
+      "collection": null,
+      "author": "Gary Chapman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 259
+    },
+    {
+      "register": "00259",
+      "title": "Celebração da disciplina: o caminho o crescimento espiritual",
+      "collection": null,
+      "author": "Richard Foster",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 260
+    },
+    {
+      "register": "00260",
+      "title": "O cuidado do corpo: sabedoria bíblica para o bem-estar físico e espiritual",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 261
+    },
+    {
+      "register": "00261",
+      "title": "Caminhando com o peregrino: retratos de porções da imortal alegoria de John Bunyan",
+      "collection": null,
+      "author": "Charles H. Spurgeon",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 262
+    },
+    {
+      "register": "00262",
+      "title": "E defesa da graça",
+      "collection": null,
+      "author": "Lee Strobel",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 263
+    },
+    {
+      "register": "00263",
+      "title": "Orando a palavra",
+      "collection": "Escola de oração (vol.3)",
+      "author": "Valnice Milhomens",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 264
+    },
+    {
+      "register": "00264",
+      "title": "Como cultivar uma vida de leitura",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 265
+    },
+    {
+      "register": "00265",
+      "title": "Campo de batalha da mente para crianças",
+      "collection": null,
+      "author": "Joyce Meyer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 266
+    },
+    {
+      "register": "00266",
+      "title": "O awgir invisivél de Deus",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 267
+    },
+    {
+      "register": "00267",
+      "title": "Peneirado: em busca do crescimento espiritual nas provações, nos desafios e nas decepções",
+      "collection": null,
+      "author": "Wayne Cordeiro; Francis Chan; Larry Osborne",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 268
+    },
+    {
+      "register": "00268",
+      "title": "Pescadores de crianças: orientação prática para falar de Jesus às crianças",
+      "collection": null,
+      "author": "Charles H. Spurgeon",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 269
+    },
+    {
+      "register": "00269",
+      "title": "Manso e humilde: o coração de Cristo para quem peca e para quem sofre",
+      "collection": null,
+      "author": "Dane Ortlund",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 270
+    },
+    {
+      "register": "00270",
+      "title": "5 linguagens do amor para homens: como expressar um compromisso de amor è sua esposa",
+      "collection": null,
+      "author": "Gary Chapman; Randy Southern;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 271
+    },
+    {
+      "register": "00271",
+      "title": "Jesus copy: a revolução das copias de Jesus",
+      "collection": null,
+      "author": "Douglas Gonçalves",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 272
+    },
+    {
+      "register": "00272",
+      "title": "O custo do discipulado: a doutrina da imitação de Cristo",
+      "collection": null,
+      "author": "Jonas Madureira",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 273
+    },
+    {
+      "register": "00273",
+      "title": "Uma questão de honra: o valor do dinheiro na adoração",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 274
+    },
+    {
+      "register": "00274",
+      "title": "Conversão e discipulado: você não pode ter um sem o outro",
+      "collection": null,
+      "author": "Bill Hull",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 275
+    },
+    {
+      "register": "00275",
+      "title": "O impostor que vive em mim",
+      "collection": null,
+      "author": "Brennan Manning",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 276
+    },
+    {
+      "register": "00276",
+      "title": "Campo de batalha da mente para adolescentes",
+      "collection": null,
+      "author": "Joyce Meyer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 277
+    },
+    {
+      "register": "00277",
+      "title": "Mulher do Reino: seu propósito, seu poder, suas possibilidades",
+      "collection": null,
+      "author": "Tony Evans",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 278
+    },
+    {
+      "register": "00278",
+      "title": "O poder da intercessão",
+      "collection": "Escola de oração (vol.4)",
+      "author": "Valnice Milhomens",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 279
+    },
+    {
+      "register": "00279",
+      "title": "Tipos de oração",
+      "collection": "Escola de oração (vol.2)",
+      "author": "Valnice Milhomens",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 280
+    },
+    {
+      "register": "00280",
+      "title": "De quanta terra precisa um homem",
+      "collection": null,
+      "author": "Liev Tolstói",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 281
+    },
+    {
+      "register": "00281",
+      "title": "5 linguagens do amor das crianças : como expressar compromisso de amor ao seu filho",
+      "collection": null,
+      "author": "Gary Chapman; Ross Campbell",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 282
+    },
+    {
+      "register": "00282",
+      "title": "Discipulado",
+      "collection": null,
+      "author": "Dietrich Bonhoeffer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 283
+    },
+    {
+      "register": "00283",
+      "title": "Biblia 365 para corajosas: a palavra de Deus em leituras diárias",
+      "collection": null,
+      "author": "NVT",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 284
+    },
+    {
+      "register": "00284",
+      "title": "Somente pela graça: compreendendo e aplicando o evangelho na vida diária",
+      "collection": null,
+      "author": "Charles H. Spurgeon",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 285
+    },
+    {
+      "register": "00285",
+      "title": "A criança digital: ensinando seu filho a encontrar equilíbrio no mundo virtual",
+      "collection": null,
+      "author": "Gary Chapman; Arlene Pellicane;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 286
+    },
+    {
+      "register": "00286",
+      "title": "Vimos e ouvimos: a incumbencia da pregação",
+      "collection": null,
+      "author": "Israel Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 287
+    },
+    {
+      "register": "00287",
+      "title": "Manual dos tempos e costumes bíblicos",
+      "collection": null,
+      "author": "William L. Coleman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 288
+    },
+    {
+      "register": "00288",
+      "title": "A superioridade de Cristo:para quem está preso em coisas menores",
+      "collection": null,
+      "author": "Yago Martins",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 289
+    },
+    {
+      "register": "00289",
+      "title": "Mentores segundo o coração de Deus: preserve sua alma, estableça seuy legado e mantenha viva a palavra de Deus dentro de você",
+      "collection": null,
+      "author": "Wayne Cordeiro",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 290
+    },
+    {
+      "register": "00290",
+      "title": "Bem-vindo Espírito Santo: como a presença do Espírito Santo atua em nossa vida",
+      "collection": null,
+      "author": "Benny Hinn",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 291
+    },
+    {
+      "register": "00291",
+      "title": "Como destruir o que rouba a sua força",
+      "collection": "Kriptonita",
+      "author": "John Bevere",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 292
+    },
+    {
+      "register": "00292",
+      "title": "A formação de um discipulo",
+      "collection": null,
+      "author": "Keith Phillips",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 293
+    },
+    {
+      "register": "00293",
+      "title": "Em seus passos que faria Jesus?",
+      "collection": null,
+      "author": "Charles M. Sheldon",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 294
+    },
+    {
+      "register": "00294",
+      "title": "O Deus esquecido: revertendo nossa trágica negligência para com o Espírito Santo",
+      "collection": null,
+      "author": "Francis Chan; Danae Yankoski",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 295
+    },
+    {
+      "register": "00295",
+      "title": "Rumo aos 120 anos",
+      "collection": null,
+      "author": "Dr. Aldrin Marshall; Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 296
+    },
+    {
+      "register": "00296",
+      "title": "Ausência de dons: a tragédia da igreja",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 297
+    },
+    {
+      "register": "00297",
+      "title": "Mais que um carpinteiro: a historia deste livro pode mudar a sua história",
+      "collection": null,
+      "author": "Josh McDowell; Sean McDowell",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 298
+    },
+    {
+      "register": "00298",
+      "title": "Entendes o que lês? um guia para entender a bíblia com auxílio da exegese e da hermeneutica",
+      "collection": null,
+      "author": "Gordon D. Fee; Douglas Stuart;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 299
+    },
+    {
+      "register": "00299",
+      "title": "Alma sobrevivente: sou cristão, apesar da igreja",
+      "collection": null,
+      "author": "Philip Yancey",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 300
+    },
+    {
+      "register": "00300",
+      "title": "A vida crucificada: como viver uma experiência cristã mais profunda",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 301
+    },
+    {
+      "register": "00301",
+      "title": "Em busca de Deus: minha alma anseia por ti",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 302
+    },
+    {
+      "register": "00302",
+      "title": "Ego transformado: a humildade que brota do evangelho e traz a verdadeira alegria",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 303
+    },
+    {
+      "register": "00303",
+      "title": "A teologia do livro de apocalipse",
+      "collection": null,
+      "author": "Richard Bauckham",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 304
+    },
+    {
+      "register": "00304",
+      "title": "E Ele habitou: ensinamentos do evangelho de João",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 305
+    },
+    {
+      "register": "00305",
+      "title": "Casal imperfeito: etratos de um casamento aperfeiçoado em Deus",
+      "collection": null,
+      "author": "Fernanda Witwytzky",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 306
+    },
+    {
+      "register": "00306",
+      "title": "Surpreendido pela alegria",
+      "collection": null,
+      "author": "C. S. Lewis",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 307
+    },
+    {
+      "register": "00307",
+      "title": "Até que sejamos um",
+      "collection": null,
+      "author": "Francis Chan",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 308
+    },
+    {
+      "register": "00308",
+      "title": "Casamento do reino: o propósito de Deus para a vida a dois",
+      "collection": null,
+      "author": "Tony Evans",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 309
+    },
+    {
+      "register": "00309",
+      "title": "Como Deus transforma a tristeza em alegria",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 310
+    },
+    {
+      "register": "00310",
+      "title": "Os atributos de Deus I: uma viagem ao coração do Pai",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 311
+    },
+    {
+      "register": "00311",
+      "title": "Jesus, nosso defensor na glória: 12 mensagens sobre o livro de Hebreus",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 312
+    },
+    {
+      "register": "00312",
+      "title": "O poder de Deus para a sua vida: como o Espírito Santo transforma você por meio da palavra de Deus",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 313
+    },
+    {
+      "register": "00313",
+      "title": "Teologia sistemática ao alcance de todos",
+      "collection": null,
+      "author": "Wayne Gruden",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 314
+    },
+    {
+      "register": "00314",
+      "title": "O discíplo radical",
+      "collection": null,
+      "author": "John Stott",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 315
+    },
+    {
+      "register": "00315",
+      "title": "As 5 linguagens do amor das crianças: como expressar um compromisso de amor a seu filho",
+      "collection": null,
+      "author": "Gary Chapman; Ross Campbell",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 316
+    },
+    {
+      "register": "00316",
+      "title": "As 5 linguagens do amor dos adolescentes: como expressar um compromisso de amor a seu filho adolescente",
+      "collection": null,
+      "author": "Gary Chapman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 317
+    },
+    {
+      "register": "00317",
+      "title": "Discipulando com a bíblia: um manual para ler escrituras juntos",
+      "collection": null,
+      "author": "David Helm",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 318
+    },
+    {
+      "register": "00318",
+      "title": "O propósito da família: a importância da visão familiar na relação com Deus",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 319
+    },
+    {
+      "register": "00319",
+      "title": "Como flechas: preparando e projetando os filhos para o propósito divino",
+      "collection": null,
+      "author": "Luciano Subirá; Kely Subirá;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 320
+    },
+    {
+      "register": "00320",
+      "title": "O Deus que destrói sonhos",
+      "collection": null,
+      "author": "Rodrigo Bibo",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 321
+    },
+    {
+      "register": "00321",
+      "title": "Geração do Reino: levantando crianças sobrenaturais",
+      "collection": null,
+      "author": "Lucas Hayashi; Jackeline Hayashi ;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 322
+    },
+    {
+      "register": "00322",
+      "title": "Manual de arqueoligia bíblica Thomas Nelson",
+      "collection": null,
+      "author": "Randall Price; H. Wayne House;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 323
+    },
+    {
+      "register": "00323",
+      "title": "Como o Deus é um e três ao mesmo tempo?",
+      "collection": "Teologia para todos",
+      "author": "Pedro Pampiona",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 324
+    },
+    {
+      "register": "00324",
+      "title": "Quando seu cônjugue não é crente",
+      "collection": null,
+      "author": "Lee Strobel",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 325
+    },
+    {
+      "register": "00325",
+      "title": "Apocalipse para todos",
+      "collection": null,
+      "author": "N. T. Wright",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 326
+    },
+    {
+      "register": "00326",
+      "title": "O evangelho maltrapilho",
+      "collection": null,
+      "author": "Brennan Manning",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 327
+    },
+    {
+      "register": "00327",
+      "title": "Corajosas: os contos das princesas nada encantadas",
+      "collection": null,
+      "author": "Maria S. Araújo; Queren Ane; Arlene Diniz; Thais Oliveira;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 328
+    },
+    {
+      "register": "00328",
+      "title": "O significado do casamento",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 329
+    },
+    {
+      "register": "00329",
+      "title": "Servindo Deus em família",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 330
+    },
+    {
+      "register": "00330",
+      "title": "Nosso novo grande sumo sacerdote: para quem precisa estar mais perto de Deus",
+      "collection": null,
+      "author": "Yago Martins",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 331
+    },
+    {
+      "register": "00331",
+      "title": "Devocional mulheres enraizadas",
+      "collection": null,
+      "author": "Viviane Martinello",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 332
+    },
+    {
+      "register": "00332",
+      "title": "Carta aos pecadores: a resposa de Deus aos pecados humanos",
+      "collection": null,
+      "author": "Saulo Daniel Lopes; Douglas Gonçalves",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 333
+    },
+    {
+      "register": "00333",
+      "title": "As 5 linguagens do amor: como expressar um compromisso de amor a seu cônjuge",
+      "collection": null,
+      "author": "Gary Chapman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 334
+    },
+    {
+      "register": "00334",
+      "title": "As 5 linguagens do amor: como expressar um compromisso de amor a seu cônjuge",
+      "collection": null,
+      "author": "Gary Chapman",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": "edições diferentes",
+      "sourceRow": 335
+    },
+    {
+      "register": "00335",
+      "title": "Pense: a vida da mente e o amor de Deus",
+      "collection": null,
+      "author": "John Piper",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 336
+    },
+    {
+      "register": "00336",
+      "title": "Eu, meu pavio curto e Deus: aprendendo a irar-se sem pecar",
+      "collection": null,
+      "author": "Lisa Bevere",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 337
+    },
+    {
+      "register": "00337",
+      "title": "Alegrem-se: mensagens para deaafiar a mente e o coração",
+      "collection": null,
+      "author": "Charles H. Spurgeon",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 338
+    },
+    {
+      "register": "00338",
+      "title": "Graça transformadora",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 339
+    },
+    {
+      "register": "00339",
+      "title": "Como ler a bíblia livro por livro; um guia confiável para ler e entender as escrituras sagradas",
+      "collection": null,
+      "author": "Gordon Fee; Douglas Stuart;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 340
+    },
+    {
+      "register": "00340",
+      "title": "O cristão e a política: descubra como vencer a guerra cultural",
+      "collection": null,
+      "author": "Nikolas Ferreira",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 341
+    },
+    {
+      "register": "00341",
+      "title": "O evangelhos do reino: estudos bíblicos sobre o reino de Deus",
+      "collection": null,
+      "author": "George Eldon Ladd",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 342
+    },
+    {
+      "register": "00342",
+      "title": "Nova mentalidade: conversas em torno da carta de Paulo aos Filipenses",
+      "collection": null,
+      "author": "Rodrigo Bibo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 343
+    },
+    {
+      "register": "00343",
+      "title": "Os perigos de uma fé superficial: desperte da letargia espiritual",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 344
+    },
+    {
+      "register": "00344",
+      "title": "Corajosas 2: os contos das princesas nada encantadas",
+      "collection": null,
+      "author": "Maria S. Araújo; Queren Ane; Arlene Diniz; Thais Oliveira;",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 345
+    },
+    {
+      "register": "00345",
+      "title": "A cultura do jejum: encontre um nível mais profundo de intimidade com Deus",
+      "collection": null,
+      "author": "Luciano Subirá",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 346
+    },
+    {
+      "register": "00346",
+      "title": "Jugo desigual",
+      "collection": null,
+      "author": "Lee Strobel; Leslie Strobel;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 347
+    },
+    {
+      "register": "00347",
+      "title": "Biblia Sagrada",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": "Com flores",
+      "sourceRow": 348
+    },
+    {
+      "register": "00348",
+      "title": "Forjados: formando a identidade de meninos do reino",
+      "collection": null,
+      "author": "Tony Evans",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 349
+    },
+    {
+      "register": "00349",
+      "title": "Criação biblacompatível: vivendo uma maternidade bíblica",
+      "collection": null,
+      "author": "Tatiane Joslin",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 350
+    },
+    {
+      "register": "00350",
+      "title": "1001 perguntas e respostas da bíblia",
+      "collection": null,
+      "author": "Venâncio Josiel dos Santos",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 351
+    },
+    {
+      "register": "00351",
+      "title": "Escatoligia e a influência do futuro no dia a dia cristão",
+      "collection": null,
+      "author": "Russel P. Shedd",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 352
+    },
+    {
+      "register": "00352",
+      "title": "História do cristianismo: uma obra completa e atual sobre a trajetória da igreja cristã desde as origens até o século XXI",
+      "collection": null,
+      "author": "Bruce L. Shelley",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 353
+    },
+    {
+      "register": "00353",
+      "title": "Um adolescente com propósito: manual prático para sua melhor fase",
+      "collection": null,
+      "author": "Victor Cavalaro",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 354
+    },
+    {
+      "register": "00354",
+      "title": "O poder da garota que ora",
+      "collection": null,
+      "author": "Stormie Omartian",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 355
+    },
+    {
+      "register": "00355",
+      "title": "O profeta prodígio: Jonas e o ministério da misericórdia de Deus",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 356
+    },
+    {
+      "register": "00356",
+      "title": "Redimidas: os contos das princesas vilãs desencantadas",
+      "collection": null,
+      "author": "Maria S. Araújo; Queren Ane; Arlene Diniz; Thais Oliveira;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 357
+    },
+    {
+      "register": "00357",
+      "title": "Meu sol de primavera",
+      "collection": null,
+      "author": "Queren Ane",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 358
+    },
+    {
+      "register": "00358",
+      "title": "Bíblia em ação para colorir",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": 5,
+      "notes": null,
+      "sourceRow": 359
+    },
+    {
+      "register": "00359",
+      "title": "A bíblia e o antigo Egito",
+      "collection": null,
+      "author": "Rodrigo Silva; William Cardoso;",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 360
+    },
+    {
+      "register": "00360",
+      "title": "Ortodoxia",
+      "collection": null,
+      "author": "G. K. Chesterton",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 361
+    },
+    {
+      "register": "00361",
+      "title": "Antevidência: como a quúimica da vida revela planejamento e porpósito",
+      "collection": null,
+      "author": "Marcos Eberlin",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 362
+    },
+    {
+      "register": "00362",
+      "title": "As 5 linguagens do perdão",
+      "collection": null,
+      "author": "Gary Chapman; Jennifer Thomas;",
+      "shelfmark": null,
+      "quantity": 2,
+      "notes": null,
+      "sourceRow": 363
+    },
+    {
+      "register": "00363",
+      "title": "Bíblia Sagrada",
+      "collection": null,
+      "author": "NVI",
+      "shelfmark": null,
+      "quantity": 3,
+      "notes": "capa leão azul",
+      "sourceRow": 364
+    },
+    {
+      "register": "00364",
+      "title": "O cristão pode perder a salvação? Resposta calvinista",
+      "collection": "Teologia para todos",
+      "author": "Yago Martins",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 365
+    },
+    {
+      "register": "00365",
+      "title": "O segredo da virtuosa",
+      "collection": null,
+      "author": "Maurício Zágari",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 366
+    },
+    {
+      "register": "00366",
+      "title": "Cristãos, judeus e muçulmanos adoram ao mesmo Deus? Quatro visões",
+      "collection": null,
+      "author": "William Andrew Schawartz; John B. Cobb Jr.; Francis J. Beckwith; et. al.",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 367
+    },
+    {
+      "register": "00367",
+      "title": "Mensagens de fé, esperança e salvação",
+      "collection": "Os milagres de Jesus (Vol 1)",
+      "author": "Charles H. Spurgeon",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 368
+    },
+    {
+      "register": "00368",
+      "title": "Casamento: o desafio da felicidade em meio das imperfeições",
+      "collection": null,
+      "author": "Claudio Duarte",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 369
+    },
+    {
+      "register": "00369",
+      "title": "Construindo pontes: aconselhamento bíblico para crianças e adolescentes",
+      "collection": null,
+      "author": "Julie Lowe",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 370
+    },
+    {
+      "register": "00370",
+      "title": "O cristão surpreendente: como os verdadeiros filhos de Deus vivem na terra",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 371
+    },
+    {
+      "register": "00371",
+      "title": "Pregação bíblica: o desenvolvimento e a entrega de sermões expositivos",
+      "collection": null,
+      "author": "Haddon Robinson",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 372
+    },
+    {
+      "register": "00372",
+      "title": "Como se tornar um cristão inútil",
+      "collection": null,
+      "author": "Robrido Bibo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 373
+    },
+    {
+      "register": "00373",
+      "title": "Escatoligia do novo testamento",
+      "collection": null,
+      "author": "Russel P. Shedd",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 374
+    },
+    {
+      "register": "00374",
+      "title": "O que Cristo pensa da igreja: a mensagem das sete cartas de apocalipse",
+      "collection": null,
+      "author": "John Stott",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 375
+    },
+    {
+      "register": "00375",
+      "title": "Bíblia sagrada: a fé é a certeza de que vamos receber coisas que esperamos Hebreus 11.1",
+      "collection": null,
+      "author": "Sociedade bíblica do Brasil",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 376
+    },
+    {
+      "register": "00376",
+      "title": "Bíblia sagrada : no príncipio Deus criou os céus e a terra. Génesis 1.1",
+      "collection": "Teologia para todos",
+      "author": "Sociedade bíblica do Brasil",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 377
+    },
+    {
+      "register": "00377",
+      "title": "Teologia esfria o crente?",
+      "collection": null,
+      "author": "Rodrigo Bibo",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 378
+    },
+    {
+      "register": "00378",
+      "title": "Vivendo com um cristão: os ensinamentos de 1 Pedro",
+      "collection": null,
+      "author": "A. W. Tozer",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 379
+    },
+    {
+      "register": "00379",
+      "title": "Providência",
+      "collection": null,
+      "author": "John Piper",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 380
+    },
+    {
+      "register": "00380",
+      "title": "Igreja centrada: desenvolvendo em sua cidade um ministério equilibrado e centrado no evangelho",
+      "collection": null,
+      "author": "Timothy Keller",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 381
+    },
+    {
+      "register": "00381",
+      "title": "Louco amor: maravilhado com um Deus que nunca muda",
+      "collection": null,
+      "author": "Francis Chan; Danae Yankoski",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 382
+    },
+    {
+      "register": "00382",
+      "title": "Cristãos sem vergonha... de fazer perguntas difíceis ao pastor sobre sexo, namoro e casamento",
+      "collection": null,
+      "author": "Yago Martins",
+      "shelfmark": null,
+      "quantity": 1,
+      "notes": null,
+      "sourceRow": 383
+    },
+    {
+      "register": "00383",
+      "title": "Porquê Jesus?",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": null,
+      "notes": "verficar quantidade",
+      "sourceRow": 384
+    },
+    {
+      "register": "00384",
+      "title": "ADN 1",
+      "collection": null,
+      "author": null,
+      "shelfmark": null,
+      "quantity": null,
+      "notes": "verficar quantidade",
+      "sourceRow": 385
+    }
+  ]
+}

@@ -47,6 +47,16 @@ describe('Basic member experience', () => {
       id: 'b1',
       title: 'Livro completo',
       author: 'Autora',
+      registrationNumber: '00001',
+      collection: 'Coleção Ponte',
+      categories: [
+        {
+          categoryCode: '54',
+          isPrimary: true,
+          reviewedAt: null,
+          category: { code: '54', name: 'Liderança', parentCode: '50' },
+        },
+      ],
       cover: 'https://example.com/cover.jpg',
       quantity: 2,
       available: 1,
@@ -98,6 +108,11 @@ describe('Basic member experience', () => {
     const dialog = within(screen.getByRole('dialog'));
     expect(await dialog.findByText('Editora Ponte')).toBeInTheDocument();
     expect(dialog.getByText('123456')).toBeInTheDocument();
+    expect(dialog.getByText('00001')).toBeInTheDocument();
+    expect(dialog.getByText('Coleção Ponte')).toBeInTheDocument();
+    expect(
+      dialog.getByText(/54 — Liderança · Tema principal · Proposta por rever/),
+    ).toBeInTheDocument();
     expect(dialog.getByText('150')).toBeInTheDocument();
     expect(await dialog.findByText('Renovações: 1')).toBeInTheDocument();
     fireEvent.click(

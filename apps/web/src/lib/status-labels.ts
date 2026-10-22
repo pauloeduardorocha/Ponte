@@ -11,6 +11,8 @@ export const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Pendente',
   COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
+  PENDING_INVENTORY: 'Por conferir',
+  NOT_ASSESSED: 'Por avaliar',
   AVAILABLE: 'Disponível',
   LOANED: 'Emprestado',
   RETURNED: 'Devolvido',

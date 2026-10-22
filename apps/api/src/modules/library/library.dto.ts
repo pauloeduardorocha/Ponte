@@ -2,6 +2,7 @@ import { PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayUnique,
   IsArray,
   IsBoolean,
   IsDateString,
@@ -21,6 +22,7 @@ import {
 import { PageQuery } from '../members/member.dto';
 
 export const COPY_STATUSES = [
+  'PENDING_INVENTORY',
   'AVAILABLE',
   'LOANED',
   'RESERVED',
@@ -56,6 +58,38 @@ export class LibraryQuery extends PageQuery {
 }
 
 export class BookDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/)
+  @MaxLength(32)
+  registrationNumber?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  collection?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(10000)
+  catalogueNotes?: string | null;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2,3}$/)
+  primaryCategoryCode?: string | null;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(30)
+  @ArrayUnique()
+  @Matches(/^\d{2,3}$/, { each: true })
+  secondaryCategoryCodes?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  classificationReviewed?: boolean;
+
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' ? value.trim() : value,
   )
@@ -64,11 +98,12 @@ export class BookDto {
   @MaxLength(200)
   title!: string;
 
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @Matches(/\S/)
   @MaxLength(200)
-  author!: string;
+  author?: string | null;
 
   @IsOptional()
   @IsString()
@@ -138,6 +173,11 @@ export class UpdateBookDto extends PartialType(BookDto, {
 }) {}
 
 export class CopyDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  shelfmark?: string | null;
+
   @IsString()
   @MinLength(1)
   @Matches(/\S/)
@@ -181,8 +221,9 @@ export class UpdateCopyDto extends PartialType(CopyDto, {
   skipNullProperties: false,
 }) {
   @ValidateIf((_object, value) => value !== undefined)
-  @IsIn(['AVAILABLE', 'MAINTENANCE', 'LOST', 'DISPOSED'])
-  status?: 'AVAILABLE' | 'MAINTENANCE' | 'LOST' | 'DISPOSED';
+  @IsIn(['PENDING_INVENTORY', 'AVAILABLE', 'MAINTENANCE', 'LOST', 'DISPOSED'])
+  status?:
+    'PENDING_INVENTORY' | 'AVAILABLE' | 'MAINTENANCE' | 'LOST' | 'DISPOSED';
 
   @IsString()
   @Matches(/\S/)

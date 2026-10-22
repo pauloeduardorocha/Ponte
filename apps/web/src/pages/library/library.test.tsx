@@ -163,7 +163,7 @@ describe('Library frontend', () => {
     fireEvent.submit(form!);
     expect(
       await within(dialog).findAllByText('Campo obrigatório'),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
     expect(
       requests.filter(
         (entry) =>
@@ -481,9 +481,6 @@ describe('Library frontend', () => {
     expect(
       requests.filter((r) => r.path.startsWith('/library/')).map((r) => r.path),
     ).toEqual(['/library/fines']);
-    const resources = screen.getByRole('button', { name: 'Recursos' });
-    expect(resources).toHaveAttribute('aria-expanded', 'false');
-    fireEvent.click(resources);
     expect(
       await screen.findByRole('link', { name: 'Biblioteca' }),
     ).toBeInTheDocument();

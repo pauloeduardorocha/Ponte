@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "provider": "Google Books",
+  "applied": false,
+  "note": "Correspondência de obra. A edição física não está identificada na fonte; requer conferência antes de associar a capa.",
+  "candidates": [
+    {
+      "registrationNumber": "00228",
+      "volumeId": "0fUtDwAAQBAJ",
+      "sourceUrl": "https://books.google.com/books?id=0fUtDwAAQBAJ",
+      "sourceTitle": "Cristianismo puro e simples - C.S. Lewis - Google Livros",
+      "coverUrl": "https://books.google.pt/books/publisher/content?id=0fUtDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl",
+      "httpStatus": 200,
+      "contentType": "image/jpeg",
+      "status": "TITLE_AUTHOR_MATCH_EDITION_UNCONFIRMED"
+    },
+    {
+      "registrationNumber": "00313",
+      "volumeId": "9ZyuDwAAQBAJ",
+      "sourceUrl": "https://books.google.com/books?id=9ZyuDwAAQBAJ",
+      "sourceTitle": "Teologia sistemática ao alcance de todos - Wayne Grudem - Google Livros",
+      "coverUrl": "https://books.google.pt/books/publisher/content?id=9ZyuDwAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl",
+      "httpStatus": 200,
+      "contentType": "image/jpeg",
+      "status": "TITLE_AUTHOR_MATCH_EDITION_UNCONFIRMED"
+    },
+    {
+      "registrationNumber": "00233",
+      "volumeId": "F5WSEAAAQBAJ",
+      "sourceUrl": "https://books.google.com/books?id=F5WSEAAAQBAJ",
+      "sourceTitle": "Teologia Sistemática (GRUDEM): 2a Ed. revisada e ampliada - Wayne Grudem - Google Livros",
+      "coverUrl": "https://books.google.pt/books/publisher/content?id=F5WSEAAAQBAJ&printsec=frontcover&img=1&zoom=1&edge=curl",
+      "httpStatus": 200,
+      "contentType": "image/jpeg",
+      "status": "TITLE_AUTHOR_MATCH_EDITION_UNCONFIRMED"
+    }
+  ]
+}

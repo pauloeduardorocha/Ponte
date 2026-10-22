@@ -45,6 +45,34 @@ const reservationInclude = {
   bookCopy: true,
 } satisfies Prisma.ReservationInclude;
 
+const catalogueInclude = {
+  categories: { include: { category: true } },
+  copies: { select: { status: true, shelfmark: true } },
+} satisfies Prisma.BookInclude;
+type CatalogueBook = Prisma.BookGetPayload<{
+  include: typeof catalogueInclude;
+}>;
+function presentBook({ copies, categories, ...book }: CatalogueBook) {
+  const primary = categories.find((item) => item.isPrimary);
+  return {
+    ...book,
+    categories,
+    primaryCategoryCode: primary?.categoryCode ?? null,
+    secondaryCategoryCodes: categories
+      .filter((item) => !item.isPrimary)
+      .map((item) => item.categoryCode),
+    classificationReviewed: Boolean(primary?.reviewedAt),
+    quantity: copies.length,
+    available: copies.filter((copy) => copy.status === 'AVAILABLE').length,
+    pendingInventory: copies.filter(
+      (copy) => copy.status === 'PENDING_INVENTORY',
+    ).length,
+    shelfmarks: [
+      ...new Set(copies.map((copy) => copy.shelfmark).filter(Boolean)),
+    ],
+  };
+}
+
 @Injectable()
 export class LibraryService implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
@@ -278,9 +306,36 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         author: query.author
           ? { contains: query.author, mode: 'insensitive' }
           : undefined,
-        category: query.category
-          ? { equals: query.category, mode: 'insensitive' }
-          : undefined,
+        ...(query.category
+          ? {
+              AND: [
+                {
+                  OR: [
+                    {
+                      category: { equals: query.category, mode: 'insensitive' },
+                    },
+                    {
+                      categories: {
+                        some: {
+                          OR: [
+                            { categoryCode: query.category.split(' — ')[0] },
+                            {
+                              category: {
+                                name: {
+                                  equals: query.category,
+                                  mode: 'insensitive',
+                                },
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            }
+          : {}),
         ...(query.available
           ? {
               copies:
@@ -292,12 +347,27 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         ...(query.search
           ? {
               OR: [
-                ...['title', 'subtitle', 'author', 'isbn', 'category'].map(
-                  (field) => ({
-                    [field]: { contains: query.search, mode: 'insensitive' },
-                  }),
-                ),
+                ...[
+                  'title',
+                  'subtitle',
+                  'author',
+                  'isbn',
+                  'category',
+                  'registrationNumber',
+                  'collection',
+                ].map((field) => ({
+                  [field]: { contains: query.search, mode: 'insensitive' },
+                })),
                 { keywords: { has: query.search } },
+                {
+                  categories: {
+                    some: {
+                      category: {
+                        name: { contains: query.search, mode: 'insensitive' },
+                      },
+                    },
+                  },
+                },
               ],
             }
           : {}),
@@ -307,15 +377,10 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         orderBy: [{ title: 'asc' }, { id: 'asc' }],
-        include: { copies: { select: { status: true } } },
+        include: catalogueInclude,
       });
       return {
-        items: books.map(({ copies, ...book }) => ({
-          ...book,
-          quantity: copies.length,
-          available: copies.filter((copy) => copy.status === 'AVAILABLE')
-            .length,
-        })),
+        items: books.map(presentBook),
         total: await tx.book.count({ where }),
         page: query.page,
         pageSize: query.pageSize,
@@ -324,10 +389,29 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   bookOptions(field: 'author' | 'category', query: PageQuery) {
+    if (field === 'category')
+      return this.transaction(async (tx) => {
+        const values = Prisma.sql`SELECT code || ' — ' || name AS value FROM library_categories
+        UNION SELECT category AS value FROM library_books WHERE category IS NOT NULL AND category <> ''`;
+        const filter = Prisma.sql`strpos(lower(value),lower(${query.search ?? ''})) > 0`;
+        const items = await tx.$queryRaw<
+          { id: string; name: string }[]
+        >(Prisma.sql`
+        SELECT value AS id,value AS name FROM (${values}) options WHERE ${filter}
+        ORDER BY value LIMIT ${query.pageSize} OFFSET ${(query.page - 1) * query.pageSize}`);
+        const [count] = await tx.$queryRaw<{ total: number }[]>(
+          Prisma.sql`SELECT count(*)::int AS total FROM (${values}) options WHERE ${filter}`,
+        );
+        return {
+          items,
+          total: count?.total ?? 0,
+          page: query.page,
+          pageSize: query.pageSize,
+        };
+      });
     return this.transaction(async (tx) => {
       // Only these two constant identifiers enter SQL; search remains parameterized.
-      const column =
-        field === 'author' ? Prisma.sql`"author"` : Prisma.sql`"category"`;
+      const column = Prisma.sql`"author"`;
       const where = Prisma.sql`${column} IS NOT NULL AND ${column} <> ''
         AND strpos(lower(${column}), lower(${query.search ?? ''})) > 0`;
       const items = await tx.$queryRaw<
@@ -347,9 +431,82 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
+  categories(query: PageQuery, filterLabels = false) {
+    return this.transaction(async (tx) => {
+      const where: Prisma.LibraryCategoryWhereInput = query.search
+        ? {
+            OR: [
+              { code: { contains: query.search } },
+              { name: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {};
+      const rows = await tx.libraryCategory.findMany({
+        where,
+        orderBy: { code: 'asc' },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+      });
+      return {
+        items: rows.map((row) => ({
+          ...row,
+          id: filterLabels ? `${row.code} — ${row.name}` : row.code,
+          name: `${row.code} — ${row.name}`,
+        })),
+        total: await tx.libraryCategory.count({ where }),
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
+  private async assignCategories(
+    tx: Tx,
+    bookId: string,
+    primary: string | null,
+    secondary: string[],
+    reviewed: boolean,
+    legacyCategory?: string | null,
+  ) {
+    const codes = [...(primary ? [primary] : []), ...secondary];
+    if (new Set(codes).size !== codes.length || (secondary.length && !primary))
+      throw new BadRequestException(
+        'Indique uma categoria principal e não repita categorias',
+      );
+    const categories = await tx.libraryCategory.findMany({
+      where: { code: { in: codes } },
+    });
+    if (categories.length !== codes.length)
+      throw new BadRequestException('Categoria inexistente');
+    await tx.bookCategory.deleteMany({ where: { bookId } });
+    if (codes.length)
+      await tx.bookCategory.createMany({
+        data: codes.map((categoryCode) => ({
+          bookId,
+          categoryCode,
+          isPrimary: categoryCode === primary,
+          reviewedAt: reviewed ? new Date() : null,
+        })),
+      });
+    const category = categories.find((item) => item.code === primary);
+    await tx.book.update({
+      where: { id: bookId },
+      data: {
+        category: category
+          ? `${category.code} — ${category.name}`
+          : (legacyCategory ?? null),
+      },
+    });
+  }
+
   getBook(id: string) {
     return this.transaction(async (tx) =>
-      tx.book.findUniqueOrThrow({ where: { id } }),
+      presentBook(
+        await tx.book.findUniqueOrThrow({
+          where: { id },
+          include: catalogueInclude,
+        }),
+      ),
     );
   }
 
@@ -383,24 +540,82 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   createBook(dto: BookDto, actor: string) {
     return this.transaction(async (tx) => {
       await bindAudit(tx);
-      const book = await tx.book.create({ data: dto });
+      const {
+        primaryCategoryCode,
+        secondaryCategoryCodes,
+        classificationReviewed,
+        ...data
+      } = dto;
+      const book = await tx.book.create({ data });
+      if (
+        primaryCategoryCode !== undefined ||
+        secondaryCategoryCodes !== undefined
+      ) {
+        await this.assignCategories(
+          tx,
+          book.id,
+          primaryCategoryCode ?? null,
+          secondaryCategoryCodes ?? [],
+          classificationReviewed ?? false,
+          data.category,
+        );
+      }
       await this.audit(tx, actor, 'BOOK_CREATE', 'Book', book.id, {
         changes: JSON.parse(JSON.stringify(dto)) as Prisma.InputJsonValue,
       });
-      return book;
+      return presentBook(
+        await tx.book.findUniqueOrThrow({
+          where: { id: book.id },
+          include: catalogueInclude,
+        }),
+      );
     });
   }
 
   updateBook(id: string, dto: UpdateBookDto, actor: string) {
     return this.transaction(async (tx) => {
       await bindAudit(tx);
-      const before = await tx.book.findUniqueOrThrow({ where: { id } });
-      const book = await tx.book.update({ where: { id }, data: dto });
+      const before = await tx.book.findUniqueOrThrow({
+        where: { id },
+        include: catalogueInclude,
+      });
+      const {
+        primaryCategoryCode,
+        secondaryCategoryCodes,
+        classificationReviewed,
+        ...data
+      } = dto;
+      await tx.book.update({ where: { id }, data });
+      if (
+        primaryCategoryCode !== undefined ||
+        secondaryCategoryCodes !== undefined ||
+        classificationReviewed !== undefined
+      ) {
+        await this.assignCategories(
+          tx,
+          id,
+          primaryCategoryCode === undefined
+            ? (before.categories.find((item) => item.isPrimary)?.categoryCode ??
+                null)
+            : primaryCategoryCode,
+          secondaryCategoryCodes ??
+            before.categories
+              .filter((item) => !item.isPrimary)
+              .map((item) => item.categoryCode),
+          classificationReviewed ?? false,
+          data.category,
+        );
+      }
       await this.audit(tx, actor, 'BOOK_UPDATE', 'Book', id, {
         before: JSON.parse(JSON.stringify(before)) as Prisma.InputJsonValue,
         changes: JSON.parse(JSON.stringify(dto)) as Prisma.InputJsonValue,
       });
-      return book;
+      return presentBook(
+        await tx.book.findUniqueOrThrow({
+          where: { id },
+          include: catalogueInclude,
+        }),
+      );
     });
   }
 

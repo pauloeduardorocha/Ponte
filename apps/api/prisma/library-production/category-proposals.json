@@ -1,0 +1,2695 @@
+{
+  "version": 1,
+  "approved": false,
+  "basis": "Propostas a partir do título e coleção; sem leitura do conteúdo das obras.",
+  "assignments": [
+    {
+      "register": "00001",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00002",
+      "primaryCategoryCode": "55",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00003",
+      "primaryCategoryCode": "122",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00004",
+      "primaryCategoryCode": "83",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00005",
+      "primaryCategoryCode": "83",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00006",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00007",
+      "primaryCategoryCode": "152",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00008",
+      "primaryCategoryCode": "91",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00009",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00010",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00011",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00012",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00013",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00014",
+      "primaryCategoryCode": "34",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00015",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00016",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00017",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00018",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00019",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00020",
+      "primaryCategoryCode": "05",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00021",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00022",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00023",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00024",
+      "primaryCategoryCode": "72",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00025",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00026",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00027",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00028",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00029",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00030",
+      "primaryCategoryCode": "135",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00031",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00032",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00033",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00034",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00035",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00036",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00037",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00038",
+      "primaryCategoryCode": "71",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00039",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00040",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00041",
+      "primaryCategoryCode": "107",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00042",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00043",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00044",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00045",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00046",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00047",
+      "primaryCategoryCode": "155",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00048",
+      "primaryCategoryCode": null,
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Sem categoria segura no índice; verificar conteúdo."
+    },
+    {
+      "register": "00049",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00050",
+      "primaryCategoryCode": "91",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00051",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00052",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00053",
+      "primaryCategoryCode": "71",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00054",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00055",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00056",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00057",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00058",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00059",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00060",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00061",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00062",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00063",
+      "primaryCategoryCode": "21",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00064",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00065",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00066",
+      "primaryCategoryCode": "21",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00067",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00068",
+      "primaryCategoryCode": "128",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00069",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00070",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00071",
+      "primaryCategoryCode": "71",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00072",
+      "primaryCategoryCode": "71",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00073",
+      "primaryCategoryCode": "94",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00074",
+      "primaryCategoryCode": "61",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00075",
+      "primaryCategoryCode": "128",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00076",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00077",
+      "primaryCategoryCode": "20",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00078",
+      "primaryCategoryCode": "26",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00079",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00080",
+      "primaryCategoryCode": "101",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00081",
+      "primaryCategoryCode": "111",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00082",
+      "primaryCategoryCode": "107",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00083",
+      "primaryCategoryCode": "141",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00084",
+      "primaryCategoryCode": "14",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00085",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00086",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00087",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00088",
+      "primaryCategoryCode": "00",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00089",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00090",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00091",
+      "primaryCategoryCode": "26",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00092",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00093",
+      "primaryCategoryCode": "111",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00094",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00095",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00096",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00097",
+      "primaryCategoryCode": "00",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00098",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00099",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00100",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00101",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00102",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00103",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00104",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00105",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00106",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00107",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00108",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00109",
+      "primaryCategoryCode": "01",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00110",
+      "primaryCategoryCode": "112",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00111",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00112",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00113",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00114",
+      "primaryCategoryCode": "111",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00115",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00116",
+      "primaryCategoryCode": "14",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00117",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00118",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00119",
+      "primaryCategoryCode": "141",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00120",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00121",
+      "primaryCategoryCode": "135",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00122",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00123",
+      "primaryCategoryCode": "93",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00124",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00125",
+      "primaryCategoryCode": "93",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00126",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00127",
+      "primaryCategoryCode": "46",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00128",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00129",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00130",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00131",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00132",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00133",
+      "primaryCategoryCode": "15",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00134",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00135",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00136",
+      "primaryCategoryCode": "525",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00137",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00138",
+      "primaryCategoryCode": "105",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00139",
+      "primaryCategoryCode": "123",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00140",
+      "primaryCategoryCode": "102",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00141",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00142",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00143",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00144",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00145",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00146",
+      "primaryCategoryCode": "142",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00147",
+      "primaryCategoryCode": "52",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00148",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00149",
+      "primaryCategoryCode": "101",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00150",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00151",
+      "primaryCategoryCode": "522",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00152",
+      "primaryCategoryCode": "522",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00153",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00154",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00155",
+      "primaryCategoryCode": "91",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00156",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00157",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00158",
+      "primaryCategoryCode": null,
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Sem categoria segura no índice; verificar conteúdo."
+    },
+    {
+      "register": "00159",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00160",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00161",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00162",
+      "primaryCategoryCode": "52",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00163",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00164",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00165",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00166",
+      "primaryCategoryCode": null,
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Sem categoria segura no índice; verificar conteúdo."
+    },
+    {
+      "register": "00167",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00168",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00169",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00170",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00171",
+      "primaryCategoryCode": "15",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00172",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00173",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00174",
+      "primaryCategoryCode": "91",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00175",
+      "primaryCategoryCode": "15",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00176",
+      "primaryCategoryCode": "114",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00177",
+      "primaryCategoryCode": "55",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00178",
+      "primaryCategoryCode": "107",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00179",
+      "primaryCategoryCode": "128",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00180",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00181",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00182",
+      "primaryCategoryCode": "82",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00183",
+      "primaryCategoryCode": "61",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00184",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00185",
+      "primaryCategoryCode": "522",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00186",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00187",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00188",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00189",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00190",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00191",
+      "primaryCategoryCode": null,
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Sem categoria segura no índice; verificar conteúdo."
+    },
+    {
+      "register": "00192",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00193",
+      "primaryCategoryCode": "152",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00194",
+      "primaryCategoryCode": "15",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00195",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00196",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00197",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00198",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00199",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00200",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00201",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00202",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00203",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00204",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00205",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00206",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00207",
+      "primaryCategoryCode": "123",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00208",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00209",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00210",
+      "primaryCategoryCode": "82",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00211",
+      "primaryCategoryCode": "46",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00212",
+      "primaryCategoryCode": "02",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00213",
+      "primaryCategoryCode": "136",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00214",
+      "primaryCategoryCode": "104",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00215",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00216",
+      "primaryCategoryCode": "101",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00217",
+      "primaryCategoryCode": "94",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00218",
+      "primaryCategoryCode": "71",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00219",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00220",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00221",
+      "primaryCategoryCode": "136",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00222",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00223",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00224",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00225",
+      "primaryCategoryCode": "522",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00226",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00227",
+      "primaryCategoryCode": "135",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00228",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00229",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00230",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00231",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00232",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00233",
+      "primaryCategoryCode": "28",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00234",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00235",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00236",
+      "primaryCategoryCode": "124",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00237",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00238",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00239",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00240",
+      "primaryCategoryCode": "122",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00241",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00242",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00243",
+      "primaryCategoryCode": "21",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00244",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00245",
+      "primaryCategoryCode": "126",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00246",
+      "primaryCategoryCode": "22",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00247",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00248",
+      "primaryCategoryCode": "95",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00249",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00250",
+      "primaryCategoryCode": "136",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00251",
+      "primaryCategoryCode": "21",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00252",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00253",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00254",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00255",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00256",
+      "primaryCategoryCode": "135",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00257",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00258",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00259",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00260",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00261",
+      "primaryCategoryCode": "135",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00262",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00263",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00264",
+      "primaryCategoryCode": "132",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00265",
+      "primaryCategoryCode": "43",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00266",
+      "primaryCategoryCode": "22",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00267",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00268",
+      "primaryCategoryCode": "111",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00269",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00270",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00271",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00272",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00273",
+      "primaryCategoryCode": "82",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00274",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00275",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00276",
+      "primaryCategoryCode": "44",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00277",
+      "primaryCategoryCode": "61",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00278",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00279",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00280",
+      "primaryCategoryCode": "132",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00281",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00282",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00283",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00284",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00285",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00286",
+      "primaryCategoryCode": "103",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00287",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00288",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00289",
+      "primaryCategoryCode": "54",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00290",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00291",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00292",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00293",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00294",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00295",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00296",
+      "primaryCategoryCode": "94",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00297",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00298",
+      "primaryCategoryCode": "15",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00299",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00300",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00301",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00302",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00303",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00304",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00305",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00306",
+      "primaryCategoryCode": "141",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00307",
+      "primaryCategoryCode": "26",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00308",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00309",
+      "primaryCategoryCode": "57",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00310",
+      "primaryCategoryCode": "22",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00311",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00312",
+      "primaryCategoryCode": "24",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00313",
+      "primaryCategoryCode": "28",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00314",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00315",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00316",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00317",
+      "primaryCategoryCode": "45",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00318",
+      "primaryCategoryCode": "34",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00319",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00320",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00321",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00322",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00323",
+      "primaryCategoryCode": "22",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00324",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00325",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00326",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00327",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00328",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00329",
+      "primaryCategoryCode": "34",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00330",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00331",
+      "primaryCategoryCode": "62",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00332",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00333",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00334",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00335",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00336",
+      "primaryCategoryCode": "56",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00337",
+      "primaryCategoryCode": "131",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00338",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00339",
+      "primaryCategoryCode": "05",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00340",
+      "primaryCategoryCode": "125",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00341",
+      "primaryCategoryCode": "26",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00342",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00343",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00344",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00345",
+      "primaryCategoryCode": "95",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00346",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00347",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00348",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00349",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00350",
+      "primaryCategoryCode": "46",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00351",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00352",
+      "primaryCategoryCode": "152",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00353",
+      "primaryCategoryCode": "33",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00354",
+      "primaryCategoryCode": "92",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00355",
+      "primaryCategoryCode": "11",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00356",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00357",
+      "primaryCategoryCode": "133",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00358",
+      "primaryCategoryCode": "43",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00359",
+      "primaryCategoryCode": "16",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00360",
+      "primaryCategoryCode": "121",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00361",
+      "primaryCategoryCode": "123",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00362",
+      "primaryCategoryCode": "525",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00363",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00364",
+      "primaryCategoryCode": "25",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00365",
+      "primaryCategoryCode": "61",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00366",
+      "primaryCategoryCode": "128",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00367",
+      "primaryCategoryCode": "103",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00368",
+      "primaryCategoryCode": "31",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00369",
+      "primaryCategoryCode": "32",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00370",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00371",
+      "primaryCategoryCode": "103",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00372",
+      "primaryCategoryCode": "51",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00373",
+      "primaryCategoryCode": "27",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00374",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00375",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00376",
+      "primaryCategoryCode": "10",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00377",
+      "primaryCategoryCode": "21",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00378",
+      "primaryCategoryCode": "12",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00379",
+      "primaryCategoryCode": "22",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00380",
+      "primaryCategoryCode": "107",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00381",
+      "primaryCategoryCode": "96",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00382",
+      "primaryCategoryCode": "522",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Tema sugerido pelo título ou pela coleção; confirmar na revisão."
+    },
+    {
+      "register": "00383",
+      "primaryCategoryCode": "23",
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Verificar conteúdo antes de confirmar a classificação."
+    },
+    {
+      "register": "00384",
+      "primaryCategoryCode": null,
+      "secondaryCategoryCodes": [],
+      "reviewStatus": "PENDING",
+      "reviewNote": "Sem categoria segura no índice; verificar conteúdo."
+    }
+  ]
+}

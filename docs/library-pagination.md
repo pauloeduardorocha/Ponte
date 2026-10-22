@@ -46,3 +46,24 @@ livro, ordenados por empréstimo mais recente e id decrescente para desempate.
 Não inclui membros, operadores, observações, multas ou identificadores de leitores.
 Livro inexistente retorna 404; UUID ou paginação inválidos retornam 400.
 Os detalhes bibliográficos usam o endpoint existente `GET /api/v1/library/books/:id`.
+
+## Categorias estruturadas e inventário
+
+`GET /api/v1/library/categories` usa LIBRARY_BOOK_READ e devolve o índice paginado,
+com id igual ao código textual, name como código e nome, code e parentCode.
+Inclui categorias ainda não usadas. O endpoint de opções de categorias combina
+esse índice com as categorias livres já utilizadas, sem duplicar rótulos.
+O filtro category aceita código, nome ou rótulo e encontra também temas secundários.
+A pesquisa inclui número de registo, coleção e nome dos temas associados.
+
+Livros mantêm os campos existentes e acrescentam registrationNumber, collection,
+catalogueNotes, primaryCategoryCode, secondaryCategoryCodes e classificationReviewed.
+O retorno inclui categories com reviewedAt e o tema correspondente, pendingInventory
+e shelfmarks. Autor pode ser nulo; und significa idioma não informado.
+Criar ou editar permite selecionar tema principal, temas secundários e indicar
+explicitamente se a classificação foi revista. Categorias inexistentes ou repetidas
+são rejeitadas. Existe apenas um tema principal por livro.
+
+Exemplares acrescentam shelfmark (cota) e o estado PENDING_INVENTORY, apresentado
+como Por conferir. Só AVAILABLE e RESERVED podem ser emprestados pelas regras
+existentes; o novo estado não é contado como disponível nem alocado a reservas.
