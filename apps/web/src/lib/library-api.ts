@@ -221,6 +221,16 @@ export const cancelReservation = (id: string) =>
   });
 export const listFines = (query: LibraryFilters = {}) =>
   apiRequest<Page<Fine>>(`${root}/fines`, { query });
+export interface FineHistory {
+  payments: Fine['payments'];
+  adjustments: Fine['adjustments'];
+  totalPayments: number;
+  totalAdjustments: number;
+  page: number;
+  pageSize: number;
+}
+export const getFineHistory = (id: string, query: LibraryFilters = {}) =>
+  apiRequest<FineHistory>(`${root}/fines/${id}/history`, { query });
 export const payFine = (
   id: string,
   body: { amount: string; idempotencyKey: string },

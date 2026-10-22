@@ -519,6 +519,84 @@ describe('Library frontend', () => {
         ?.query.get('page'),
     ).toBe('2');
   });
+  it.each([
+    ['Exemplares', 'copies', copy],
+    ['Empréstimos', 'loans', loan],
+    ['Multas', 'fines', fine],
+    ['Reservas', 'reservations', reservation],
+    [
+      'Membros / histórico',
+      'members',
+      { id: 'm1', name: 'Ana Biblioteca', status: 'ACTIVE' },
+    ],
+  ])('paginates %s on demand', async (label, endpoint, entry) => {
+    const requests = mockApi({
+      ...routes(),
+      [`GET /library/${endpoint}`]: { body: page([entry], 41) },
+    });
+    renderApp('/library');
+    await tab(label);
+    expect(
+      await screen.findByText('Página 1 · 41 registros'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^Próxima$/ }));
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((r) => r.path === `/library/${endpoint}`)
+          .at(-1)
+          ?.query.get('page'),
+      ).toBe('2'),
+    );
+    expect(
+      requests.filter((r) => r.path === `/library/${endpoint}`),
+    ).toHaveLength(2);
+  });
+  it('loads fine movements only on request and paginates them independently from the fine list', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /library/fines/f1/history': ({ query }) => ({
+        body: {
+          payments: [
+            {
+              id: `p${query.get('page')}`,
+              amount: '0.10',
+              createdAt: loan.borrowedAt,
+              createdBy: 'u1',
+            },
+          ],
+          adjustments: [],
+          totalPayments: 43,
+          totalAdjustments: 0,
+          page: Number(query.get('page')),
+          pageSize: 20,
+        },
+      }),
+    });
+    renderApp('/library');
+    await tab('Multas');
+    const button = await screen.findByRole('button', {
+      name: 'Ver pagamentos e ajustes',
+    });
+    expect(requests.some((r) => r.path.endsWith('/f1/history'))).toBe(false);
+    fireEvent.click(button);
+    expect(await screen.findByText('Página 1')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Próxima página dos movimentos' }),
+    );
+    expect(await screen.findByText('Página 2')).toBeInTheDocument();
+    expect(
+      requests
+        .filter((r) => r.path.endsWith('/f1/history'))
+        .map((r) => r.query.get('page')),
+    ).toEqual(['1', '2']);
+    expect(requests.filter((r) => r.path === '/library/fines')).toHaveLength(1);
+    expect(
+      requests
+        .filter((r) => r.path.endsWith('/f1/history'))
+        .every((r) => r.query.get('pageSize') === '20'),
+    ).toBe(true);
+  });
   it('formats money using integer cents', () => {
     expect(
       fineBalance({ amount: '0.30', paidAmount: '0.10', discount: '0.10' }),

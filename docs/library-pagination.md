@@ -67,3 +67,19 @@ são rejeitadas. Existe apenas um tema principal por livro.
 Exemplares acrescentam shelfmark (cota) e o estado PENDING_INVENTORY, apresentado
 como Por conferir. Só AVAILABLE e RESERVED podem ser emprestados pelas regras
 existentes; o novo estado não é contado como disponível nem alocado a reservas.
+
+## Pagamentos e ajustes de multas
+
+`GET /api/v1/library/fines/:id/history` aceita `page` e `pageSize`
+(padrão 20, máximo 100) e exige `LIBRARY_FINE_READ` ou `LIBRARY_HISTORY_READ`.
+Retorna `{ payments, adjustments, totalPayments, totalAdjustments, page, pageSize }`.
+Cada lista é paginada no banco e ordenada por `createdAt desc, id desc`.
+A navegação avança ambas até à última página da maior lista. Multa inexistente
+retorna 404; UUID ou paginação inválidos retornam 400.
+
+Nas multas e nos históricos de membros e exemplares, “Ver pagamentos e ajustes”
+carrega os movimentos apenas ao abrir e permite navegar sem mudar a página da
+lista principal. Os arrays embutidos mantidos por compatibilidade nesses retornos
+e na resposta de ajuste ficam limitados aos 20 movimentos mais recentes de cada
+tipo; o endpoint dedicado permite consultar todos os restantes. Valores totais,
+saldos e operações de pagamento continuam a considerar todos os movimentos.

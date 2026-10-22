@@ -13,7 +13,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { AuthRequest } from '../auth/auth.guard';
-import { Permission } from '../auth/permission.decorator';
+import { Permission, PermissionAny } from '../auth/permission.decorator';
 import {
   AdjustmentDto,
   BookDto,
@@ -222,6 +222,15 @@ export class LibraryController {
   @Permission('LIBRARY_FINE_READ')
   fines(@Query() query: LibraryQuery) {
     return this.library.listFines(query);
+  }
+
+  @Get('fines/:id/history')
+  @PermissionAny('LIBRARY_FINE_READ', 'LIBRARY_HISTORY_READ')
+  fineHistory(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query() query: PageQuery,
+  ) {
+    return this.library.fineHistory(id, query);
   }
 
   @Post('fines/:id/payments')

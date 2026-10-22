@@ -45,6 +45,13 @@ const reservationInclude = {
   bookCopy: true,
 } satisfies Prisma.ReservationInclude;
 
+// Embedded movements remain bounded for existing consumers; the full history
+// is available through the independently paginated fine history endpoint.
+const fineMovementsInclude = {
+  payments: { take: 20, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
+  adjustments: { take: 20, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }] },
+} satisfies Prisma.FineInclude;
+
 const catalogueInclude = {
   categories: { include: { category: true } },
   copies: { select: { status: true, shelfmark: true } },
@@ -670,7 +677,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         take: query.pageSize,
         include: {
           ...loanInclude,
-          fine: { include: { payments: true, adjustments: true } },
+          fine: { include: fineMovementsInclude },
         },
         orderBy: [{ borrowedAt: 'desc' }, { id: 'desc' }],
       }),
@@ -968,7 +975,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
           take: query.pageSize,
           include: {
             ...loanInclude,
-            fine: { include: { payments: true, adjustments: true } },
+            fine: { include: fineMovementsInclude },
           },
           orderBy: [{ borrowedAt: 'desc' }, { id: 'desc' }],
         }),
@@ -1128,8 +1135,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         items: await tx.fine.findMany({
           where,
           include: {
-            payments: true,
-            adjustments: true,
+            ...fineMovementsInclude,
             loan: {
               include: {
                 member: { select: { id: true, name: true } },
@@ -1142,6 +1148,29 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
           orderBy: [{ createdAt: 'desc' }, { id: 'asc' }],
         }),
         total: await tx.fine.count({ where }),
+        page: query.page,
+        pageSize: query.pageSize,
+      };
+    });
+  }
+
+  fineHistory(id: string, query: PageQuery = new PageQuery()) {
+    return this.transaction(async (tx) => {
+      await bindAudit(tx);
+      await tx.fine.findUniqueOrThrow({ where: { id } });
+      const page = {
+        where: { fineId: id },
+        skip: (query.page - 1) * query.pageSize,
+        take: query.pageSize,
+        orderBy: [{ createdAt: 'desc' as const }, { id: 'desc' as const }],
+      };
+      return {
+        payments: await tx.finePayment.findMany(page),
+        adjustments: await tx.fineAdjustment.findMany(page),
+        totalPayments: await tx.finePayment.count({ where: { fineId: id } }),
+        totalAdjustments: await tx.fineAdjustment.count({
+          where: { fineId: id },
+        }),
         page: query.page,
         pageSize: query.pageSize,
       };
@@ -1238,7 +1267,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
                   ? 'PAID'
                   : 'OPEN',
         },
-        include: { payments: true, adjustments: true },
+        include: fineMovementsInclude,
       });
       await this.audit(tx, actor, 'FINE_ADJUST', 'Fine', id, {
         ...dto,

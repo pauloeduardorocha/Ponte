@@ -1,6 +1,195 @@
 {
   "openapi": "3.0.0",
   "paths": {
+    "/api/v1/library/fines/{id}/history": {
+      "get": {
+        "operationId": "LibraryController_fineHistory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100000,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Movimentos paginados da multa",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "payments",
+                    "adjustments",
+                    "totalPayments",
+                    "totalAdjustments",
+                    "page",
+                    "pageSize"
+                  ],
+                  "properties": {
+                    "payments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "fineId",
+                          "amount",
+                          "createdBy",
+                          "createdAt",
+                          "idempotencyKey"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "fineId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "amount": {
+                            "type": "string"
+                          },
+                          "createdBy": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "idempotencyKey": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "adjustments": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "id",
+                          "fineId",
+                          "amount",
+                          "createdBy",
+                          "createdAt",
+                          "kind",
+                          "justification"
+                        ],
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "fineId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "amount": {
+                            "type": "string"
+                          },
+                          "createdBy": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "kind": {
+                            "type": "string"
+                          },
+                          "justification": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "totalPayments": {
+                      "type": "integer"
+                    },
+                    "totalAdjustments": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pageSize": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "UUID ou paginação inválidos"
+          },
+          "401": {
+            "description": "Não autenticado"
+          },
+          "403": {
+            "description": "Sem LIBRARY_FINE_READ ou LIBRARY_HISTORY_READ"
+          },
+          "404": {
+            "description": "Multa não encontrada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Biblioteca"
+        ],
+        "description": "Paginated private fine movements. Requires LIBRARY_FINE_READ or LIBRARY_HISTORY_READ. Returns payments, adjustments, totalPayments, totalAdjustments, page and pageSize. Each list is bounded by pageSize and ordered by createdAt desc, id desc."
+      }
+    },
     "/api/v1/audit": {
       "get": {
         "operationId": "AuditController_list",

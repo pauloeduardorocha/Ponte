@@ -1,3 +1,4 @@
+import { FineMovements } from './FineMovements';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -57,19 +58,7 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
                   {loan.fine.paidAmount} · Ajustado {loan.fine.discount} · Saldo{' '}
                   {fineBalance(loan.fine)}
                 </Typography>
-                {loan.fine.payments.map((payment) => (
-                  <Typography key={payment.id} variant="body2">
-                    Pagamento {payment.amount} · {formatDate(payment.createdAt)}{' '}
-                    · {payment.createdBy}
-                  </Typography>
-                ))}
-                {loan.fine.adjustments.map((adjustment) => (
-                  <Typography key={adjustment.id} variant="body2">
-                    {adjustment.kind} {adjustment.amount} ·{' '}
-                    {adjustment.justification} ·{' '}
-                    {formatDate(adjustment.createdAt)} · {adjustment.createdBy}
-                  </Typography>
-                ))}
+                <FineMovements fineId={loan.fine.id} />
               </>
             )}
           </RecordRow>

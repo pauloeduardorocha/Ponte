@@ -1,3 +1,4 @@
+import { FineMovements } from './FineMovements';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { BookCatalogDetails } from './BookCatalogDetails';
 import { MemberPortalPage } from '../MemberPortalPage';
@@ -1235,18 +1236,7 @@ function LibraryManagementPage() {
                       </>
                     }
                   >
-                    {fine.payments.map((p) => (
-                      <Typography key={p.id} variant="body2">
-                        Pagamento {p.amount} · {formatDate(p.createdAt)} ·{' '}
-                        {p.createdBy}
-                      </Typography>
-                    ))}
-                    {fine.adjustments.map((a) => (
-                      <Typography key={a.id} variant="body2">
-                        {a.kind} {a.amount} · {a.justification} ·{' '}
-                        {formatDate(a.createdAt)} · {a.createdBy}
-                      </Typography>
-                    ))}
+                    <FineMovements fineId={fine.id} />
                   </RecordRow>
                 ))}
               </RecordTable>
