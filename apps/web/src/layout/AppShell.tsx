@@ -210,7 +210,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       >
         <Box
           component="img"
-          src="/logo.jpg"
+          src="/logo.png"
           alt="Logo de A Ponte"
           width={42}
           height={42}
