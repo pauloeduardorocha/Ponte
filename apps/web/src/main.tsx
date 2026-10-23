@@ -7,6 +7,10 @@ import { SpeedInsights } from '@vercel/speed-insights/react';
 import App from './App';
 import './styles.css';
 import { PwaControls } from './components/PwaControls';
+import { getAccessToken } from './lib/api';
+import { initFrontendErrorReporting } from './lib/frontend-error-reporting';
+
+initFrontendErrorReporting(getAccessToken);
 
 const queryClient = new QueryClient({
   defaultOptions: {

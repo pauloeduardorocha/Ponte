@@ -140,6 +140,7 @@ model User {
   bankReconciliations  BankReconciliation[]  @relation("BankReconciler")
   bankUndoActions      BankReconciliation[]  @relation("BankUndoer")
   financialUploads     FinancialAttachment[] @relation("AttachmentUploader")
+  frontendErrorReports FrontendErrorReport[]
 
   @@index([status])
   @@index([deletedAt])
@@ -536,6 +537,31 @@ model AuditLog {
   @@index([action, createdAt], map: "audit_logs_action_created_at_idx")
   @@index([transactionId, entity, entityId], map: "audit_logs_transaction_entity_idx")
   @@map("audit_logs")
+}
+
+model FrontendErrorReport {
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  requestId       String   @map("request_id") @db.VarChar(36)
+  clientRequestId String?  @map("client_request_id") @db.VarChar(128)
+  occurredAt      DateTime @map("occurred_at") @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  eventType       String   @map("event_type") @db.VarChar(32)
+  message         String   @db.VarChar(2000)
+  stack           String?  @db.Text
+  route           String   @db.VarChar(512)
+  apiPath         String?  @map("api_path") @db.VarChar(512)
+  apiMethod       String?  @map("api_method") @db.VarChar(10)
+  apiStatus       Int?     @map("api_status")
+  userAgent       String?  @map("user_agent") @db.VarChar(1024)
+  device          Json?
+  logs            Json?
+
+  @@index([createdAt], map: "frontend_error_reports_created_at_idx")
+  @@index([userId, createdAt], map: "frontend_error_reports_user_created_at_idx")
+  @@index([eventType, createdAt], map: "frontend_error_reports_type_created_at_idx")
+  @@map("frontend_error_reports")
 }
 
 enum FinancialKind {

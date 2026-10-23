@@ -1,4 +1,5 @@
 import type { AuthSession } from './types';
+import { reportApiFailure } from './frontend-error-reporting';
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
@@ -132,11 +133,19 @@ async function send<T>(
       credentials: 'include',
     });
   } catch {
+    reportApiFailure({ path, method: options.method ?? 'GET', message: 'Falha de rede ao chamar API.' });
     throw new ApiError(0, DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE);
   }
 
   const data = await parseBody(response);
   if (!response.ok) {
+    reportApiFailure({
+      path,
+      method: options.method ?? 'GET',
+      status: response.status,
+      requestId: response.headers.get('x-request-id') ?? (data && typeof data === 'object' && 'requestId' in data && typeof data.requestId === 'string' ? data.requestId : undefined),
+      message: `A API respondeu com HTTP ${response.status}.`,
+    });
     throw new ApiError(
       response.status,
       withErrorReference(extractMessage(data, response.status), data),

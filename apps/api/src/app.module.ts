@@ -25,6 +25,7 @@ import { traceMiddleware } from './common/request-trace';
 import { CommunityModule } from './modules/community/community.controller';
 import { OperationsModule } from './modules/operations/operations.controller';
 import { EventsModule } from './modules/events/events.controller';
+import { FrontendErrorsModule } from './modules/frontend-errors/frontend-errors.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { EventsModule } from './modules/events/events.controller';
     FinanceModule,
     ReimbursementsModule,
     BankingModule,
+    FrontendErrorsModule,
   ],
   providers: [
     { provide: APP_FILTER, useClass: SafeExceptionFilter },
