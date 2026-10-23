@@ -29,3 +29,11 @@ Nova ocorrência às 16:18 UTC: 503 em 2185 ms, sem redirecionamento, com 1.600.
 O caminho de preparação anteriormente devolvia o objeto File original quando abaixo do limite de compressão e limpava imediatamente o seletor. Agora lê os bytes e cria uma cópia em memória antes de limpar o seletor, inclusive para PDFs. Falhas de leitura são apresentadas antes do envio. Fotos comprimidas já eram materializadas pelo canvas. Trata-se de proteção contra ficheiros temporários de provedores de conteúdo; a resolução do incidente depende de nova validação no dispositivo real. Nenhum anexo é persistido em armazenamento local do navegador.
 
 Relatórios HTTP também incluem o código do cabeçalho `x-vercel-error`, limitado a letras maiúsculas, números e sublinhado (até 100 caracteres), sem copiar o corpo da resposta. Validação: 26 testes passaram, incluindo falha de leitura e preservação dos bytes de PDF; TypeScript e lint passaram.
+
+### Normalização de captura direta
+
+A ocorrência seguinte (16:24 UTC) apresentou `SERVICE_UNAVAILABLE` da Vercel, 2.435 ms e 1.972.808 bytes. Às 16:25 UTC, o mesmo dispositivo enviou uma imagem diferente da galeria: POST 201, anexo JPEG de 523.015 bytes. Logo, a cópia em memória não resolveu o incidente e a comparação ainda não isola origem, tamanho e conteúdo da imagem.
+
+Como mitigação, o botão Tirar fotografia agora sempre decodifica e reencoda a captura em JPEG, mesmo abaixo de 2 MB. Mantém proporções, sem recortes, limita a maior dimensão a 2560 pixels e reduz a qualidade até caber em 768 KiB. Se não conseguir, informa a falha antes de enviar. A imagem passa pela pré-visualização para conferência da legibilidade. Galeria e PDFs mantêm o fluxo anterior. Não há repetição automática de gravações.
+
+Os testes cobrem capturas de 523.015 e 1.972.808 bytes, limite de saída, falha de otimização e bloqueio do formulário durante a preparação. São testes locais com canvas simulado; não comprovam resolução no dispositivo real. Validação acumulada: 30 testes de frontend, TypeScript e lint. O diagnóstico permanece aberto até uma captura real ser enviada com sucesso.

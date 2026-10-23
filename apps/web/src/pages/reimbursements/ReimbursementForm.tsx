@@ -16,6 +16,7 @@ import { DocumentGallery } from '../../components/DocumentGallery';
 import {
   type Reimbursement,
   prepareReimbursementFiles,
+  prepareReimbursementCameraPhoto,
   reimbursementFileRequest,
 } from './api';
 
@@ -101,7 +102,7 @@ export function ReimbursementForm({
       onSaved(receipt);
     },
   });
-  async function addFiles(selected: FileList | null) {
+  async function addFiles(selected: FileList | null, camera = false) {
     if (save.isPending || preparingRef.current || !selected?.length) return;
     const incoming = Array.from(selected);
     if (files.length + incoming.length > 3) {
@@ -112,7 +113,10 @@ export function ReimbursementForm({
     setPreparing(true);
     setFileError('');
     try {
-      setFiles(await prepareReimbursementFiles([...files, ...incoming]));
+      const ready = camera
+        ? await Promise.all(incoming.map(prepareReimbursementCameraPhoto))
+        : incoming;
+      setFiles(await prepareReimbursementFiles([...files, ...ready]));
     } catch (error) {
       setFileError(
         error instanceof Error
@@ -243,16 +247,16 @@ export function ReimbursementForm({
                 capture="environment"
                 onChange={async (e) => {
                   const input = e.currentTarget;
-                  await addFiles(input.files);
+                  await addFiles(input.files, true);
                   input.value = '';
                 }}
               />
             </Button>
           </Stack>
           <Typography variant="caption">
-            As fotos são comprimidas para cerca de 2 MB, sem recortes. Várias
-            fotos podem ser comprimidas um pouco mais para caberem no mesmo
-            envio.
+            As fotos tiradas aqui são otimizadas para até 768 KB, sem recortes.
+            Outras fotos podem ter até 2 MB após a otimização. Confira se o
+            documento continua legível na pré-visualização.
           </Typography>
           {preparing && (
             <Typography role="status">A preparar os documentos…</Typography>

@@ -1,3 +1,4 @@
+import * as reimbursementApi from './api';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS } from '@church/shared';
@@ -123,6 +124,42 @@ describe('Reimbursements', () => {
     expect(
       requests.some((request) => request.path.startsWith('/reimbursements')),
     ).toBe(false);
+  });
+  it('normalizes the camera capture before enabling submission', async () => {
+    mockApi({ ...sessionRoutes(makeUser()), ...memberFormRoutes });
+    const normalized = new File(['jpeg'], 'camera.jpg', { type: 'image/jpeg' });
+    let finish: (file: File) => void = () => undefined;
+    const normalize = vi
+      .spyOn(reimbursementApi, 'prepareReimbursementCameraPhoto')
+      .mockReturnValue(
+        new Promise<File>((resolve) => {
+          finish = resolve;
+        }),
+      );
+    try {
+      const view = renderApp('/pedir-reembolso');
+      await screen.findByLabelText('Quem recebe o reembolso?');
+      await chooseCategory();
+      const camera = view.container.querySelector('input[capture]')!;
+      const original = new File(['camera source'], 'capture.png', {
+        type: 'image/png',
+      });
+      fireEvent.change(camera, { target: { files: [original] } });
+      expect(normalize).toHaveBeenCalledWith(original, 0, [original]);
+      expect(
+        screen.getByRole('button', { name: 'Guardar pedido' }),
+      ).toBeDisabled();
+      finish(normalized);
+      await screen.findByText('camera.jpg');
+      await waitFor(() =>
+        expect(
+          screen.getByRole('button', { name: 'Guardar pedido' }),
+        ).toBeEnabled(),
+      );
+      expect(screen.queryByText('capture.png')).not.toBeInTheDocument();
+    } finally {
+      normalize.mockRestore();
+    }
   });
   it('preserves the document after a server error and permits retry', async () => {
     mockApi({

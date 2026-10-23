@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { prepareReimbursementFile, prepareReimbursementFiles } from './api';
+import {
+  prepareReimbursementFile,
+  prepareReimbursementFiles,
+  prepareReimbursementCameraPhoto,
+} from './api';
 
 const mb = 1024 * 1024;
 const photo = (size: number) =>
@@ -46,6 +50,26 @@ describe('Reimbursement photo compression', () => {
     expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0, 4096, 2731);
     expect(HTMLCanvasElement.prototype.toBlob).toHaveBeenCalledTimes(2);
     expect(bitmap.close).toHaveBeenCalledOnce();
+  });
+
+  it.each([523015, 1972808])(
+    'normalizes a %i-byte camera capture into a smaller JPEG',
+    async (size) => {
+      const { bitmap, drawImage } = canvas([900000, 700000]);
+      const result = await prepareReimbursementCameraPhoto(photo(size));
+      expect(result.size).toBeLessThanOrEqual(768 * 1024);
+      expect(result.type).toBe('image/jpeg');
+      expect(result.name).toBe('foto.jpg');
+      expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0, 2560, 1707);
+      expect(bitmap.close).toHaveBeenCalledOnce();
+    },
+  );
+
+  it('does not send an oversized camera capture if optimization fails', async () => {
+    canvas([900000]);
+    await expect(
+      prepareReimbursementCameraPhoto(photo(1972808)),
+    ).rejects.toThrow('continua demasiado grande');
   });
 
   it('preserves photos already below the target and rejects originals above 10 MB', async () => {

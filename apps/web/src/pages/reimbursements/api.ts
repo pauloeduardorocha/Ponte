@@ -9,6 +9,7 @@ const BATCH_LIMIT = 4 * 1024 * 1024;
 export async function prepareReimbursementFile(
   file: File,
   targetBytes = UPLOAD_LIMIT,
+  normalizeCameraPhoto = false,
 ): Promise<File> {
   const image = ['image/jpeg', 'image/png'].includes(file.type);
   if ((!image && file.type !== 'application/pdf') || file.size < 1) {
@@ -17,7 +18,7 @@ export async function prepareReimbursementFile(
   if (file.size > (image ? PHOTO_LIMIT : PDF_LIMIT)) {
     throw new Error('Cada foto pode ter até 10 MB; cada PDF, até 1 MB.');
   }
-  if (!image || file.size <= targetBytes) {
+  if (!image || (!normalizeCameraPhoto && file.size <= targetBytes)) {
     // Camera/content-provider files can be temporary. Read their bytes now,
     // before clearing the picker, instead of deferring the read until fetch.
     const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
@@ -25,7 +26,7 @@ export async function prepareReimbursementFile(
       const failed = () =>
         reject(
           new Error(
-            'N�o foi poss�vel ler o documento. Selecione o ficheiro novamente ou guarde a foto na galeria.',
+            'Não foi possível ler o documento. Selecione o ficheiro novamente ou guarde a foto na galeria.',
           ),
         );
       reader.onerror = failed;
@@ -57,7 +58,11 @@ export async function prepareReimbursementFile(
   }
   try {
     const canvas = document.createElement('canvas');
-    const ratio = Math.min(1, 4096 / Math.max(bitmap.width, bitmap.height));
+    const maxDimension = normalizeCameraPhoto ? 2560 : 4096;
+    const ratio = Math.min(
+      1,
+      maxDimension / Math.max(bitmap.width, bitmap.height),
+    );
     canvas.width = Math.max(1, Math.round(bitmap.width * ratio));
     canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
     const context = canvas.getContext('2d');
@@ -84,6 +89,11 @@ export async function prepareReimbursementFile(
   } finally {
     bitmap.close();
   }
+}
+
+/** Materialize and normalize camera captures even below the ordinary upload limit. */
+export function prepareReimbursementCameraPhoto(file: File): Promise<File> {
+  return prepareReimbursementFile(file, 768 * 1024, true);
 }
 
 export async function prepareReimbursementFiles(
