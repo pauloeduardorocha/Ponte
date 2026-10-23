@@ -17,7 +17,36 @@ export async function prepareReimbursementFile(
   if (file.size > (image ? PHOTO_LIMIT : PDF_LIMIT)) {
     throw new Error('Cada foto pode ter até 10 MB; cada PDF, até 1 MB.');
   }
-  if (!image || file.size <= targetBytes) return file;
+  if (!image || file.size <= targetBytes) {
+    // Camera/content-provider files can be temporary. Read their bytes now,
+    // before clearing the picker, instead of deferring the read until fetch.
+    const bytes = await new Promise<ArrayBuffer>((resolve, reject) => {
+      const reader = new FileReader();
+      const failed = () =>
+        reject(
+          new Error(
+            'N�o foi poss�vel ler o documento. Selecione o ficheiro novamente ou guarde a foto na galeria.',
+          ),
+        );
+      reader.onerror = failed;
+      reader.onabort = failed;
+      reader.onload = () => {
+        if (
+          !(reader.result instanceof ArrayBuffer) ||
+          reader.result.byteLength !== file.size
+        ) {
+          failed();
+          return;
+        }
+        resolve(reader.result);
+      };
+      reader.readAsArrayBuffer(file);
+    });
+    return new File([bytes], file.name, {
+      type: file.type,
+      lastModified: file.lastModified,
+    });
+  }
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);

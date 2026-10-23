@@ -164,12 +164,15 @@ async function send(
       typeof data.requestId === 'string'
         ? data.requestId
         : undefined);
+    const edgeCode = response.headers.get('x-vercel-error');
+    const safeEdgeCode =
+      edgeCode && /^[A-Z0-9_]{1,100}$/.test(edgeCode) ? edgeCode : 'unknown';
     reportApiFailure({
       path,
       method: options.method ?? 'GET',
       status: response.status,
       requestId,
-      message: `A API respondeu com HTTP ${response.status}; duração=${Math.round(performance.now() - startedAt)}ms; redirecionado=${response.redirected}; anexosBytes=${uploadBytes ?? 0}.`,
+      message: `A API respondeu com HTTP ${response.status}; duração=${Math.round(performance.now() - startedAt)}ms; redirecionado=${response.redirected}; anexosBytes=${uploadBytes ?? 0}; edgeCode=${safeEdgeCode}.`,
     });
     throw new ApiError(
       response.status,

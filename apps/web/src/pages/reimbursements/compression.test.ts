@@ -50,9 +50,24 @@ describe('Reimbursement photo compression', () => {
 
   it('preserves photos already below the target and rejects originals above 10 MB', async () => {
     const original = photo(mb);
-    expect(await prepareReimbursementFile(original)).toBe(original);
+    const prepared = await prepareReimbursementFile(original);
+    expect(prepared).not.toBe(original);
+    expect(prepared.size).toBe(original.size);
+    expect(prepared.name).toBe(original.name);
+    expect(prepared.type).toBe(original.type);
     await expect(prepareReimbursementFile(photo(10 * mb + 1))).rejects.toThrow(
       '10 MB',
+    );
+  });
+
+  it('rejects unreadable camera files during preparation instead of during upload', async () => {
+    vi.spyOn(FileReader.prototype, 'readAsArrayBuffer').mockImplementation(
+      function (this: FileReader) {
+        this.dispatchEvent(new ProgressEvent('error'));
+      },
+    );
+    await expect(prepareReimbursementFile(photo(mb))).rejects.toThrow(
+      'Selecione o ficheiro novamente',
     );
   });
 
@@ -73,7 +88,15 @@ describe('Reimbursement photo compression', () => {
     const pdf = new File(['%PDF-test'], 'recibo.pdf', {
       type: 'application/pdf',
     });
-    expect(await prepareReimbursementFile(pdf)).toBe(pdf);
+    const prepared = await prepareReimbursementFile(pdf);
+    expect(prepared).not.toBe(pdf);
+    const read = (file: File) =>
+      new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsText(file);
+      });
+    expect(await read(prepared)).toBe('%PDF-test');
     vi.stubGlobal(
       'createImageBitmap',
       vi.fn().mockRejectedValue(new Error('decode failed')),

@@ -227,9 +227,10 @@ export function ReimbursementForm({
             type="file"
             multiple
             accept="application/pdf,image/jpeg,image/png"
-            onChange={(e) => {
-              addFiles(e.target.files);
-              e.target.value = '';
+            onChange={async (e) => {
+              const input = e.currentTarget;
+              await addFiles(input.files);
+              input.value = '';
             }}
           />
           <Stack direction="row" gap={1} flexWrap="wrap">
@@ -240,9 +241,10 @@ export function ReimbursementForm({
                 type="file"
                 accept="image/jpeg,image/png"
                 capture="environment"
-                onChange={(e) => {
-                  addFiles(e.target.files);
-                  e.target.value = '';
+                onChange={async (e) => {
+                  const input = e.currentTarget;
+                  await addFiles(input.files);
+                  input.value = '';
                 }}
               />
             </Button>

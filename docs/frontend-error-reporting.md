@@ -21,3 +21,11 @@ Investigação de 23/10: os dois relatórios existentes correspondiam a HTTP 503
 Sondas multipart sem autenticação, de 100 e 2.100.000 bytes, receberam 401 no domínio com www e 308 para o domínio com www quando chamadas sem www. Não criaram reembolsos. Não reproduziram o 503 e não validam um envio autenticado no dispositivo afetado. A correção de sessão resolve um defeito independente de 401; não deve ser apresentada como prova de resolução da origem dos 503.
 
 Validação local: 25 testes de transporte, renovação de sessão, formulário, compressão e relatórios passaram; TypeScript e ESLint dos arquivos alterados passaram.
+
+### Fotos capturadas no Android
+
+Nova ocorrência às 16:18 UTC: 503 em 2185 ms, sem redirecionamento, com 1.600.365 bytes de anexos. O utilizador informou captura pela câmera e falha tanto em Wi-Fi quanto em dados móveis. Esses dados não confirmam a causa, mas não indicam excesso de tamanho do upload.
+
+O caminho de preparação anteriormente devolvia o objeto File original quando abaixo do limite de compressão e limpava imediatamente o seletor. Agora lê os bytes e cria uma cópia em memória antes de limpar o seletor, inclusive para PDFs. Falhas de leitura são apresentadas antes do envio. Fotos comprimidas já eram materializadas pelo canvas. Trata-se de proteção contra ficheiros temporários de provedores de conteúdo; a resolução do incidente depende de nova validação no dispositivo real. Nenhum anexo é persistido em armazenamento local do navegador.
+
+Relatórios HTTP também incluem o código do cabeçalho `x-vercel-error`, limitado a letras maiúsculas, números e sublinhado (até 100 caracteres), sem copiar o corpo da resposta. Validação: 26 testes passaram, incluindo falha de leitura e preservação dos bytes de PDF; TypeScript e lint passaram.
