@@ -36,6 +36,8 @@ import { NotificationBell } from '../components/NotificationBell';
 import { PushPermissionBanner } from '../components/PushPermissionBanner';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
+import VideoLibraryRounded from '@mui/icons-material/VideoLibraryRounded';
+import { videoPlaylists } from '../lib/video-playlists';
 import {
   Link,
   NavLink,
@@ -58,6 +60,7 @@ const navigationGroups = [
   'Eventos',
   'Financeiro',
   'Biblioteca',
+  'Vídeos',
   'Comunicação',
   'Administração',
 ] as const;
@@ -75,6 +78,18 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
+  {
+    label: 'Todas as playlists',
+    group: 'Vídeos',
+    to: '/videos',
+    icon: VideoLibraryRounded,
+  },
+  ...videoPlaylists.map((playlist): NavigationItem => ({
+    label: playlist.title,
+    group: 'Vídeos',
+    to: `/videos/${playlist.id}`,
+    icon: VideoLibraryRounded,
+  })),
   {
     label: 'Gestão de eventos',
     group: 'Eventos',
@@ -187,14 +202,18 @@ function isNavigationActive(to: string, location: { pathname: string }) {
   const [pathname] = to.split('?');
   return (
     location.pathname === pathname ||
-    (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
+    (pathname !== '/' &&
+      pathname !== '/videos' &&
+      location.pathname.startsWith(`${pathname}/`))
   );
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user, hasPermission } = useAuth();
   const location = useLocation();
-  const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>([]);
+  const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
+    location.pathname.startsWith('/videos') ? ['Vídeos'] : [],
+  );
   function toggleGroup(group: NavigationGroup) {
     setExpandedGroups((current) =>
       current.includes(group)

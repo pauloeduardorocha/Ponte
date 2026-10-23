@@ -1,5 +1,15 @@
 # Vídeos da igreja
 
+## Menu de playlists
+
+O menu **Vídeos** está disponível a todas as contas autenticadas, mesmo sem permissões. Inclui **Todas as playlists** (`/videos`) e um submenu por playlist (`/videos/:playlistId`). O catálogo em `apps/web/src/lib/video-playlists.ts` contém as 27 playlists públicas verificadas no canal @IGREJAPONTE em 22/10/2026, incluindo a consulta da continuação da listagem do canal.
+
+Cada página incorpora o reprodutor oficial da playlist, sem reprodução automática, com seleção de vídeos no menu do próprio reprodutor e link alternativo para abrir no YouTube. O reprodutor é recriado ao mudar de playlist para interromper o vídeo anterior. IDs fora do catálogo mostram uma mensagem de playlist não encontrada.
+
+Os vídeos de cada playlist são carregados diretamente pelo YouTube e acompanham as alterações da playlist. Novas playlists e alterações de nome devem ser atualizadas no catálogo local; não há sincronização automática do catálogo. Esta funcionalidade não requer chave de API nem novos endpoints. Vídeos privados, removidos ou com incorporação desativada dependem das regras do YouTube.
+
+Referência do reprodutor: https://developers.google.com/youtube/player_parameters#Selecting_Content_to_Play
+
 O painel inicial apresenta um carrossel para todas as contas autenticadas, sem permissões administrativas. Os cartões abrem o vídeo no YouTube numa nova aba. A faixa suporta deslizar no telemóvel, navegação por teclado e botões anterior/próximo, sem reprodução automática.
 
 ## Contrato

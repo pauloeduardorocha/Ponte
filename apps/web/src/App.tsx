@@ -95,6 +95,10 @@ const LibraryPage = lazy(() =>
   })),
 );
 
+const VideosPage = lazy(() =>
+  import('./pages/VideosPage').then((m) => ({ default: m.VideosPage })),
+);
+
 export function App({ children }: { children?: ReactNode }) {
   return (
     <AuthProvider>
@@ -124,6 +128,8 @@ export function App({ children }: { children?: ReactNode }) {
               <Route path="account" element={<AccountPage />} />
               <Route path="reimbursements" element={<ReimbursementsPage />} />
               <Route path="library" element={<LibraryPage />} />
+              <Route path="videos" element={<VideosPage />} />
+              <Route path="videos/:playlistId" element={<VideosPage />} />
               <Route
                 path="members"
                 element={
