@@ -1,7 +1,7 @@
 import { apiResponse } from '../../lib/api';
 
 export const PHOTO_LIMIT = 10 * 1024 * 1024;
-const UPLOAD_LIMIT = 2 * 1024 * 1024;
+const UPLOAD_LIMIT = 768 * 1024;
 const PDF_LIMIT = 1024 * 1024;
 const BATCH_LIMIT = 4 * 1024 * 1024;
 
@@ -58,7 +58,7 @@ export async function prepareReimbursementFile(
   }
   try {
     const canvas = document.createElement('canvas');
-    const maxDimension = normalizeCameraPhoto ? 2560 : 4096;
+    const maxDimension = 2560;
     const ratio = Math.min(
       1,
       maxDimension / Math.max(bitmap.width, bitmap.height),
@@ -93,7 +93,7 @@ export async function prepareReimbursementFile(
 
 /** Materialize and normalize camera captures even below the ordinary upload limit. */
 export function prepareReimbursementCameraPhoto(file: File): Promise<File> {
-  return prepareReimbursementFile(file, 768 * 1024, true);
+  return prepareReimbursementFile(file, UPLOAD_LIMIT, true);
 }
 
 export async function prepareReimbursementFiles(

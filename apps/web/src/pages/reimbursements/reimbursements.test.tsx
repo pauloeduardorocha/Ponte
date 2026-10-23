@@ -125,6 +125,66 @@ describe('Reimbursements', () => {
       requests.some((request) => request.path.startsWith('/reimbursements')),
     ).toBe(false);
   });
+  it.each(['input[type=file]:not([capture])', 'input[capture]'])(
+    'uploads a reduced 1.5 MB image selected through %s',
+    async (selector) => {
+      mockApi({
+        ...sessionRoutes(makeUser()),
+        ...memberFormRoutes,
+        'POST /reimbursements': {
+          status: 400,
+          body: { message: 'test response' },
+        },
+      });
+      vi.stubGlobal(
+        'createImageBitmap',
+        vi
+          .fn()
+          .mockResolvedValue({ width: 4000, height: 3000, close: vi.fn() }),
+      );
+      vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+        fillRect: vi.fn(),
+        drawImage: vi.fn(),
+      } as unknown as CanvasRenderingContext2D);
+      vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation(
+        (callback) =>
+          callback(new Blob([new Uint8Array(600000)], { type: 'image/jpeg' })),
+      );
+      try {
+        const view = renderApp('/pedir-reembolso');
+        await screen.findByLabelText('Quem recebe o reembolso?');
+        await chooseCategory();
+        fireEvent.change(view.container.querySelector(selector)!, {
+          target: {
+            files: [
+              new File([new Uint8Array(1576060)], 'source.png', {
+                type: 'image/png',
+              }),
+            ],
+          },
+        });
+        await waitFor(() =>
+          expect(
+            screen.getByRole('button', { name: 'Guardar pedido' }),
+          ).toBeEnabled(),
+        );
+        fireEvent.click(screen.getByRole('button', { name: 'Guardar pedido' }));
+        await screen.findByText('test response');
+        const call = vi
+          .mocked(fetch)
+          .mock.calls.find(
+            ([url, init]) =>
+              String(url).endsWith('/reimbursements') &&
+              init?.method === 'POST',
+          );
+        const file = (call?.[1]?.body as FormData).get('files') as File;
+        expect(file.size).toBeLessThanOrEqual(768 * 1024);
+        expect(file.type).toBe('image/jpeg');
+      } finally {
+        vi.restoreAllMocks();
+      }
+    },
+  );
   it('normalizes the camera capture before enabling submission', async () => {
     mockApi({ ...sessionRoutes(makeUser()), ...memberFormRoutes });
     const normalized = new File(['jpeg'], 'camera.jpg', { type: 'image/jpeg' });

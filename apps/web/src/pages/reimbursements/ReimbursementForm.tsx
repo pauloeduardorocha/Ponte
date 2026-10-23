@@ -254,9 +254,9 @@ export function ReimbursementForm({
             </Button>
           </Stack>
           <Typography variant="caption">
-            As fotos tiradas aqui são otimizadas para até 768 KB, sem recortes.
-            Outras fotos podem ter até 2 MB após a otimização. Confira se o
-            documento continua legível na pré-visualização.
+            Todas as fotos, da câmera ou da galeria, são otimizadas para até 768
+            KB, sem recortes. Confira se o documento continua legível na
+            pré-visualização.
           </Typography>
           {preparing && (
             <Typography role="status">A preparar os documentos…</Typography>

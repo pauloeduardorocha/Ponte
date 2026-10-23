@@ -37,17 +37,14 @@ describe('Reimbursement photo compression', () => {
     return { bitmap, drawImage };
   }
 
-  it('accepts an 8 MB photo and reduces quality to fit 2 MB without cropping', async () => {
-    const { bitmap, drawImage } = canvas([
-      Math.floor(2.5 * mb),
-      Math.floor(1.8 * mb),
-    ]);
+  it('accepts an 8 MB photo and reduces quality to fit 768 KB without cropping', async () => {
+    const { bitmap, drawImage } = canvas([900000, 700000]);
     const result = await prepareReimbursementFile(photo(8 * mb));
-    expect(result.size).toBeLessThanOrEqual(2 * mb);
+    expect(result.size).toBeLessThanOrEqual(768 * 1024);
     expect(result.type).toBe('image/jpeg');
     expect(result.name).toBe('foto.jpg');
     // The complete source image is drawn, with proportional scaling; no crop rectangle.
-    expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0, 4096, 2731);
+    expect(drawImage).toHaveBeenCalledWith(bitmap, 0, 0, 2560, 1707);
     expect(HTMLCanvasElement.prototype.toBlob).toHaveBeenCalledTimes(2);
     expect(bitmap.close).toHaveBeenCalledOnce();
   });
@@ -65,6 +62,16 @@ describe('Reimbursement photo compression', () => {
     },
   );
 
+  it.each([1557107, 1576060, 1825221])(
+    'also reduces a %i-byte file chosen through the gallery picker',
+    async (size) => {
+      canvas([700000]);
+      const [result] = await prepareReimbursementFiles([photo(size)]);
+      expect(result?.size).toBeLessThanOrEqual(768 * 1024);
+      expect(result?.type).toBe('image/jpeg');
+    },
+  );
+
   it('does not send an oversized camera capture if optimization fails', async () => {
     canvas([900000]);
     await expect(
@@ -73,7 +80,7 @@ describe('Reimbursement photo compression', () => {
   });
 
   it('preserves photos already below the target and rejects originals above 10 MB', async () => {
-    const original = photo(mb);
+    const original = photo(523015);
     const prepared = await prepareReimbursementFile(original);
     expect(prepared).not.toBe(original);
     expect(prepared.size).toBe(original.size);
@@ -90,13 +97,13 @@ describe('Reimbursement photo compression', () => {
         this.dispatchEvent(new ProgressEvent('error'));
       },
     );
-    await expect(prepareReimbursementFile(photo(mb))).rejects.toThrow(
+    await expect(prepareReimbursementFile(photo(523015))).rejects.toThrow(
       'Selecione o ficheiro novamente',
     );
   });
 
   it('fits three photos into one hosted request without dropping any document', async () => {
-    canvas([Math.floor(1.2 * mb)]);
+    canvas([700000]);
     const result = await prepareReimbursementFiles([
       photo(2 * mb),
       photo(2 * mb),

@@ -37,3 +37,11 @@ A ocorrência seguinte (16:24 UTC) apresentou `SERVICE_UNAVAILABLE` da Vercel, 2
 Como mitigação, o botão Tirar fotografia agora sempre decodifica e reencoda a captura em JPEG, mesmo abaixo de 2 MB. Mantém proporções, sem recortes, limita a maior dimensão a 2560 pixels e reduz a qualidade até caber em 768 KiB. Se não conseguir, informa a falha antes de enviar. A imagem passa pela pré-visualização para conferência da legibilidade. Galeria e PDFs mantêm o fluxo anterior. Não há repetição automática de gravações.
 
 Os testes cobrem capturas de 523.015 e 1.972.808 bytes, limite de saída, falha de otimização e bloqueio do formulário durante a preparação. São testes locais com canvas simulado; não comprovam resolução no dispositivo real. Validação acumulada: 30 testes de frontend, TypeScript e lint. O diagnóstico permanece aberto até uma captura real ser enviada com sucesso.
+
+### Mesmo limite em todos os seletores
+
+O utilizador confirmou que abria a câmera por Carregar documentos, não pelo botão Tirar fotografia. Esse caminho ainda usava o alvo antigo de 2 MiB. Os relatórios às 18:06–18:07 UTC confirmaram anexos únicos de 1.557.107, 1.576.060 e 1.825.221 bytes, com 503 SERVICE_UNAVAILABLE.
+
+O alvo de 768 KiB agora é comum a todas as imagens preparadas, incluindo galeria, seletor comum, arrastar/soltar e botão de câmera. Imagens já menores continuam preservadas; imagens maiores são reencodadas em JPEG com maior dimensão até 2560 pixels. Os PDFs mantêm seu limite existente. O limite do lote não foi alterado: esta mitigação por imagem não comprova um limite agregado inferior da infraestrutura.
+
+Dois testes de formulário percorrem os seletores com e sem capture e inspecionam o ficheiro efetivamente enviado no FormData, verificando JPEG abaixo de 768 KiB para uma origem de 1.576.060 bytes. A documentação oficial da Vercel descreve limite de 4,5 MB com 413 FUNCTION_PAYLOAD_TOO_LARGE (https://vercel.com/docs/errors/function_payload_too_large); portanto, os 503 observados abaixo desse tamanho não comprovam esse limite padrão. Não foi encontrado limite menor explícito no vercel.json. A causa na infraestrutura continua não demonstrada.
