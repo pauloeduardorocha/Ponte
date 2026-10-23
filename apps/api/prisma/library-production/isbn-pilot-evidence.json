@@ -1,0 +1,301 @@
+{
+  "version": 1,
+  "research_date": "2026-10-22",
+  "scope": "20 registos do piloto multilingual; pesquisa assistida em catálogos, editoras e livrarias, não importação automática",
+  "physically_confirmed": false,
+  "candidates": [
+    {
+      "registrationNumber": "00001",
+      "matched_title": "The Illustrated Guide to Bible Customs and Curiosities",
+      "matched_authors": "George W. Knight",
+      "isbns": [
+        "9781630584689"
+      ],
+      "source_url": "https://openlibrary.org/books/OL25719237M",
+      "publisher": "Barbour",
+      "year": "2007",
+      "language": "en",
+      "format": "unknown",
+      "source_type": "catalogue",
+      "notes": "A fonte normaliza Illustrated e and; a planilha tem Ilustrated e &. Formato e ano precisam de confirmação: os metadados desta edição podem estar agregados."
+    },
+    {
+      "registrationNumber": "00001",
+      "matched_title": "The Illustrated Guide to Bible Customs & Curiosities",
+      "matched_authors": "George W. Knight",
+      "isbns": [
+        "9781593107031"
+      ],
+      "source_url": "https://www.abebooks.com/9781593107031/ILLUSTRATED-GUIDE-BIBLE-CUSTOMS-George-159310703X/plp",
+      "publisher": "Barbour",
+      "year": "",
+      "language": "en",
+      "format": "paperback",
+      "source_type": "bookseller",
+      "notes": "Alternativa em brochura. Não escolher entre ISBNs sem conferir o exemplar."
+    },
+    {
+      "registrationNumber": "00003",
+      "matched_title": "A morte da razão",
+      "matched_authors": "Ravi Zacharias",
+      "isbns": [
+        "8538301950",
+        "9788538301950"
+      ],
+      "source_url": "https://www.touchelivros.com.br/a-morte-da-razao/",
+      "publisher": "Vida",
+      "year": "2011",
+      "language": "pt-BR",
+      "format": "brochura",
+      "source_type": "bookseller",
+      "notes": ""
+    },
+    {
+      "registrationNumber": "00011",
+      "matched_title": "A superior aliança",
+      "matched_authors": "Watchman Nee",
+      "isbns": [
+        "8573672218"
+      ],
+      "source_url": "https://www.skoob.com.br/pt/book/251166",
+      "publisher": "Vida",
+      "year": "1997",
+      "language": "pt-BR",
+      "format": "unknown",
+      "source_type": "community_catalogue",
+      "notes": "Fonte comunitária; confirmar em exemplar ou catálogo editorial. ISBN-13 do CSV convertido matematicamente do ISBN-10 publicado."
+    },
+    {
+      "registrationNumber": "00041",
+      "matched_title": "Muito Mais do que Números",
+      "matched_authors": "Dr. David Yonggi Cho",
+      "isbns": [
+        "0829705309"
+      ],
+      "source_url": "https://www.skoob.com.br/pt/book/191993",
+      "publisher": "Vida",
+      "year": "1985",
+      "language": "pt-BR",
+      "format": "unknown",
+      "source_type": "community_catalogue",
+      "notes": "Fonte comunitária. A planilha usa Dr. Paul Yonggi Cho; a ficha usa Dr. David Yonggi Cho. Confirmar edição. ISBN-13 convertido do ISBN-10."
+    },
+    {
+      "registrationNumber": "00061",
+      "matched_title": "Que bom se ele soubesse",
+      "matched_authors": "Gary Smalley",
+      "isbns": [
+        "8585670533",
+        "9788585670535"
+      ],
+      "source_url": "https://books.google.com/books/about/QUE_BOM_SE_ELE_SOUBESSE.html?id=iOHHv1gcVy0C",
+      "publisher": "Mundo Cristão",
+      "year": "",
+      "language": "pt-BR",
+      "format": "unknown",
+      "source_type": "bibliographic_catalogue",
+      "notes": "O subtítulo da planilha não foi usado para substituir a ficha. Ano não informado na ficha consultada."
+    },
+    {
+      "registrationNumber": "00081",
+      "matched_title": "Cum să iniţiezi o discuţie despre Împărăţia lui Dumnezeu",
+      "matched_authors": "Duke Heller",
+      "isbns": [
+        "9789731990118"
+      ],
+      "source_url": "https://oldsite.bibnat.ro/dyn-doc/publicatii/BN_CAH/CAH-20-2011.pdf",
+      "publisher": "Cartea Creştină",
+      "year": "2010",
+      "language": "ro",
+      "format": "print",
+      "source_type": "national_library",
+      "notes": "Entrada 77, 2.ª edição revista. Não confundir com edição de 2008. Livraria Scriptum confirma ISBN mas apresenta editora/paginação divergentes: exige conferência."
+    },
+    {
+      "registrationNumber": "00081",
+      "matched_title": "Cum să iniţiezi o discuţie despre Împărăţia lui Dumnezeu",
+      "matched_authors": "Duke Heller",
+      "isbns": [
+        "9789739317931"
+      ],
+      "source_url": "https://oldsite.bibnat.ro/dyn-doc/publicatii/BN_CAH/CAH%2021.pdf",
+      "publisher": "Cartea Creştină",
+      "year": "2008",
+      "language": "ro",
+      "format": "print",
+      "source_type": "national_library",
+      "notes": "Entrada 65; alternativa de 2008. A planilha não permite escolher entre 2008 e 2010."
+    },
+    {
+      "registrationNumber": "00101",
+      "matched_title": "Appointment in Jerusalem",
+      "matched_authors": "Lydia Prince",
+      "isbns": [
+        "0854762485"
+      ],
+      "source_url": "https://openlibrary.org/books/OL17258590M",
+      "publisher": "Victory Press",
+      "year": "1976",
+      "language": "en",
+      "format": "unknown",
+      "source_type": "bibliographic_catalogue",
+      "notes": "ISBN-13 convertido do ISBN-10 do registo da edição. A planilha não informa ano ou editora."
+    },
+    {
+      "registrationNumber": "00121",
+      "matched_title": "A Tale of Three Kings",
+      "matched_authors": "Gene Edwards",
+      "isbns": [
+        "9780842369084"
+      ],
+      "source_url": "https://www.tyndale.com/p/a-tale-of-three-kings/9780842369084",
+      "publisher": "Tyndale House Publishers",
+      "year": "1992",
+      "language": "en",
+      "format": "softcover",
+      "source_type": "publisher",
+      "notes": "Autor na planilha: Gene Edwaeds; fonte editorial: Gene Edwards. Proposta de correção, não aplicada ao banco."
+    },
+    {
+      "registrationNumber": "00161",
+      "matched_title": "Managing Your Time",
+      "matched_authors": "Steve Chalke; Penny Relph",
+      "isbns": [
+        "0854764690",
+        "9780854764693"
+      ],
+      "source_url": "https://www.abebooks.com/9780854764693/Managing-Time-Chalke-Steve-Relph-0854764690/plp",
+      "publisher": "Kingsway Communications",
+      "year": "1998",
+      "language": "en",
+      "format": "paperback",
+      "source_type": "bookseller",
+      "notes": ""
+    },
+    {
+      "registrationNumber": "00201",
+      "matched_title": "Box Evangelhos para todos",
+      "matched_authors": "N. T. Wright",
+      "isbns": [
+        "9786556894454"
+      ],
+      "source_url": "https://thomasnelson.com.br/products/box-evangelhos-para-todos-nt-wright",
+      "publisher": "Thomas Nelson Brasil",
+      "year": "2021",
+      "language": "pt-BR",
+      "format": "box",
+      "source_type": "publisher",
+      "notes": "ISBN do box de seis volumes. A entrada da planilha diz apenas Evangelhos para todos, quantidade 1; verificar se é box ou volume avulso antes de associar."
+    },
+    {
+      "registrationNumber": "00221",
+      "matched_title": "Quando meu sorvete cai",
+      "matched_authors": "Rodrigo Bibo; Phellip Willian",
+      "isbns": [
+        "9786556893143"
+      ],
+      "source_url": "https://www.travessa.com.br/quando-meu-sorvete-cai/artigo/705d263a-e496-4b99-95a4-9a62cc63647f",
+      "publisher": "Thomas Nelson Brasil",
+      "year": "2022",
+      "language": "pt-BR",
+      "format": "hardcover",
+      "source_type": "bookseller",
+      "notes": "ISBN da edição impressa em capa dura. Página da livraria destaca Rodrigo Bibo; Google Books confirma coautoria de Phellip Willian mas lista ISBN digital diferente, não usado aqui. Corroborado pela Plenitude: https://plenitudedistribuidora.com.br/products/quando-meu-sorvete-cai-rodrigo-bibo"
+    },
+    {
+      "registrationNumber": "00228",
+      "matched_title": "Cristianismo Puro e Simples",
+      "matched_authors": "C. S. Lewis",
+      "isbns": [
+        "8578601777",
+        "9788578601775"
+      ],
+      "source_url": "https://openlibrary.org/books/OL31895729M",
+      "publisher": "Thomas Nelson Brasil",
+      "year": "2017",
+      "language": "pt-BR",
+      "format": "hardcover",
+      "source_type": "bibliographic_catalogue",
+      "notes": ""
+    },
+    {
+      "registrationNumber": "00233",
+      "matched_title": "Teologia Sistemática Grudem (Completa e Atual)",
+      "matched_authors": "Wayne Grudem",
+      "isbns": [
+        "9788527502702"
+      ],
+      "source_url": "https://livrariainstitutoreformado.com.br/livro/teologia-sistematica-grudem-edicao-especial-wayne-grudem/",
+      "publisher": "Vida Nova",
+      "year": "2010",
+      "language": "pt-BR",
+      "format": "hardcover",
+      "source_type": "bookseller",
+      "notes": "Ficha técnica apresenta 2010/1104 páginas, mas a descrição fala de edição nova; não assumir 2.ª edição. O mesmo ISBN consta no Google Books sob título Teologia sistemática: atual e exaustiva, ano 1999: https://books.google.com/books/about/Teologia_sistem%C3%A1tica.html?id=OE5SAAAACAAJ. Prioridade de conferência por inconsistência editorial."
+    },
+    {
+      "registrationNumber": "00261",
+      "matched_title": "Caminhando com o peregrino: Retratos de porções da imortal alegoria de John Bunyan",
+      "matched_authors": "Charles H. Spurgeon",
+      "isbns": [
+        "9786555521672"
+      ],
+      "source_url": "https://recursos.cirandacultural.com.br/MediaCenter/9786555521672.pdf",
+      "publisher": "Principis",
+      "year": "2020",
+      "language": "pt-BR",
+      "format": "print",
+      "source_type": "publisher",
+      "notes": "ISBN presente na ficha CIP do trecho fornecido pela editora. Outras edições têm ISBNs diferentes."
+    },
+    {
+      "registrationNumber": "00301",
+      "matched_title": "Em busca de Deus: minha alma anseia por ti",
+      "matched_authors": "A. W. Tozer",
+      "isbns": [
+        "9788538303480"
+      ],
+      "source_url": "https://www.editoravida.com.br/busca-de-deus-em-minha-alma-anseia-por-ti.html",
+      "publisher": "Vida",
+      "year": "",
+      "language": "pt-BR",
+      "format": "unknown",
+      "source_type": "publisher",
+      "notes": "Ano/formato não preenchidos: ficha da editora consultada não os fixa. Há outras edições posteriores, não misturadas com este ISBN."
+    },
+    {
+      "registrationNumber": "00313",
+      "matched_title": "Teologia sistemática ao alcance de todos",
+      "matched_authors": "Wayne Grudem",
+      "isbns": [
+        "8571670358",
+        "9788571670358"
+      ],
+      "source_url": "https://www.magazineluiza.com.br/livro-teologia-sistematica-ao-alcance-de-todos/p/ed5afe6b9h/li/liao/?seller_id=plenitudedistribuidoraoficial",
+      "publisher": "Thomas Nelson Brasil",
+      "year": "2019",
+      "language": "pt-BR",
+      "format": "print",
+      "source_type": "bookseller",
+      "notes": "Autor na planilha: Wayne Gruden; fonte: Wayne Grudem. Proposta de correção não aplicada. A ficha da editora confirma obra/autor, mas os dados de ISBN são dinâmicos; o ISBN acima está explícito na livraria."
+    }
+  ],
+  "unresolved": [
+    {
+      "registrationNumber": "00002",
+      "reason": "Título e autor pesquisados, sem ISBN candidato sustentado por fonte suficiente."
+    },
+    {
+      "registrationNumber": "00021",
+      "reason": "Autor ausente e título genérico; resultados de outras obras não foram aceites."
+    },
+    {
+      "registrationNumber": "00141",
+      "reason": "Autor, editora e ano ausentes. Novo testamento: a boa nova não identifica inequivocamente uma edição."
+    },
+    {
+      "registrationNumber": "00181",
+      "reason": "Não encontrado ISBN candidato suficiente para Existe tempo de desistir?, Alexis Campos."
+    }
+  ]
+}

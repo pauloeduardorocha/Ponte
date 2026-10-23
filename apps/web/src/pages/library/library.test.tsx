@@ -152,6 +152,54 @@ async function confirm() {
 
 describe('Library frontend', () => {
   beforeEach(resetTestState);
+  it('edits the catalogue category through a paginated selector and preserves reviewed classification', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /library/books': {
+        body: page([
+          {
+            ...book,
+            primaryCategoryCode: '54',
+            secondaryCategoryCodes: [],
+            classificationReviewed: true,
+          },
+        ]),
+      },
+      'GET /library/categories': {
+        body: page([
+          { id: '54', name: '54 — Liderança' },
+          { id: '55', name: '55 — Discipulado' },
+        ]),
+      },
+      'PATCH /library/books/b1': { body: book },
+    });
+    renderApp('/library');
+    await screen.findByText('Livro Ponte', {}, { timeout: 15000 });
+    fireEvent.click(await screen.findByRole('button', { name: 'Editar' }));
+    const dialog = within(screen.getByRole('dialog'));
+    const category = dialog.getByRole('combobox', { name: 'Categoria' });
+    expect(
+      dialog.queryByRole('textbox', { name: 'Categoria' }),
+    ).not.toBeInTheDocument();
+    fireEvent.mouseDown(category);
+    fireEvent.click(
+      await screen.findByRole('option', { name: '55 — Discipulado' }),
+    );
+    await confirm();
+    expect(
+      requests.find(
+        (r) => r.method === 'PATCH' && r.path === '/library/books/b1',
+      )?.body,
+    ).toMatchObject({
+      primaryCategoryCode: '55',
+      classificationReviewed: true,
+    });
+    expect(
+      requests
+        .find((r) => r.path === '/library/categories')
+        ?.query.get('pageSize'),
+    ).toBe('10');
+  });
   it('validates required library fields before sending a mutation', async () => {
     const requests = mockApi(routes());
     renderApp('/library');

@@ -348,6 +348,7 @@ model BookCategory {
 }
 
 model Book {
+  enrichment         BookEnrichment?
   registrationNumber String?        @unique @db.VarChar(32)
   collection         String?        @db.VarChar(200)
   catalogueNotes     String?        @db.Text
@@ -373,6 +374,19 @@ model Book {
 
   @@index([category, title])
   @@map("library_books")
+}
+
+model BookEnrichment {
+  bookId         String   @id @db.Uuid
+  sourceHash     String   @db.VarChar(64)
+  research       Json     @db.JsonB
+  selection      Json     @db.JsonB
+  previousValues Json     @db.JsonB
+  importedAt     DateTime @default(now()) @db.Timestamptz(6)
+  reviewedAt     DateTime? @db.Timestamptz(6)
+  book           Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@map("library_book_enrichments")
 }
 
 model BookCopy {

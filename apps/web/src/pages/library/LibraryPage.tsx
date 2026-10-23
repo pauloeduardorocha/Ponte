@@ -79,7 +79,7 @@ const bookFields: Field[] = [
   { name: 'catalogueNotes', label: 'Notas de catalogação', multiline: true },
   {
     name: 'primaryCategoryCode',
-    label: 'Tema principal',
+    label: 'Categoria',
     endpoint: '/library/categories',
   },
   {
@@ -102,7 +102,6 @@ const bookFields: Field[] = [
   { name: 'description', label: 'Descrição', multiline: true },
   { name: 'pages', label: 'Páginas', type: 'number' },
   { name: 'cover', label: 'Capa (URL HTTPS)', type: 'url' },
-  { name: 'category', label: 'Categoria' },
   { name: 'keywords', label: 'Palavras-chave (separadas por vírgulas)' },
 ];
 const justification: Field = {
@@ -134,7 +133,6 @@ function bookInput(v: Record<string, string>, clearing = false): api.BookInput {
     description: v.description || blank,
     pages: v.pages ? Number(v.pages) : blank,
     cover: v.cover || blank,
-    category: v.category || blank,
     keywords: (v.keywords ?? '')
       .split(',')
       .map((word) => word.trim())
@@ -365,7 +363,9 @@ function CopyHistoryDialog({ id, close }: { id: string; close: () => void }) {
           <Stack spacing={2}>
             <Typography>
               {history.data.copy.assetCode} · {history.data.copy.status} ·{' '}
-              {history.data.copy.condition} · {history.data.copy.location}
+              {STATUS_LABELS[history.data.copy.condition ?? ''] ??
+                history.data.copy.condition}{' '}
+              · {history.data.copy.location}
             </Typography>
             <HistoryContent history={history.data} />
             <Typography variant="h6">
