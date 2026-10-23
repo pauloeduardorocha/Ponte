@@ -9,3 +9,15 @@ A API guarda os relatórios na tabela `frontend_error_reports`, usa a hora do se
 Mensagens, stack traces e logs passam por redação de tokens Bearer/JWT, emails, IBANs portugueses e parâmetros de query conhecidos como sensíveis. O frontend nunca inclui cookies, cabeçalhos, corpo de pedidos/respostas, campos de formulários ou conteúdo de ficheiros. A fila de tentativas fica em memória e volta a tentar quando a rede regressa; um encerramento da aplicação sem rede pode impedir o envio.
 
 Para investigar um caso, correlacione `created_at`, `user_id`, `request_id` e `client_request_id`. O `request_id` identifica o pedido de ingestão; `client_request_id` referencia a falha original observada pelo browser.
+
+## Envio de reembolsos e falhas de infraestrutura (2026-10-23)
+
+O envio multipart e o download de reembolsos usam o mesmo transporte autenticado das chamadas JSON. Uma resposta 401 renova a sessão uma vez e repete o envio com os mesmos documentos; uma resposta 503 ou uma falha de rede não repete automaticamente a gravação. A interface distingue falha de rede, excesso de tamanho (413), indisponibilidade (502/503) e demora do servidor (504), quando a resposta não contém uma mensagem própria. Antes de repetir um envio de resultado incerto, o utilizador deve conferir os pedidos guardados.
+
+Os relatórios HTTP incluem duração, indicação de redirecionamento e total de bytes dos anexos na mensagem técnica. Na ausência de `x-request-id`, o transporte usa `x-vercel-id` para permitir correlação de falhas anteriores à API. Não são incluídos nomes, conteúdo dos documentos nem campos do formulário.
+
+Investigação de 23/10: os dois relatórios existentes correspondiam a HTTP 503 no envio de reembolsos em Android/Chrome em modo PWA, às 15:58 e 16:01 UTC. Os registros CDN correspondentes indicavam GET, enquanto o cliente registrava POST, e não apresentavam a rota de função normal. A consulta de runtime para a rota e intervalo não retornou registros. Perfil, categorias e ingestão do relatório funcionaram no mesmo intervalo. Isso sugere uma falha anterior ao processamento normal da API, mas não demonstra a causa nem que ocorreu conversão real de método.
+
+Sondas multipart sem autenticação, de 100 e 2.100.000 bytes, receberam 401 no domínio com www e 308 para o domínio com www quando chamadas sem www. Não criaram reembolsos. Não reproduziram o 503 e não validam um envio autenticado no dispositivo afetado. A correção de sessão resolve um defeito independente de 401; não deve ser apresentada como prova de resolução da origem dos 503.
+
+Validação local: 25 testes de transporte, renovação de sessão, formulário, compressão e relatórios passaram; TypeScript e ESLint dos arquivos alterados passaram.

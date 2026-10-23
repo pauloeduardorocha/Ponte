@@ -1,5 +1,4 @@
-import { getAccessToken, withErrorReference } from '../../lib/api';
-import { reportApiFailure } from '../../lib/frontend-error-reporting';
+import { apiResponse } from '../../lib/api';
 
 export const PHOTO_LIMIT = 10 * 1024 * 1024;
 const UPLOAD_LIMIT = 2 * 1024 * 1024;
@@ -117,41 +116,12 @@ export const money = (amount: string | null, currency = 'EUR') =>
       )
     : 'Valor por preencher';
 export async function reimbursementFileRequest(path: string, body?: FormData) {
-  const token = getAccessToken();
-  const endpoint = `${import.meta.env.VITE_API_URL ?? '/api/v1'}/reimbursements${path}`;
-  let response: Response;
-  try {
-    response = await fetch(
-    endpoint,
-    {
-      method: body ? 'POST' : 'GET',
-      body,
-      credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-    },
-    );
-  } catch (error) {
-    reportApiFailure({ path: endpoint, method: body ? 'POST' : 'GET', message: 'Falha de rede no pedido de documento de reembolso.' });
-    throw error;
-  }
-  if (!response.ok) {
-    const data = await response.json().catch(() => null);
-    reportApiFailure({
-      path: endpoint, method: body ? 'POST' : 'GET', status: response.status,
-      requestId: response.headers.get('x-request-id') ?? (typeof data?.requestId === 'string' ? data.requestId : undefined),
-      message: `A API respondeu com HTTP ${response.status} no fluxo de reembolsos.`,
-    });
-    throw new Error(
-      withErrorReference(
-        Array.isArray(data?.message)
-          ? data.message.join(', ')
-          : (data?.message ?? 'Não foi possível processar o documento.'),
-        data,
-      ),
-    );
-  }
-  return response;
+  return apiResponse(`/reimbursements${path}`, {
+    method: body ? 'POST' : 'GET',
+    body,
+  });
 }
+
 export async function downloadReimbursementFile(
   id: string,
   file: ReimbursementFile,

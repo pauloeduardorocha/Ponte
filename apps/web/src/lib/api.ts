@@ -10,6 +10,10 @@ const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
   403: 'Você não tem permissão para realizar esta ação.',
   404: 'Registro não encontrado.',
   409: 'Já existe um registro com estes dados.',
+  413: 'Os documentos excedem o tamanho permitido. Reduza o tamanho dos ficheiros.',
+  502: 'O servidor está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
+  503: 'O serviço está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
+  504: 'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.',
 };
 const GENERIC_ERROR_MESSAGE = 'Ocorreu um erro inesperado. Tente novamente.';
 
@@ -106,11 +110,11 @@ function extractMessage(data: unknown, status: number): string {
   return DEFAULT_ERROR_MESSAGES[status] ?? GENERIC_ERROR_MESSAGE;
 }
 
-async function send<T>(
+async function send(
   path: string,
   options: RequestOptions,
   token: string | null,
-): Promise<T> {
+): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
@@ -119,6 +123,14 @@ async function send<T>(
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const startedAt = performance.now();
+  const uploadBytes =
+    options.body instanceof FormData
+      ? Array.from(options.body.values()).reduce(
+          (total, value) => total + (value instanceof Blob ? value.size : 0),
+          0,
+        )
+      : undefined;
   let response: Response;
   try {
     response = await fetch(buildUrl(path, options.query), {
@@ -133,18 +145,31 @@ async function send<T>(
       credentials: 'include',
     });
   } catch {
-    reportApiFailure({ path, method: options.method ?? 'GET', message: 'Falha de rede ao chamar API.' });
+    reportApiFailure({
+      path,
+      method: options.method ?? 'GET',
+      message: 'Falha de rede ao chamar API.',
+    });
     throw new ApiError(0, DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE);
   }
 
-  const data = await parseBody(response);
   if (!response.ok) {
+    const data = await parseBody(response);
+    const requestId =
+      response.headers.get('x-request-id') ??
+      response.headers.get('x-vercel-id') ??
+      (data &&
+      typeof data === 'object' &&
+      'requestId' in data &&
+      typeof data.requestId === 'string'
+        ? data.requestId
+        : undefined);
     reportApiFailure({
       path,
       method: options.method ?? 'GET',
       status: response.status,
-      requestId: response.headers.get('x-request-id') ?? (data && typeof data === 'object' && 'requestId' in data && typeof data.requestId === 'string' ? data.requestId : undefined),
-      message: `A API respondeu com HTTP ${response.status}.`,
+      requestId,
+      message: `A API respondeu com HTTP ${response.status}; duração=${Math.round(performance.now() - startedAt)}ms; redirecionado=${response.redirected}; anexosBytes=${uploadBytes ?? 0}.`,
     });
     throw new ApiError(
       response.status,
@@ -152,7 +177,7 @@ async function send<T>(
       data,
     );
   }
-  return data as T;
+  return response;
 }
 
 /**
@@ -163,11 +188,13 @@ export function refreshSession(): Promise<AuthSession | null> {
   refreshPromise ??= (async () => {
     const generation = authGeneration;
     try {
-      const session = await send<AuthSession>(
-        '/auth/refresh',
-        { method: 'POST', skipAuthRefresh: true },
-        null,
-      );
+      const session = (await parseBody(
+        await send(
+          '/auth/refresh',
+          { method: 'POST', skipAuthRefresh: true },
+          null,
+        ),
+      )) as AuthSession;
       if (generation !== authGeneration) return null;
       accessToken = session.accessToken;
       return session;
@@ -187,13 +214,13 @@ export function refreshSession(): Promise<AuthSession | null> {
  * Performs an authenticated API request. On 401 it refreshes the access token
  * once and retries; if the refresh fails, session-expired listeners are notified.
  */
-export async function apiRequest<T>(
+export async function apiResponse(
   path: string,
   options: RequestOptions = {},
-): Promise<T> {
+): Promise<Response> {
   const token = accessToken;
   try {
-    return await send<T>(path, options, token);
+    return await send(path, options, token);
   } catch (error) {
     if (
       !(error instanceof ApiError) ||
@@ -204,15 +231,23 @@ export async function apiRequest<T>(
       throw error;
     }
     if (accessToken && accessToken !== token) {
-      return send<T>(path, options, accessToken);
+      return send(path, options, accessToken);
     }
     const session = await refreshSession();
     if (!session) {
       sessionExpiredListeners.forEach((listener) => listener());
       throw error;
     }
-    return send<T>(path, options, session.accessToken);
+    return send(path, options, session.accessToken);
   }
+}
+
+/** JSON counterpart of apiResponse, sharing authentication and error handling. */
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  return (await parseBody(await apiResponse(path, options))) as T;
 }
 
 export interface HealthResponse {
