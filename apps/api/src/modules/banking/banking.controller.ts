@@ -6,6 +6,8 @@ import {
   ApiExtraModels,
   getSchemaPath,
   ApiProduces,
+  ApiOperation,
+  ApiOkResponse,
 } from '@nestjs/swagger';
 import {
   Body,
@@ -156,6 +158,45 @@ export class BankingController {
   }
   @Get('imports') imports(@Query() q: BankQuery) {
     return this.banking.imports(q);
+  }
+  @Get('import-guidance')
+  @ApiOperation({
+    summary: 'Suggest bank import periods for an account',
+    description:
+      'Requires FINANCE_BANK_IMPORT and FINANCE_CONTRIBUTION_READ. Estimates gaps between per-file movement date ranges from CONFIRMED and READY_FOR_REVIEW imports (no pagination). Days without activity may appear as gaps. No coverage is inferred before the first movement. The update suggestion includes the last imported day through today in Europe/Lisbon; null when current or without history.',
+  })
+  @ApiOkResponse({
+    schema: {
+      type: 'object',
+      required: ['accountId', 'bankDataThrough', 'gaps', 'suggestedPeriod'],
+      properties: {
+        accountId: { type: 'string', format: 'uuid' },
+        bankDataThrough: { type: 'string', format: 'date', nullable: true },
+        gaps: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['start', 'end'],
+            properties: {
+              start: { type: 'string', format: 'date' },
+              end: { type: 'string', format: 'date' },
+            },
+          },
+        },
+        suggestedPeriod: {
+          type: 'object',
+          nullable: true,
+          required: ['start', 'end'],
+          properties: {
+            start: { type: 'string', format: 'date' },
+            end: { type: 'string', format: 'date' },
+          },
+        },
+      },
+    },
+  })
+  importGuidance(@Query() q: ImportUploadDto) {
+    return this.banking.importGuidance(q.accountId);
   }
   @Get('imports/:id') detail(@Param('id', ParseUUIDPipe) id: string) {
     return this.banking.importDetail(id);

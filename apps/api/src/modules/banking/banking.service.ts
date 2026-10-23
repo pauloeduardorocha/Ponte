@@ -695,6 +695,69 @@ export class BankingService {
       expenseId: expense?.id ?? null,
     });
   }
+  async importGuidance(accountId: string) {
+    const account = await this.db.bankAccount.findUnique({
+      where: { id: accountId },
+    });
+    if (!account) throw new NotFoundException('Conta bancária não encontrada');
+    // Use every completed import, regardless of history pagination or review status.
+    const groups = await this.db.bankTransaction.groupBy({
+      by: ['importId'],
+      where: {
+        import: {
+          accountId,
+          status: { in: ['CONFIRMED', 'READY_FOR_REVIEW'] },
+        },
+      },
+      _min: { date: true },
+      _max: { date: true },
+    });
+    const periods = groups
+      .flatMap((g) =>
+        g._min.date && g._max.date
+          ? [
+              {
+                start: g._min.date.toISOString().slice(0, 10),
+                end: g._max.date.toISOString().slice(0, 10),
+              },
+            ]
+          : [],
+      )
+      .sort((a, b) => a.start.localeCompare(b.start));
+    const merged: { start: string; end: string }[] = [];
+    const shift = (date: string, days: number) => {
+      const value = new Date(`${date}T00:00:00.000Z`);
+      value.setUTCDate(value.getUTCDate() + days);
+      return value.toISOString().slice(0, 10);
+    };
+    for (const period of periods) {
+      const last = merged.at(-1);
+      if (last && period.start <= shift(last.end, 1)) {
+        if (period.end > last.end) last.end = period.end;
+      } else merged.push({ ...period });
+    }
+    const gaps = merged.slice(1).map((period, index) => ({
+      start: shift(merged[index]!.end, 1),
+      end: shift(period.start, -1),
+    }));
+    const bankDataThrough = merged.at(-1)?.end ?? null;
+    const today = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/Lisbon',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    return {
+      accountId,
+      bankDataThrough,
+      gaps,
+      // Include the last imported day, since a previous export may have been partial.
+      suggestedPeriod:
+        bankDataThrough && bankDataThrough < today
+          ? { start: bankDataThrough, end: today }
+          : null,
+    };
+  }
   async imports(q: BankQuery) {
     const where = { accountId: q.accountId };
     return {

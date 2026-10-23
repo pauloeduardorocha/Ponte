@@ -34,6 +34,12 @@ import { MovementAttachments } from './MovementAttachments';
 import { EfaturaFetch } from './EfaturaFetch';
 import { LinkBankMovement } from './LinkBankMovement';
 type Lookup = { id: string; name: string; kind?: string; currency?: string };
+type ImportGuidance = {
+  accountId: string;
+  bankDataThrough: string | null;
+  gaps: { start: string; end: string }[];
+  suggestedPeriod: { start: string; end: string } | null;
+};
 type Import = {
   summary?: { registered: number; ignored: number; pending: number };
   period?: { start: string | null; end: string | null };
@@ -177,6 +183,14 @@ export function BankingPage({
     queryKey: ['finance', 'banking', 'import', importId],
     queryFn: () => apiRequest<Import>(`/finance/banking/imports/${importId}`),
     enabled: authorized && !pendingOnly && Boolean(importId),
+  });
+  const guidance = useQuery({
+    queryKey: ['finance', 'banking', 'import-guidance', accountId],
+    queryFn: () =>
+      apiRequest<ImportGuidance>('/finance/banking/import-guidance', {
+        query: { accountId },
+      }),
+    enabled: authorized && !pendingOnly && Boolean(accountId),
   });
   const pendingSummary = useQuery({
     queryKey: ['finance', 'banking', 'pending-classification'],
@@ -832,6 +846,71 @@ export function BankingPage({
             </TextField>
             {accounts.error && (
               <Alert severity="error">{accounts.error.message}</Alert>
+            )}
+            <Alert severity="info">
+              <Typography sx={{ fontWeight: 600 }}>
+                Período sugerido para importar
+              </Typography>
+              {!accountId &&
+                'Selecione a conta bancária para consultar os períodos em falta.'}
+              {accountId &&
+                guidance.isPending &&
+                'Consultando os períodos já importados…'}
+              {accountId && guidance.data && (
+                <Stack spacing={1}>
+                  {!guidance.data.bankDataThrough ? (
+                    <Typography>
+                      Ainda não há movimentos importados nesta conta. Exporte
+                      desde a data inicial do histórico que pretende registar
+                      até hoje.
+                    </Typography>
+                  ) : (
+                    <>
+                      <Typography>
+                        Movimentos importados até{' '}
+                        {formatDateOnly(guidance.data.bankDataThrough)}.
+                      </Typography>
+                      {guidance.data.gaps.map((gap) => (
+                        <Typography key={gap.start}>
+                          Intervalo a verificar: {formatDateOnly(gap.start)} a{' '}
+                          {formatDateOnly(gap.end)}.
+                        </Typography>
+                      ))}
+                      {guidance.data.suggestedPeriod ? (
+                        <Typography>
+                          Para atualizar: exporte de{' '}
+                          {formatDateOnly(guidance.data.suggestedPeriod.start)}{' '}
+                          a {formatDateOnly(guidance.data.suggestedPeriod.end)}.
+                        </Typography>
+                      ) : (
+                        <Typography>
+                          Não há período adicional a sugerir até hoje.
+                        </Typography>
+                      )}
+                      <Typography variant="body2">
+                        Os intervalos são estimados pelas datas dos movimentos
+                        de cada ficheiro; podem incluir dias sem atividade
+                        bancária. Confirme o período no banco. A sugestão de
+                        atualização inclui o último dia importado para cobrir
+                        exportações parciais; possíveis duplicados ficam para
+                        revisão.
+                      </Typography>
+                    </>
+                  )}
+                </Stack>
+              )}
+            </Alert>
+            {accountId && guidance.error && (
+              <Alert
+                severity="error"
+                action={
+                  <Button onClick={() => void guidance.refetch()}>
+                    Tentar novamente
+                  </Button>
+                }
+              >
+                Não foi possível consultar o período sugerido para esta conta.
+              </Alert>
             )}
             <Button component="label">
               Escolher arquivo (até 10 MB)

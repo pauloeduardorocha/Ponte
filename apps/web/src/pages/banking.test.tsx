@@ -47,6 +47,14 @@ function routes() {
     ),
     'GET /finance/banking/pending-classification': { body: { total: 0 } },
     'GET /finance/banking/imports': { body: page([imported]) },
+    'GET /finance/banking/import-guidance': {
+      body: {
+        accountId: 'account-1',
+        bankDataThrough: null,
+        gaps: [],
+        suggestedPeriod: null,
+      },
+    },
     'GET /finance/banking/transactions': { body: page([row]) },
     'GET /finance/banking/imports/import-1': { body: imported },
     'GET /finance/accounts': {
@@ -93,6 +101,64 @@ async function uploadStatement() {
 }
 describe('Bank statement review', () => {
   beforeEach(resetTestState);
+  it('shows import guidance to a super admin and refreshes it when changing accounts', async () => {
+    const requests = mockApi({
+      ...routes(),
+      ...sessionRoutes(makeUser([...PERMISSIONS])),
+      'GET /finance/accounts': {
+        body: page([
+          { id: 'account-1', name: 'Millennium', currency: 'EUR' },
+          { id: 'account-2', name: 'Outra conta', currency: 'EUR' },
+        ]),
+      },
+      'GET /finance/banking/import-guidance': (r) => ({
+        body:
+          r.query.get('accountId') === 'account-1'
+            ? {
+                accountId: 'account-1',
+                bankDataThrough: '2026-10-20',
+                gaps: [{ start: '2026-10-01', end: '2026-10-14' }],
+                suggestedPeriod: { start: '2026-10-20', end: '2026-10-23' },
+              }
+            : {
+                accountId: 'account-2',
+                bankDataThrough: null,
+                gaps: [],
+                suggestedPeriod: null,
+              },
+      }),
+    });
+    renderApp('/finance?tab=banking');
+    expect(
+      await screen.findByText('Período sugerido para importar'),
+    ).toBeVisible();
+    expect(
+      screen.getByText(/Selecione a conta bancária para consultar/),
+    ).toBeVisible();
+    expect(requests.some((r) => r.path.endsWith('/import-guidance'))).toBe(
+      false,
+    );
+    await screen.findByRole('combobox', { name: 'Conta bancária' });
+    await waitFor(() =>
+      expect(requests.some((r) => r.path === '/finance/accounts')).toBe(true),
+    );
+    select('Conta bancária', 'Millennium (EUR)');
+    expect(
+      await screen.findByText(
+        'Intervalo a verificar: 01/10/2026 a 14/10/2026.',
+      ),
+    ).toBeVisible();
+    expect(
+      screen.getByText('Para atualizar: exporte de 20/10/2026 a 23/10/2026.'),
+    ).toBeVisible();
+    select('Conta bancária', 'Outra conta (EUR)');
+    expect(
+      await screen.findByText(/Ainda não há movimentos importados nesta conta/),
+    ).toBeVisible();
+    expect(
+      screen.queryByText(/Intervalo a verificar:/),
+    ).not.toBeInTheDocument();
+  });
   it('prefills the expense category when a reimbursement is linked during review', async () => {
     let linked = false;
     const reimbursement = {
