@@ -5003,7 +5003,65 @@
         },
         "responses": {
           "201": {
-            "description": ""
+            "description": "Notificação individual ou resumo coletivo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SENT",
+                            "FAILED",
+                            "PENDING"
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "required": [
+                        "total",
+                        "sent",
+                        "failed",
+                        "pending",
+                        "status"
+                      ],
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "sent": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        },
+                        "pending": {
+                          "type": "integer"
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "SENT",
+                            "FAILED",
+                            "PARTIAL",
+                            "PENDING"
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5013,7 +5071,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "description": "Cria uma mensagem por destinatário. Sem scheduledAt envia imediatamente; com agendamento cria PENDING para envio manual após a data. Resposta individual preservada; envio coletivo retorna total, sent, failed, pending e status SENT, FAILED, PARTIAL ou PENDING. 400 para público inválido/vazio; 403 para público global sem escopo; 404 para seleção inexistente/inacessível; 409 para canal imediato sem provedor."
       }
     },
     "/api/v1/operations/notifications/{id}/send": {
@@ -11440,6 +11499,73 @@
           }
         }
       }
+    },
+    "/api/v1/operations/notification-audiences/{kind}": {
+      "get": {
+        "operationId": "OperationsController_notificationAudiences",
+        "summary": "Consultar públicos de notificações",
+        "description": "Exige NOTIFICATION_SEND. Grupos e ministérios ativos no escopo de gestão; roles exigem OPERATION_SCOPE_ALL. Retorna items (id, name), total, page e pageSize.",
+        "tags": [
+          "Operacao da igreja"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "small-groups",
+                "ministries",
+                "roles"
+              ]
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Públicos disponíveis"
+          },
+          "400": {
+            "description": "Tipo ou paginação inválidos"
+          },
+          "403": {
+            "description": "Permissão insuficiente"
+          }
+        }
+      }
     }
   },
   "info": {
@@ -12489,12 +12615,44 @@
           },
           "scheduledAt": {
             "type": "string"
+          },
+          "smallGroupIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "ministryIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "roleIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "allMembers": {
+            "type": "boolean",
+            "description": "Envia a todos os membros ativos. Exige OPERATION_SCOPE_ALL."
           }
         },
         "required": [
           "channel",
           "content"
-        ]
+        ],
+        "description": "Escolha exatamente um público: recipientMemberId, recipientVisitorId, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays selecionam a união, sem duplicar membros. Roles e todos os membros exigem OPERATION_SCOPE_ALL; grupos e ministérios respeitam o escopo de gestão."
       },
       "TemplateDto": {
         "type": "object",

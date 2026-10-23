@@ -1778,7 +1778,72 @@ export class OperationsService {
     ]);
     return this.page(items, total, q);
   }
+  async notificationAudiences(
+    kind: string,
+    q: D.OperationQuery,
+    user: CurrentUser,
+  ) {
+    const name = q.search
+      ? { contains: q.search, mode: 'insensitive' as const }
+      : undefined;
+    const select = { id: true, name: true };
+    const args = {
+      select,
+      ...this.pagination(q),
+      orderBy: { name: 'asc' as const },
+    };
+    if (kind === 'small-groups') {
+      const where = {
+        AND: [await this.groupScope(user), { active: true, name }],
+      };
+      const [items, total] = await this.db.$transaction([
+        this.db.smallGroup.findMany({ ...args, where }),
+        this.db.smallGroup.count({ where }),
+      ]);
+      return this.page(items, total, q);
+    }
+    if (kind === 'ministries') {
+      const where = {
+        AND: [await this.ministryScope(user), { active: true, name }],
+      };
+      const [items, total] = await this.db.$transaction([
+        this.db.ministry.findMany({ ...args, where }),
+        this.db.ministry.count({ where }),
+      ]);
+      return this.page(items, total, q);
+    }
+    if (kind !== 'roles')
+      throw new BadRequestException('Tipo de destinatário inválido.');
+    if (!this.all(user)) throw new ForbiddenException();
+    const where = q.search ? { OR: [{ name }, { displayName: name }] } : {};
+    const [rows, total] = await this.db.$transaction([
+      this.db.role.findMany({
+        ...args,
+        select: { ...select, displayName: true },
+        where,
+      }),
+      this.db.role.count({ where }),
+    ]);
+    return this.page(
+      rows.map((r) => ({ id: r.id, name: r.displayName || r.name })),
+      total,
+      q,
+    );
+  }
   async sendNotification(dto: D.NotificationDto, user: CurrentUser) {
+    const { smallGroupIds, ministryIds, roleIds, allMembers, ...message } = dto;
+    const audienceCount = [
+      dto.recipientMemberId,
+      dto.recipientVisitorId,
+      smallGroupIds?.length,
+      ministryIds?.length,
+      roleIds?.length,
+      allMembers,
+    ].filter(Boolean).length;
+    if (audienceCount !== 1)
+      throw new BadRequestException(
+        'Selecione exatamente um tipo de destinatário.',
+      );
     if (
       !dto.scheduledAt &&
       !this.providers.some((p) => p.channel === dto.channel)
@@ -1786,6 +1851,130 @@ export class OperationsService {
       throw new ConflictException(
         'Canal preparado; configure um provedor antes de enviar.',
       );
+    const bulk = !!(smallGroupIds || ministryIds || roleIds || allMembers);
+    if (bulk) {
+      if ((roleIds || allMembers) && !this.all(user))
+        throw new ForbiddenException();
+      const created = await this.write(async (tx) => {
+        const filters: Prisma.MemberWhereInput[] = [];
+        if (smallGroupIds) {
+          const ids = [...new Set(smallGroupIds)];
+          const groups = await tx.smallGroup.findMany({
+            where: {
+              AND: [
+                await this.groupScope(user),
+                { id: { in: ids }, active: true },
+              ],
+            },
+            select: {
+              id: true,
+              leaderMemberId: true,
+              coLeaderMemberId: true,
+              hostMemberId: true,
+            },
+          });
+          if (groups.length !== ids.length)
+            throw new NotFoundException('Grupo familiar indisponível.');
+          filters.push(
+            {
+              groupMemberships: {
+                some: { smallGroupId: { in: ids }, active: true, leftAt: null },
+              },
+            },
+            {
+              id: {
+                in: groups.flatMap((g) =>
+                  [g.leaderMemberId, g.coLeaderMemberId, g.hostMemberId].filter(
+                    (id): id is string => !!id,
+                  ),
+                ),
+              },
+            },
+          );
+        }
+        if (ministryIds) {
+          const ids = [...new Set(ministryIds)];
+          const ministries = await tx.ministry.findMany({
+            where: {
+              AND: [
+                await this.ministryScope(user),
+                { id: { in: ids }, active: true },
+              ],
+            },
+            select: { id: true, leaderMemberId: true },
+          });
+          if (ministries.length !== ids.length)
+            throw new NotFoundException('Ministério indisponível.');
+          filters.push(
+            {
+              ministryMemberships: {
+                some: { ministryId: { in: ids }, active: true, leftAt: null },
+              },
+            },
+            { id: { in: ministries.map((m) => m.leaderMemberId) } },
+          );
+        }
+        if (roleIds) {
+          const ids = [...new Set(roleIds)];
+          if (
+            (await tx.role.count({ where: { id: { in: ids } } })) !== ids.length
+          )
+            throw new NotFoundException('Role indisponível.');
+          filters.push({
+            user: {
+              status: 'ACTIVE',
+              deletedAt: null,
+              userRoles: { some: { roleId: { in: ids } } },
+            },
+          });
+        }
+        const members = await tx.member.findMany({
+          where: {
+            status: 'ACTIVE',
+            anonymizedAt: null,
+            ...(allMembers ? {} : { OR: filters }),
+          },
+          select: { id: true },
+        });
+        if (!members.length)
+          throw new BadRequestException(
+            'Nenhum membro ativo encontrado para esta seleção.',
+          );
+        return tx.notification.createManyAndReturn({
+          data: members.map((m) => ({
+            ...message,
+            recipientMemberId: m.id,
+            scheduledAt: dto.scheduledAt
+              ? new Date(dto.scheduledAt)
+              : undefined,
+            createdByUserId: user.id,
+          })),
+          select: { id: true },
+        });
+      });
+      let sent = 0,
+        failed = 0;
+      if (!dto.scheduledAt) {
+        for (const n of created) {
+          const result = await this.notificationAction(n.id, user);
+          if (result.status === 'SENT') sent++;
+          else failed++;
+        }
+      }
+      return {
+        total: created.length,
+        sent,
+        failed,
+        pending: dto.scheduledAt ? created.length : 0,
+        status: dto.scheduledAt
+          ? 'PENDING'
+          : failed
+            ? sent
+              ? 'PARTIAL'
+              : 'FAILED'
+            : 'SENT',
+      };
+    }
     const created = await this.write(async (tx) => {
       await this.accessiblePerson(
         tx,
@@ -1794,7 +1983,7 @@ export class OperationsService {
       );
       return tx.notification.create({
         data: {
-          ...dto,
+          ...message,
           scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
           createdByUserId: user.id,
         },

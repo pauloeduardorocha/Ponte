@@ -26,7 +26,7 @@ import {
   type Entry,
   type Field,
 } from './operation-config';
-type Values = Record<string, string | boolean>;
+type Values = Record<string, string | boolean | string[]>;
 export function LookupField({
   field,
   control,
@@ -38,14 +38,16 @@ export function LookupField({
 }) {
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<Entry[]>([]);
   const debounced = useDebouncedValue(search);
-  const permitted =
-    field.lookup === 'people'
+  const permitted = field.lookup?.startsWith('notification-audiences/')
+    ? hasPermission('NOTIFICATION_SEND')
+    : field.lookup === 'people'
       ? true
       : field.lookup === 'assignees'
         ? hasPermission('FOLLOWUP_READ')
         : field.lookup
-          ? hasPermission(configs[field.lookup].read) ||
+          ? hasPermission(configs[field.lookup as keyof typeof configs].read) ||
             (field.lookup === 'ministries' && hasPermission('COMMUNITY_READ'))
           : false;
   const data = useQuery({
@@ -75,15 +77,25 @@ export function LookupField({
       rules={{ required: field.required ? 'Selecione uma opção' : false }}
       render={({ field: input, fieldState }) => (
         <Autocomplete
+          multiple={field.multiple}
           options={options}
           value={
-            options.find((o) => o.id === input.value) ??
-            (input.value
-              ? {
-                  id: String(input.value),
-                  name: initialEntry?.name ?? 'Seleção atual',
-                }
-              : null)
+            field.multiple
+              ? (Array.isArray(input.value) ? input.value : []).map(
+                  (id) =>
+                    options.find((o) => o.id === id) ??
+                    selected.find((o) => o.id === id) ?? {
+                      id,
+                      name: 'Seleção atual',
+                    },
+                )
+              : (options.find((o) => o.id === input.value) ??
+                (input.value
+                  ? {
+                      id: String(input.value),
+                      name: initialEntry?.name ?? 'Seleção atual',
+                    }
+                  : null))
           }
           getOptionLabel={entryName}
           isOptionEqualToValue={(a, b) => a.id === b.id}
@@ -91,7 +103,12 @@ export function LookupField({
           onInputChange={(_, v, reason) => {
             if (reason === 'input') setSearch(v);
           }}
-          onChange={(_, v) => input.onChange(v?.id ?? '')}
+          onChange={(_, v) => {
+            if (Array.isArray(v)) {
+              setSelected(v);
+              input.onChange(v.map((o) => o.id));
+            } else input.onChange(v?.id ?? '');
+          }}
           loading={data.isFetching}
           disabled={!permitted}
           noOptionsText={
@@ -103,7 +120,12 @@ export function LookupField({
             <TextField
               {...p}
               label={field.label}
-              required={field.required}
+              required={
+                field.required &&
+                (!field.multiple ||
+                  !Array.isArray(input.value) ||
+                  input.value.length === 0)
+              }
               error={!!fieldState.error || data.isError}
               helperText={
                 fieldState.error?.message ??
@@ -133,10 +155,12 @@ export function OperationForm({
   onClose: () => void;
   onSaved: (result?: unknown) => void;
 }) {
+  const { hasPermission } = useAuth();
   const defaults: Values = {};
   for (const f of fields) {
     const value = initial?.[f.key];
-    if (f.type === 'boolean')
+    if (f.multiple) defaults[f.key] = [];
+    else if (f.type === 'boolean')
       defaults[f.key] = typeof value === 'boolean' ? value : f.key === 'active';
     else if (value && f.type === 'datetime-local') {
       const d = new Date(String(value));
@@ -152,12 +176,27 @@ export function OperationForm({
       );
   }
   const form = useForm<Values>({ defaultValues: defaults });
+  const audience = form.watch('audience');
+  const recipientFields: Record<string, string> = {
+    recipientMemberId: 'MEMBER',
+    recipientVisitorId: 'VISITOR',
+    smallGroupIds: 'SMALL_GROUPS',
+    ministryIds: 'MINISTRIES',
+    roleIds: 'ROLES',
+  };
+  const visibleFields = fields.filter(
+    (f) =>
+      !audience ||
+      !recipientFields[f.key] ||
+      recipientFields[f.key] === audience,
+  );
   const client = useQueryClient();
   const [confirmation, setConfirmation] = useState<Values>();
   const save = useMutation({
     mutationFn: (values: Values) => {
       const body: Record<string, unknown> = {};
-      for (const f of fields) {
+      for (const f of visibleFields) {
+        if (f.key === 'audience') continue;
         const value = values[f.key];
         if (value === '') {
           if (
@@ -183,6 +222,7 @@ export function OperationForm({
               ? new Date(String(value)).toISOString()
               : value;
       }
+      if (audience === 'ALL') body.allMembers = true;
       return apiRequest(path, { method, body });
     },
     onSuccess: (result) => {
@@ -220,11 +260,20 @@ export function OperationForm({
                     Selecione um membro ou um visitante.
                   </Alert>
                 )}
-              {fields.map((f) =>
+              {audience === 'ALL' && (
+                <Alert severity="info">
+                  A mensagem será enviada a todos os membros ativos.
+                </Alert>
+              )}
+              {visibleFields.map((f) =>
                 f.lookup ? (
                   <LookupField
                     key={f.key}
-                    field={f}
+                    field={{
+                      ...f,
+                      required:
+                        f.required || (!!audience && !!recipientFields[f.key]),
+                    }}
                     control={form.control}
                     initial={initial}
                   />
@@ -260,7 +309,11 @@ export function OperationForm({
                         required={f.required}
                         name={field.name}
                         value={field.value}
-                        onChange={field.onChange}
+                        onChange={(event) => {
+                          if (f.key === 'audience')
+                            form.unregister(Object.keys(recipientFields));
+                          field.onChange(event);
+                        }}
                         onBlur={field.onBlur}
                         inputRef={field.ref}
                         error={!!fieldState.error}
@@ -270,15 +323,22 @@ export function OperationForm({
                         {!f.required && (
                           <MenuItem value="">Não informado</MenuItem>
                         )}
-                        {f.options?.map((o) => (
-                          <MenuItem key={o} value={o}>
-                            {f.key === 'meetingDay'
-                              ? dayLabels[Number(o)]
-                              : (f.optionLabels?.[o] ??
-                                operationLabels[o] ??
-                                o)}
-                          </MenuItem>
-                        ))}
+                        {f.options
+                          ?.filter(
+                            (o) =>
+                              f.key !== 'audience' ||
+                              !['ROLES', 'ALL'].includes(o) ||
+                              hasPermission('OPERATION_SCOPE_ALL'),
+                          )
+                          .map((o) => (
+                            <MenuItem key={o} value={o}>
+                              {f.key === 'meetingDay'
+                                ? dayLabels[Number(o)]
+                                : (f.optionLabels?.[o] ??
+                                  operationLabels[o] ??
+                                  o)}
+                            </MenuItem>
+                          ))}
                       </TextField>
                     )}
                   />

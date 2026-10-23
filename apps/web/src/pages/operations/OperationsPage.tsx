@@ -73,7 +73,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     [end, setEnd] = useState('');
   const [meetingDay, setMeetingDay] = useState(''),
     [page, setPage] = useState(0);
-  const filterForm = useForm<Record<string, string | boolean>>({
+  const filterForm = useForm<Record<string, string | boolean | string[]>>({
     defaultValues: params.get('ministryId')
       ? { ministryId: params.get('ministryId')! }
       : {},
@@ -127,7 +127,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     [detail, setDetail] = useState<Entry>(),
     [notice, setNotice] = useState<{
       text: string;
-      severity: 'success' | 'error';
+      severity: 'success' | 'error' | 'warning';
     }>();
   const [confirm, setConfirm] = useState<{ path: string; text: string }>();
   const client = useQueryClient();
@@ -556,18 +556,31 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           onSaved={(result) => {
             setForm(undefined);
             const status = (result as Entry | undefined)?.status;
+            const batch = result as
+              | {
+                  total?: number;
+                  sent?: number;
+                  failed?: number;
+                  pending?: number;
+                }
+              | undefined;
             setNotice({
               text:
                 resource !== 'notifications'
                   ? 'Cadastro salvo com sucesso.'
-                  : status === 'SENT'
-                    ? 'Notificação enviada.'
-                    : status === 'FAILED'
-                      ? 'Não foi possível enviar a notificação. Consulte a situação do envio.'
-                      : 'Notificação salva com agendamento.',
+                  : batch?.total !== undefined
+                    ? `Destinatários: ${batch.total}. Enviadas: ${batch.sent}. Falhas: ${batch.failed}. Agendadas: ${batch.pending}.`
+                    : status === 'SENT'
+                      ? 'Notificação enviada.'
+                      : status === 'FAILED'
+                        ? 'Não foi possível enviar a notificação. Consulte a situação do envio.'
+                        : 'Notificação salva com agendamento.',
               severity:
-                resource === 'notifications' && status === 'FAILED'
-                  ? 'error'
+                resource === 'notifications' &&
+                (status === 'FAILED' || status === 'PARTIAL')
+                  ? status === 'PARTIAL'
+                    ? 'warning'
+                    : 'error'
                   : 'success',
             });
           }}

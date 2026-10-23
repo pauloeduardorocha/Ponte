@@ -9,6 +9,28 @@ import {
 } from '../../test/utils';
 describe('Operational workflows', () => {
   beforeEach(resetTestState);
+  it('hides global audiences for senders without global operation scope', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['NOTIFICATION_READ', 'NOTIFICATION_SEND'])),
+      'GET /operations/notifications': { body: { items: [], total: 0 } },
+      'GET /operations/people': { body: { items: [] } },
+    });
+    renderApp('/notifications');
+    fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Enviar para' }));
+    expect(
+      screen.getByRole('option', { name: 'Grupos familiares' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('option', { name: 'Ministérios' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: 'Roles' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: 'Todos os membros' }),
+    ).not.toBeInTheDocument();
+  });
   it.each([
     ['SENT', 'Notificação enviada.', 'success'],
     [

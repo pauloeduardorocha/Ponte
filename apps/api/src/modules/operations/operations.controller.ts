@@ -520,11 +520,20 @@ export class OperationsController {
   @ApiOperation({
     summary: 'Criar uma notificação',
     description:
-      'Sem scheduledAt, tenta enviar imediatamente e retorna SENT ou FAILED. Com scheduledAt, cria PENDING para envio manual após a data. Um canal sem provedor retorna 409 antes da criação de um envio imediato.',
+      'Selecione exatamente um público: recipientMemberId, recipientVisitorId, smallGroupIds, ministryIds, roleIds ou allMembers=true. Grupos e ministérios respeitam o escopo de gestão; roles e todos os membros exigem OPERATION_SCOPE_ALL. Sem scheduledAt, tenta enviar imediatamente. Com scheduledAt, cria PENDING para envio manual após a data. O envio coletivo retorna total, sent, failed, pending e status (SENT, FAILED, PARTIAL ou PENDING); o individual preserva sua resposta. Canal sem provedor retorna 409 antes da criação de envio imediato.',
   })
   @Permission('NOTIFICATION_SEND')
   notify(@Body() dto: D.NotificationDto, @Req() r: AuthRequest) {
     return this.service.sendNotification(dto, r.user);
+  }
+  @Get('notification-audiences/:kind')
+  @Permission('NOTIFICATION_SEND')
+  notificationAudiences(
+    @Param('kind') kind: string,
+    @Query() q: D.OperationQuery,
+    @Req() r: AuthRequest,
+  ) {
+    return this.service.notificationAudiences(kind, q, r.user);
   }
   @Post('notifications/:id/send') @Permission('NOTIFICATION_SEND') dispatch(
     @Param('id', ParseUUIDPipe) id: string,

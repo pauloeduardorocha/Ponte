@@ -2,6 +2,9 @@ import { PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsArray,
+  ArrayNotEmpty,
+  ArrayMaxSize,
   IsDateString,
   IsEmail,
   IsIn,
@@ -167,6 +170,25 @@ export class AssignmentResponseDto {
   status!: string;
 }
 export class NotificationDto {
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  smallGroupIds?: string[];
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  ministryIds?: string[];
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  roleIds?: string[];
+  @IsOptional() @IsBoolean() allMembers?: boolean;
   @IsOptional() @IsUUID() recipientMemberId?: string;
   @IsOptional() @IsUUID() recipientVisitorId?: string;
   @IsIn(['EMAIL', 'SMS', 'WHATSAPP', 'PUSH', 'INTERNAL']) channel!: string;

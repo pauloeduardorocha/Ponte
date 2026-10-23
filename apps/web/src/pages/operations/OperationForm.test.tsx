@@ -47,6 +47,83 @@ function select(label: string, option: string) {
 describe('Operation form selections', () => {
   beforeEach(resetTestState);
 
+  it.each([
+    ['Grupos familiares', 'small-groups', 'smallGroupIds'],
+    ['Ministérios', 'ministries', 'ministryIds'],
+    ['Roles', 'roles', 'roleIds'],
+  ])(
+    'sends to multiple %s and clears hidden recipients when changing audience',
+    async (label, kind, key) => {
+      const requests = mockApi({
+        'GET /operations/people': {
+          body: { items: [{ id: 'm1', name: 'Membro individual' }] },
+        },
+        [`GET /operations/notification-audiences/${kind}`]: {
+          body: {
+            items: [
+              { id: 'a1', name: 'Opção A' },
+              { id: 'a2', name: 'Opção B' },
+            ],
+          },
+        },
+        'POST /operations/notifications': {
+          body: { total: 2, sent: 2, failed: 0, pending: 0, status: 'SENT' },
+        },
+      });
+      show(configs.notifications.fields, undefined, true);
+      fireEvent.mouseDown(
+        screen.getByRole('combobox', { name: 'Destinatário: membro' }),
+      );
+      fireEvent.click(
+        await screen.findByRole('option', { name: 'Membro individual' }),
+      );
+      select('Enviar para', label);
+      expect(
+        screen.queryByRole('combobox', { name: 'Destinatário: membro' }),
+      ).not.toBeInTheDocument();
+      fireEvent.mouseDown(screen.getByRole('combobox', { name: label }));
+      fireEvent.click(await screen.findByRole('option', { name: 'Opção A' }));
+      fireEvent.mouseDown(screen.getByRole('combobox', { name: label }));
+      fireEvent.click(await screen.findByRole('option', { name: 'Opção B' }));
+      expect(screen.getByRole('combobox', { name: label })).not.toBeRequired();
+      fireEvent.change(screen.getByLabelText(/Mensagem/), {
+        target: { value: 'Comunicado coletivo' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      await waitFor(() =>
+        expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+          [key]: ['a1', 'a2'],
+          channel: 'INTERNAL',
+          content: 'Comunicado coletivo',
+        }),
+      );
+    },
+  );
+
+  it('sends to all members after switching away from a required audience lookup', async () => {
+    const requests = mockApi({
+      'GET /operations/people': { body: { items: [] } },
+      'GET /operations/notification-audiences/small-groups': {
+        body: { items: [] },
+      },
+      'POST /operations/notifications': { body: { total: 2, status: 'SENT' } },
+    });
+    show(configs.notifications.fields, undefined, true);
+    select('Enviar para', 'Grupos familiares');
+    select('Enviar para', 'Todos os membros');
+    fireEvent.change(screen.getByLabelText(/Mensagem/), {
+      target: { value: 'Aviso geral' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+        allMembers: true,
+        channel: 'INTERNAL',
+        content: 'Aviso geral',
+      }),
+    );
+  });
+
   it('uses a native date and time picker and submits the selected local time in UTC', async () => {
     const requests = mockApi({
       'POST /operations/notifications': {
@@ -106,7 +183,7 @@ describe('Operation form selections', () => {
   it.each(
     Object.entries(configs).flatMap(([resource, config]) =>
       config.fields
-        .filter((field) => field.options)
+        .filter((field) => field.options && field.key !== 'audience')
         .map((field) => ({
           resource,
           field,

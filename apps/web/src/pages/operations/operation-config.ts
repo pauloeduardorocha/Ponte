@@ -22,7 +22,14 @@ export type Field = {
     | 'boolean';
   options?: string[];
   optionLabels?: Record<string, string>;
-  lookup?: Resource | 'people' | 'assignees';
+  multiple?: boolean;
+  lookup?:
+    | Resource
+    | 'people'
+    | 'assignees'
+    | 'notification-audiences/small-groups'
+    | 'notification-audiences/ministries'
+    | 'notification-audiences/roles';
 };
 export type Config = {
   title: string;
@@ -251,11 +258,53 @@ export const configs: Record<Resource, Config> = {
     update: 'NOTIFICATION_SEND',
     statuses: ['PENDING', 'SENT', 'FAILED', 'CANCELLED'],
     fields: [
+      {
+        key: 'audience',
+        label: 'Enviar para',
+        required: true,
+        options: [
+          'MEMBER',
+          'VISITOR',
+          'SMALL_GROUPS',
+          'MINISTRIES',
+          'ROLES',
+          'ALL',
+        ],
+        optionLabels: {
+          MEMBER: 'Um membro',
+          VISITOR: 'Um visitante',
+          SMALL_GROUPS: 'Grupos familiares',
+          MINISTRIES: 'Ministérios',
+          ROLES: 'Roles',
+          ALL: 'Todos os membros',
+        },
+      },
       { ...member, key: 'recipientMemberId', label: 'Destinatário: membro' },
       {
         ...visitor,
         key: 'recipientVisitorId',
         label: 'Destinatário: visitante',
+      },
+      {
+        key: 'smallGroupIds',
+        label: 'Grupos familiares',
+        lookup: 'notification-audiences/small-groups',
+        multiple: true,
+        required: true,
+      },
+      {
+        key: 'ministryIds',
+        label: 'Ministérios',
+        lookup: 'notification-audiences/ministries',
+        multiple: true,
+        required: true,
+      },
+      {
+        key: 'roleIds',
+        label: 'Roles',
+        lookup: 'notification-audiences/roles',
+        multiple: true,
+        required: true,
       },
       {
         key: 'channel',

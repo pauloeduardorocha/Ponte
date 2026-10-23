@@ -1,17 +1,36 @@
 # Notificações internas e Web Push
 
-Todos os endpoints abaixo exigem Bearer auth e usam o usuário da sessão; não aceitam um usuário destinatário fornecido pelo cliente.
+Os endpoints da caixa pessoal e de Web Push abaixo exigem Bearer auth e usam o usuário da sessão; não aceitam um usuário destinatário fornecido pelo cliente.
 
-| Método e caminho (`/api/v1`)            | Contrato                                                                                                                                                                                                   |
-| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| GET `/operations/inbox`                 | Paginação existente; inclui canais INTERNAL e PUSH enviados e `readAt` por mensagem.                                                                                                                       |
-| GET `/operations/inbox/unread`          | `{ count: number }`, somente mensagens do destinatário autenticado.                                                                                                                                        |
-| POST `/operations/inbox/:id/read`       | Marca mensagem própria enviada como lida; idempotente; 404 para mensagem alheia.                                                                                                                           |
-| POST `/operations/inbox/read-all`       | Marca todas as mensagens próprias enviadas como lidas; `{ count }`.                                                                                                                                        |
-| DELETE `/operations/inbox/:id`         | Remove uma mensagem enviada da caixa do usuário autenticado; `{ count: 1 }`. Não exige permissão administrativa. 404 para mensagem alheia, removida ou não enviada; 400 para UUID inválido. Preserva o histórico de envio. |
-| GET `/operations/push/config`           | `{ enabled, publicKey }`; chave pública VAPID ou null. Nunca expõe chave privada.                                                                                                                          |
-| POST `/operations/push/subscriptions`   | `{ endpoint, keys: { p256dh, auth } }`; cria/atualiza inscrição própria, `{ subscribed: true }`. 400 para endpoint/chaves inválidos; 409 se pertencer a outra conta; 503 quando push não está configurado. |
-| DELETE `/operations/push/subscriptions` | `{ endpoint }`; remove somente inscrição própria, idempotente; `{ subscribed: false }`.                                                                                                                    |
+## Envio por público
+
+`POST /operations/notifications` exige `NOTIFICATION_SEND`. Além de `channel`, `content`, `subject` e `scheduledAt`, escolha exatamente um público:
+
+- `recipientMemberId`: um membro, preservando o contrato individual.
+- `recipientVisitorId`: um visitante, preservando o contrato individual.
+- `smallGroupIds`: array de UUIDs de grupos familiares ativos no escopo de gestão do remetente.
+- `ministryIds`: array de UUIDs de ministérios ativos no escopo de gestão do remetente.
+- `roleIds`: array de UUIDs das roles de contas ativas vinculadas a membros; exige também `OPERATION_SCOPE_ALL`.
+- `allMembers: true`: todos os membros ativos; exige também `OPERATION_SCOPE_ALL`.
+
+Arrays aceitam entre 1 e 100 IDs. A seleção inclui a união dos participantes atuais (`active: true`, `leftAt: null`) e dos líderes, co-líderes e anfitriões cadastrados nos grupos/ministérios. Membros inativos ou anonimizados são excluídos. Cada membro recebe uma única mensagem mesmo se pertencer a várias opções selecionadas. Cada mensagem conserva seu próprio estado de envio e leitura no histórico e na caixa pessoal. Os destinatários do agendamento são definidos no momento da criação; o envio após a data continua manual, por mensagem.
+
+O envio coletivo retorna `{ total, sent, failed, pending, status }`, com status `SENT`, `FAILED`, `PARTIAL` ou `PENDING`. Falhas do provedor em um destinatário não impedem a tentativa aos seguintes. O formulário apresenta as quatro contagens, incluindo envios parciais. Seleção ambígua ou sem membros ativos retorna 400; acesso global sem escopo retorna 403; grupo, ministério ou role inexistente/inacessível retorna 404. O envio individual mantém sua resposta anterior.
+
+`GET /operations/notification-audiences/:kind` aceita `small-groups`, `ministries` ou `roles` e os parâmetros `search`, `page` e `pageSize` (máximo 100). Exige `NOTIFICATION_SEND` e retorna `{ items: [{ id, name }], total, page, pageSize }`. Apenas opções no escopo autorizado são oferecidas. Roles usam o nome de exibição quando disponível e exigem escopo global. Os campos de seleção no formulário permitem várias opções da mesma categoria.
+
+Exemplo: `{ "smallGroupIds": ["63b80123-eefa-4f48-a877-6cfdcdd4b724"], "channel": "INTERNAL", "content": "Encontro nesta semana." }`.
+
+| Método e caminho (`/api/v1`)            | Contrato                                                                                                                                                                                                                   |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET `/operations/inbox`                 | Paginação existente; inclui canais INTERNAL e PUSH enviados e `readAt` por mensagem.                                                                                                                                       |
+| GET `/operations/inbox/unread`          | `{ count: number }`, somente mensagens do destinatário autenticado.                                                                                                                                                        |
+| POST `/operations/inbox/:id/read`       | Marca mensagem própria enviada como lida; idempotente; 404 para mensagem alheia.                                                                                                                                           |
+| POST `/operations/inbox/read-all`       | Marca todas as mensagens próprias enviadas como lidas; `{ count }`.                                                                                                                                                        |
+| DELETE `/operations/inbox/:id`          | Remove uma mensagem enviada da caixa do usuário autenticado; `{ count: 1 }`. Não exige permissão administrativa. 404 para mensagem alheia, removida ou não enviada; 400 para UUID inválido. Preserva o histórico de envio. |
+| GET `/operations/push/config`           | `{ enabled, publicKey }`; chave pública VAPID ou null. Nunca expõe chave privada.                                                                                                                                          |
+| POST `/operations/push/subscriptions`   | `{ endpoint, keys: { p256dh, auth } }`; cria/atualiza inscrição própria, `{ subscribed: true }`. 400 para endpoint/chaves inválidos; 409 se pertencer a outra conta; 503 quando push não está configurado.                 |
+| DELETE `/operations/push/subscriptions` | `{ endpoint }`; remove somente inscrição própria, idempotente; `{ subscribed: false }`.                                                                                                                                    |
 
 Enviar INTERNAL preserva a mensagem no banco antes de tentar avisar os dispositivos inscritos. Uma falha push não desfaz a entrega interna. PUSH usa a mesma caixa de entrada e exige configuração e ao menos um dispositivo que aceite o envio; falhas ficam FAILED. Inscrições expiradas (404/410) são removidas. O alerta usa o assunto como título (ou “A Ponte” quando ausente) e a mensagem como corpo. Mensagens longas recebem uma prévia com reticências para respeitar o limite de tamanho do push; a mensagem completa continua na caixa interna. O clique abre `/inbox` e exige a sessão normal.
 
