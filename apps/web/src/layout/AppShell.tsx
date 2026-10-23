@@ -47,8 +47,7 @@ import {
 } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { initials } from '../lib/format';
-import type { Permission } from '../lib/types';
-import { AUDIT_PERMISSIONS } from '../lib/audit-permissions';
+import { canAccessRoute } from '../auth/route-access';
 
 const sidebarWidth = 264;
 
@@ -71,10 +70,6 @@ interface NavigationItem {
   to: string;
   icon: typeof DashboardRounded;
   group: NavigationGroup;
-  permission?: Permission;
-  permissions?: Permission[];
-  anyPermissions?: Permission[];
-  permissionPrefix?: 'LIBRARY_' | 'FINANCE_';
 }
 
 const navigation: NavigationItem[] = [
@@ -95,29 +90,18 @@ const navigation: NavigationItem[] = [
     group: 'Eventos',
     to: '/my-events',
     icon: CalendarMonthRounded,
-    permission: 'EVENT_READ',
   },
   {
     label: 'Vida da igreja',
     group: 'Operação',
     to: '/operations',
     icon: DashboardRounded,
-    anyPermissions: [
-      'MEMBER_READ',
-      'VISITOR_READ',
-      'FOLLOWUP_READ',
-      'SMALL_GROUP_READ',
-      'MINISTRY_READ',
-      'EVENT_READ',
-      'SCHEDULE_READ',
-    ],
   },
   {
     label: 'Auditoria',
     group: 'Administração',
     to: '/audit',
     icon: AdminPanelSettingsRounded,
-    permissions: AUDIT_PERMISSIONS,
   },
   { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
   {
@@ -125,70 +109,60 @@ const navigation: NavigationItem[] = [
     group: 'Pessoas',
     to: '/members',
     icon: PeopleAltRounded,
-    permission: 'MEMBER_READ',
   },
   {
     label: 'Agenda de eventos',
     group: 'Eventos',
     to: '/events?view=community',
     icon: CalendarMonthRounded,
-    anyPermissions: ['EVENT_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Visitantes',
     group: 'Pessoas',
     to: '/visitors',
     icon: PeopleAltRounded,
-    permission: 'VISITOR_READ',
   },
   {
     label: 'Acompanhamento',
     group: 'Pessoas',
     to: '/follow-ups',
     icon: PeopleAltRounded,
-    permission: 'FOLLOWUP_READ',
   },
   {
     label: 'Grupos familiares',
     group: 'Grupos e ministérios',
     to: '/small-groups?view=community',
     icon: PeopleAltRounded,
-    anyPermissions: ['SMALL_GROUP_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Ministérios',
     group: 'Grupos e ministérios',
     to: '/ministries?view=community',
     icon: PeopleAltRounded,
-    anyPermissions: ['MINISTRY_READ', 'COMMUNITY_READ'],
   },
   {
     label: 'Escalas',
     group: 'Operação',
     to: '/schedules',
     icon: CalendarMonthRounded,
-    permission: 'COMMUNITY_READ',
   },
   {
     label: 'Notificações',
     group: 'Comunicação',
     to: '/notifications',
     icon: NotificationsNoneRounded,
-    permission: 'NOTIFICATION_READ',
   },
   {
     label: 'Biblioteca',
     group: 'Biblioteca',
     to: '/library',
     icon: MenuBookRounded,
-    permissionPrefix: 'LIBRARY_',
   },
   {
     label: 'Financeiro',
     group: 'Financeiro',
     to: '/finance',
     icon: AccountBalanceRounded,
-    permissionPrefix: 'FINANCE_',
   },
   {
     label: 'Meus reembolsos',
@@ -202,14 +176,12 @@ function isNavigationActive(to: string, location: { pathname: string }) {
   const [pathname] = to.split('?');
   return (
     location.pathname === pathname ||
-    (pathname !== '/' &&
-      pathname !== '/videos' &&
-      location.pathname.startsWith(`${pathname}/`))
+    (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
   );
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
     location.pathname.startsWith('/videos') ? ['Vídeos'] : [],
@@ -226,17 +198,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       (a, b) =>
         navigationGroups.indexOf(a.group) - navigationGroups.indexOf(b.group),
     )
-    .filter(({ permissionPrefix, permission, permissions, anyPermissions }) =>
-      anyPermissions
-        ? anyPermissions.some(hasPermission)
-        : permissions
-          ? permissions.every(hasPermission)
-          : permissionPrefix
-            ? user?.permissions.some((code) =>
-                code.startsWith(permissionPrefix),
-              )
-            : !permission || hasPermission(permission),
-    );
+    .filter(({ to }) => canAccessRoute(to, user?.permissions ?? []));
 
   return (
     <Box className="sidebar">
@@ -321,10 +283,16 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                       component={Link}
                       to={to}
                       aria-current={
-                        isNavigationActive(to, location) ? 'page' : undefined
+                        (
+                          to === '/videos'
+                            ? location.pathname === to
+                            : isNavigationActive(to, location)
+                        )
+                          ? 'page'
+                          : undefined
                       }
                       onClick={onNavigate}
-                      className={`navigation-link${isNavigationActive(to, location) ? ' active' : ''}`}
+                      className={`navigation-link${(to === '/videos' ? location.pathname === to : isNavigationActive(to, location)) ? ' active' : ''}`}
                       sx={{
                         '&.active': {
                           color: 'primary.main',

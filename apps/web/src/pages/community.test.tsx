@@ -14,9 +14,7 @@ describe('Community registration and permissions', () => {
     const requests = mockApi(sessionRoutes(makeUser([])));
     renderApp('/visitors');
     expect(
-      await screen.findByText(
-        'Você não tem permissão para acessar este módulo.',
-      ),
+      await screen.findByText('Você não tem permissão para acessar esta área.'),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/community'))).toBe(false);
   });

@@ -12,7 +12,12 @@ const ReimbursementRequestPage = lazy(() =>
 import { LinearProgress } from '@mui/material';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
-import { PublicOnly, RequireAuth, RequirePermission } from './auth/guards';
+import {
+  PublicOnly,
+  RequireAuth,
+  RequirePermission,
+  RequireRouteAccess,
+} from './auth/guards';
 const AppShell = lazy(() =>
   import('./layout/AppShell').then((m) => ({ default: m.AppShell })),
 );
@@ -94,7 +99,6 @@ const LibraryPage = lazy(() =>
     default: m.LibraryPage,
   })),
 );
-
 const VideosPage = lazy(() =>
   import('./pages/VideosPage').then((m) => ({ default: m.VideosPage })),
 );
@@ -121,104 +125,114 @@ export function App({ children }: { children?: ReactNode }) {
               element={<ReimbursementRequestPage />}
             />
             <Route element={<AppShell />}>
-              <Route index element={<DashboardPage />} />
-              <Route path="operations" element={<OperationsDashboardPage />} />
-              <Route path="inbox" element={<InboxPage />} />
-              <Route path="my-events" element={<EventWorkspace />} />
-              <Route path="account" element={<AccountPage />} />
-              <Route path="reimbursements" element={<ReimbursementsPage />} />
-              <Route path="library" element={<LibraryPage />} />
-              <Route path="videos" element={<VideosPage />} />
-              <Route path="videos/:playlistId" element={<VideosPage />} />
-              <Route
-                path="members"
-                element={
-                  <RequirePermission permission="MEMBER_READ">
-                    <MembersListPage />
-                  </RequirePermission>
-                }
-              />
-              <Route
-                path="members/new"
-                element={
-                  <RequirePermission permission="MEMBER_CREATE">
-                    <MemberCreatePage />
-                  </RequirePermission>
-                }
-              />
-              <Route
-                path="members/:id"
-                element={
-                  <RequirePermission permission="MEMBER_READ">
-                    <MemberDetailPage />
-                  </RequirePermission>
-                }
-              />
-              <Route
-                path="members/:id/edit"
-                element={
-                  <RequirePermission permission="MEMBER_UPDATE">
-                    <MemberEditPage />
-                  </RequirePermission>
-                }
-              />
-              <Route
-                path="users"
-                element={<Navigate to="/members" replace />}
-              />
-              <Route
-                path="events"
-                element={<OperationsPage key="events" resource="events" />}
-              />
-              <Route path="finance" element={<FinancePage />} />
-              <Route path="audit" element={<AuditPage />} />
-              <Route
-                path="visitors"
-                element={<OperationsPage key="visitors" resource="visitors" />}
-              />
-              <Route
-                path="follow-ups"
-                element={
-                  <OperationsPage key="follow-ups" resource="follow-ups" />
-                }
-              />
-              <Route
-                path="small-groups"
-                element={
-                  <OperationsPage key="small-groups" resource="small-groups" />
-                }
-              />
-              <Route
-                path="ministries"
-                element={
-                  <OperationsPage key="ministries" resource="ministries" />
-                }
-              />
-              <Route
-                path="schedules"
-                element={
-                  <OperationsPage key="schedules" resource="schedules" />
-                }
-              />
-              <Route
-                path="notifications"
-                element={
-                  <OperationsPage
-                    key="notifications"
-                    resource="notifications"
-                  />
-                }
-              />
-              <Route
-                path="notification-templates"
-                element={
-                  <OperationsPage
-                    key="notification-templates"
-                    resource="notification-templates"
-                  />
-                }
-              />
-              <Route path="*" element={<PlaceholderPage title="Módulo" />} />
+              <Route element={<RequireRouteAccess />}>
+                <Route index element={<DashboardPage />} />
+                <Route
+                  path="operations"
+                  element={<OperationsDashboardPage />}
+                />
+                <Route path="inbox" element={<InboxPage />} />
+                <Route path="my-events" element={<EventWorkspace />} />
+                <Route path="account" element={<AccountPage />} />
+                <Route path="reimbursements" element={<ReimbursementsPage />} />
+                <Route path="library" element={<LibraryPage />} />
+                <Route path="videos" element={<VideosPage />} />
+                <Route path="videos/:playlistId" element={<VideosPage />} />
+                <Route
+                  path="members"
+                  element={
+                    <RequirePermission permission="MEMBER_READ">
+                      <MembersListPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="members/new"
+                  element={
+                    <RequirePermission permission="MEMBER_CREATE">
+                      <MemberCreatePage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="members/:id"
+                  element={
+                    <RequirePermission permission="MEMBER_READ">
+                      <MemberDetailPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="members/:id/edit"
+                  element={
+                    <RequirePermission permission="MEMBER_UPDATE">
+                      <MemberEditPage />
+                    </RequirePermission>
+                  }
+                />
+                <Route
+                  path="users"
+                  element={<Navigate to="/members" replace />}
+                />
+                <Route
+                  path="events"
+                  element={<OperationsPage key="events" resource="events" />}
+                />
+                <Route path="finance" element={<FinancePage />} />
+                <Route path="audit" element={<AuditPage />} />
+                <Route
+                  path="visitors"
+                  element={
+                    <OperationsPage key="visitors" resource="visitors" />
+                  }
+                />
+                <Route
+                  path="follow-ups"
+                  element={
+                    <OperationsPage key="follow-ups" resource="follow-ups" />
+                  }
+                />
+                <Route
+                  path="small-groups"
+                  element={
+                    <OperationsPage
+                      key="small-groups"
+                      resource="small-groups"
+                    />
+                  }
+                />
+                <Route
+                  path="ministries"
+                  element={
+                    <OperationsPage key="ministries" resource="ministries" />
+                  }
+                />
+                <Route
+                  path="schedules"
+                  element={
+                    <OperationsPage key="schedules" resource="schedules" />
+                  }
+                />
+                <Route
+                  path="notifications"
+                  element={
+                    <OperationsPage
+                      key="notifications"
+                      resource="notifications"
+                    />
+                  }
+                />
+                <Route
+                  path="notification-templates"
+                  element={
+                    <OperationsPage
+                      key="notification-templates"
+                      resource="notification-templates"
+                    />
+                  }
+                />
+                <Route path="*" element={<PlaceholderPage title="Módulo" />} />
+              </Route>
             </Route>
           </Route>
         </Routes>

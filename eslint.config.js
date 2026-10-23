@@ -11,6 +11,7 @@ export default tseslint.config(
       '**/dist-seed/**',
       '**/coverage/**',
       '**/node_modules/**',
+      'tmp/**',
     ],
   },
   eslint.configs.recommended,
@@ -26,6 +27,7 @@ export default tseslint.config(
       'apps/api/src/modules/banking/efatura/*.cjs',
       'apps/api/scripts/*.cjs',
       'apps/api/prisma/library-production/*.cjs',
+      'apps/api/prisma/bootstrap-production.cjs',
     ],
     languageOptions: {
       sourceType: 'commonjs',

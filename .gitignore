@@ -5,6 +5,7 @@ dist-seed/
 coverage/
 *.tsbuildinfo
 tmp/
+output/reembolsos/
 .env
 .env.*
 !.env.example

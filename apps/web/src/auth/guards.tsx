@@ -3,6 +3,7 @@ import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import type { Permission } from '../lib/types';
 import { useAuth } from './auth-context';
+import { canAccessRoute } from './route-access';
 
 export function FullPageLoader() {
   return (
@@ -71,6 +72,17 @@ export function RequirePermission({
 }) {
   const { hasPermission } = useAuth();
   return hasPermission(permission) ? children : <ForbiddenPage />;
+}
+
+/** Reject unauthorized URLs before mounting a page or running its queries. */
+export function RequireRouteAccess() {
+  const { user } = useAuth();
+  const { pathname } = useLocation();
+  return canAccessRoute(pathname, user?.permissions ?? []) ? (
+    <Outlet />
+  ) : (
+    <ForbiddenPage />
+  );
 }
 
 /** Renders children only when the current user has the permission. */
