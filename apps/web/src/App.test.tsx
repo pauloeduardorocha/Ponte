@@ -1,6 +1,7 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getAccessToken } from './lib/api';
+import { APP_VERSION } from './lib/app-version';
 import {
   ADMIN_PERMISSIONS,
   SECRETARY_PERMISSIONS,
@@ -27,6 +28,9 @@ describe('Authentication', () => {
       await screen.findByRole('heading', { name: 'Acesse sua conta' }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();
+    expect(screen.getByRole('contentinfo')).toHaveTextContent(
+      `A Ponte · v${APP_VERSION}`,
+    );
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 

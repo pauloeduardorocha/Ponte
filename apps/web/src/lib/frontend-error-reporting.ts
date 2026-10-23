@@ -1,3 +1,5 @@
+import { APP_VERSION } from './app-version';
+
 type EventType = 'runtime' | 'unhandled_rejection' | 'console' | 'api';
 type Report = {
   occurredAt: string;
@@ -41,6 +43,7 @@ function deviceInfo() {
   const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iPod/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : 'unknown';
   const browser = /Edg\//i.test(ua) ? 'Edge' : /Firefox\//i.test(ua) ? 'Firefox' : /CriOS|Chrome\//i.test(ua) ? 'Chrome' : /Safari\//i.test(ua) ? 'Safari' : 'unknown';
   return {
+    appVersion: APP_VERSION,
     os, browser, platform: safeText(navigator.platform, 40), language: safeText(navigator.language, 80),
     timezone: safeText(Intl.DateTimeFormat().resolvedOptions().timeZone, 80),
     viewportWidth: window.innerWidth, viewportHeight: window.innerHeight,

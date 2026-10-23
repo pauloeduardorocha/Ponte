@@ -13,6 +13,8 @@ Estas instruções aplicam-se a todo o repositório. Registre aqui os acordos du
 
 ## Git e publicação
 
+- Versão da aplicação: atualize `APP_VERSION` em `apps/web/src/lib/app-version.ts` em toda tarefa que altere a aplicação, antes do commit/publicação. Use `MAJOR.MINOR.PATCH` e incremente pelo menos o patch; mudanças incompatíveis incrementam major e funcionalidades podem incrementar minor. O rodapé e os relatórios de erros devem sempre usar essa mesma constante. Não substitua a versão enviada pelo cliente pela versão do servidor: clientes PWA antigos precisam continuar identificáveis. Verifique essa atualização na revisão antes de publicar.
+
 - Antes de editar, confira a branch, `git status --short` e eventuais alterações já existentes. Preserve trabalhos de outras tarefas.
 - Antes de publicar, execute `git fetch origin` e confira a diferença entre a branch local e a remota. Integre os commits remotos preservando as alterações locais.
 - Faça commits apenas dos arquivos e trechos pertencentes à tarefa. Quando um arquivo tiver alterações de várias tarefas, separe os trechos.

@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { APP_VERSION } from './app-version';
 
 describe('frontend error reporting', () => {
   afterEach(() => vi.unstubAllGlobals());
@@ -20,6 +21,7 @@ describe('frontend error reporting', () => {
     expect(url).toBe('/api/v1/client-errors');
     expect(payload).toMatchObject({ eventType: 'api', apiStatus: 503, apiMethod: 'POST', apiPath: '/api/v1/reimbursements' });
     expect(payload.clientRequestId).toBe('12345678-1234-4234-8234-123456789abc');
+    expect(payload.device.appVersion).toBe(APP_VERSION);
     expect(options.headers).toEqual({ 'Content-Type': 'application/json' });
     expect(payload).not.toHaveProperty('body');
   });

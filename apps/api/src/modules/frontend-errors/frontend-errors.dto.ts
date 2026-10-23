@@ -11,11 +11,13 @@ import {
   IsString,
   Max,
   MaxLength,
+  Matches,
   Min,
   ValidateNested,
 } from 'class-validator';
 
 export class ClientDeviceDto {
+  @IsOptional() @IsString() @MaxLength(32) @Matches(/^\d+\.\d+\.\d+$/) appVersion?: string;
   @IsOptional() @IsString() @MaxLength(80) os?: string;
   @IsOptional() @IsString() @MaxLength(80) browser?: string;
   @IsOptional() @IsString() @MaxLength(40) platform?: string;

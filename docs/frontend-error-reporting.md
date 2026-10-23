@@ -1,5 +1,13 @@
 # Captura de erros do frontend
 
+## Versão da aplicação
+
+A versão visível no rodapé de todas as páginas vem de `APP_VERSION` em `apps/web/src/lib/app-version.ts` (inicialmente `0.1.1`). O mesmo valor é enviado em `device.appVersion` em todos os relatórios de erro e persistido no campo JSON `device` de `frontend_error_reports`, sem migração de banco. A API aceita o campo opcional no formato `MAJOR.MINOR.PATCH`, com até 32 caracteres. Relatórios de clientes antigos continuam aceitos sem versão; não se infere uma versão para esses registros.
+
+Para consultar: `SELECT created_at, device->>'appVersion' AS app_version, message FROM frontend_error_reports ORDER BY created_at DESC;`.
+
+A versão é a do código carregado pelo navegador/PWA, não a versão mais recente disponível no servidor. Incrementar a constante em toda alteração da aplicação é obrigatório conforme `AGENTS.md`; rodapé e telemetria não devem ter versões duplicadas. Esta versão de produto é independente das versões internas dos pacotes npm do monorepo.
+
 O frontend envia falhas não tratadas, rejeições não tratadas, erros de console e respostas HTTP malsucedidas para `POST /api/v1/client-errors`. A captura é inicializada no arranque da aplicação e inclui as falhas da API de reembolsos.
 
 O payload contém hora do dispositivo, rota sem query string, tipo e mensagem, stack quando disponível, identificador de pedido da API, método e status HTTP, user agent, sistema operativo e browser estimados, idioma, fuso horário, tamanho da janela, estado de rede, modo PWA e até 20 mensagens recentes de `console.warn`/`console.error`. Os logs só aceitam texto e objetos `Error`; objetos arbitrários são omitidos.

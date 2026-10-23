@@ -9,7 +9,8 @@ const ReimbursementRequestPage = lazy(() =>
     default: m.ReimbursementRequestPage,
   })),
 );
-import { LinearProgress } from '@mui/material';
+import { LinearProgress, Typography } from '@mui/material';
+import { APP_VERSION } from './lib/app-version';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './auth/AuthProvider';
 import {
@@ -237,6 +238,14 @@ export function App({ children }: { children?: ReactNode }) {
           </Route>
         </Routes>
       </Suspense>
+      <Typography
+        component="footer"
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', textAlign: 'center', py: 2, px: 2 }}
+      >
+        A Ponte · v{APP_VERSION}
+      </Typography>
       {children}
     </AuthProvider>
   );
