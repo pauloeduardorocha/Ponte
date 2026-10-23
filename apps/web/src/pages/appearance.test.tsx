@@ -159,9 +159,24 @@ describe('Account appearance', () => {
     );
   });
 
-  it('lets the user enable and disable each automatic push category', async () => {
+  it.each([
+    [
+      'Novos pedidos na fila financeira de reembolsos',
+      'pushReimbursementRequested',
+    ],
+    [
+      'Pedidos de reembolso de inscrições em eventos',
+      'pushEventRefundRequested',
+    ],
+    ['Empréstimos de livros em atraso', 'pushLibraryOverdue'],
+    [
+      'Exemplares disponíveis para as minhas reservas',
+      'pushLibraryReservationReady',
+    ],
+  ])('saves the toggle for %s', async (label, key) => {
     const user = {
       ...makeUser(),
+      pushReimbursementRequested: true,
       pushEventRefundRequested: true,
       pushLibraryOverdue: true,
       pushLibraryReservationReady: true,
@@ -175,14 +190,14 @@ describe('Account appearance', () => {
     renderApp('/account');
 
     const overdue = await screen.findByRole('switch', {
-      name: 'Empréstimos de livros em atraso',
+      name: label,
     });
     expect(overdue).toBeChecked();
     fireEvent.click(overdue);
     await screen.findByText('Preferência de notificações salva.');
     expect(overdue).not.toBeChecked();
     expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
-      pushLibraryOverdue: false,
+      [key]: false,
     });
   });
 });

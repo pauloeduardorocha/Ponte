@@ -12,13 +12,25 @@ describe('Account preferences HTTP contract', () => {
   const user = {
     id: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
     colorMode: 'light',
+    pushReimbursementRequested: true,
     pushEventRefundRequested: true,
     pushLibraryOverdue: true,
     pushLibraryReservationReady: true,
   };
   const update = jest.fn(async ({ data }: { data: Partial<typeof user> }) => {
-    Object.assign(user, data);
-    return { ...user };
+    Object.assign(
+      user,
+      Object.fromEntries(
+        Object.entries(data).filter(([, value]) => value !== undefined),
+      ),
+    );
+    return {
+      colorMode: user.colorMode,
+      pushReimbursementRequested: user.pushReimbursementRequested,
+      pushEventRefundRequested: user.pushEventRefundRequested,
+      pushLibraryOverdue: user.pushLibraryOverdue,
+      pushLibraryReservationReady: user.pushLibraryReservationReady,
+    };
   });
   const db = {
     $transaction: (fn: (tx: unknown) => unknown) => fn({ user: { update } }),
@@ -58,6 +70,7 @@ describe('Account preferences HTTP contract', () => {
     update.mockClear();
     Object.assign(user, {
       colorMode: 'light',
+      pushReimbursementRequested: true,
       pushEventRefundRequested: true,
       pushLibraryOverdue: true,
       pushLibraryReservationReady: true,
@@ -73,12 +86,17 @@ describe('Account preferences HTTP contract', () => {
         .send({ colorMode })
         .expect(200)
         .expect('Cache-Control', 'no-store');
-      expect(response.status).toBe(200);
+      expect(response.body).toMatchObject({
+        colorMode,
+        pushReimbursementRequested: true,
+        pushLibraryOverdue: true,
+      });
       expect(update).toHaveBeenCalledWith({
         where: { id: user.id },
         data: { colorMode },
         select: {
           colorMode: true,
+          pushReimbursementRequested: true,
           pushEventRefundRequested: true,
           pushLibraryOverdue: true,
           pushLibraryReservationReady: true,
@@ -93,12 +111,17 @@ describe('Account preferences HTTP contract', () => {
       .set('Authorization', 'Bearer access')
       .send({ pushLibraryOverdue: false })
       .expect(200);
-    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      colorMode: 'light',
+      pushReimbursementRequested: true,
+      pushLibraryOverdue: false,
+    });
     expect(update).toHaveBeenCalledWith({
       where: { id: user.id },
       data: { pushLibraryOverdue: false },
       select: {
         colorMode: true,
+        pushReimbursementRequested: true,
         pushEventRefundRequested: true,
         pushLibraryOverdue: true,
         pushLibraryReservationReady: true,

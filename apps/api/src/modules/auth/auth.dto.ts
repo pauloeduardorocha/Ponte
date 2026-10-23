@@ -11,6 +11,11 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdatePreferencesDto {
+  @ApiProperty({ required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  pushReimbursementRequested?: boolean;
+
   @ApiProperty({
     enum: ['system', 'light', 'dark'],
     required: false,

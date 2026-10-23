@@ -66,6 +66,7 @@ export function AccountPage() {
   }
   async function changePushPreference(
     key:
+      | 'pushReimbursementRequested'
       | 'pushEventRefundRequested'
       | 'pushLibraryOverdue'
       | 'pushLibraryReservationReady',
@@ -258,6 +259,21 @@ export function AccountPage() {
             <FormControlLabel
               control={
                 <Switch
+                  checked={user?.pushReimbursementRequested ?? true}
+                  disabled={pushPreferenceSaving}
+                  onChange={(_, checked) =>
+                    void changePushPreference(
+                      'pushReimbursementRequested',
+                      checked,
+                    )
+                  }
+                />
+              }
+              label="Novos pedidos na fila financeira de reembolsos"
+            />
+            <FormControlLabel
+              control={
+                <Switch
                   checked={user?.pushEventRefundRequested ?? true}
                   disabled={pushPreferenceSaving}
                   onChange={(_, checked) =>
@@ -268,7 +284,7 @@ export function AccountPage() {
                   }
                 />
               }
-              label="Novos pedidos de reembolso para tratamento"
+              label="Pedidos de reembolso de inscrições em eventos"
             />
             <FormControlLabel
               control={

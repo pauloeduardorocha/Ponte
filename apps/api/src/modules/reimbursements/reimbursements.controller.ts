@@ -22,6 +22,7 @@ import { Permission } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { StorageService, PrivateUpload } from '../finance/storage.service';
 import { ReimbursementsService } from './reimbursements.service';
+import { OperationsModule } from '../operations/operations.controller';
 import {
   LinkReimbursementDto,
   PaymentDto,
@@ -167,6 +168,7 @@ export class ReimbursementsController {
   }
 }
 @Module({
+  imports: [OperationsModule],
   controllers: [ReimbursementsController],
   providers: [ReimbursementsService, StorageService],
 })

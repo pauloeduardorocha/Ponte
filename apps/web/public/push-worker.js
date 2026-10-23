@@ -1,11 +1,27 @@
 /* global self, URL */
+function notificationUrl(value) {
+  try {
+    if (typeof value !== 'string') return '/inbox';
+    const url = new URL(value, self.location.origin);
+    if (
+      url.origin === self.location.origin &&
+      ['/', '/inbox', '/finance', '/my-events'].includes(url.pathname)
+    )
+      return url.pathname + url.search;
+  } catch {
+    /* Invalid destinations use the inbox. */
+  }
+  return '/inbox';
+}
 self.addEventListener('push', (event) => {
   // Text is displayed by the Notifications API; navigation stays same-origin.
   let tag = 'ponte-message';
   let title = 'A Ponte';
+  let url = '/inbox';
   let body = 'Você tem uma nova mensagem. Abra a caixa de notificações.';
   try {
     const payload = event.data?.json();
+    url = notificationUrl(payload?.url);
     if (typeof payload?.tag === 'string') tag = payload.tag;
     if (typeof payload?.title === 'string' && payload.title.trim())
       title = payload.title;
@@ -21,7 +37,7 @@ self.addEventListener('push', (event) => {
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag,
-        data: { url: '/inbox' },
+        data: { url },
       });
       const clients = await self.clients.matchAll({
         type: 'window',
@@ -36,7 +52,10 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
     (async () => {
-      const inbox = new URL('/inbox', self.location.origin).href;
+      const inbox = new URL(
+        notificationUrl(event.notification.data?.url),
+        self.location.origin,
+      ).href;
       const clients = await self.clients.matchAll({
         type: 'window',
         includeUncontrolled: true,

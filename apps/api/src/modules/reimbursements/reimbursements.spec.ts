@@ -34,6 +34,9 @@ const file = {
 };
 function setup() {
   const tx = {
+    user: {
+      findMany: jest.fn().mockResolvedValue([{ id: 'finance-handler' }]),
+    },
     $queryRaw: jest.fn().mockResolvedValue([{ id: 'request' }]),
     reimbursement: {
       findMany: jest.fn().mockResolvedValue([]),
@@ -79,17 +82,81 @@ function setup() {
     remove: jest.fn(),
     get: jest.fn().mockResolvedValue(Buffer.from('file')),
   };
+  const push = { notifyUsers: jest.fn().mockResolvedValue(undefined) };
   return {
+    push,
     tx,
     db,
     storage,
     service: new ReimbursementsService(
       db as unknown as PrismaService,
       storage as unknown as StorageService,
+      push as never,
     ),
   };
 }
 describe('Reimbursement lifecycle and access', () => {
+  it('notifies queue handlers after creation and preserves files if delivery fails', async () => {
+    const { service, push, storage, db } = setup();
+    push.notifyUsers.mockRejectedValueOnce(new Error('Push unavailable'));
+    await expect(
+      service.create(
+        {
+          beneficiaryName: 'Maria',
+          iban: row.iban,
+          categoryId: 'category',
+          purpose: 'Material',
+          amount: '25.10',
+        },
+        [file],
+        user,
+      ),
+    ).resolves.toMatchObject({ id: 'request' });
+    expect(db.user.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          status: 'ACTIVE',
+          deletedAt: null,
+          AND: expect.arrayContaining([
+            {
+              userRoles: {
+                some: {
+                  role: {
+                    permissions: {
+                      some: {
+                        permission: { code: 'FINANCE_TRANSACTION_READ' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            {
+              userRoles: {
+                some: {
+                  role: {
+                    permissions: {
+                      some: {
+                        permission: { code: 'FINANCE_TRANSACTION_UPDATE' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ]),
+        }),
+      }),
+    );
+    expect(push.notifyUsers).toHaveBeenCalledWith(
+      ['finance-handler'],
+      'pushReimbursementRequested',
+      'Novo pedido de reembolso',
+      expect.any(String),
+      '/finance?tab=reimbursements',
+    );
+    expect(storage.remove).not.toHaveBeenCalled();
+  });
   it('lists the same expense categories for members without finance permissions', async () => {
     const { service, tx } = setup();
     await service.categories(user);

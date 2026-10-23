@@ -38,6 +38,7 @@ export function notificationPushPayload(notification: Notification) {
 }
 
 export type SystemPushPreference =
+  | 'pushReimbursementRequested'
   | 'pushEventRefundRequested'
   | 'pushLibraryOverdue'
   | 'pushLibraryReservationReady';

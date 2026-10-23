@@ -405,7 +405,7 @@ export class EventsService {
           'pushEventRefundRequested',
           'Novo pedido de reembolso',
           'Há um novo pedido de reembolso para análise.',
-          `/events/${id}`,
+          `/my-events?event=${id}&section=refunds`,
         )
         .catch(() => undefined);
     } catch {

@@ -3,6 +3,7 @@ import {
   ConflictException,
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import { PrismaService } from '../../database/prisma.service';
 import { PrivateUpload, StorageService } from '../finance/storage.service';
 import { auditRequestFields, bindAudit } from '../audit/audit-context';
 import { ReimbursementDto, ReimbursementQuery } from './reimbursements.dto';
+import { PushService } from '../operations/push.service';
 
 const include = {
   category: { select: { id: true, name: true } },
@@ -51,9 +53,11 @@ export function reimbursementStatus(row: {
 }
 @Injectable()
 export class ReimbursementsService {
+  private readonly logger = new Logger(ReimbursementsService.name);
   constructor(
     private readonly db: PrismaService,
     private readonly storage: StorageService,
+    private readonly push: PushService,
   ) {}
   private async requireMember(user?: CurrentUser) {
     if (!user) throw new UnauthorizedException();
@@ -269,6 +273,36 @@ export class ReimbursementsService {
         await this.audit(tx, 'CREATE', saved.id, user);
         return saved;
       });
+      // Delivery failures must never undo a committed request or remove its files.
+      try {
+        const recipients = await this.db.user.findMany({
+          where: {
+            status: 'ACTIVE',
+            deletedAt: null,
+            AND: ['FINANCE_TRANSACTION_READ', 'FINANCE_TRANSACTION_UPDATE'].map(
+              (code) => ({
+                userRoles: {
+                  some: {
+                    role: { permissions: { some: { permission: { code } } } },
+                  },
+                },
+              }),
+            ),
+          },
+          select: { id: true },
+        });
+        await this.push.notifyUsers(
+          recipients.map((recipient) => recipient.id),
+          'pushReimbursementRequested',
+          'Novo pedido de reembolso',
+          'Há um novo pedido na fila de reembolsos para tratamento.',
+          '/finance?tab=reimbursements',
+        );
+      } catch {
+        this.logger.warn(
+          'Não foi possível entregar o aviso do novo reembolso.',
+        );
+      }
       return { ...this.view(row), possibleDuplicate: duplicate };
     } catch (error) {
       await Promise.allSettled(keys.map((key) => this.storage.remove(key)));

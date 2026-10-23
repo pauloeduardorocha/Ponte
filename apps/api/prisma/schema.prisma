@@ -101,6 +101,7 @@ enum UserStatus {
 }
 
 model User {
+  pushReimbursementRequested Boolean @default(true) @map("push_reimbursement_requested")
   colorMode                    String                @default("system") @map("color_mode") @db.VarChar(6)
   pushEventRefundRequested     Boolean               @default(true) @map("push_event_refund_requested")
   pushLibraryOverdue           Boolean               @default(true) @map("push_library_overdue")

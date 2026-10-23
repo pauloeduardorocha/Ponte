@@ -206,7 +206,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
             preference: 'pushLibraryOverdue',
             title: 'Livro em atraso',
             body: `O prazo para devolver “${loan.bookCopy.book.title}” terminou.`,
-            url: '/dashboard',
+            url: '/',
           });
       }
       const amount = loan.dailyFine.mul(days);
@@ -269,7 +269,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     bookId: string,
     now: Date,
     holdDays: number,
-    pushes: PendingSystemPush[] = [],
+    pushes: PendingSystemPush[],
   ) {
     const queue = await tx.reservation.findMany({
       where: { bookId, status: 'WAITING', expiresAt: { gt: now } },
@@ -316,7 +316,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
           preference: 'pushLibraryReservationReady',
           title: 'Reserva disponível',
           body: `Já pode levantar “${reservation.book.title}”.`,
-          url: '/dashboard',
+          url: '/',
         });
     }
   }

@@ -35,17 +35,20 @@ export function fetchCurrentUser(): Promise<CurrentUser> {
 }
 
 export type PushPreferenceKey =
+  | 'pushReimbursementRequested'
   | 'pushEventRefundRequested'
   | 'pushLibraryOverdue'
   | 'pushLibraryReservationReady';
 
 export function updatePreferences(preferences: {
+  pushReimbursementRequested?: boolean;
   colorMode?: 'system' | 'light' | 'dark';
   pushEventRefundRequested?: boolean;
   pushLibraryOverdue?: boolean;
   pushLibraryReservationReady?: boolean;
 }) {
   return apiRequest<{
+    pushReimbursementRequested: boolean;
     colorMode: 'system' | 'light' | 'dark';
     pushEventRefundRequested: boolean;
     pushLibraryOverdue: boolean;

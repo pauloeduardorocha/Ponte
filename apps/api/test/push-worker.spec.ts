@@ -75,6 +75,37 @@ describe('Push service worker', () => {
     expect(client.focus).toHaveBeenCalled();
   });
   it.each([
+    '/',
+    '/finance?tab=reimbursements',
+    '/my-events?event=id&section=refunds',
+  ])(
+    'preserves the supported system destination %s on display and click',
+    async (url) => {
+      const { worker, client, handlers } = setup();
+      let completion = Promise.resolve();
+      const waitUntil = (promise: Promise<void>) => {
+        completion = promise;
+      };
+      handlers.push!({
+        data: { json: () => ({ title: 'Aviso', url }) },
+        waitUntil,
+      });
+      await completion;
+      expect(worker.registration.showNotification).toHaveBeenCalledWith(
+        'Aviso',
+        expect.objectContaining({ data: { url } }),
+      );
+      handlers.notificationclick!({
+        notification: { close: jest.fn(), data: { url } },
+        waitUntil,
+      });
+      await completion;
+      expect(client.navigate).toHaveBeenCalledWith(
+        `https://ponte.example${url}`,
+      );
+    },
+  );
+  it.each([
     () => undefined,
     () => ({ title: 7, body: [] }),
     () => {
