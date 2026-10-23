@@ -95,6 +95,7 @@ function routes() {
     'GET /library/book-options/categories': {
       body: page([{ id: 'Comunidade', name: 'Comunidade' }]),
     },
+    'GET /library/book-options/keywords': { body: page([]) },
     'GET /library/copies': { body: page([copy]) },
     'GET /library/loans': { body: page([loan]) },
     'GET /library/fines': { body: page([fine]) },
@@ -152,7 +153,7 @@ async function confirm() {
 
 describe('Library frontend', () => {
   beforeEach(resetTestState);
-  it('edits the catalogue category through a paginated selector and preserves reviewed classification', async () => {
+  it('edits multiple catalogue categories through a paginated selector and preserves reviewed classification', async () => {
     const requests = mockApi({
       ...routes(),
       'GET /library/books': {
@@ -191,7 +192,8 @@ describe('Library frontend', () => {
         (r) => r.method === 'PATCH' && r.path === '/library/books/b1',
       )?.body,
     ).toMatchObject({
-      primaryCategoryCode: '55',
+      primaryCategoryCode: '54',
+      secondaryCategoryCodes: ['55'],
       classificationReviewed: true,
     });
     expect(
@@ -199,6 +201,30 @@ describe('Library frontend', () => {
         .find((r) => r.path === '/library/categories')
         ?.query.get('pageSize'),
     ).toBe('10');
+  });
+  it('adds new related subjects in the multi-select book form', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'POST /library/books': { body: book },
+    });
+    renderApp('/library');
+    fireEvent.click(await screen.findByRole('button', { name: 'Novo livro' }));
+    const dialog = within(screen.getByRole('dialog'));
+    fireEvent.change(dialog.getByLabelText(/^Título/), {
+      target: { value: 'Livro novo' },
+    });
+    const subjects = dialog.getByRole('combobox', {
+      name: 'Assuntos relacionados',
+    });
+    fireEvent.mouseDown(subjects);
+    fireEvent.change(subjects, { target: { value: 'Novo assunto' } });
+    fireEvent.keyDown(subjects, { key: 'Enter', code: 'Enter' });
+    await confirm();
+    expect(
+      requests.find(
+        (request) => request.method === 'POST' && request.path === '/library/books',
+      )?.body,
+    ).toMatchObject({ keywords: ['Novo assunto'] });
   });
   it('validates required library fields before sending a mutation', async () => {
     const requests = mockApi(routes());
@@ -280,7 +306,13 @@ describe('Library frontend', () => {
     fill('Autor', 'Nova autora');
     fill('ISBN', 'ISBN-1');
     fill('Páginas', '123');
-    fill('Palavras-chave', 'ponte, teste');
+    const subjects = within(screen.getByRole('dialog')).getByRole('combobox', {
+      name: 'Assuntos relacionados',
+    });
+    fireEvent.change(subjects, { target: { value: 'ponte' } });
+    fireEvent.keyDown(subjects, { key: 'Enter', code: 'Enter' });
+    fireEvent.change(subjects, { target: { value: 'teste' } });
+    fireEvent.keyDown(subjects, { key: 'Enter', code: 'Enter' });
     fireEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', {
         name: 'Confirmar',

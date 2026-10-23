@@ -16,6 +16,7 @@ function fixture() {
   };
   const tx = {
     $executeRaw: jest.fn(),
+    $queryRaw: jest.fn(),
     librarySettings: { upsert: jest.fn().mockResolvedValue({ holdDays: 2 }) },
     loan: { findMany: jest.fn().mockResolvedValue([]) },
     reservation: { findMany: jest.fn().mockResolvedValue([]) },
@@ -49,7 +50,10 @@ function fixture() {
     $transaction: async (operation: (client: typeof tx) => unknown) =>
       operation(tx),
   };
-  return { service: new LibraryService(db as unknown as PrismaService), tx };
+  return {
+    service: new LibraryService(db as unknown as PrismaService, {} as never),
+    tx,
+  };
 }
 
 describe('Structured library catalogue', () => {
@@ -117,5 +121,24 @@ describe('Structured library catalogue', () => {
       'actor',
     );
     expect(result.classificationReviewed).toBe(true);
+  });
+  it('returns distinct, paginated related subjects for autocomplete', async () => {
+    const { service, tx } = fixture();
+    tx.$queryRaw
+      .mockResolvedValueOnce([{ id: 'Discipulado', name: 'Discipulado' }])
+      .mockResolvedValueOnce([{ total: 1 }]);
+    await expect(
+      service.bookOptions('keyword', {
+        search: 'discip',
+        page: 2,
+        pageSize: 10,
+      } as never),
+    ).resolves.toEqual({
+      items: [{ id: 'Discipulado', name: 'Discipulado' }],
+      total: 1,
+      page: 2,
+      pageSize: 10,
+    });
+    expect(tx.$queryRaw).toHaveBeenCalledTimes(2);
   });
 });

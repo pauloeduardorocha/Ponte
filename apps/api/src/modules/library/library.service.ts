@@ -449,7 +449,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  bookOptions(field: 'author' | 'category', query: PageQuery) {
+  bookOptions(field: 'author' | 'category' | 'keyword', query: PageQuery) {
     if (field === 'category')
       return this.transaction(async (tx) => {
         const values = Prisma.sql`SELECT code || ' — ' || name AS value FROM library_categories
@@ -463,6 +463,27 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         const [count] = await tx.$queryRaw<{ total: number }[]>(
           Prisma.sql`SELECT count(*)::int AS total FROM (${values}) options WHERE ${filter}`,
         );
+        return {
+          items,
+          total: count?.total ?? 0,
+          page: query.page,
+          pageSize: query.pageSize,
+        };
+      });
+    if (field === 'keyword')
+      return this.transaction(async (tx) => {
+        const where = Prisma.sql`keyword IS NOT NULL AND keyword <> ''
+          AND strpos(lower(keyword), lower(${query.search ?? ''})) > 0`;
+        const items = await tx.$queryRaw<{ id: string; name: string }[]>(
+          Prisma.sql`SELECT DISTINCT keyword AS id, keyword AS name
+            FROM library_books, unnest(keywords) AS options(keyword)
+            WHERE ${where}
+            ORDER BY name ASC
+            LIMIT ${query.pageSize} OFFSET ${(query.page - 1) * query.pageSize}`,
+        );
+        const [count] = await tx.$queryRaw<{ total: number }[]>(Prisma.sql`
+          SELECT COUNT(DISTINCT keyword)::int AS total
+          FROM library_books, unnest(keywords) AS options(keyword) WHERE ${where}`);
         return {
           items,
           total: count?.total ?? 0,

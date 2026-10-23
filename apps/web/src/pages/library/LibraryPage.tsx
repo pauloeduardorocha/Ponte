@@ -4,6 +4,7 @@ import { BookCatalogDetails } from './BookCatalogDetails';
 import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
+import { LibraryMultiAutocomplete } from '../../components/LibraryMultiAutocomplete';
 import { STATUS_LABELS } from '../../lib/status-labels';
 import { LibraryDashboardPanel } from './LibraryDashboardPanel';
 import { useSearchParams } from 'react-router-dom';
@@ -50,6 +51,8 @@ interface Field {
   endpoint?: string;
   query?: Record<string, string>;
   options?: readonly string[];
+  multiple?: boolean;
+  freeSolo?: boolean;
 }
 interface Action {
   title: string;
@@ -78,13 +81,10 @@ const bookFields: Field[] = [
   { name: 'collection', label: 'Coleção' },
   { name: 'catalogueNotes', label: 'Notas de catalogação', multiline: true },
   {
-    name: 'primaryCategoryCode',
+    name: 'categoryCodes',
     label: 'Categoria',
     endpoint: '/library/categories',
-  },
-  {
-    name: 'secondaryCategoryCodes',
-    label: 'Outros temas (códigos separados por vírgulas)',
+    multiple: true,
   },
   {
     name: 'classificationReviewed',
@@ -102,7 +102,13 @@ const bookFields: Field[] = [
   { name: 'description', label: 'Descrição', multiline: true },
   { name: 'pages', label: 'Páginas', type: 'number' },
   { name: 'cover', label: 'Capa (URL HTTPS)', type: 'url' },
-  { name: 'keywords', label: 'Palavras-chave (separadas por vírgulas)' },
+  {
+    name: 'keywords',
+    label: 'Assuntos relacionados',
+    endpoint: '/library/book-options/keywords',
+    multiple: true,
+    freeSolo: true,
+  },
 ];
 const justification: Field = {
   name: 'justification',
@@ -118,9 +124,10 @@ function bookInput(v: Record<string, string>, clearing = false): api.BookInput {
     registrationNumber: v.registrationNumber || blank,
     collection: v.collection || blank,
     catalogueNotes: v.catalogueNotes || blank,
-    primaryCategoryCode: v.primaryCategoryCode || null,
-    secondaryCategoryCodes: (v.secondaryCategoryCodes ?? '')
-      .split(',')
+    primaryCategoryCode: v.categoryCodes?.split('\n')[0] || null,
+    secondaryCategoryCodes: (v.categoryCodes ?? '')
+      .split('\n')
+      .slice(1)
       .map((code) => code.trim())
       .filter(Boolean),
     classificationReviewed: v.classificationReviewed === 'true',
@@ -134,7 +141,7 @@ function bookInput(v: Record<string, string>, clearing = false): api.BookInput {
     pages: v.pages ? Number(v.pages) : blank,
     cover: v.cover || blank,
     keywords: (v.keywords ?? '')
-      .split(',')
+      .split('\n')
       .map((word) => word.trim())
       .filter(Boolean),
   };
@@ -157,7 +164,7 @@ function valuesOf(value: object): Record<string, string> {
     Object.entries(value).map(([key, val]) => [
       key,
       Array.isArray(val)
-        ? val.join(', ')
+        ? val.join('\n')
         : val === null || val === undefined
           ? ''
           : String(val),
@@ -223,7 +230,18 @@ function ActionDialog({
                   required: field.required ? 'Campo obrigatório' : false,
                 }}
                 render={({ field: input, fieldState }) =>
-                  field.endpoint ? (
+                  field.multiple && field.endpoint ? (
+                    <LibraryMultiAutocomplete
+                      {...input}
+                      inputRef={input.ref}
+                      endpoint={field.endpoint}
+                      label={field.label}
+                      freeSolo={field.freeSolo}
+                      disabled={mutation.isPending}
+                      error={Boolean(fieldState.error)}
+                      helperText={fieldState.error?.message}
+                    />
+                  ) : field.endpoint ? (
                     <EntitySelect
                       {...input}
                       inputRef={input.ref}
@@ -840,7 +858,15 @@ function LibraryManagementPage() {
                                   (v) =>
                                     api.updateBook(book.id, bookInput(v, true)),
                                   bookFields,
-                                  valuesOf(book),
+                                  valuesOf({
+                                    ...book,
+                                    categoryCodes: [
+                                      ...(book.primaryCategoryCode
+                                        ? [book.primaryCategoryCode]
+                                        : []),
+                                      ...(book.secondaryCategoryCodes ?? []),
+                                    ],
+                                  }),
                                 )
                               }
                             >

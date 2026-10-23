@@ -63,6 +63,12 @@ export class LibraryController {
     return this.library.bookOptions('category', query);
   }
 
+  @Get('book-options/keywords')
+  @Permission('LIBRARY_BOOK_READ')
+  keywords(@Query() query: PageQuery) {
+    return this.library.bookOptions('keyword', query);
+  }
+
   @Get('books/:id')
   @Permission('LIBRARY_BOOK_READ')
   book(@Param('id', ParseUUIDPipe) id: string) {

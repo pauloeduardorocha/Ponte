@@ -15,10 +15,13 @@ todas as páginas.
 - Membros: `GET /api/v1/library/members?search=ana&page=1&pageSize=20`.
 - Autores: `GET /api/v1/library/book-options/authors?search=ana&page=1&pageSize=20`.
 - Categorias: `GET /api/v1/library/book-options/categories?search=hist&page=1&pageSize=20`.
+- Assuntos relacionados: `GET /api/v1/library/book-options/keywords?search=discip&page=1&pageSize=20`.
 
-Autores e categorias são valores distintos, pesquisados sem distinguir
-maiúsculas de minúsculas e ordenados no banco. As opções têm `{ id, name }`,
-ambos com o valor do filtro. Estes dois endpoints exigem `LIBRARY_BOOK_READ`.
+Autores, categorias e assuntos relacionados são valores distintos, pesquisados
+sem distinguir maiúsculas de minúsculas e ordenados no banco. As opções têm
+`{ id, name }`, ambos com o valor do filtro. Estes endpoints exigem
+`LIBRARY_BOOK_READ`. O seletor de assuntos consulta páginas de 10 valores e
+também permite adicionar texto novo, persistido no array `keywords` do livro.
 Status e disponibilidade são opções fixas, sem consulta a listas de entidades.
 
 `GET /api/v1/library/members/:id/history` e
@@ -60,9 +63,11 @@ Livros mantêm os campos existentes e acrescentam registrationNumber, collection
 catalogueNotes, primaryCategoryCode, secondaryCategoryCodes e classificationReviewed.
 O retorno inclui categories com reviewedAt e o tema correspondente, pendingInventory
 e shelfmarks. Autor pode ser nulo; und significa idioma não informado.
-Criar ou editar permite selecionar tema principal, temas secundários e indicar
-explicitamente se a classificação foi revista. Categorias inexistentes ou repetidas
-são rejeitadas. Existe apenas um tema principal por livro.
+Criar ou editar permite selecionar várias categorias num único seletor. O primeiro
+código selecionado permanece como tema principal e os restantes como temas
+secundários para compatibilidade com os consumidores existentes. Também permite
+selecionar vários assuntos relacionados e adicionar assuntos novos. Categorias
+inexistentes ou repetidas são rejeitadas. Existe apenas um tema principal por livro.
 
 Exemplares acrescentam shelfmark (cota) e o estado PENDING_INVENTORY, apresentado
 como Por conferir. Só AVAILABLE e RESERVED podem ser emprestados pelas regras
