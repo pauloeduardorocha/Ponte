@@ -72,20 +72,30 @@ describe('Operation form selections', () => {
       });
       show(configs.notifications.fields, undefined, true);
       fireEvent.mouseDown(
-        screen.getByRole('combobox', { name: 'Destinatário: membro' }),
+        screen.getByRole('combobox', { name: 'Destinatários: membros' }),
       );
       fireEvent.click(
         await screen.findByRole('option', { name: 'Membro individual' }),
       );
       select('Enviar para', label);
       expect(
-        screen.queryByRole('combobox', { name: 'Destinatário: membro' }),
+        screen.queryByRole('combobox', { name: 'Destinatários: membros' }),
       ).not.toBeInTheDocument();
       fireEvent.mouseDown(screen.getByRole('combobox', { name: label }));
       fireEvent.click(await screen.findByRole('option', { name: 'Opção A' }));
-      fireEvent.mouseDown(screen.getByRole('combobox', { name: label }));
       fireEvent.click(await screen.findByRole('option', { name: 'Opção B' }));
       expect(screen.getByRole('combobox', { name: label })).not.toBeRequired();
+      expect(screen.getByRole('option', { name: 'Opção A' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      expect(screen.getByRole('option', { name: 'Opção B' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      fireEvent.keyDown(screen.getByRole('combobox', { name: label }), {
+        key: 'Escape',
+      });
       fireEvent.change(screen.getByLabelText(/Mensagem/), {
         target: { value: 'Comunicado coletivo' },
       });
@@ -95,6 +105,58 @@ describe('Operation form selections', () => {
           [key]: ['a1', 'a2'],
           channel: 'INTERNAL',
           content: 'Comunicado coletivo',
+        }),
+      );
+    },
+  );
+
+  it.each([
+    ['MEMBER', 'Destinatários: membros', 'people', 'recipientMemberIds'],
+    ['VISITOR', 'Destinatários: visitantes', 'visitors', 'recipientVisitorIds'],
+  ])(
+    'submits the multiselect for %s and allows removing a selected recipient',
+    async (audience, label, lookup, key) => {
+      const requests = mockApi({
+        'GET /operations/people': { body: { items: [] } },
+        [`GET /operations/${lookup}`]: {
+          body: {
+            items: [
+              { id: 'p1', name: 'Pessoa A' },
+              { id: 'p2', name: 'Pessoa B' },
+              { id: 'p3', name: 'Pessoa C' },
+            ],
+          },
+        },
+        'POST /operations/notifications': {
+          body: { total: 2, sent: 2, failed: 0, pending: 0, status: 'SENT' },
+        },
+      });
+      show(configs.notifications.fields, undefined, true);
+      if (audience === 'VISITOR') select('Enviar para', 'Visitantes');
+      const input = screen.getByRole('combobox', { name: label });
+      fireEvent.mouseDown(input);
+      fireEvent.click(await screen.findByRole('option', { name: 'Pessoa A' }));
+      fireEvent.click(screen.getByRole('option', { name: 'Pessoa B' }));
+      fireEvent.click(screen.getByRole('option', { name: 'Pessoa C' }));
+      fireEvent.click(screen.getByRole('option', { name: 'Pessoa B' }));
+      expect(screen.getByRole('option', { name: 'Pessoa B' })).toHaveAttribute(
+        'aria-selected',
+        'false',
+      );
+      expect(screen.getByRole('option', { name: 'Pessoa A' })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      );
+      fireEvent.keyDown(input, { key: 'Escape' });
+      fireEvent.change(screen.getByLabelText(/Mensagem/), {
+        target: { value: 'Aviso' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      await waitFor(() =>
+        expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+          [key]: ['p1', 'p3'],
+          channel: 'INTERNAL',
+          content: 'Aviso',
         }),
       );
     },

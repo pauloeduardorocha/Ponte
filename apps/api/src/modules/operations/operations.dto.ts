@@ -175,6 +175,18 @@ export class NotificationDto {
   @ArrayNotEmpty()
   @ArrayMaxSize(100)
   @IsUUID('all', { each: true })
+  recipientMemberIds?: string[];
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
+  recipientVisitorIds?: string[];
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @ArrayMaxSize(100)
+  @IsUUID('all', { each: true })
   smallGroupIds?: string[];
   @IsOptional()
   @IsArray()

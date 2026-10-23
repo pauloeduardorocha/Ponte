@@ -1831,10 +1831,20 @@ export class OperationsService {
     );
   }
   async sendNotification(dto: D.NotificationDto, user: CurrentUser) {
-    const { smallGroupIds, ministryIds, roleIds, allMembers, ...message } = dto;
+    const {
+      recipientMemberIds,
+      recipientVisitorIds,
+      smallGroupIds,
+      ministryIds,
+      roleIds,
+      allMembers,
+      ...message
+    } = dto;
     const audienceCount = [
       dto.recipientMemberId,
       dto.recipientVisitorId,
+      recipientMemberIds?.length,
+      recipientVisitorIds?.length,
       smallGroupIds?.length,
       ministryIds?.length,
       roleIds?.length,
@@ -1851,11 +1861,41 @@ export class OperationsService {
       throw new ConflictException(
         'Canal preparado; configure um provedor antes de enviar.',
       );
-    const bulk = !!(smallGroupIds || ministryIds || roleIds || allMembers);
+    const bulk = !!(
+      recipientMemberIds ||
+      recipientVisitorIds ||
+      smallGroupIds ||
+      ministryIds ||
+      roleIds ||
+      allMembers
+    );
     if (bulk) {
       if ((roleIds || allMembers) && !this.all(user))
         throw new ForbiddenException();
       const created = await this.write(async (tx) => {
+        if (recipientMemberIds || recipientVisitorIds) {
+          const ids = [...new Set(recipientMemberIds ?? recipientVisitorIds)];
+          for (const id of ids) {
+            await this.accessiblePerson(
+              tx,
+              recipientMemberIds ? { memberId: id } : { visitorId: id },
+              user,
+            );
+          }
+          return tx.notification.createManyAndReturn({
+            data: ids.map((id) => ({
+              ...message,
+              ...(recipientMemberIds
+                ? { recipientMemberId: id }
+                : { recipientVisitorId: id }),
+              scheduledAt: dto.scheduledAt
+                ? new Date(dto.scheduledAt)
+                : undefined,
+              createdByUserId: user.id,
+            })),
+            select: { id: true },
+          });
+        }
         const filters: Prisma.MemberWhereInput[] = [];
         if (smallGroupIds) {
           const ids = [...new Set(smallGroupIds)];

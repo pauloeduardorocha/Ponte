@@ -25,7 +25,8 @@ describe('Notification audiences HTTP contract (mocked database)', () => {
     $transaction: jest.fn(),
     $queryRaw: jest.fn(),
     user: { findUnique: jest.fn() },
-    member: { findMany: jest.fn() },
+    member: { findMany: jest.fn(), findFirst: jest.fn() },
+    visitor: { findFirst: jest.fn() },
     smallGroup: { findMany: jest.fn() },
     ministry: { findMany: jest.fn() },
     role: { count: jest.fn(), findMany: jest.fn() },
@@ -71,6 +72,8 @@ describe('Notification audiences HTTP contract (mocked database)', () => {
     );
     db.user.findUnique.mockResolvedValue({ memberId: ids[0] });
     db.member.findMany.mockResolvedValue(ids.map((id) => ({ id })));
+    db.member.findFirst.mockResolvedValue({ id: ids[0] });
+    db.visitor.findFirst.mockResolvedValue({ id: ids[0] });
     db.smallGroup.findMany.mockResolvedValue(
       ids.map((id) => ({ id, leaderMemberId: ids[0] })),
     );
@@ -218,6 +221,68 @@ describe('Notification audiences HTTP contract (mocked database)', () => {
     await request(app.getHttpServer())
       .post('/operations/notifications')
       .send({ ...base, allMembers: true })
+      .expect(400);
+    expect(db.notification.createManyAndReturn).not.toHaveBeenCalled();
+  });
+  it.each(['recipientMemberIds', 'recipientVisitorIds'])(
+    'sends to multiple explicit recipients via %s without repeating IDs',
+    async (key) => {
+      await request(app.getHttpServer())
+        .post('/operations/notifications')
+        .send({ ...base, [key]: [ids[0], ids[1], ids[0]] })
+        .expect(201, {
+          total: 2,
+          sent: 2,
+          failed: 0,
+          pending: 0,
+          status: 'SENT',
+        });
+      const rows = db.notification.createManyAndReturn.mock.calls[0][0].data;
+      const recipientKey =
+        key === 'recipientMemberIds'
+          ? 'recipientMemberId'
+          : 'recipientVisitorId';
+      expect(
+        rows.map((row: Record<string, unknown>) => row[recipientKey]),
+      ).toEqual(ids);
+      expect(rows[0]).not.toHaveProperty(key);
+      expect(provider.send).toHaveBeenCalledTimes(2);
+    },
+  );
+  it('refuses the whole member selection when a recipient is outside the sender scope', async () => {
+    user.permissions = ['NOTIFICATION_SEND'];
+    db.member.findFirst
+      .mockResolvedValueOnce({ id: ids[0] })
+      .mockResolvedValueOnce({ id: ids[0] })
+      .mockResolvedValueOnce({ id: ids[1] })
+      .mockResolvedValueOnce(null);
+    await request(app.getHttpServer())
+      .post('/operations/notifications')
+      .send({ ...base, recipientMemberIds: ids })
+      .expect(404);
+    expect(db.notification.createManyAndReturn).not.toHaveBeenCalled();
+    expect(provider.send).not.toHaveBeenCalled();
+  });
+  it('refuses the whole visitor selection when a recipient is inaccessible', async () => {
+    db.visitor.findFirst
+      .mockResolvedValueOnce({ id: ids[0] })
+      .mockResolvedValueOnce(null);
+    await request(app.getHttpServer())
+      .post('/operations/notifications')
+      .send({ ...base, recipientVisitorIds: ids })
+      .expect(404);
+    expect(db.notification.createManyAndReturn).not.toHaveBeenCalled();
+  });
+  it.each([
+    { recipientMemberIds: [] },
+    { recipientVisitorIds: ['invalid'] },
+    { recipientMemberIds: [ids[0]], recipientMemberId: ids[1] },
+    { recipientMemberIds: [ids[0]], recipientVisitorIds: [ids[1]] },
+    { recipientMemberIds: Array(101).fill(ids[0]) },
+  ])('rejects malformed or mixed explicit selections %j', async (audience) => {
+    await request(app.getHttpServer())
+      .post('/operations/notifications')
+      .send({ ...base, ...audience })
       .expect(400);
     expect(db.notification.createManyAndReturn).not.toHaveBeenCalled();
   });

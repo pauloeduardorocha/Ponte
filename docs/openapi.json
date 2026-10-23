@@ -5072,7 +5072,7 @@
         "tags": [
           "Operacao da igreja"
         ],
-        "description": "Cria uma mensagem por destinatário. Sem scheduledAt envia imediatamente; com agendamento cria PENDING para envio manual após a data. Resposta individual preservada; envio coletivo retorna total, sent, failed, pending e status SENT, FAILED, PARTIAL ou PENDING. 400 para público inválido/vazio; 403 para público global sem escopo; 404 para seleção inexistente/inacessível; 409 para canal imediato sem provedor."
+        "description": "Cria uma mensagem por destinatário. Sem scheduledAt envia imediatamente; com agendamento cria PENDING para envio manual após a data. Resposta individual preservada; envio coletivo retorna total, sent, failed, pending e status SENT, FAILED, PARTIAL ou PENDING. 400 para público inválido/vazio; 403 para público global sem escopo; 404 para seleção inexistente/inacessível; 409 para canal imediato sem provedor. recipientMemberIds e recipientVisitorIds aceitam de 1 a 100 UUIDs, removem IDs repetidos e retornam resumo coletivo. Todos os destinatários explícitos são validados antes da criação; os campos individuais anteriores continuam aceitos."
       }
     },
     "/api/v1/operations/notifications/{id}/send": {
@@ -12646,13 +12646,33 @@
           "allMembers": {
             "type": "boolean",
             "description": "Envia a todos os membros ativos. Exige OPERATION_SCOPE_ALL."
+          },
+          "recipientMemberIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Destinatários explícitos acessíveis ao remetente. IDs repetidos são removidos; todos são validados antes da criação. Retorna resumo coletivo."
+          },
+          "recipientVisitorIds": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 100,
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Destinatários explícitos acessíveis ao remetente. IDs repetidos são removidos; todos são validados antes da criação. Retorna resumo coletivo."
           }
         },
         "required": [
           "channel",
           "content"
         ],
-        "description": "Escolha exatamente um público: recipientMemberId, recipientVisitorId, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays selecionam a união, sem duplicar membros. Roles e todos os membros exigem OPERATION_SCOPE_ALL; grupos e ministérios respeitam o escopo de gestão."
+        "description": "Escolha exatamente um público: recipientMemberId, recipientVisitorId, recipientMemberIds, recipientVisitorIds, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays selecionam a união, sem duplicar membros. Roles e todos os membros exigem OPERATION_SCOPE_ALL; grupos e ministérios respeitam o escopo de gestão."
       },
       "TemplateDto": {
         "type": "object",

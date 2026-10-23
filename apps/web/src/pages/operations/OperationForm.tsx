@@ -78,6 +78,7 @@ export function LookupField({
       render={({ field: input, fieldState }) => (
         <Autocomplete
           multiple={field.multiple}
+          disableCloseOnSelect={field.multiple}
           options={options}
           value={
             field.multiple
@@ -100,6 +101,25 @@ export function LookupField({
           getOptionLabel={entryName}
           isOptionEqualToValue={(a, b) => a.id === b.id}
           filterOptions={(o) => o}
+          renderOption={
+            field.multiple
+              ? (props, option, { selected: checked }) => {
+                  const { key, ...optionProps } = props;
+                  return (
+                    <li key={key} {...optionProps}>
+                      <Checkbox
+                        checked={checked}
+                        tabIndex={-1}
+                        disableRipple
+                        sx={{ mr: 1 }}
+                        slotProps={{ input: { 'aria-hidden': true } }}
+                      />
+                      {entryName(option)}
+                    </li>
+                  );
+                }
+              : undefined
+          }
           onInputChange={(_, v, reason) => {
             if (reason === 'input') setSearch(v);
           }}
@@ -129,7 +149,8 @@ export function LookupField({
               error={!!fieldState.error || data.isError}
               helperText={
                 fieldState.error?.message ??
-                (data.isError ? 'Falha ao carregar opções' : undefined)
+                (data.isError ? 'Falha ao carregar opções' : undefined) ??
+                (field.multiple ? 'Selecione uma ou mais opções.' : undefined)
               }
             />
           )}
@@ -178,8 +199,8 @@ export function OperationForm({
   const form = useForm<Values>({ defaultValues: defaults });
   const audience = form.watch('audience');
   const recipientFields: Record<string, string> = {
-    recipientMemberId: 'MEMBER',
-    recipientVisitorId: 'VISITOR',
+    recipientMemberIds: 'MEMBER',
+    recipientVisitorIds: 'VISITOR',
     smallGroupIds: 'SMALL_GROUPS',
     ministryIds: 'MINISTRIES',
     roleIds: 'ROLES',

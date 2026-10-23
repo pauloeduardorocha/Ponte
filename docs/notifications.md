@@ -8,6 +8,8 @@ Os endpoints da caixa pessoal e de Web Push abaixo exigem Bearer auth e usam o u
 
 - `recipientMemberId`: um membro, preservando o contrato individual.
 - `recipientVisitorId`: um visitante, preservando o contrato individual.
+- `recipientMemberIds`: array de UUIDs de membros ativos acessíveis ao remetente.
+- `recipientVisitorIds`: array de UUIDs de visitantes acessíveis ao remetente.
 - `smallGroupIds`: array de UUIDs de grupos familiares ativos no escopo de gestão do remetente.
 - `ministryIds`: array de UUIDs de ministérios ativos no escopo de gestão do remetente.
 - `roleIds`: array de UUIDs das roles de contas ativas vinculadas a membros; exige também `OPERATION_SCOPE_ALL`.
@@ -20,6 +22,8 @@ O envio coletivo retorna `{ total, sent, failed, pending, status }`, com status 
 `GET /operations/notification-audiences/:kind` aceita `small-groups`, `ministries` ou `roles` e os parâmetros `search`, `page` e `pageSize` (máximo 100). Exige `NOTIFICATION_SEND` e retorna `{ items: [{ id, name }], total, page, pageSize }`. Apenas opções no escopo autorizado são oferecidas. Roles usam o nome de exibição quando disponível e exigem escopo global. Os campos de seleção no formulário permitem várias opções da mesma categoria.
 
 Exemplo: `{ "smallGroupIds": ["63b80123-eefa-4f48-a877-6cfdcdd4b724"], "channel": "INTERNAL", "content": "Encontro nesta semana." }`.
+
+O formulário usa multiselect com pesquisa, caixas de seleção e nomes selecionados para membros, visitantes, grupos familiares, ministérios e roles. A lista permanece aberta para selecionar ou desmarcar várias opções. Membros e visitantes usam os novos campos de arrays, com resposta coletiva mesmo para uma única escolha; os campos individuais da API continuam disponíveis para clientes existentes. IDs repetidos nos arrays são removidos antes da criação. Todos os destinatários explícitos são validados antes de criar as mensagens: se algum estiver inacessível, nenhuma mensagem da seleção é criada. A troca do tipo de público limpa os destinatários anteriores.
 
 | Método e caminho (`/api/v1`)            | Contrato                                                                                                                                                                                                                   |
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

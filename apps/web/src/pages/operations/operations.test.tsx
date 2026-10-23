@@ -53,7 +53,7 @@ describe('Operational workflows', () => {
       renderApp('/notifications');
       fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
       const recipient = await screen.findByRole('combobox', {
-        name: 'Destinatário: membro',
+        name: 'Destinatários: membros',
       });
       fireEvent.mouseDown(recipient);
       fireEvent.click(
@@ -78,7 +78,7 @@ describe('Operational workflows', () => {
         expect.objectContaining({
           path: '/operations/notifications',
           body: {
-            recipientMemberId: 'member',
+            recipientMemberIds: ['member'],
             channel: 'INTERNAL',
             content: 'Comunicado',
           },
