@@ -281,7 +281,14 @@ export function ReimbursementForm({
       <TextField
         label="Quem recebe o reembolso?"
         value={beneficiaryName}
-        slotProps={{ input: { readOnly: true } }}
+        helperText="Nome preenchido automaticamente pela sua conta. Não pode ser alterado."
+        slotProps={{
+          input: { readOnly: true },
+          htmlInput: { readOnly: true, 'aria-readonly': true },
+        }}
+        sx={{
+          '& .MuiInputBase-root': { bgcolor: 'action.disabledBackground' },
+        }}
         disabled={save.isPending}
       />
       <TextField

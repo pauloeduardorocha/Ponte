@@ -254,8 +254,14 @@ describe('Reimbursements', () => {
     expect(
       await screen.findByLabelText('Quem recebe o reembolso?'),
     ).toHaveValue('Ana Souza');
-    expect(screen.getByLabelText('Quem recebe o reembolso?')).toHaveAttribute(
-      'readonly',
+    const beneficiary = screen.getByLabelText(
+      'Quem recebe o reembolso?',
+    ) as HTMLInputElement;
+    expect(beneficiary.readOnly).toBe(true);
+    expect(beneficiary).toHaveAttribute('readonly');
+    expect(beneficiary).toHaveAttribute('aria-readonly', 'true');
+    expect(beneficiary).toHaveAccessibleDescription(
+      'Nome preenchido automaticamente pela sua conta. Não pode ser alterado.',
     );
     fireEvent.change(view.container.querySelector('input[type=file]')!, {
       target: {
