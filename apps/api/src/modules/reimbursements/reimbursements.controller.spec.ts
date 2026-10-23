@@ -12,7 +12,6 @@ describe('Reimbursement submission HTTP contract', () => {
   const user = { id: 'member', permissions: [] };
   const create = jest.fn().mockResolvedValue({ id: 'receipt' });
   const payload = {
-    beneficiaryName: 'Maria',
     iban: 'PT50000201231234567890154',
     categoryId: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
     purpose: 'Material',
@@ -79,7 +78,7 @@ describe('Reimbursement submission HTTP contract', () => {
       expect(create).not.toHaveBeenCalled();
     },
   );
-  it('accepts all five form fields and passes the authenticated author', async () => {
+  it('accepts the four editable form fields and passes the authenticated author', async () => {
     let upload = request(app.getHttpServer())
       .post('/reimbursements')
       .set('Authorization', 'Bearer member');

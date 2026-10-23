@@ -27,9 +27,6 @@ export function ReimbursementForm({
   onSaved: (receipt: { id: string; possibleDuplicate?: boolean }) => void;
 }) {
   const { user } = useAuth();
-  const [beneficiaryName, setName] = useState(
-    initial?.beneficiaryName ?? user?.name ?? '',
-  );
   const queryClient = useQueryClient();
   const profile = useQuery({
     queryKey: ['reimbursement-profile', user?.id],
@@ -45,6 +42,8 @@ export function ReimbursementForm({
       apiRequest<{ id: string; name: string }[]>('/reimbursements/categories'),
     enabled: Boolean(user),
   });
+  const beneficiaryName =
+    initial?.beneficiaryName ?? profile.data?.name ?? user?.name ?? '';
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '');
   const [enteredIban, setIban] = useState<string>();
   const iban = enteredIban ?? initial?.iban ?? profile.data?.iban ?? '';
@@ -63,14 +62,12 @@ export function ReimbursementForm({
   const dropHintId = useId();
   const save = useMutation({
     mutationFn: async ({
-      beneficiaryName,
       iban,
       categoryId,
       purpose,
       amount,
       files,
     }: {
-      beneficiaryName: string;
       iban: string;
       categoryId: string;
       purpose: string;
@@ -78,7 +75,6 @@ export function ReimbursementForm({
       files: File[];
     }) => {
       const values = {
-        beneficiaryName,
         iban,
         categoryId,
         purpose,
@@ -137,7 +133,6 @@ export function ReimbursementForm({
         event.preventDefault();
         if (!busy && validAmount)
           save.mutate({
-            beneficiaryName,
             iban,
             categoryId,
             purpose,
@@ -147,8 +142,8 @@ export function ReimbursementForm({
       }}
     >
       <Typography variant="body2">
-        Indique o valor, o IBAN e a categoria da despesa para guardar o pedido.
-        Para outra pessoa, altere o beneficiário e o IBAN.
+        O pedido é registado em seu nome. Indique o valor, o seu IBAN e a
+        categoria da despesa para guardar o pedido.
       </Typography>
       {!initial && (
         <>
@@ -286,8 +281,7 @@ export function ReimbursementForm({
       <TextField
         label="Quem recebe o reembolso?"
         value={beneficiaryName}
-        onChange={(e) => setName(e.target.value)}
-        slotProps={{ htmlInput: { maxLength: 120 } }}
+        slotProps={{ input: { readOnly: true } }}
         disabled={save.isPending}
       />
       <TextField

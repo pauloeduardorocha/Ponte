@@ -134,16 +134,23 @@ describe('Reimbursement lifecycle and access', () => {
       });
     },
   );
-  it('does not persist the IBAN of a different beneficiary in the member profile', async () => {
+  it('preserves legacy beneficiary names and does not save their IBAN in another member profile', async () => {
     const { service, tx } = setup();
     tx.member.findFirst.mockResolvedValue({
       id: 'member',
       name: 'Outra pessoa',
     });
-    await service.create(
+    await service.update(
+      row.id,
       { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
-      [file],
       user,
+    );
+    expect(tx.reimbursement.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.not.objectContaining({
+          beneficiaryName: expect.anything(),
+        }),
+      }),
     );
     expect(tx.member.updateMany).not.toHaveBeenCalled();
   });
@@ -296,23 +303,54 @@ describe('Reimbursement lifecycle and access', () => {
       ),
     ).rejects.toThrow('categoria');
   });
-  it('stores the authenticated submitter separately from the beneficiary', async () => {
+  it('assigns the authenticated member as beneficiary without accepting a client identity', async () => {
     const { service, tx } = setup();
     await service.create(
-      {
-        beneficiaryName: 'Outra pessoa',
-        iban: row.iban,
-        categoryId: row.categoryId,
-        amount: '25.10',
-      },
+      { iban: row.iban, categoryId: row.categoryId, amount: '25.10' },
       [file],
       user,
     );
     expect(tx.reimbursement.create.mock.calls[0]![0].data).toMatchObject({
       submittedBy: user.id,
-      beneficiaryName: 'Outra pessoa',
+      beneficiaryName: 'Maria',
     });
   });
+  it('rejects submitting for another person before storing files', async () => {
+    const { service, storage, tx } = setup();
+    await expect(
+      service.create(
+        {
+          beneficiaryName: 'Outra pessoa',
+          iban: row.iban,
+          categoryId: row.categoryId,
+          amount: '25.10',
+        },
+        [file],
+        user,
+      ),
+    ).rejects.toThrow('beneficiário');
+    expect(storage.put).not.toHaveBeenCalled();
+    expect(tx.reimbursement.create).not.toHaveBeenCalled();
+  });
+  it.each([user, { ...manager, id: 'treasurer' }])(
+    'rejects changing the beneficiary on update, including treasury edits',
+    async (actor) => {
+      const { service, tx } = setup();
+      await expect(
+        service.update(
+          row.id,
+          {
+            beneficiaryName: 'Outra pessoa',
+            iban: row.iban,
+            categoryId: row.categoryId,
+            amount: '25.10',
+          },
+          actor,
+        ),
+      ).rejects.toThrow('beneficiário');
+      expect(tx.reimbursement.update).not.toHaveBeenCalled();
+    },
+  );
   it('requires a document and cleans files when persistence fails', async () => {
     const { service, tx, storage } = setup();
     await expect(

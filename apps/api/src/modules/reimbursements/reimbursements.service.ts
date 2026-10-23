@@ -59,12 +59,13 @@ export class ReimbursementsService {
     if (!user) throw new UnauthorizedException();
     const member = await this.db.member.findFirst({
       where: { user: { id: user.id }, anonymizedAt: null },
-      select: { id: true },
+      select: { id: true, name: true },
     });
     if (!member)
       throw new ForbiddenException(
         'O cadastro de reembolsos é exclusivo para membros.',
       );
+    return member;
   }
   async categories(user: CurrentUser) {
     await this.requireMember(user);
@@ -226,7 +227,8 @@ export class ReimbursementsService {
     files: PrivateUpload[],
     user?: CurrentUser,
   ) {
-    await this.requireMember(user);
+    const member = await this.requireMember(user);
+    this.checkBeneficiary(dto, member.name);
     const fields = this.fields(dto);
     if (!files?.length)
       throw new BadRequestException('Anexe pelo menos um documento da despesa');
@@ -249,6 +251,7 @@ export class ReimbursementsService {
         const saved = await tx.reimbursement.create({
           data: {
             ...fields,
+            beneficiaryName: member.name.trim(),
             submittedBy: user?.id,
             attachments: {
               create: files.map((file, i) => ({
@@ -272,6 +275,15 @@ export class ReimbursementsService {
       throw error;
     }
   }
+  private checkBeneficiary(dto: ReimbursementDto, name: string) {
+    if (
+      dto.beneficiaryName !== undefined &&
+      dto.beneficiaryName.trim() !== name.trim()
+    )
+      throw new BadRequestException(
+        'O beneficiário é definido pela conta e não pode ser alterado',
+      );
+  }
   private fields(dto: ReimbursementDto) {
     const iban = dto.iban?.replace(/\s/g, '').toUpperCase();
     if (!iban || !isIBAN(iban))
@@ -285,7 +297,6 @@ export class ReimbursementsService {
     )
       throw new BadRequestException('O valor deve ser positivo');
     return {
-      beneficiaryName: dto.beneficiaryName?.trim(),
       iban,
       categoryId: dto.categoryId,
       purpose: dto.purpose?.trim(),
@@ -301,6 +312,7 @@ export class ReimbursementsService {
       if (row.deletedAt) throw new NotFoundException('Pedido excluído');
       if (row.paidAt || row.bankTransactionId)
         throw new ConflictException('Um pedido pago não pode ser alterado');
+      this.checkBeneficiary(dto, row.beneficiaryName);
       const fields = this.fields(dto);
       await this.validateCategory(tx, dto.categoryId);
       const saved = await tx.reimbursement.update({

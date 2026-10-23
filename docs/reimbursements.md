@@ -4,7 +4,7 @@ Cada pedido representa um pagamento integral em EUR e pode ser associado a um ú
 
 ## Utilização
 
-- `/pedir-reembolso`: formulário exclusivo para membros com sessão iniciada. Valor positivo, IBAN e categoria de despesa são obrigatórios. Guarda os documentos com IBAN e categoria, permitindo completar os restantes dados depois. Com sessão iniciada, identifica o autor do pedido; o beneficiário pode ser outra pessoa.
+- `/pedir-reembolso`: formulário exclusivo para membros com sessão iniciada. Valor positivo, IBAN e categoria de despesa são obrigatórios. Guarda os documentos com IBAN e categoria, permitindo completar os restantes dados depois. O beneficiário é sempre o membro autenticado e é definido pela API. Não são aceites novos pedidos para terceiros.
 - `/reimbursements`: os pedidos submetidos pelo utilizador autenticado.
 - `/finance?tab=reimbursements`: gestão pela tesouraria, com pesquisa, filtros, edição, documentos, registo de pagamento por transferência bancária e associação ao banco.
 - No painel de anexos do movimento bancário aparecem os documentos do pedido associado. Para movimentos compatíveis, a tesouraria também pode confirmar a associação nesse painel.
@@ -33,7 +33,7 @@ Esta versão não inclui OCR, receção automática de WhatsApp/email ou execuç
 
 ## Validação
 
-Os testes da API cobrem privacidade, rejeição de novos pedidos anónimos, autor versus beneficiário, integridade do pagamento, correspondência de valor/moeda, exclusividade da associação, auditoria e limpeza em falhas. Os testes web cobrem redirecionamento para login, envio autenticado, nova tentativa após erro, pedidos para terceiros, lista pessoal e confirmação da associação pela tesouraria.
+Os testes da API cobrem privacidade, rejeição de novos pedidos anónimos, beneficiário definido pela sessão e bloqueio de alterações, integridade do pagamento, correspondência de valor/moeda, exclusividade da associação, auditoria e limpeza em falhas. Os testes web cobrem redirecionamento para login, envio autenticado, nova tentativa após erro, bloqueio de pedidos para terceiros, lista pessoal e confirmação da associação pela tesouraria.
 
 ## Contrato IBAN
 
@@ -41,8 +41,10 @@ Os testes da API cobrem privacidade, rejeição de novos pedidos anónimos, auto
 
 Os pedidos de reembolso usam `iban` em vez de `contact`, tanto em multipart no envio como em JSON ao editar. O valor (`amount`) é obrigatório, positivo e com até duas casas decimais. O IBAN é obrigatório e validado em cada criação e edição, assim como `categoryId`, que deve identificar uma categoria de despesas existente. `GET /reimbursements/categories` lista essas categorias para membros autenticados. `GET /reimbursements/profile` exige login e devolve apenas `{ name, iban }` do membro autenticado, ou `null` quando a conta estiver sem membro associado. O campo no novo pedido recebe esse IBAN sem substituir valores editados ou guardados no pedido.
 
-Ao criar ou editar um pedido do membro autenticado com o seu nome como beneficiário, o IBAN fica guardado no membro se estiver vazio, na mesma transação. Pedidos para terceiros ou enviados sem login e pedidos de outros autores editados pela tesouraria preservam o IBAN do cadastro. Um IBAN existente nunca é substituído automaticamente.
+Ao criar ou editar um pedido do membro autenticado com o seu nome como beneficiário, o IBAN fica guardado no membro se estiver vazio, na mesma transação. Pedidos legados para terceiros e pedidos de outros autores editados pela tesouraria preservam o IBAN do cadastro. Um IBAN existente nunca é substituído automaticamente.
 
 Aplicar a migração `20261020180000_reimbursement_member_iban`. Os contactos antigos ficam preservados como dados legados; pedidos ainda por pagar precisam de IBAN para ficarem prontos para pagamento.
 
 Aplicar a migração `20261022120000_reimbursement_category`. A categoria permanece nula nos registos legados até serem completados; novos pedidos exigem categoria e IBAN pela API.
+
+O nome do beneficiário é apresentado apenas para leitura. A API preenche-o a partir do membro associado à sessão e preserva-o nas edições, incluindo pela tesouraria. Pedidos antigos mantêm os dados históricos; não há alteração retroativa dos beneficiários. O campo opcional `beneficiaryName` é aceite por compatibilidade apenas quando coincide com o nome definido pelo servidor.

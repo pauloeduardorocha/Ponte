@@ -244,7 +244,7 @@ describe('Reimbursements', () => {
     );
     expect((submission[1]?.body as FormData).has('contact')).toBe(false);
   });
-  it('allows an authenticated member to submit for another person', async () => {
+  it('locks the beneficiary to the authenticated member and excludes it from the submitted payload', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
       ...memberFormRoutes,
@@ -254,9 +254,9 @@ describe('Reimbursements', () => {
     expect(
       await screen.findByLabelText('Quem recebe o reembolso?'),
     ).toHaveValue('Ana Souza');
-    fireEvent.change(screen.getByLabelText('Quem recebe o reembolso?'), {
-      target: { value: 'Maria' },
-    });
+    expect(screen.getByLabelText('Quem recebe o reembolso?')).toHaveAttribute(
+      'readonly',
+    );
     fireEvent.change(view.container.querySelector('input[type=file]')!, {
       target: {
         files: [new File(['test'], 'recibo.pdf', { type: 'application/pdf' })],
@@ -273,8 +273,8 @@ describe('Reimbursements', () => {
     const submission = vi
       .mocked(fetch)
       .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
-    expect((submission[1]?.body as FormData).get('beneficiaryName')).toBe(
-      'Maria',
+    expect((submission[1]?.body as FormData).has('beneficiaryName')).toBe(
+      false,
     );
     expect(submission[1]?.headers).toHaveProperty(
       'Authorization',

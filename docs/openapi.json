@@ -11181,7 +11181,7 @@
             "bearer": []
           }
         ],
-        "description": "Cadastro exclusivo para membros autenticados. Requer valor positivo, IBAN, categoria de despesa e pelo menos um documento.",
+        "description": "Cadastro exclusivo para membros autenticados. Requer valor positivo, IBAN, categoria de despesa e pelo menos um documento. O beneficiário é sempre o membro autenticado, definido pela API; pedidos para terceiros não são permitidos.",
         "requestBody": {
           "required": true,
           "content": {
@@ -11206,7 +11206,9 @@
                   },
                   "beneficiaryName": {
                     "type": "string",
-                    "maxLength": 120
+                    "maxLength": 120,
+                    "deprecated": true,
+                    "description": "Compatibilidade com clientes antigos. O servidor define o beneficiário pelo membro autenticado na criação; valores divergentes são rejeitados. O beneficiário de um pedido existente não pode ser alterado."
                   },
                   "purpose": {
                     "type": "string",
@@ -13947,7 +13949,9 @@
           },
           "beneficiaryName": {
             "type": "string",
-            "maxLength": 120
+            "maxLength": 120,
+            "deprecated": true,
+            "description": "Compatibilidade com clientes antigos. O servidor define o beneficiário pelo membro autenticado na criação; valores divergentes são rejeitados. O beneficiário de um pedido existente não pode ser alterado."
           },
           "purpose": {
             "type": "string",
