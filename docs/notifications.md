@@ -2,6 +2,20 @@
 
 Os endpoints da caixa pessoal e de Web Push abaixo exigem Bearer auth e usam o usuário da sessão; não aceitam um usuário destinatário fornecido pelo cliente.
 
+## Notificações automáticas do sistema
+
+| Evento                             | Destinatários                                 | Quando é enviado                                                                           | Preferência da conta          |
+| ---------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------- |
+| Novo pedido de reembolso de evento | Contas ativas com `EVENT_REFUND_APPROVE`      | Depois de uma solicitação válida ser persistida                                            | `pushEventRefundRequested`    |
+| Empréstimo em atraso               | Conta ativa vinculada ao membro do empréstimo | Uma vez quando o empréstimo muda para `OVERDUE`; a manutenção periódica não repete o aviso | `pushLibraryOverdue`          |
+| Reserva disponível                 | Conta ativa vinculada ao membro da reserva    | Quando a fila atribui um exemplar e muda a reserva para `READY`                            | `pushLibraryReservationReady` |
+
+Os três avisos são Web Push best-effort para dispositivos inscritos. As preferências são por usuário e aplicam-se em todos os seus dispositivos; cada uma começa ativa e pode ser alterada em **Minha conta → Notificações push**. Desativar uma categoria não altera os outros avisos nem a inscrição push do dispositivo. O endpoint `PATCH /auth/preferences` aceita qualquer combinação parcial de `colorMode`, `pushEventRefundRequested`, `pushLibraryOverdue` e `pushLibraryReservationReady`, devolvendo as preferências completas da conta. O destinatário de reserva/atraso precisa ter uma conta ligada ao membro; pedidos de reembolso são direcionados a contas ativas com a permissão de aprovação.
+
+Uma reserva pode ficar disponível imediatamente ao ser criada, quando um exemplar é cadastrado ou liberado por devolução/encerramento de empréstimo, ou quando a expiração/cancelamento de outra reserva libera um exemplar. Todos esses caminhos convergem na promoção da fila para `READY` e usam o mesmo aviso, sem duplicar a cada manutenção.
+
+Não há atualmente estados separados de rejeição de reembolso nem lembretes recorrentes de atraso; esses casos não geram avisos adicionais.
+
 ## Envio por público
 
 `POST /operations/notifications` exige `NOTIFICATION_SEND`. Além de `channel`, `content`, `subject` e `scheduledAt`, escolha exatamente um público:

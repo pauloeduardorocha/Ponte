@@ -198,6 +198,54 @@ describe('Push delivery and ownership', () => {
       url: '/inbox',
     });
   });
+  it('sends system alerts only to active users who enabled that category', async () => {
+    const { push, db } = setup();
+    jest.mocked(webPush.sendNotification).mockClear();
+    const subscription = {
+      id: 'system-sub',
+      endpoint: dto.endpoint,
+      ...dto.keys,
+      updatedAt: new Date(),
+    };
+    db.pushSubscription.findMany.mockResolvedValue([subscription]);
+    jest.mocked(webPush.sendNotification).mockResolvedValue({
+      statusCode: 201,
+      body: '',
+      headers: {},
+    });
+
+    await push.notifyUsers(
+      [user.id, user.id],
+      'pushLibraryOverdue',
+      'Livro em atraso',
+      'O prazo terminou.',
+      '/dashboard',
+    );
+
+    expect(db.pushSubscription.findMany).toHaveBeenCalledWith({
+      where: {
+        user: {
+          id: { in: [user.id] },
+          status: 'ACTIVE',
+          deletedAt: null,
+          pushLibraryOverdue: true,
+        },
+      },
+    });
+    expect(webPush.sendNotification).toHaveBeenCalledWith(
+      {
+        endpoint: dto.endpoint,
+        keys: dto.keys,
+      },
+      expect.stringContaining('O prazo terminou.'),
+      expect.objectContaining({ TTL: 86400 }),
+    );
+    expect(
+      JSON.parse(
+        jest.mocked(webPush.sendNotification).mock.calls[0]![1]! as string,
+      ),
+    ).toMatchObject({ title: 'Livro em atraso', url: '/dashboard' });
+  });
   it('uses the church name when no subject is provided', () => {
     expect(
       JSON.parse(notificationPushPayload({ ...message, subject: null })),

@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
+import { PushService } from '../operations/push.service';
 import { LibraryPageQuery as PageQuery } from './library.dto';
 import {
   AdjustmentDto,
@@ -35,6 +36,13 @@ import {
 } from './library.policy';
 
 type Tx = Prisma.TransactionClient;
+type PendingSystemPush = {
+  userIds: string[];
+  preference: 'pushLibraryOverdue' | 'pushLibraryReservationReady';
+  title: string;
+  body: string;
+  url: string;
+};
 const loanInclude = {
   member: { select: { id: true, name: true } },
   bookCopy: { include: { book: true } },
@@ -85,7 +93,10 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   private timer?: NodeJS.Timeout;
   private readonly logger = new Logger(LibraryService.name);
 
-  constructor(private readonly db: PrismaService) {}
+  constructor(
+    private readonly db: PrismaService,
+    private readonly push: PushService,
+  ) {}
 
   onModuleInit() {
     this.timer = setInterval(() => {
@@ -101,17 +112,19 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   private async transaction<T>(
-    operation: (tx: Tx, now: Date) => Promise<T>,
+    operation: (tx: Tx, now: Date, pushes: PendingSystemPush[]) => Promise<T>,
   ): Promise<T> {
+    const pushes: PendingSystemPush[] = [];
+    let result: T;
     try {
-      return await this.db.$transaction(
+      result = await this.db.$transaction(
         async (tx) => {
           await bindAudit(tx);
           // One shared transaction lock also serializes limits, queues and payments across replicas.
           await tx.$executeRaw`SELECT pg_advisory_xact_lock(716023, 1)`;
           const now = new Date();
-          await this.synchronize(tx, now);
-          return operation(tx, now);
+          await this.synchronize(tx, now, pushes);
+          return operation(tx, now, pushes);
         },
         { maxWait: 10000, timeout: 30000 },
       );
@@ -128,6 +141,17 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
       }
       throw error;
     }
+    for (const notice of pushes)
+      void this.push
+        .notifyUsers(
+          notice.userIds,
+          notice.preference,
+          notice.title,
+          notice.body,
+          notice.url,
+        )
+        .catch(() => undefined);
+    return result;
   }
 
   private audit(
@@ -158,11 +182,15 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  private async synchronize(tx: Tx, now: Date) {
+  private async synchronize(tx: Tx, now: Date, pushes: PendingSystemPush[]) {
     const settings = await this.settings(tx);
     const active = await tx.loan.findMany({
       where: { status: { in: [...ACTIVE_LOANS] } },
-      include: { fine: true },
+      include: {
+        fine: true,
+        member: { select: { user: { select: { id: true } } } },
+        bookCopy: { select: { book: { select: { title: true } } } },
+      },
     });
     for (const loan of active) {
       const days = overdueDays(loan.dueAt, now, loan.graceDays);
@@ -172,6 +200,14 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
           data: { status: 'OVERDUE' },
         });
         await this.audit(tx, null, 'OVERDUE', 'Loan', loan.id, { days });
+        if (loan.member.user?.id)
+          pushes.push({
+            userIds: [loan.member.user.id],
+            preference: 'pushLibraryOverdue',
+            title: 'Livro em atraso',
+            body: `O prazo para devolver “${loan.bookCopy.book.title}” terminou.`,
+            url: '/dashboard',
+          });
       }
       const amount = loan.dailyFine.mul(days);
       if (amount.gt(0) && !loan.fine) {
@@ -225,13 +261,23 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
       select: { bookId: true },
     });
     for (const { bookId } of books)
-      await this.promote(tx, bookId, now, settings.holdDays);
+      await this.promote(tx, bookId, now, settings.holdDays, pushes);
   }
 
-  private async promote(tx: Tx, bookId: string, now: Date, holdDays: number) {
+  private async promote(
+    tx: Tx,
+    bookId: string,
+    now: Date,
+    holdDays: number,
+    pushes: PendingSystemPush[] = [],
+  ) {
     const queue = await tx.reservation.findMany({
       where: { bookId, status: 'WAITING', expiresAt: { gt: now } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      include: {
+        member: { select: { user: { select: { id: true } } } },
+        book: { select: { title: true } },
+      },
     });
     const copies = await tx.bookCopy.findMany({
       where: { bookId, status: 'AVAILABLE' },
@@ -264,6 +310,14 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
       await this.audit(tx, null, 'COPY_RESERVED', 'BookCopy', copy.id, {
         reservationId: reservation.id,
       });
+      if (reservation.member.user?.id)
+        pushes.push({
+          userIds: [reservation.member.user.id],
+          preference: 'pushLibraryReservationReady',
+          title: 'Reserva disponível',
+          body: `Já pode levantar “${reservation.book.title}”.`,
+          url: '/dashboard',
+        });
     }
   }
 
@@ -707,7 +761,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   createCopy(bookId: string, dto: CopyDto, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       await tx.book.findUniqueOrThrow({ where: { id: bookId } });
       const copy = await tx.bookCopy.create({
         data: {
@@ -717,7 +771,13 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         },
       });
       await this.audit(tx, actor, 'COPY_CREATE', 'BookCopy', copy.id);
-      await this.promote(tx, bookId, now, (await this.settings(tx)).holdDays);
+      await this.promote(
+        tx,
+        bookId,
+        now,
+        (await this.settings(tx)).holdDays,
+        pushes,
+      );
       return tx.bookCopy.findUniqueOrThrow({
         where: { id: copy.id },
         include: { book: true },
@@ -726,7 +786,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   updateCopy(id: string, dto: UpdateCopyDto, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       const copy = await tx.bookCopy.findUniqueOrThrow({ where: { id } });
       if (
         dto.status &&
@@ -760,6 +820,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         copy.bookId,
         now,
         (await this.settings(tx)).holdDays,
+        pushes,
       );
       return tx.bookCopy.findUniqueOrThrow({
         where: { id },
@@ -848,7 +909,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   returnLoan(id: string, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       const loan = await tx.loan.findUniqueOrThrow({
         where: { id },
         include: { bookCopy: true },
@@ -877,6 +938,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         loan.bookCopy.bookId,
         now,
         (await this.settings(tx)).holdDays,
+        pushes,
       );
       return tx.loan.findUniqueOrThrow({ where: { id }, include: loanInclude });
     });
@@ -930,7 +992,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   closeLoan(id: string, dto: CloseLoanDto, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       const loan = await tx.loan.findUniqueOrThrow({
         where: { id },
         include: { bookCopy: true },
@@ -959,6 +1021,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         loan.bookCopy.bookId,
         now,
         (await this.settings(tx)).holdDays,
+        pushes,
       );
       return tx.loan.findUniqueOrThrow({ where: { id }, include: loanInclude });
     });
@@ -1037,7 +1100,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   reserve(dto: ReservationDto, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       const member = await tx.member.findUniqueOrThrow({
         where: { id: dto.memberId },
       });
@@ -1067,7 +1130,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         'Reservation',
         reservation.id,
       );
-      await this.promote(tx, dto.bookId, now, settings.holdDays);
+      await this.promote(tx, dto.bookId, now, settings.holdDays, pushes);
       return tx.reservation.findUniqueOrThrow({
         where: { id: reservation.id },
         include: reservationInclude,
@@ -1076,7 +1139,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
   }
 
   cancelReservation(id: string, actor: string) {
-    return this.transaction(async (tx, now) => {
+    return this.transaction(async (tx, now, pushes) => {
       const reservation = await tx.reservation.findUniqueOrThrow({
         where: { id },
       });
@@ -1094,6 +1157,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
         reservation.bookId,
         now,
         (await this.settings(tx)).holdDays,
+        pushes,
       );
       return tx.reservation.findUniqueOrThrow({
         where: { id },

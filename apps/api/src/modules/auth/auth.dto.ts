@@ -1,11 +1,39 @@
 import { Transform } from 'class-transformer';
-import { IsEmail, IsIn, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsString,
+  MaxLength,
+  MinLength,
+  ValidateIf,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdatePreferencesDto {
-  @ApiProperty({ enum: ['system', 'light', 'dark'], default: 'system' })
+  @ApiProperty({
+    enum: ['system', 'light', 'dark'],
+    required: false,
+    default: 'system',
+  })
+  @ValidateIf((_object, value) => value !== undefined)
   @IsIn(['system', 'light', 'dark'])
-  colorMode!: 'system' | 'light' | 'dark';
+  colorMode?: 'system' | 'light' | 'dark';
+
+  @ApiProperty({ required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  pushEventRefundRequested?: boolean;
+
+  @ApiProperty({ required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  pushLibraryOverdue?: boolean;
+
+  @ApiProperty({ required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
+  pushLibraryReservationReady?: boolean;
 }
 
 export class LoginDto {

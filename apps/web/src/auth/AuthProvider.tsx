@@ -156,13 +156,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (mode: 'system' | 'light' | 'dark') => {
       const userId = state.user?.id;
       if (!userId) return;
-      const preferences = await authApi.updatePreferences(mode);
+      const preferences = await authApi.updatePreferences({ colorMode: mode });
       setState((current) =>
         current.user?.id === userId
           ? {
               ...current,
               user: { ...current.user, colorMode: preferences.colorMode },
             }
+          : current,
+      );
+    },
+    [state.user?.id],
+  );
+
+  const updatePushPreference = useCallback(
+    async (key: authApi.PushPreferenceKey, preference: boolean) => {
+      const userId = state.user?.id;
+      if (!userId) return;
+      const updated = await authApi.updatePreferences({ [key]: preference });
+      setState((current) =>
+        current.user?.id === userId
+          ? { ...current, user: { ...current.user, ...updated } }
           : current,
       );
     },
@@ -178,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearSession,
       hasPermission,
       updateColorMode,
+      updatePushPreference,
     }),
     [
       state,
@@ -187,6 +202,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearSession,
       hasPermission,
       updateColorMode,
+      updatePushPreference,
     ],
   );
 

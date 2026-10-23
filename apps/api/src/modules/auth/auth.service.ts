@@ -35,6 +35,9 @@ export const safeUser = (user: Identity): CurrentUser => ({
     user.colorMode === 'light' || user.colorMode === 'dark'
       ? user.colorMode
       : 'system',
+  pushEventRefundRequested: user.pushEventRefundRequested,
+  pushLibraryOverdue: user.pushLibraryOverdue,
+  pushLibraryReservationReady: user.pushLibraryReservationReady,
   roles: user.userRoles.map(({ role }) => role.name),
   memberId: user.memberId,
   id: user.id,
@@ -90,14 +93,24 @@ export class AuthService {
 
   async updatePreferences(
     userId: string,
-    colorMode: 'system' | 'light' | 'dark',
+    preferences: {
+      colorMode?: 'system' | 'light' | 'dark';
+      pushEventRefundRequested?: boolean;
+      pushLibraryOverdue?: boolean;
+      pushLibraryReservationReady?: boolean;
+    },
   ) {
     return this.db.$transaction(async (tx) => {
       await bindAudit(tx);
       return tx.user.update({
         where: { id: userId },
-        data: { colorMode },
-        select: { colorMode: true },
+        data: preferences,
+        select: {
+          colorMode: true,
+          pushEventRefundRequested: true,
+          pushLibraryOverdue: true,
+          pushLibraryReservationReady: true,
+        },
       });
     });
   }

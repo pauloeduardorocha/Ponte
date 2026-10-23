@@ -6,6 +6,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { randomUUID } from 'node:crypto';
 import { ECDH } from 'node:crypto';
 import { Notification, Prisma } from '@prisma/client';
 import * as webPush from 'web-push';
@@ -35,6 +36,11 @@ export function notificationPushPayload(notification: Notification) {
   }
   return JSON.stringify(payload);
 }
+
+export type SystemPushPreference =
+  | 'pushEventRefundRequested'
+  | 'pushLibraryOverdue'
+  | 'pushLibraryReservationReady';
 
 // Endpoints are client input. Never allow arbitrary outbound requests or redirects.
 export function validatePushEndpoint(endpoint: string) {
@@ -193,6 +199,63 @@ export class PushService {
       accepted += results.reduce<number>((sum, count) => sum + count, 0);
     }
     return accepted;
+  }
+  async notifyUsers(
+    userIds: string[],
+    preference: SystemPushPreference,
+    title: string,
+    body: string,
+    url: string,
+  ) {
+    const vapidDetails = this.vapid();
+    if (!vapidDetails || userIds.length === 0) return;
+    const subscriptions = await this.db.pushSubscription.findMany({
+      where: {
+        user: {
+          id: { in: [...new Set(userIds)] },
+          status: 'ACTIVE',
+          deletedAt: null,
+          [preference]: true,
+        },
+      },
+    });
+    const payload = JSON.stringify({
+      title,
+      body,
+      tag: `${preference}:${randomUUID()}`,
+      url,
+    });
+    for (let offset = 0; offset < subscriptions.length; offset += 5) {
+      await Promise.all(
+        subscriptions.slice(offset, offset + 5).map(async (subscription) => {
+          try {
+            validatePushEndpoint(subscription.endpoint);
+            await webPush.sendNotification(
+              {
+                endpoint: subscription.endpoint,
+                keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+              },
+              payload,
+              { vapidDetails, TTL: 86400, timeout: 5000 },
+            );
+          } catch (error) {
+            const status = (error as { statusCode?: number }).statusCode;
+            if (status === 404 || status === 410) {
+              await this.db.pushSubscription.deleteMany({
+                where: {
+                  id: subscription.id,
+                  updatedAt: subscription.updatedAt,
+                },
+              });
+            } else {
+              this.logger.warn(
+                'Não foi possível entregar um alerta push do sistema.',
+              );
+            }
+          }
+        }),
+      );
+    }
   }
   async notifyInternal(notification: Notification) {
     try {

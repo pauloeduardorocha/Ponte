@@ -4,10 +4,11 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CurrentUser } from '@church/shared';
+import { CurrentUser, PERMISSIONS } from '@church/shared';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { OperationsService } from '../operations/operations.service';
+import { PushService } from '../operations/push.service';
 import { auditRequestFields, bindAudit } from '../audit/audit-context';
 import { OperationQuery } from '../operations/operations.dto';
 import * as D from './events.dto';
@@ -29,6 +30,7 @@ export class EventsService {
   constructor(
     private readonly db: PrismaService,
     private readonly operations: OperationsService,
+    private readonly push: PushService,
   ) {}
   private async write<T>(
     eventId: string,
@@ -291,29 +293,125 @@ export class EventsService {
       pageSize: q.pageSize,
     };
   }
-  refund(id: string, paymentId: string, dto: D.RefundDto, user: CurrentUser) {
-    return this.write(id, user, 'EVENT_REFUND_REQUESTED', async (tx) => {
-      const payment = await tx.eventPayment.findFirst({
+  async refund(
+    id: string,
+    paymentId: string,
+    dto: D.RefundDto,
+    user: CurrentUser,
+  ) {
+    const refund = await this.write(
+      id,
+      user,
+      'EVENT_REFUND_REQUESTED',
+      async (tx) => {
+        const payment = await tx.eventPayment.findFirst({
+          where: {
+            id: paymentId,
+            eventId: id,
+            registration: { eventId: id },
+            status: 'CONFIRMED',
+          },
+        });
+        if (!payment) throw new NotFoundException();
+        if (payment.refundedAmount.gte(payment.amount.minus(payment.discount)))
+          throw new ConflictException('Pagamento já reembolsado');
+        if (
+          await tx.eventRefund.findFirst({
+            where: { paymentId, status: { in: ['REQUESTED', 'APPROVED'] } },
+          })
+        )
+          throw new ConflictException('Reembolso já solicitado');
+        return tx.eventRefund.create({
+          data: { paymentId, reason: dto.reason, requestedByUserId: user.id },
+        });
+      },
+    );
+    try {
+      const candidates = await this.db.user.findMany({
         where: {
-          id: paymentId,
-          eventId: id,
-          registration: { eventId: id },
-          status: 'CONFIRMED',
+          status: 'ACTIVE',
+          deletedAt: null,
+          userRoles: {
+            some: {
+              role: {
+                permissions: {
+                  some: {
+                    permission: {
+                      code: {
+                        in: ['EVENT_REFUND_APPROVE', 'EVENT_PAYMENT_READ'],
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          status: true,
+          memberId: true,
+          userRoles: {
+            select: {
+              role: {
+                select: {
+                  name: true,
+                  permissions: {
+                    select: { permission: { select: { code: true } } },
+                  },
+                },
+              },
+            },
+          },
         },
       });
-      if (!payment) throw new NotFoundException();
-      if (payment.refundedAmount.gte(payment.amount.minus(payment.discount)))
-        throw new ConflictException('Pagamento já reembolsado');
-      if (
-        await tx.eventRefund.findFirst({
-          where: { paymentId, status: { in: ['REQUESTED', 'APPROVED'] } },
-        })
-      )
-        throw new ConflictException('Reembolso já solicitado');
-      return tx.eventRefund.create({
-        data: { paymentId, reason: dto.reason, requestedByUserId: user.id },
-      });
-    });
+      const authorized: string[] = [];
+      for (const candidate of candidates) {
+        const permissions = PERMISSIONS.filter((code) =>
+          candidate.userRoles.some((assignment) =>
+            assignment.role.permissions.some(
+              ({ permission }) => permission.code === code,
+            ),
+          ),
+        );
+        if (
+          !permissions.includes('EVENT_REFUND_APPROVE') ||
+          !permissions.includes('EVENT_PAYMENT_READ')
+        )
+          continue;
+        const candidateUser: CurrentUser = {
+          id: candidate.id,
+          name: candidate.name,
+          email: candidate.email,
+          status: candidate.status,
+          memberId: candidate.memberId,
+          roles: candidate.userRoles.map(({ role }) => role.name),
+          permissions,
+        };
+        const scope = await this.operations.eventScope(candidateUser);
+        if (
+          await this.db.communityEvent.findFirst({
+            where: { AND: [{ id }, scope] },
+            select: { id: true },
+          })
+        )
+          authorized.push(candidate.id);
+      }
+      void this.push
+        .notifyUsers(
+          authorized,
+          'pushEventRefundRequested',
+          'Novo pedido de reembolso',
+          'Há um novo pedido de reembolso para análise.',
+          `/events/${id}`,
+        )
+        .catch(() => undefined);
+    } catch {
+      // The refund is already committed; push audience lookup is best-effort.
+    }
+    return refund;
   }
   approveRefund(id: string, refundId: string, user: CurrentUser) {
     return this.write(id, user, 'EVENT_REFUND_APPROVED', async (tx) => {

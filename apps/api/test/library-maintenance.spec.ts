@@ -12,7 +12,7 @@ describe('Library maintenance lifecycle', () => {
     const error = jest
       .spyOn(Logger.prototype, 'error')
       .mockImplementation(() => undefined);
-    const library = new LibraryService(db);
+    const library = new LibraryService(db, { notifyUsers: jest.fn() } as never);
     try {
       library.onModuleInit();
       expect(jest.getTimerCount()).toBe(1);

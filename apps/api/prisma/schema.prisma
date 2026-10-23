@@ -101,8 +101,11 @@ enum UserStatus {
 }
 
 model User {
-  colorMode             String                @default("system") @map("color_mode") @db.VarChar(6)
-  pushSubscriptions     PushSubscription[]
+  colorMode                    String                @default("system") @map("color_mode") @db.VarChar(6)
+  pushEventRefundRequested     Boolean               @default(true) @map("push_event_refund_requested")
+  pushLibraryOverdue           Boolean               @default(true) @map("push_library_overdue")
+  pushLibraryReservationReady  Boolean               @default(true) @map("push_library_reservation_ready")
+  pushSubscriptions            PushSubscription[]
   passkeys              Passkey[]
   managedEvents         EventManagerAssignment[] @relation("EventManager")
   assignedEventManagers EventManagerAssignment[] @relation("EventAssigner")

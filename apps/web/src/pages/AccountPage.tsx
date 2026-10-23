@@ -15,6 +15,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  Switch,
   TextField,
   Typography,
 } from '@mui/material';
@@ -39,10 +40,16 @@ const passwordFormSchema = z
 type PasswordFields = z.infer<typeof passwordFormSchema>;
 
 export function AccountPage() {
-  const { user, clearSession, updateColorMode } = useAuth();
+  const { user, clearSession, updateColorMode, updatePushPreference } =
+    useAuth();
   const [savingAppearance, setSavingAppearance] = useState(false);
   const [appearanceError, setAppearanceError] = useState<string | null>(null);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
+  const [pushPreferenceSaving, setPushPreferenceSaving] = useState(false);
+  const [pushPreferenceError, setPushPreferenceError] = useState<string | null>(
+    null,
+  );
+  const [pushPreferenceSaved, setPushPreferenceSaved] = useState(false);
 
   async function changeAppearance(mode: 'system' | 'light' | 'dark') {
     setSavingAppearance(true);
@@ -55,6 +62,25 @@ export function AccountPage() {
       setAppearanceError(errorMessage(err));
     } finally {
       setSavingAppearance(false);
+    }
+  }
+  async function changePushPreference(
+    key:
+      | 'pushEventRefundRequested'
+      | 'pushLibraryOverdue'
+      | 'pushLibraryReservationReady',
+    value: boolean,
+  ) {
+    setPushPreferenceSaving(true);
+    setPushPreferenceError(null);
+    setPushPreferenceSaved(false);
+    try {
+      await updatePushPreference(key, value);
+      setPushPreferenceSaved(true);
+    } catch (err) {
+      setPushPreferenceError(errorMessage(err));
+    } finally {
+      setPushPreferenceSaving(false);
     }
   }
   const [error, setError] = useState<string | null>(null);
@@ -219,6 +245,72 @@ export function AccountPage() {
         </CardContent>
       </Card>
       <PasskeySettings />
+      <Card variant="outlined">
+        <CardContent>
+          <Stack spacing={1.5}>
+            <Typography variant="h6" fontWeight={700}>
+              Notificações push
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Escolha quais avisos do sistema quer receber nos dispositivos com
+              notificações ativadas.
+            </Typography>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={user?.pushEventRefundRequested ?? true}
+                  disabled={pushPreferenceSaving}
+                  onChange={(_, checked) =>
+                    void changePushPreference(
+                      'pushEventRefundRequested',
+                      checked,
+                    )
+                  }
+                />
+              }
+              label="Novos pedidos de reembolso para tratamento"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={user?.pushLibraryOverdue ?? true}
+                  disabled={pushPreferenceSaving}
+                  onChange={(_, checked) =>
+                    void changePushPreference('pushLibraryOverdue', checked)
+                  }
+                />
+              }
+              label="Empréstimos de livros em atraso"
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={user?.pushLibraryReservationReady ?? true}
+                  disabled={pushPreferenceSaving}
+                  onChange={(_, checked) =>
+                    void changePushPreference(
+                      'pushLibraryReservationReady',
+                      checked,
+                    )
+                  }
+                />
+              }
+              label="Exemplares disponíveis para as minhas reservas"
+            />
+            {pushPreferenceSaving && (
+              <Typography role="status">Salvando preferência…</Typography>
+            )}
+            {pushPreferenceSaved && (
+              <Alert severity="success">
+                Preferência de notificações salva.
+              </Alert>
+            )}
+            {pushPreferenceError && (
+              <Alert severity="error">{pushPreferenceError}</Alert>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
     </Stack>
   );
 }

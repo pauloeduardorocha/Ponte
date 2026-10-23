@@ -7,23 +7,30 @@ import { AuthController } from './auth.controller';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 
-describe('Account appearance HTTP contract', () => {
+describe('Account preferences HTTP contract', () => {
   let app: INestApplication;
   const user = {
     id: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
     colorMode: 'light',
+    pushEventRefundRequested: true,
+    pushLibraryOverdue: true,
+    pushLibraryReservationReady: true,
   };
-  const update = jest.fn(async ({ data }: { data: { colorMode: string } }) => {
-    user.colorMode = data.colorMode;
-    return { colorMode: user.colorMode };
+  const update = jest.fn(async ({ data }: { data: Partial<typeof user> }) => {
+    Object.assign(user, data);
+    return { ...user };
   });
   const db = {
     $transaction: (fn: (tx: unknown) => unknown) => fn({ user: { update } }),
   };
   const auth = {
     authenticate: jest.fn(async () => ({ user, sessionId: 'session' })),
-    updatePreferences: (id: string, mode: 'system' | 'light' | 'dark') =>
-      AuthService.prototype.updatePreferences.call({ db } as never, id, mode),
+    updatePreferences: (id: string, preferences: Partial<typeof user>) =>
+      AuthService.prototype.updatePreferences.call(
+        { db } as never,
+        id,
+        preferences,
+      ),
   };
 
   beforeAll(async () => {
@@ -49,35 +56,60 @@ describe('Account appearance HTTP contract', () => {
   afterAll(() => app.close());
   beforeEach(() => {
     update.mockClear();
-    user.colorMode = 'light';
+    Object.assign(user, {
+      colorMode: 'light',
+      pushEventRefundRequested: true,
+      pushLibraryOverdue: true,
+      pushLibraryReservationReady: true,
+    });
   });
 
   it.each(['system', 'dark', 'light'])(
-    'saves %s only for the authenticated user and returns it from /me',
+    'saves color mode %s only for the authenticated user',
     async (colorMode) => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .patch('/api/v1/auth/preferences')
         .set('Authorization', 'Bearer access')
         .send({ colorMode })
-        .expect(200, { colorMode })
+        .expect(200)
         .expect('Cache-Control', 'no-store');
+      expect(response.status).toBe(200);
       expect(update).toHaveBeenCalledWith({
         where: { id: user.id },
         data: { colorMode },
-        select: { colorMode: true },
+        select: {
+          colorMode: true,
+          pushEventRefundRequested: true,
+          pushLibraryOverdue: true,
+          pushLibraryReservationReady: true,
+        },
       });
-      const response = await request(app.getHttpServer())
-        .get('/api/v1/auth/me')
-        .set('Authorization', 'Bearer access')
-        .expect(200);
-      expect(response.body.colorMode).toBe(colorMode);
     },
   );
 
+  it('saves a push preference without changing the other preferences', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/auth/preferences')
+      .set('Authorization', 'Bearer access')
+      .send({ pushLibraryOverdue: false })
+      .expect(200);
+    expect(response.status).toBe(200);
+    expect(update).toHaveBeenCalledWith({
+      where: { id: user.id },
+      data: { pushLibraryOverdue: false },
+      select: {
+        colorMode: true,
+        pushEventRefundRequested: true,
+        pushLibraryOverdue: true,
+        pushLibraryReservationReady: true,
+      },
+    });
+  });
+
   it.each([
-    {},
     { colorMode: 'auto' },
     { colorMode: null },
+    { pushLibraryOverdue: 'false' },
     { colorMode: 'dark', userId: 'someone-else' },
   ])('rejects an invalid body %j', async (body) => {
     await request(app.getHttpServer())
@@ -91,7 +123,7 @@ describe('Account appearance HTTP contract', () => {
   it('requires authentication', async () => {
     await request(app.getHttpServer())
       .patch('/api/v1/auth/preferences')
-      .send({ colorMode: 'dark' })
+      .send({ pushLibraryOverdue: false })
       .expect(401);
     expect(update).not.toHaveBeenCalled();
   });

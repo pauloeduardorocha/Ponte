@@ -584,6 +584,6 @@ export class OperationsController {
       inject: [InternalNotificationProvider, PushNotificationProvider],
     },
   ],
-  exports: [OperationsService],
+  exports: [OperationsService, PushService],
 })
 export class OperationsModule {}

@@ -126,7 +126,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     res.setHeader('Cache-Control', 'no-store');
-    return this.auth.updatePreferences(req.user.id, dto.colorMode);
+    return this.auth.updatePreferences(req.user.id, dto);
   }
 
   @ApiBearerAuth()

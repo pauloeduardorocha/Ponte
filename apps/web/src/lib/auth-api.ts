@@ -34,10 +34,25 @@ export function fetchCurrentUser(): Promise<CurrentUser> {
   return apiRequest<CurrentUser>('/auth/me');
 }
 
-export function updatePreferences(colorMode: 'system' | 'light' | 'dark') {
-  return apiRequest<{ colorMode: 'system' | 'light' | 'dark' }>('/auth/preferences', {
+export type PushPreferenceKey =
+  | 'pushEventRefundRequested'
+  | 'pushLibraryOverdue'
+  | 'pushLibraryReservationReady';
+
+export function updatePreferences(preferences: {
+  colorMode?: 'system' | 'light' | 'dark';
+  pushEventRefundRequested?: boolean;
+  pushLibraryOverdue?: boolean;
+  pushLibraryReservationReady?: boolean;
+}) {
+  return apiRequest<{
+    colorMode: 'system' | 'light' | 'dark';
+    pushEventRefundRequested: boolean;
+    pushLibraryOverdue: boolean;
+    pushLibraryReservationReady: boolean;
+  }>('/auth/preferences', {
     method: 'PATCH',
-    body: { colorMode },
+    body: preferences,
   });
 }
 

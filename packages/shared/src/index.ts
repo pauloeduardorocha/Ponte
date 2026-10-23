@@ -193,6 +193,9 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
 
 export interface CurrentUser {
   colorMode?: 'system' | 'light' | 'dark';
+  pushEventRefundRequested?: boolean;
+  pushLibraryOverdue?: boolean;
+  pushLibraryReservationReady?: boolean;
   id: string;
   name: string;
   email: string;

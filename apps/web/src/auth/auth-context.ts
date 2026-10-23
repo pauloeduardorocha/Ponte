@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { CurrentUser, Permission } from '../lib/types';
+import type { PushPreferenceKey } from '../lib/auth-api';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -15,6 +16,10 @@ export interface AuthContextValue {
   /** Drops the local session without calling the API (e.g. after revocation). */
   clearSession: (notice?: string) => void;
   updateColorMode: (mode: 'system' | 'light' | 'dark') => Promise<void>;
+  updatePushPreference: (
+    key: PushPreferenceKey,
+    value: boolean,
+  ) => Promise<void>;
   hasPermission: (permission: Permission) => boolean;
 }
 

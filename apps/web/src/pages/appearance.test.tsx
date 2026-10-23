@@ -158,4 +158,31 @@ describe('Account appearance', () => {
       'light',
     );
   });
+
+  it('lets the user enable and disable each automatic push category', async () => {
+    const user = {
+      ...makeUser(),
+      pushEventRefundRequested: true,
+      pushLibraryOverdue: true,
+      pushLibraryReservationReady: true,
+    };
+    const requests = mockApi({
+      ...sessionRoutes(user),
+      'PATCH /auth/preferences': ({ body }) => ({
+        body: { ...user, ...(body as Record<string, unknown>) },
+      }),
+    });
+    renderApp('/account');
+
+    const overdue = await screen.findByRole('switch', {
+      name: 'Empréstimos de livros em atraso',
+    });
+    expect(overdue).toBeChecked();
+    fireEvent.click(overdue);
+    await screen.findByText('Preferência de notificações salva.');
+    expect(overdue).not.toBeChecked();
+    expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
+      pushLibraryOverdue: false,
+    });
+  });
 });
