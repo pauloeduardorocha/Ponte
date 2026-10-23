@@ -4,6 +4,7 @@
 .git
 .neon
 tmp
+output/reembolsos
 private-storage
 **/coverage
 **/*.tsbuildinfo

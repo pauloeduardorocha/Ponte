@@ -326,7 +326,13 @@ describe('Permissions', () => {
       within(nav)
         .getAllByRole('button')
         .map((el) => el.textContent),
-    ).toEqual(['Pessoas', 'Grupos e ministérios', 'Operação', 'Comunicação']);
+    ).toEqual([
+      'Pessoas',
+      'Grupos e ministérios',
+      'Operação',
+      'Vídeos',
+      'Comunicação',
+    ]);
     expect(within(nav).getAllByRole('link')).toHaveLength(5);
     for (const button of within(nav).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-expanded', 'false');
@@ -353,8 +359,11 @@ describe('Permissions', () => {
     const nav = await screen.findByRole('navigation', {
       name: 'Navegação principal',
     });
-    // Personal reimbursements are available to every authenticated account.
-    expect(within(nav).queryAllByRole('button')).toHaveLength(0);
+    // Videos and personal reimbursements are available to every authenticated account.
+    expect(within(nav).queryAllByRole('button')).toHaveLength(1);
+    expect(
+      within(nav).getByRole('button', { name: 'Vídeos' }),
+    ).toBeInTheDocument();
     expect(
       await within(nav).findByRole('link', { name: 'Meus reembolsos' }),
     ).toBeInTheDocument();

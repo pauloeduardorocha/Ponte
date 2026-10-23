@@ -183,9 +183,7 @@ describe('Operational workflows', () => {
     const requests = mockApi(sessionRoutes(makeUser([])));
     renderApp('/follow-ups');
     expect(
-      await screen.findByText(
-        'Você não tem permissão para acessar este módulo.',
-      ),
+      await screen.findByText('Você não tem permissão para acessar esta área.'),
     ).toBeInTheDocument();
     expect(
       requests.filter(

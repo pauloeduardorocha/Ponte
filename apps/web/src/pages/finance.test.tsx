@@ -274,7 +274,7 @@ describe('Finance permissions and dashboard', () => {
     const requests = mockApi(sessionRoutes(makeUser(['MEMBER_READ'])));
     renderApp('/finance');
     expect(
-      await screen.findByText('Sem permissão financeira.'),
+      await screen.findByText('Você não tem permissão para acessar esta área.'),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/finance'))).toBe(false);
   });

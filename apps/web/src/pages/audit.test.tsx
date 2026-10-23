@@ -14,9 +14,7 @@ describe('Audit access', () => {
     const requests = mockApi({ ...sessionRoutes(makeUser(['AUDIT_READ'])) });
     renderApp('/audit');
     expect(
-      await screen.findByText(
-        'Você não tem permissão para consultar a auditoria.',
-      ),
+      await screen.findByText('Você não tem permissão para acessar esta área.'),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path === '/audit')).toBe(false);
     expect(
