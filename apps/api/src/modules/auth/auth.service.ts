@@ -7,6 +7,7 @@ import {
   ConflictException,
   BadRequestException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -69,11 +70,12 @@ export const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const RESET_TTL_MS = 30 * 60 * 1000;
 export const RECOVERY_MESSAGE = {
   message:
-    'Se a conta estiver ativa, as instruções serão enviadas quando a entrega de e-mail estiver disponível.',
+    'Se o e-mail estiver cadastrado e a conta permitir recuperação, você receberá as instruções para redefinir a senha.',
 };
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   private readonly accessSecret: string;
   private readonly refreshSecret: string;
   private readonly dummyHash: Promise<string>;
@@ -552,8 +554,14 @@ export class AuthService {
         });
         return true;
       });
-      if (queued)
-        await this.delivery.send({ email: user.email, token, expiresAt });
+      if (queued) {
+        try {
+          await this.delivery.send({ email: user.email, token, expiresAt });
+        } catch {
+          // Keep the public response identical for existing and unknown accounts.
+          this.logger.error('Password recovery email could not be sent.');
+        }
+      }
     }
     return RECOVERY_MESSAGE;
   }

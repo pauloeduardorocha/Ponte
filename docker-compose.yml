@@ -37,6 +37,9 @@ services:
       NODE_ENV: production
       API_PORT: 3000
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:5173}
+      PUBLIC_WEB_URL: ${PUBLIC_WEB_URL:-http://localhost:5173}
+      BIRD_API_KEY: ${BIRD_API_KEY:-}
+      BIRD_EMAIL_FROM: ${BIRD_EMAIL_FROM:-noreply@igrejaponte.com}
       WEB_PUSH_PUBLIC_KEY: ${WEB_PUSH_PUBLIC_KEY:-}
       WEB_PUSH_PRIVATE_KEY: ${WEB_PUSH_PRIVATE_KEY:-}
       WEB_PUSH_SUBJECT: ${WEB_PUSH_SUBJECT:-}

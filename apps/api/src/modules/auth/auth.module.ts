@@ -6,16 +6,17 @@ import { PasskeysService } from './passkeys.service';
 import { PasskeysController } from './passkeys.controller';
 import {
   PasswordResetDelivery,
-  PendingEmailDelivery,
+  BirdPasswordResetDelivery,
 } from './password-reset.delivery';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [JwtModule.register({})],
+  imports: [JwtModule.register({}), EmailModule],
   controllers: [AuthController, PasskeysController],
   providers: [
     AuthService,
     PasskeysService,
-    { provide: PasswordResetDelivery, useClass: PendingEmailDelivery },
+    { provide: PasswordResetDelivery, useClass: BirdPasswordResetDelivery },
   ],
   exports: [AuthService],
 })

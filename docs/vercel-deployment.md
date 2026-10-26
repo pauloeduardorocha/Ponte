@@ -58,6 +58,11 @@ Set these environment variables for Production:
 | `PRIVATE_STORAGE_DRIVER` | `database`                                                 |
 | `SEED_DEMO`              | `false`                                                    |
 
+For password recovery emails, also configure `BIRD_API_KEY` (private EU key),
+`BIRD_EMAIL_FROM=noreply@igrejaponte.com` and `PUBLIC_WEB_URL` with the actual
+HTTPS frontend URL. See [Bird email setup](email.md). Redeploy the API after
+changing these values.
+
 Generate the two secrets independently with `node -e
 "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`
 in a private terminal. Do not place secrets in frontend environment variables.
