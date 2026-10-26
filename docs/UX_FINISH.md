@@ -2,6 +2,9 @@
 
 ## Interface e fluxos
 
+- No gráfico financeiro, as legendas mostram apenas o nome da categoria;
+  as cores permanecem iguais às barras (verde para receitas e vermelho para
+  despesas). Os balões omitem a data e o prefixo do tipo; os meses seguem no eixo.
 - Componentes compartilhados para indicadores, gráficos e estados com cores
   semânticas, texto e valores acessíveis. Crédito/conclusão em verde,
   débito/atraso/erro em vermelho, pendência em amarelo e informação em azul.
