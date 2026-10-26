@@ -57,6 +57,10 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       manifest: true,
+      commonjsOptions: {
+        // Workspace packages resolve outside node_modules after symlink resolution.
+        include: [/node_modules/, /packages[\\/]shared[\\/]/],
+      },
       // Let Rollup share modules by usage so lazy-only UI stays with its routes.
     },
     test: {
