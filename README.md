@@ -5,6 +5,11 @@ Inclui autenticação JWT, usuários, autorização centralizada, membros, visit
 eventos, biblioteca, financeiro, importação bancária, relatórios e auditoria.
 A infraestrutura, health check e proxy Nginx/Vite são preservados.
 
+## Serviços e painéis de administração
+
+- Domínio e DNS de `igrejaponte.com`: [register.domains](https://register.domains/).
+- Banco de dados PostgreSQL: [Neon](https://neon.com/).
+
 ## Requisitos
 
 Para publicar frontend, API e PostgreSQL nos planos gratuitos Vercel/Neon,
