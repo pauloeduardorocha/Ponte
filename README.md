@@ -9,6 +9,7 @@ A infraestrutura, health check e proxy Nginx/Vite são preservados.
 
 - Domínio e DNS de `igrejaponte.com`: [register.domains](https://register.domains/).
 - Banco de dados PostgreSQL: [Neon](https://neon.com/).
+- Envio de e-mails do remetente `noreply`: configurado no [Bird](https://bird.com/).
 
 ## Requisitos
 
