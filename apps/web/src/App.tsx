@@ -22,6 +22,9 @@ import {
 const AppShell = lazy(() =>
   import('./layout/AppShell').then((m) => ({ default: m.AppShell })),
 );
+const CalendarPage = lazy(() =>
+  import('./pages/CalendarPage').then((m) => ({ default: m.CalendarPage })),
+);
 const AccountPage = lazy(() =>
   import('./pages/AccountPage').then((m) => ({ default: m.AccountPage })),
 );
@@ -145,6 +148,7 @@ export function App({ children }: { children?: ReactNode }) {
                 <Route path="inbox" element={<InboxPage />} />
                 <Route path="my-events" element={<EventWorkspace />} />
                 <Route path="account" element={<AccountPage />} />
+                <Route path="calendar" element={<CalendarPage />} />
                 <Route path="reimbursements" element={<ReimbursementsPage />} />
                 <Route path="library" element={<LibraryPage />} />
                 <Route path="videos" element={<VideosPage />} />

@@ -53,7 +53,7 @@ const sidebarWidth = 264;
 
 const navigationGroups = [
   'Início',
-  'Eventos',
+  'Datas',
   'Biblioteca',
   'Pessoas',
   'Grupos e ministérios',
@@ -74,6 +74,12 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
+    label: 'Calendário',
+    group: 'Datas',
+    to: '/calendar',
+    icon: CalendarMonthRounded,
+  },
+  {
     label: 'Lista de espera',
     group: 'Pessoas',
     to: '/pending-approvals',
@@ -93,7 +99,7 @@ const navigation: NavigationItem[] = [
   })),
   {
     label: 'Gestão de eventos',
-    group: 'Eventos',
+    group: 'Datas',
     to: '/my-events',
     icon: CalendarMonthRounded,
   },
@@ -118,7 +124,7 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Agenda de eventos',
-    group: 'Eventos',
+    group: 'Datas',
     to: '/events?view=community',
     icon: CalendarMonthRounded,
   },
@@ -190,7 +196,14 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
-    location.pathname.startsWith('/videos') ? ['Vídeos'] : [],
+    navigationGroups.filter(
+      (group) =>
+        (group === 'Datas' || group === 'Vídeos') &&
+        navigation.some(
+          (item) =>
+            item.group === group && isNavigationActive(item.to, location),
+        ),
+    ),
   );
   function toggleGroup(group: NavigationGroup) {
     setExpandedGroups((current) =>
@@ -236,7 +249,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {navigationGroups.map((group) => {
           const groupItems = items.filter((item) => item.group === group);
           if (!groupItems.length) return null;
-          const headerless = ['Início', 'Eventos', 'Biblioteca'].includes(group);
+          const headerless = ['Início', 'Biblioteca'].includes(group);
           const expanded = headerless || expandedGroups.includes(group);
           const groupId = `navigation-group-${navigationGroups.indexOf(group)}`;
           return (

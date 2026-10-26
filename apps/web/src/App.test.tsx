@@ -320,7 +320,9 @@ describe('Permissions', () => {
 
   it('shows all management navigation for ADMIN', async () => {
     mockApi({
-      ...sessionRoutes(makeUser([...ADMIN_PERMISSIONS, 'FINANCE_SUMMARY_READ'])),
+      ...sessionRoutes(
+        makeUser([...ADMIN_PERMISSIONS, 'FINANCE_SUMMARY_READ']),
+      ),
       'GET /members': { body: { items: [], total: 0, page: 1, pageSize: 1 } },
     });
     renderApp('/');
@@ -365,6 +367,7 @@ describe('Permissions', () => {
         .getAllByRole('button')
         .map((el) => el.textContent),
     ).toEqual([
+      'Datas',
       'Pessoas',
       'Grupos e ministérios',
       'Operação',
@@ -372,7 +375,7 @@ describe('Permissions', () => {
       'Vídeos',
       'Comunicação',
     ]);
-    expect(within(nav).getAllByRole('link')).toHaveLength(4);
+    expect(within(nav).getAllByRole('link')).toHaveLength(2);
     for (const button of within(nav).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(button);
@@ -383,8 +386,9 @@ describe('Permissions', () => {
       links.length,
     );
     expect(links[0]).toHaveTextContent('Visão geral');
-    expect(links.slice(0, 4).map((link) => link.textContent)).toEqual([
+    expect(links.slice(0, 5).map((link) => link.textContent)).toEqual([
       'Visão geral',
+      'Calendário',
       'Gestão de eventos',
       'Agenda de eventos',
       'Biblioteca',
@@ -394,8 +398,45 @@ describe('Permissions', () => {
       expect(button).toHaveAttribute('aria-expanded', 'false');
     }
     await waitFor(() =>
-      expect(within(nav).getAllByRole('link')).toHaveLength(4),
+      expect(within(nav).getAllByRole('link')).toHaveLength(2),
     );
+  });
+
+  it('shows the church calendar and subscription links without event permissions', async () => {
+    mockApi(sessionRoutes(makeUser([])));
+    renderApp('/calendar');
+    expect(
+      await screen.findByRole('heading', { name: 'Calendário' }),
+    ).toBeInTheDocument();
+    const frame = screen.getByTitle('Calendário da igreja');
+    const source = new URL(frame.getAttribute('src')!);
+    expect(source.origin).toBe('https://calendar.google.com');
+    expect(source.searchParams.get('src')).toBe(
+      'f23297160cd4f586f47a6b40095d5a0c381206d416d717dc850099d53ec0114a@group.calendar.google.com',
+    );
+    const googleLink = screen.getByRole('link', {
+      name: 'Adicionar ao Google Agenda',
+    });
+    expect(
+      atob(new URL(googleLink.getAttribute('href')!).searchParams.get('cid')!),
+    ).toBe(source.searchParams.get('src'));
+    expect(
+      screen.getByRole('link', { name: 'Assinar no dispositivo' }),
+    ).toHaveAttribute(
+      'href',
+      expect.stringContaining('webcal://calendar.google.com/calendar/ical/'),
+    );
+    const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
+    expect(within(nav).getByRole('button', { name: 'Datas' })).toHaveAttribute(
+      'aria-expanded',
+      'true',
+    );
+    expect(
+      within(nav).getByRole('link', { name: 'Calendário' }),
+    ).toHaveAttribute('aria-current', 'page');
+    expect(
+      within(nav).queryByRole('link', { name: 'Gestão de eventos' }),
+    ).not.toBeInTheDocument();
   });
 
   it('omits empty groups for users without management permissions', async () => {
@@ -405,7 +446,7 @@ describe('Permissions', () => {
       name: 'Navegação principal',
     });
     // Videos and personal reimbursements are available to every authenticated account.
-    expect(within(nav).queryAllByRole('button')).toHaveLength(2);
+    expect(within(nav).queryAllByRole('button')).toHaveLength(3);
     expect(
       within(nav).getByRole('button', { name: 'Vídeos' }),
     ).toBeInTheDocument();
