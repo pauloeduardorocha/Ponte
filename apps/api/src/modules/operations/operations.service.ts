@@ -2055,7 +2055,7 @@ export class OperationsService {
           'Canal preparado; configure um provedor antes de enviar.',
         );
       try {
-        await provider.send(n);
+        await provider.send(n, tx);
       } catch {
         return tx.notification.update({
           where: { id },

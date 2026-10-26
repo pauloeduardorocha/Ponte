@@ -236,7 +236,9 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       {resource === 'notifications' && (
         <Alert severity="info">
           As mensagens internas ficam na caixa do destinatário e também geram um
-          alerta nos dispositivos em que ele ativou as notificações.
+          alerta nos dispositivos em que ele ativou as notificações. No canal
+          E-mail, cada destinatário recebe uma mensagem no endereço cadastrado.
+          O estado Enviado indica que o provedor aceitou o envio.
         </Alert>
       )}
       {notice && (

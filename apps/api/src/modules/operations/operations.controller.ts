@@ -42,6 +42,8 @@ import * as D from './operations.dto';
 import { PushService } from './push.service';
 import { PushController } from './push.controller';
 import { NotificationCountDto } from './push.dto';
+import { EmailModule } from '../email/email.module';
+import { EmailNotificationProvider } from './email-notification.provider';
 @ApiTags('Operacao da igreja')
 @ApiBearerAuth()
 @Controller('operations')
@@ -569,19 +571,26 @@ export class OperationsController {
   }
 }
 @Module({
+  imports: [EmailModule],
   controllers: [OperationsController, PushController],
   providers: [
     OperationsService,
     InternalNotificationProvider,
     PushService,
     PushNotificationProvider,
+    EmailNotificationProvider,
     {
       provide: NOTIFICATION_PROVIDERS,
       useFactory: (
         internal: InternalNotificationProvider,
         push: PushNotificationProvider,
-      ) => [internal, push],
-      inject: [InternalNotificationProvider, PushNotificationProvider],
+        email: EmailNotificationProvider,
+      ) => [internal, push, ...(email.configured ? [email] : [])],
+      inject: [
+        InternalNotificationProvider,
+        PushNotificationProvider,
+        EmailNotificationProvider,
+      ],
     },
   ],
   exports: [OperationsService, PushService],

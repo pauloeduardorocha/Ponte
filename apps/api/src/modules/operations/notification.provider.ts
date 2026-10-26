@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import type { Notification } from '@prisma/client';
+import type { Notification, Prisma } from '@prisma/client';
 import { PushService } from './push.service';
 export interface NotificationProvider {
   readonly channel: string;
-  send(notification: Notification): Promise<void>;
+  send(notification: Notification, tx: Prisma.TransactionClient): Promise<void>;
 }
 @Injectable()
 export class InternalNotificationProvider implements NotificationProvider {

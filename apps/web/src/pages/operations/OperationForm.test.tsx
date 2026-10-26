@@ -47,6 +47,33 @@ function select(label: string, option: string) {
 describe('Operation form selections', () => {
   beforeEach(resetTestState);
 
+  it('submits the email channel and subject with the selected audience', async () => {
+    const requests = mockApi({
+      'GET /operations/people': { body: { items: [] } },
+      'POST /operations/notifications': {
+        body: { total: 2, sent: 2, failed: 0, pending: 0, status: 'SENT' },
+      },
+    });
+    show(configs.notifications.fields, undefined, true);
+    select('Enviar para', 'Todos os membros');
+    select('Canal', 'E-mail');
+    fireEvent.change(screen.getByLabelText('Assunto'), {
+      target: { value: 'Aviso da igreja' },
+    });
+    fireEvent.change(screen.getByLabelText(/Mensagem/), {
+      target: { value: 'Encontro de domingo' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    await waitFor(() =>
+      expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
+        allMembers: true,
+        channel: 'EMAIL',
+        subject: 'Aviso da igreja',
+        content: 'Encontro de domingo',
+      }),
+    );
+  });
+
   it.each([
     ['Grupos familiares', 'small-groups', 'smallGroupIds'],
     ['Ministérios', 'ministries', 'ministryIds'],

@@ -150,15 +150,19 @@ modelo de boas-vindas e notificação interna pendente. Todos usam IDs estáveis
 ## Comunicação preparada para evolução
 
 NotificationProvider é injetado como coleção de adaptadores. INTERNAL usa a
-persistência privada como entrega. EMAIL/SMS/WHATSAPP/PUSH ficam PENDING enquanto
-não houver provedor configurado; o sistema não simula envio externo.
+persistência privada como entrega; PUSH usa os dispositivos subscritos. EMAIL
+usa a Bird quando a chave privada está configurada, com um email individual por
+destinatário. Veja [configuração e semântica de entrega](email.md). SMS e WHATSAPP
+continuam sem adaptador. O envio imediato sem provedor é recusado; o sistema
+não simula envio externo.
 
 O sino no topo abre /inbox, com a caixa pessoal acessível a qualquer conta autenticada e limitada ao membro verificado da sessão. Mensagens pendentes ou de outros destinatários não são expostas.
 
 Envio é explícito e respeita scheduledAt. Falhas de adaptadores configurados são
-registradas como FAILED com mensagem genérica. Antes de integrar provedores externos,
-adicionar worker/outbox, idempotência de entrega, política de consentimento,
-retentativas e processamento de agendamentos.
+registradas como FAILED com mensagem genérica. EMAIL usa chave de idempotência
+por notificação e respeita as supressões da Bird. Agendamentos exigem a ação
+explícita Enviar depois da data prevista. Worker/outbox, retentativas automáticas
+e processamento automático de agendamentos continuam fora deste fluxo.
 
 ## Validação
 

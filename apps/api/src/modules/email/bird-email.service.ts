@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { isEmail } from 'class-validator';
 
-export interface TransactionalEmail {
+export interface BirdEmailMessage {
   to: string;
   subject: string;
   text: string;
   html: string;
+  category?: 'transactional' | 'marketing';
+  idempotencyKey?: string;
 }
 
 @Injectable()
@@ -31,7 +33,7 @@ export class BirdEmailService {
     return Boolean(this.apiKey);
   }
 
-  async send(message: TransactionalEmail): Promise<void> {
+  async send(message: BirdEmailMessage): Promise<void> {
     if (!this.configured)
       throw new Error('Bird email delivery is not configured.');
 
@@ -46,6 +48,9 @@ export class BirdEmailService {
           headers: {
             Authorization: `Bearer ${this.apiKey}`,
             'Content-Type': 'application/json',
+            ...(message.idempotencyKey
+              ? { 'Idempotency-Key': message.idempotencyKey }
+              : {}),
           },
           body: JSON.stringify({
             from: { email: this.from, name: 'Igreja Ponte' },
@@ -53,7 +58,7 @@ export class BirdEmailService {
             subject: message.subject,
             text: message.text,
             html: message.html,
-            category: 'transactional',
+            category: message.category ?? 'transactional',
             track_clicks: false,
             track_opens: false,
           }),
