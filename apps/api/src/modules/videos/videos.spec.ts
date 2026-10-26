@@ -47,7 +47,7 @@ describe('Church videos', () => {
     expect(stale.items).toEqual(first.items);
     expect(stale.stale).toBe(true);
     await service.latest();
-    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher).toHaveBeenCalledTimes(3);
   });
 
   it('returns a controlled error when no cached videos exist', async () => {
@@ -61,6 +61,6 @@ describe('Church videos', () => {
     await expect(service.latest()).rejects.toBeInstanceOf(
       ServiceUnavailableException,
     );
-    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledTimes(2);
   });
 });

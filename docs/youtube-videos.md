@@ -42,3 +42,5 @@ Feed Atom público: `https://www.youtube.com/feeds/videos.xml?channel_id=UCJjDDz
 Cache em memória por instância durante 10 minutos, pedidos simultâneos agrupados, timeout de 8 segundos e intervalo de 1 minuto após falhas. A interface consulta novamente a cada 10 minutos enquanto aberta. Uma reinicialização elimina o cache. O link para o canal permanece disponível durante falhas.
 
 Referência oficial do formato: https://developers.google.com/youtube/v3/guides/push_notifications
+
+Se o feed falhar (incluindo resposta 404), a API consulta a página pública de vídeos do canal e os metadados estruturados dos vídeos. Essa alternativa mantém o contrato e as datas reais de publicação, consulta até 12 vídeos com concorrência máxima de quatro e prazo total de oito segundos. Como depende do HTML do YouTube, mudanças no formato podem exigir manutenção. Se ambas as fontes falharem, mantém o comportamento de cache anterior/503.
