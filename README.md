@@ -11,6 +11,34 @@ A infraestrutura, health check e proxy Nginx/Vite são preservados.
 - Banco de dados PostgreSQL: [Neon](https://neon.com/).
 - Envio de e-mails do remetente `noreply`: configurado no [Bird](https://bird.com/).
 
+### Planos gratuitos e limites
+
+As contas de **Vercel, Neon e Bird** utilizadas pelo projeto estão associadas
+ao e-mail **p.eduardoaraujo@gmail.com**.
+
+Limites públicos consultados em **26/10/2026**. Os planos utilizados são
+Vercel **Hobby**, Neon **Free** e Bird **Email Free**. Os valores abaixo são
+franquias dos planos, não uma medição do consumo atual das contas; confira
+o painel de cada serviço antes de ampliar o uso, pois as condições podem mudar.
+
+| Serviço / finalidade | Principais limites gratuitos |
+| --- | --- |
+| Vercel Hobby — hospedagem do frontend e da API | Por mês: 100 GB de transferência de dados, 10 GB de transferência da origem, 1 milhão de requisições CDN, 1 milhão de invocações de funções, 4 horas de CPU ativa e 360 GB-horas de memória provisionada. Até 100 deploys por dia; duração máxima de funções de 300 segundos. |
+| Neon Free — PostgreSQL | Até 100 projetos e 10 branches por projeto. Por projeto: 1 GB de armazenamento PostgreSQL (20 GB no total da conta), 100 CU-horas de computação/mês, 5 GB de transferência pública/mês e computação até 2 CU (aproximadamente 8 GB de RAM). Suspensão automática após 5 minutos sem atividade; restauração de até 6 horas ou 1 GB de alterações. |
+| Bird Email Free — envio do `noreply` | Até 1.000 e-mails por mês, com teto de 50 por dia; 1 domínio de envio, 3 endpoints de webhook e até 10 requisições de envio por minuto. O envio para ao atingir o limite gratuito. |
+
+Na Vercel, exceder uma franquia pode suspender o recurso até a renovação da
+cota (normalmente após 30 dias). O Hobby é restrito a uso pessoal e não comercial
+pelas regras do provedor. No Neon, esgotar computação ou transferência pode
+suspender o banco até o próximo período ou mudança de plano; atingir a cota de
+armazenamento impede operações que a aumentem. Acompanhe essas cotas para evitar
+interrupções na aplicação e no envio de e-mails.
+
+Fontes oficiais: [Vercel Hobby](https://vercel.com/docs/plans/hobby),
+[Neon Pricing](https://neon.com/pricing),
+[limites do Neon Free](https://neon.com/docs/introduction/plans),
+[Bird Email Pricing](https://bird.com/pricing/email).
+
 ## Requisitos
 
 Para publicar frontend, API e PostgreSQL nos planos gratuitos Vercel/Neon,
