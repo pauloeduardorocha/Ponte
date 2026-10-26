@@ -22,6 +22,10 @@ export default defineConfig(({ mode }) => {
           start_url: '/',
           scope: '/',
           display: 'standalone',
+          related_applications: [
+            { platform: 'webapp', url: '/manifest.webmanifest', id: '/' },
+          ],
+          prefer_related_applications: false,
           theme_color: '#d91017',
           background_color: '#f7f8fa',
           icons: [

@@ -17,11 +17,26 @@ interface InstallPrompt extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
+const INSTALL_DISMISSED_KEY = 'ponte:pwa-install-dismissed';
+
+interface RelatedApp {
+  platform: string;
+  url?: string;
+  id?: string;
+}
+
 export function PwaControls() {
   const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(
     null,
   );
   const [instructions, setInstructions] = useState(false);
+  const [installDismissed, setInstallDismissed] = useState(() => {
+    try {
+      return localStorage.getItem(INSTALL_DISMISSED_KEY) === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [updating, setUpdating] = useState(false);
   const [updateError, setUpdateError] = useState<string | null>(null);
   const updateInProgress = useRef(false);
@@ -60,6 +75,31 @@ export function PwaControls() {
   }
 
   useEffect(() => {
+    let active = true;
+    const relatedNavigator = navigator as Navigator & {
+      getInstalledRelatedApps?: () => Promise<RelatedApp[]>;
+    };
+    async function detectInstallation() {
+      try {
+        const apps = await relatedNavigator.getInstalledRelatedApps?.();
+        const manifestUrl = new URL(
+          '/manifest.webmanifest',
+          window.location.origin,
+        ).href;
+        if (
+          active &&
+          apps?.some(
+            (app) => app.platform === 'webapp' && app.url === manifestUrl,
+          )
+        ) {
+          setInstalled(true);
+          setInstallPrompt(null);
+        }
+      } catch {
+        // Unsupported or denied detection must not prevent manual installation.
+      }
+    }
+    void detectInstallation();
     const onPrompt = (event: Event) => {
       event.preventDefault();
       setInstallPrompt(event as InstallPrompt);
@@ -71,10 +111,21 @@ export function PwaControls() {
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
     return () => {
+      active = false;
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
     };
   }, []);
+
+  function dismissInstallation() {
+    setInstallDismissed(true);
+    setInstructions(false);
+    try {
+      localStorage.setItem(INSTALL_DISMISSED_KEY, 'true');
+    } catch {
+      // Keep the dismissal for this session when storage is unavailable.
+    }
+  }
 
   async function install() {
     if (!installPrompt) {
@@ -89,7 +140,7 @@ export function PwaControls() {
 
   return (
     <>
-      {!installed && (installPrompt || ios) && (
+      {!installed && !installDismissed && (installPrompt || ios) && (
         <Box
           sx={{
             position: 'fixed',
@@ -111,6 +162,9 @@ export function PwaControls() {
           mantenha-a ativada e toque em Adicionar.
         </DialogContent>
         <DialogActions>
+          <Button onClick={dismissInstallation}>
+            Já instalei / Não mostrar novamente
+          </Button>
           <Button onClick={() => setInstructions(false)}>Entendido</Button>
         </DialogActions>
       </Dialog>
