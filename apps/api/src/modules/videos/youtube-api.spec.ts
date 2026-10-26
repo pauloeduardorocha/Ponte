@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { youtubeApiVideos } from './youtube-api';
 import { VideosService } from './videos.module';
 
@@ -14,6 +15,36 @@ const items = [
 ];
 
 afterEach(() => jest.restoreAllMocks());
+
+it('logs only HTTP status and recognized Google reasons without exposing credentials', async () => {
+  const warn = jest
+    .spyOn(Logger.prototype, 'warn')
+    .mockImplementation(() => undefined);
+  jest.spyOn(global, 'fetch').mockResolvedValue(
+    Response.json(
+      {
+        error: {
+          message: 'sensitive-key',
+          errors: [
+            { reason: 'accessNotConfigured' },
+            { reason: 'sensitive-key' },
+          ],
+          details: [
+            { reason: 'SERVICE_DISABLED', metadata: { key: 'sensitive-key' } },
+          ],
+        },
+      },
+      { status: 403 },
+    ),
+  );
+  await expect(youtubeApiVideos('sensitive-key')).rejects.toThrow(
+    'YouTube Data API unavailable',
+  );
+  expect(warn).toHaveBeenCalledWith(
+    'YouTube channels: HTTP 403; reason=accessNotConfigured,SERVICE_DISABLED',
+  );
+  expect(JSON.stringify(warn.mock.calls)).not.toContain('sensitive-key');
+});
 
 it('uses official API with the uploads playlist and actual video dates, then caches', async () => {
   jest.replaceProperty(process, 'env', {

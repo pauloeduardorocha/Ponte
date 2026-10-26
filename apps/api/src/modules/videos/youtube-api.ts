@@ -1,6 +1,25 @@
+import { Logger } from '@nestjs/common';
 import type { ChurchVideo } from './videos.module';
 
 const CHANNEL_ID = 'UCJjDDzfbKwIZoiyIXVhsh0Q';
+const logger = new Logger('YouTubeDataApi');
+const safeReasons = new Set([
+  'accessNotConfigured',
+  'keyInvalid',
+  'ipRefererBlocked',
+  'quotaExceeded',
+  'dailyLimitExceeded',
+  'forbidden',
+  'playlistNotFound',
+  'channelNotFound',
+  'SERVICE_DISABLED',
+  'API_KEY_INVALID',
+  'API_KEY_EXPIRED',
+  'API_KEY_SERVICE_BLOCKED',
+  'API_KEY_HTTP_REFERRER_BLOCKED',
+  'API_KEY_IP_ADDRESS_BLOCKED',
+  'RATE_LIMIT_EXCEEDED',
+]);
 
 function record(value: unknown): Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -15,7 +34,28 @@ export async function youtubeApiVideos(apiKey: string): Promise<ChurchVideo[]> {
     url.search = new URLSearchParams({ ...params, key: apiKey }).toString();
     const response = await fetch(url.toString(), { signal });
     // Never include Google's error body or request URL (contains the key).
-    if (!response.ok) throw new Error('YouTube Data API unavailable');
+    if (!response.ok) {
+      const body = record(await response.json().catch(() => undefined));
+      const error = record(body.error);
+      const entries = [
+        ...(Array.isArray(error.errors) ? error.errors : []),
+        ...(Array.isArray(error.details) ? error.details : []),
+      ];
+      const reasons = [
+        ...new Set(
+          entries
+            .map((entry) => record(entry).reason)
+            .filter(
+              (reason): reason is string =>
+                typeof reason === 'string' && safeReasons.has(reason),
+            ),
+        ),
+      ];
+      logger.warn(
+        `YouTube ${resource}: HTTP ${response.status}; reason=${reasons.join(',') || 'unknown'}`,
+      );
+      throw new Error('YouTube Data API unavailable');
+    }
     return record(await response.json());
   };
 

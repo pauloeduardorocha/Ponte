@@ -45,6 +45,8 @@ Sem a chave, mantém-se a integração pública abaixo, sujeita a indisponibilid
 
 Referências oficiais: [playlistItems.list](https://developers.google.com/youtube/v3/docs/playlistItems/list) e [campos de playlistItem](https://developers.google.com/youtube/v3/docs/playlistItems).
 
+Diagnóstico: erros da API oficial registam nos logs do servidor o recurso, o status HTTP e motivos reconhecidos do Google, sem a chave, URL do pedido ou mensagem/corpo completo. `SERVICE_DISABLED`/`accessNotConfigured` indica ativação pendente da YouTube Data API v3 no projeto da chave; `API_KEY_HTTP_REFERRER_BLOCKED`/`API_KEY_IP_ADDRESS_BLOCKED` indica restrição incompatível com o servidor; `API_KEY_SERVICE_BLOCKED` indica restrição à API errada; `quotaExceeded` indica quota esgotada. O cliente continua a receber a mensagem genérica de indisponibilidade.
+
 Feed Atom público: `https://www.youtube.com/feeds/videos.xml?channel_id=UCJjDDzfbKwIZoiyIXVhsh0Q`. O ID foi confirmado nos metadados do canal @IGREJAPONTE. Não requer chave de API. O feed contém uma janela limitada de publicações, podendo incluir transmissões e Shorts.
 
 Cache em memória por instância durante 10 minutos, pedidos simultâneos agrupados, timeout de 8 segundos e intervalo de 1 minuto após falhas. A interface consulta novamente a cada 10 minutos enquanto aberta. Uma reinicialização elimina o cache. O link para o canal permanece disponível durante falhas.
