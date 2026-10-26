@@ -320,7 +320,7 @@ describe('Permissions', () => {
 
   it('shows all management navigation for ADMIN', async () => {
     mockApi({
-      ...sessionRoutes(makeUser(ADMIN_PERMISSIONS)),
+      ...sessionRoutes(makeUser([...ADMIN_PERMISSIONS, 'FINANCE_SUMMARY_READ'])),
       'GET /members': { body: { items: [], total: 0, page: 1, pageSize: 1 } },
     });
     renderApp('/');
@@ -330,6 +330,13 @@ describe('Permissions', () => {
     });
     expect(within(nav).getByText('Membros')).toBeInTheDocument();
     expect(within(nav).queryByText('Usuários')).not.toBeInTheDocument();
+    fireEvent.click(within(nav).getByRole('button', { name: 'Financeiro' }));
+    expect(
+      within(nav).getByRole('link', { name: 'Tesouraria' }),
+    ).toHaveAttribute('href', '/finance');
+    expect(
+      within(nav).getByRole('link', { name: 'Meus reembolsos' }),
+    ).toHaveAttribute('href', '/reimbursements');
   });
 
   it('keeps functional groups ordered for combined permissions without duplicate links', async () => {
@@ -361,10 +368,11 @@ describe('Permissions', () => {
       'Pessoas',
       'Grupos e ministérios',
       'Operação',
+      'Financeiro',
       'Vídeos',
       'Comunicação',
     ]);
-    expect(within(nav).getAllByRole('link')).toHaveLength(5);
+    expect(within(nav).getAllByRole('link')).toHaveLength(4);
     for (const button of within(nav).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(button);
@@ -375,12 +383,18 @@ describe('Permissions', () => {
       links.length,
     );
     expect(links[0]).toHaveTextContent('Visão geral');
+    expect(links.slice(0, 4).map((link) => link.textContent)).toEqual([
+      'Visão geral',
+      'Gestão de eventos',
+      'Agenda de eventos',
+      'Biblioteca',
+    ]);
     for (const button of within(nav).getAllByRole('button')) {
       fireEvent.click(button);
       expect(button).toHaveAttribute('aria-expanded', 'false');
     }
     await waitFor(() =>
-      expect(within(nav).getAllByRole('link')).toHaveLength(5),
+      expect(within(nav).getAllByRole('link')).toHaveLength(4),
     );
   });
 
@@ -391,13 +405,19 @@ describe('Permissions', () => {
       name: 'Navegação principal',
     });
     // Videos and personal reimbursements are available to every authenticated account.
-    expect(within(nav).queryAllByRole('button')).toHaveLength(1);
+    expect(within(nav).queryAllByRole('button')).toHaveLength(2);
     expect(
       within(nav).getByRole('button', { name: 'Vídeos' }),
     ).toBeInTheDocument();
+    const finance = within(nav).getByRole('button', { name: 'Financeiro' });
+    expect(finance).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(finance);
     expect(
       await within(nav).findByRole('link', { name: 'Meus reembolsos' }),
     ).toBeInTheDocument();
+    expect(
+      within(nav).queryByRole('link', { name: 'Tesouraria' }),
+    ).not.toBeInTheDocument();
     for (const name of ['Administração', 'Operação', 'Eventos']) {
       expect(
         within(nav).queryByRole('button', { name }),

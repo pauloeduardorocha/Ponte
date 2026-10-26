@@ -53,12 +53,12 @@ const sidebarWidth = 264;
 
 const navigationGroups = [
   'Início',
+  'Eventos',
+  'Biblioteca',
   'Pessoas',
   'Grupos e ministérios',
   'Operação',
-  'Eventos',
   'Financeiro',
-  'Biblioteca',
   'Vídeos',
   'Comunicação',
   'Administração',
@@ -165,7 +165,7 @@ const navigation: NavigationItem[] = [
     icon: MenuBookRounded,
   },
   {
-    label: 'Financeiro',
+    label: 'Tesouraria',
     group: 'Financeiro',
     to: '/finance',
     icon: AccountBalanceRounded,
@@ -236,12 +236,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         {navigationGroups.map((group) => {
           const groupItems = items.filter((item) => item.group === group);
           if (!groupItems.length) return null;
-          const headerless = [
-            'Início',
-            'Eventos',
-            'Financeiro',
-            'Biblioteca',
-          ].includes(group);
+          const headerless = ['Início', 'Eventos', 'Biblioteca'].includes(group);
           const expanded = headerless || expandedGroups.includes(group);
           const groupId = `navigation-group-${navigationGroups.indexOf(group)}`;
           return (
