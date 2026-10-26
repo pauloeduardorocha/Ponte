@@ -388,10 +388,10 @@ describe('Permissions', () => {
     expect(links[0]).toHaveTextContent('Visão geral');
     expect(links.slice(0, 5).map((link) => link.textContent)).toEqual([
       'Visão geral',
+      'Biblioteca',
       'Calendário',
       'Gestão de eventos',
       'Agenda de eventos',
-      'Biblioteca',
     ]);
     for (const button of within(nav).getAllByRole('button')) {
       fireEvent.click(button);

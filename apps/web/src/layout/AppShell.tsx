@@ -64,6 +64,11 @@ const navigationGroups = [
   'Administração',
 ] as const;
 type NavigationGroup = (typeof navigationGroups)[number];
+const headerlessGroups: readonly NavigationGroup[] = ['Início', 'Biblioteca'];
+const orderedNavigationGroups = [...navigationGroups].sort(
+  (a, b) =>
+    Number(headerlessGroups.includes(b)) - Number(headerlessGroups.includes(a)),
+);
 
 interface NavigationItem {
   label: string;
@@ -246,10 +251,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       </Stack>
 
       <List className="navigation-list" disablePadding>
-        {navigationGroups.map((group) => {
+        {orderedNavigationGroups.map((group) => {
           const groupItems = items.filter((item) => item.group === group);
           if (!groupItems.length) return null;
-          const headerless = ['Início', 'Biblioteca'].includes(group);
+          const headerless = headerlessGroups.includes(group);
           const expanded = headerless || expandedGroups.includes(group);
           const groupId = `navigation-group-${navigationGroups.indexOf(group)}`;
           return (
