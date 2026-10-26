@@ -23,6 +23,7 @@ export type Field = {
   options?: string[];
   optionLabels?: Record<string, string>;
   multiple?: boolean;
+  managedOnly?: boolean;
   lookup?:
     | Resource
     | 'people'
@@ -236,7 +237,13 @@ export const configs: Record<Resource, Config> = {
     fields: [
       { key: 'title', label: 'Título', required: true },
       { key: 'eventId', label: 'Evento (opcional)', lookup: 'events' },
-      { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
+      {
+        key: 'ministryId',
+        label: 'Ministério',
+        lookup: 'ministries',
+        required: true,
+        managedOnly: true,
+      },
       {
         key: 'date',
         label: 'Data e hora',

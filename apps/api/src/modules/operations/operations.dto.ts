@@ -147,7 +147,7 @@ export class PersonDto {
 }
 export class ScheduleDto {
   @IsOptional() @IsUUID() eventId?: string;
-  @IsOptional() @IsUUID() ministryId?: string;
+  @IsUUID() ministryId!: string;
   @IsString() @Matches(/\S/) @MaxLength(160) title!: string;
   @IsDateString({ strict: true }) date!: string;
   @IsOptional() @IsString() @MaxLength(2000) notes?: string;

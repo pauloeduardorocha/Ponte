@@ -123,11 +123,9 @@ describe('Personal dashboard privacy', () => {
     const findMany = () => jest.fn().mockResolvedValue([]);
     const db = {
       user: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            member: { id: 'member', status: 'ACTIVE', anonymizedAt: null },
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          member: { id: 'member', status: 'ACTIVE', anonymizedAt: null },
+        }),
       },
       volunteerSchedule: { findMany: findMany() },
       smallGroup: { findMany: findMany() },
@@ -166,7 +164,21 @@ describe('Personal dashboard privacy', () => {
     expect(db.volunteerSchedule.findMany.mock.calls[0][0].where).toMatchObject({
       status: 'PUBLISHED',
       date: { gte: expect.any(Date) },
+      ministry: {
+        active: true,
+        OR: [
+          { leaderMemberId: 'member' },
+          {
+            members: {
+              some: { memberId: 'member', active: true, leftAt: null },
+            },
+          },
+        ],
+      },
     });
+    expect(
+      db.volunteerSchedule.findMany.mock.calls[0][0].where,
+    ).not.toHaveProperty('OR');
     expect(db.communityEvent.findMany.mock.calls[0][0].where).toMatchObject({
       publishedAt: { not: null },
       status: 'SCHEDULED',

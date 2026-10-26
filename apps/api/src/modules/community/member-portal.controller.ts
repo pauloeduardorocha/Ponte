@@ -74,19 +74,10 @@ export class MemberPortalController {
         where: {
           status: 'PUBLISHED',
           date: { gte: now },
-          OR: [
-            {
-              assignments: {
-                some: { memberId, status: { in: ['INVITED', 'CONFIRMED'] } },
-              },
-            },
-            {
-              ministry: {
-                active: true,
-                OR: [{ leaderMemberId: memberId }, { members: membership }],
-              },
-            },
-          ],
+          ministry: {
+            active: true,
+            OR: [{ leaderMemberId: memberId }, { members: membership }],
+          },
           AND: [
             {
               OR: [

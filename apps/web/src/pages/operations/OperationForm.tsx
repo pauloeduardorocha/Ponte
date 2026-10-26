@@ -69,7 +69,9 @@ export function LookupField({
       } as Record<string, string>
     )[field.key] ?? field.key.replace(/Id$/, '');
   const initialEntry = initial?.[relation] as Entry | undefined;
-  const options = data.data?.items ?? [];
+  const options = (data.data?.items ?? []).filter(
+    (entry) => !field.managedOnly || entry.canManage === true,
+  );
   return (
     <Controller
       name={field.key}

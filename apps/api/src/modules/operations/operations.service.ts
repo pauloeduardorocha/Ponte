@@ -200,11 +200,7 @@ export class OperationsService {
   ): Promise<Prisma.VolunteerScheduleWhereInput> {
     if (this.all(user)) return {};
     return {
-      OR: [
-        { ministryId: null, event: await this.eventScope(user) },
-        { ministry: await this.ministryReadScope(user) },
-        { assignments: { some: { memberId: await this.memberId(user) } } },
-      ],
+      ministry: await this.ministryReadScope(user),
     };
   }
   private range(q: D.OperationQuery) {
@@ -1276,27 +1272,29 @@ export class OperationsService {
       select: { id: true },
     });
     const ids = new Set(managed.map((m) => m.id));
-    return this.page(
-      items.map((item) => ({
-        ...item,
-        canManage:
-          this.all(user) ||
-          (item.ministryId
-            ? ids.has(item.ministryId)
-            : user.permissions.includes('SCHEDULE_MANAGE')),
-      })),
-      total,
-      q,
-    );
+    const canCreate =
+      (await this.db.ministry.count({ where: ministryScope })) > 0;
+    return {
+      ...this.page(
+        items.map((item) => ({
+          ...item,
+          canManage:
+            this.all(user) ||
+            (item.ministryId
+              ? ids.has(item.ministryId)
+              : user.permissions.includes('SCHEDULE_MANAGE')),
+        })),
+        total,
+        q,
+      ),
+      canCreate,
+    };
   }
   async schedule(id: string, user: CurrentUser, manage = false) {
     const scope =
       manage && !this.all(user)
         ? {
-            OR: [
-              { ministryId: null, event: await this.eventScope(user) },
-              { ministry: await this.ministryScope(user) },
-            ],
+            ministry: await this.ministryScope(user),
           }
         : await this.scheduleScope(user);
     const s = await this.db.volunteerSchedule.findFirst({
@@ -1311,9 +1309,13 @@ export class OperationsService {
     dto: D.ScheduleDto | D.SchedulePatch,
     user: CurrentUser,
   ) {
-    if (!id && !dto.eventId && !dto.ministryId)
-      throw new BadRequestException('Selecione um ministério ou evento.');
-    if (id) await this.schedule(id, user, true);
+    if ((!id && !dto.ministryId) || dto.ministryId === null)
+      throw new BadRequestException('Selecione um ministério.');
+    if (id) {
+      const current = await this.schedule(id, user, true);
+      if (!current.ministryId && !dto.ministryId)
+        throw new BadRequestException('Selecione um ministério.');
+    }
     if (dto.eventId) await this.event(dto.eventId, user);
     if (dto.ministryId) await this.canManageMinistry(dto.ministryId, user);
     return this.write(async (tx) => {
@@ -1535,6 +1537,7 @@ export class OperationsService {
             ministryId: schedule.ministryId,
             memberId: dto.memberId,
             active: true,
+            leftAt: null,
           },
         })) &&
         !(await tx.ministry.findFirst({
@@ -1558,7 +1561,7 @@ export class OperationsService {
         throw new ConflictException({
           message:
             'Conflito de horário: escolha outro voluntário ou ajuste o evento.',
-          conflicts,
+          ...(this.all(user) ? { conflicts } : {}),
         });
       if (replacesId) {
         const old = await tx.volunteerAssignment.findFirst({
@@ -1602,6 +1605,7 @@ export class OperationsService {
     dto: D.AssignmentResponseDto,
     user: CurrentUser,
   ) {
+    await this.schedule(id, user);
     return this.write(async (tx) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(19009002)`;
       const row = await tx.volunteerAssignment.findFirst({
@@ -1641,14 +1645,14 @@ export class OperationsService {
     const own = user ? await this.memberId(user) : null;
     const scope =
       user && !this.all(user)
-        ? Prisma.sql`AND (ea."createdByUserId"=${user.id}::uuid OR ma."leaderMemberId"=${own}::uuid OR ga."leaderMemberId"=${own}::uuid OR ga."coLeaderMemberId"=${own}::uuid OR ga."hostMemberId"=${own}::uuid OR a."memberId"=${own}::uuid)`
+        ? Prisma.sql`AND EXISTS (SELECT 1 FROM ministries visible_a WHERE visible_a.id=sa."ministryId" AND (visible_a."leaderMemberId"=${own}::uuid OR EXISTS (SELECT 1 FROM ministry_members membership_a WHERE membership_a."ministryId"=visible_a.id AND membership_a."memberId"=${own}::uuid AND membership_a.active=true AND membership_a."leftAt" IS NULL)))
+          AND EXISTS (SELECT 1 FROM ministries visible_b WHERE visible_b.id=sb."ministryId" AND (visible_b."leaderMemberId"=${own}::uuid OR EXISTS (SELECT 1 FROM ministry_members membership_b WHERE membership_b."ministryId"=visible_b.id AND membership_b."memberId"=${own}::uuid AND membership_b.active=true AND membership_b."leftAt" IS NULL)))`
         : Prisma.empty;
     const [row] = await tx.$queryRaw<
       { count: bigint }[]
     >`SELECT count(*) FROM volunteer_assignments a JOIN volunteer_assignments b ON a."memberId"=b."memberId" AND a.id<b.id AND a."scheduleId"<>b."scheduleId"
       JOIN volunteer_schedules sa ON sa.id=a."scheduleId" JOIN volunteer_schedules sb ON sb.id=b."scheduleId"
       LEFT JOIN community_events ea ON ea.id=sa."eventId" LEFT JOIN community_events eb ON eb.id=sb."eventId"
-      LEFT JOIN ministries ma ON ma.id=sa."ministryId" LEFT JOIN small_groups ga ON ga.id=ea."smallGroupId"
       WHERE a.status IN ('INVITED','CONFIRMED') AND b.status IN ('INVITED','CONFIRMED') AND sa.status IN ('DRAFT','PUBLISHED') AND sb.status IN ('DRAFT','PUBLISHED') AND COALESCE(ea.status,'SCHEDULED')<>'CANCELLED' AND COALESCE(eb.status,'SCHEDULED')<>'CANCELLED'
       AND COALESCE(ea."startsAt",sa.date)<COALESCE(eb."endsAt",eb."startsAt"+interval '1 hour',sb.date+interval '1 hour') AND COALESCE(eb."startsAt",sb.date)<COALESCE(ea."endsAt",ea."startsAt"+interval '1 hour',sa.date+interval '1 hour')
       ${eventId ? Prisma.sql`AND (ea.id=${eventId}::uuid OR eb.id=${eventId}::uuid)` : Prisma.empty}

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
   BadRequestException,
   NotFoundException,
+  ConflictException,
 } from '@nestjs/common';
 
 describe('Ministry schedules and attachments', () => {
@@ -13,14 +14,29 @@ describe('Ministry schedules and attachments', () => {
     const db = {
       $executeRaw: jest.fn(),
       user: { findUnique: jest.fn().mockResolvedValue({ memberId: 'member' }) },
-      ministry: { findFirst: jest.fn(), count: jest.fn().mockResolvedValue(0) },
+      member: { findFirst: jest.fn().mockResolvedValue({ id: 'member' }) },
+      ministryMember: {
+        findFirst: jest.fn().mockResolvedValue({ id: 'membership' }),
+      },
+      ministry: {
+        findFirst: jest.fn(),
+        count: jest.fn().mockResolvedValue(0),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
       volunteerSchedule: {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+        create: jest.fn().mockResolvedValue({ id: 'new-schedule' }),
         findFirst: jest
           .fn()
           .mockResolvedValue({ id: 'schedule', ministryId: 'ministry' }),
         delete: jest.fn().mockResolvedValue({ id: 'schedule' }),
       },
-      volunteerAssignment: { updateMany: jest.fn(), deleteMany: jest.fn() },
+      volunteerAssignment: {
+        updateMany: jest.fn(),
+        deleteMany: jest.fn(),
+        findFirst: jest.fn().mockResolvedValue(null),
+      },
       scheduleAttachment: {
         update: jest.fn().mockResolvedValue({ id: 'file' }),
         findFirst: jest.fn(),
@@ -30,7 +46,9 @@ describe('Ministry schedules and attachments', () => {
       },
       $transaction: jest.fn(),
     };
-    db.$transaction.mockImplementation((fn) => fn(db));
+    db.$transaction.mockImplementation((fn) =>
+      Array.isArray(fn) ? Promise.all(fn) : fn(db),
+    );
     return {
       db,
       service: new OperationsService(db as unknown as PrismaService, []),
@@ -63,6 +81,171 @@ describe('Ministry schedules and attachments', () => {
         user,
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+  it('blocks conflicts without disclosing another ministry schedule', async () => {
+    const { service } = setup();
+    jest
+      .spyOn(
+        service as unknown as { assignmentConflicts: () => Promise<unknown[]> },
+        'assignmentConflicts',
+      )
+      .mockResolvedValue([
+        { schedule: { title: 'Private schedule', ministryId: 'other' } },
+      ]);
+    try {
+      await service.addAssignment(
+        'schedule',
+        { memberId: 'member', function: 'Recepção' },
+        user,
+      );
+      throw new Error('Expected a scheduling conflict');
+    } catch (error) {
+      if (!(error instanceof ConflictException)) throw error;
+      expect(error.getStatus()).toBe(409);
+      expect(error.getResponse()).toEqual({
+        message:
+          'Conflito de horário: escolha outro voluntário ou ajuste o evento.',
+      });
+    }
+  });
+  it.each([0, 1])(
+    'reports creation capability independently of an empty schedule page (%s)',
+    async (count) => {
+      const { service, db } = setup();
+      db.ministry.count.mockResolvedValue(count);
+      const result = await service.schedules(
+        { page: 1, pageSize: 25, ministryId: 'other' },
+        user,
+      );
+      expect(result).toMatchObject({
+        items: [],
+        total: 0,
+        canCreate: count > 0,
+      });
+      expect(db.ministry.count).toHaveBeenCalledWith({
+        where: await service.ministryScope(user),
+      });
+      expect(db.volunteerSchedule.count.mock.calls[0][0].where).toEqual(
+        db.volunteerSchedule.findMany.mock.calls[0][0].where,
+      );
+      expect(
+        db.volunteerSchedule.findMany.mock.calls[0][0].where.AND[0],
+      ).toEqual({
+        ministry: {
+          OR: [
+            await service.ministryScope(user),
+            {
+              members: {
+                some: { memberId: 'member', active: true, leftAt: null },
+              },
+            },
+          ],
+        },
+      });
+    },
+  );
+  it('allows a recognized ministry leader to create a schedule without an event', async () => {
+    const { service, db } = setup();
+    db.ministry.findFirst.mockResolvedValue({ id: 'ministry' });
+    await expect(
+      service.saveSchedule(
+        undefined,
+        {
+          title: 'Recepção',
+          date: '2026-10-27T10:00:00Z',
+          ministryId: 'ministry',
+        },
+        user,
+      ),
+    ).resolves.toEqual({ id: 'new-schedule' });
+    expect(db.ministry.findFirst).toHaveBeenCalledWith({
+      where: { AND: [{ id: 'ministry' }, await service.ministryScope(user)] },
+      select: { id: true },
+    });
+  });
+  it('keeps global administrative access for reading and management', async () => {
+    const { service, db } = setup();
+    const admin = {
+      ...user,
+      permissions: ['OPERATION_SCOPE_ALL'],
+    } as CurrentUser;
+    await service.schedule('schedule', admin);
+    await service.schedule('schedule', admin, true);
+    for (const [query] of db.volunteerSchedule.findFirst.mock.calls)
+      expect(query.where).toEqual({ AND: [{ id: 'schedule' }, {}] });
+  });
+  it('requires a ministry even when creating a schedule for an event', async () => {
+    const { service } = setup();
+    await expect(
+      service.saveSchedule(
+        undefined,
+        {
+          title: 'Recepção',
+          date: '2026-10-27T10:00:00Z',
+          eventId: 'event',
+        },
+        user,
+      ),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+  it('denies creating a schedule for a ministry the member does not lead', async () => {
+    const { service, db } = setup();
+    db.ministry.findFirst.mockResolvedValue(null);
+    await expect(
+      service.saveSchedule(
+        undefined,
+        {
+          title: 'Recepção',
+          date: '2026-10-27T10:00:00Z',
+          ministryId: 'other',
+        },
+        user,
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+    expect(db.$transaction).not.toHaveBeenCalled();
+  });
+  it('scopes reading to active ministry participation without event or assignment bypasses', async () => {
+    const { service, db } = setup();
+    await service.schedule('schedule', user);
+    expect(db.volunteerSchedule.findFirst.mock.calls[0][0].where).toEqual({
+      AND: [
+        { id: 'schedule' },
+        {
+          ministry: {
+            OR: [
+              await service.ministryScope(user),
+              {
+                members: {
+                  some: { memberId: 'member', active: true, leftAt: null },
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  });
+  it('does not use event management to grant schedule management', async () => {
+    const { service, db } = setup();
+    await service.schedule('schedule', user, true);
+    expect(db.volunteerSchedule.findFirst.mock.calls[0][0].where).toEqual({
+      AND: [
+        { id: 'schedule' },
+        { ministry: await service.ministryScope(user) },
+      ],
+    });
+  });
+  it('denies attachments and responses when ministry access has been lost', async () => {
+    const { service, db } = setup();
+    db.volunteerSchedule.findFirst.mockResolvedValue(null);
+    await expect(service.attachments('schedule', user)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+    await expect(
+      service.respond('schedule', 'assignment', { status: 'CONFIRMED' }, user),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(db.scheduleAttachment.findMany).not.toHaveBeenCalled();
+    expect(db.$transaction).not.toHaveBeenCalled();
   });
   it('blocks enrollment by members who do not lead the ministry', async () => {
     const { service, db } = setup();

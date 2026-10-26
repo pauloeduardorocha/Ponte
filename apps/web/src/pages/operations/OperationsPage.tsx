@@ -148,6 +148,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       apiRequest<{
         items: Entry[];
         total: number;
+        canCreate?: boolean;
       }>(`/operations/${resource}`, {
         query: {
           ...Object.fromEntries(
@@ -222,11 +223,12 @@ export function OperationsPage({ resource }: { resource: Resource }) {
               Modelos
             </Button>
           )}
-          {canCreate && (
-            <Button variant="contained" onClick={() => open()}>
-              Cadastrar
-            </Button>
-          )}
+          {canCreate &&
+            (resource !== 'schedules' || data.data?.canCreate === true) && (
+              <Button variant="contained" onClick={() => open()}>
+                Cadastrar
+              </Button>
+            )}
         </Stack>
       </Stack>
       <Typography color="text.secondary">

@@ -238,11 +238,19 @@ export class OperationsController {
     return this.service.saveEvent(id, dto, r.user);
   }
   @Get('schedules')
+  @ApiOperation({
+    description:
+      'Lista apenas escalas dos ministérios em que a conta é líder principal ou participante ativo; administradores com OPERATION_SCOPE_ALL têm acesso global. canCreate indica se existe algum ministério que a conta pode gerir, independentemente dos filtros.',
+  })
   @PermissionAny('SCHEDULE_READ', 'COMMUNITY_READ')
   listSchedule(@Query() q: D.OperationQuery, @Req() r: AuthRequest) {
     return this.service.schedules(q, r.user);
   }
   @Post('schedules')
+  @ApiOperation({
+    description:
+      'Exige ministryId e liderança no ministério selecionado, ou acesso administrativo global. eventId é opcional e não concede acesso ao ministério.',
+  })
   @PermissionAny('SCHEDULE_MANAGE', 'COMMUNITY_READ')
   createSchedule(@Body() dto: D.ScheduleDto, @Req() r: AuthRequest) {
     return this.service.saveSchedule(undefined, dto, r.user);

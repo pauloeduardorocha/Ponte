@@ -316,6 +316,48 @@ describe('Operational workflows', () => {
     );
     expect(await screen.findByText('Operação concluída.')).toBeInTheDocument();
   });
+  it.each([false, true])(
+    'uses ministry leadership capability for schedule creation (%s)',
+    async (canCreate) => {
+      mockApi({
+        ...sessionRoutes(makeUser(['COMMUNITY_READ'])),
+        'GET /operations/schedules': {
+          body: { items: [], total: 0, canCreate },
+        },
+        'GET /operations/ministries': {
+          body: {
+            items: [
+              { id: 'led', name: 'Ministério liderado', canManage: true },
+              {
+                id: 'member',
+                name: 'Ministério sem liderança',
+                canManage: false,
+              },
+            ],
+            total: 2,
+          },
+        },
+      });
+      renderApp('/schedules');
+      await screen.findByText(/Nenhum registro encontrado/);
+      expect(!!screen.queryByRole('button', { name: 'Cadastrar' })).toBe(
+        canCreate,
+      );
+      if (canCreate) {
+        fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+        const dialog = await screen.findByRole('dialog');
+        fireEvent.mouseDown(
+          within(dialog).getByRole('combobox', { name: /Ministério/ }),
+        );
+        expect(
+          await screen.findByRole('option', { name: 'Ministério liderado' }),
+        ).toBeInTheDocument();
+        expect(
+          screen.queryByRole('option', { name: 'Ministério sem liderança' }),
+        ).not.toBeInTheDocument();
+      }
+    },
+  );
   it('shows conflict feedback from the server when assigning a volunteer', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser(['SCHEDULE_READ', 'SCHEDULE_MANAGE'])),
