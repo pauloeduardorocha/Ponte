@@ -148,7 +148,7 @@ const navigation: NavigationItem[] = [
   },
   {
     label: 'Escalas',
-    group: 'Operação',
+    group: 'Grupos e ministérios',
     to: '/schedules',
     icon: CalendarMonthRounded,
   },
