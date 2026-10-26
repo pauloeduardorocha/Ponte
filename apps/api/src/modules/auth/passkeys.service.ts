@@ -98,7 +98,7 @@ export class PasskeysService {
       where: { id: userId },
     });
     if (
-      user.status !== 'ACTIVE' ||
+      !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
       user.deletedAt ||
       !(await argon2.verify(user.passwordHash, password))
     )
@@ -162,7 +162,10 @@ export class PasskeysService {
       await bindAudit(tx);
       await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
-      if (user.status !== 'ACTIVE' || user.deletedAt)
+      if (
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
+        user.deletedAt
+      )
         throw new UnauthorizedException();
       await tx.passkey.create({
         data: {

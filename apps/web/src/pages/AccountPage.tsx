@@ -135,7 +135,13 @@ export function AccountPage() {
                 <Chip
                   size="small"
                   color={user?.status === 'ACTIVE' ? 'success' : 'default'}
-                  label={user?.status === 'ACTIVE' ? 'Ativa' : 'Desativada'}
+                  label={
+                    user?.status === 'PENDING_APPROVAL'
+                      ? 'Aguardando aprovação'
+                      : user?.status === 'ACTIVE'
+                        ? 'Ativa'
+                        : 'Desativada'
+                  }
                 />
               </Box>
             </Stack>
@@ -246,87 +252,89 @@ export function AccountPage() {
         </CardContent>
       </Card>
       <PasskeySettings />
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={1.5}>
-            <Typography variant="h6" fontWeight={700}>
-              Notificações push
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Escolha quais avisos do sistema quer receber nos dispositivos com
-              notificações ativadas.
-            </Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={user?.pushReimbursementRequested ?? true}
-                  disabled={pushPreferenceSaving}
-                  onChange={(_, checked) =>
-                    void changePushPreference(
-                      'pushReimbursementRequested',
-                      checked,
-                    )
-                  }
-                />
-              }
-              label="Novos pedidos na fila financeira de reembolsos"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={user?.pushEventRefundRequested ?? true}
-                  disabled={pushPreferenceSaving}
-                  onChange={(_, checked) =>
-                    void changePushPreference(
-                      'pushEventRefundRequested',
-                      checked,
-                    )
-                  }
-                />
-              }
-              label="Pedidos de reembolso de inscrições em eventos"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={user?.pushLibraryOverdue ?? true}
-                  disabled={pushPreferenceSaving}
-                  onChange={(_, checked) =>
-                    void changePushPreference('pushLibraryOverdue', checked)
-                  }
-                />
-              }
-              label="Empréstimos de livros em atraso"
-            />
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={user?.pushLibraryReservationReady ?? true}
-                  disabled={pushPreferenceSaving}
-                  onChange={(_, checked) =>
-                    void changePushPreference(
-                      'pushLibraryReservationReady',
-                      checked,
-                    )
-                  }
-                />
-              }
-              label="Exemplares disponíveis para as minhas reservas"
-            />
-            {pushPreferenceSaving && (
-              <Typography role="status">Salvando preferência…</Typography>
-            )}
-            {pushPreferenceSaved && (
-              <Alert severity="success">
-                Preferência de notificações salva.
-              </Alert>
-            )}
-            {pushPreferenceError && (
-              <Alert severity="error">{pushPreferenceError}</Alert>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
+      {user?.status !== 'PENDING_APPROVAL' && (
+        <Card variant="outlined">
+          <CardContent>
+            <Stack spacing={1.5}>
+              <Typography variant="h6" fontWeight={700}>
+                Notificações push
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Escolha quais avisos do sistema quer receber nos dispositivos
+                com notificações ativadas.
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={user?.pushReimbursementRequested ?? true}
+                    disabled={pushPreferenceSaving}
+                    onChange={(_, checked) =>
+                      void changePushPreference(
+                        'pushReimbursementRequested',
+                        checked,
+                      )
+                    }
+                  />
+                }
+                label="Novos pedidos na fila financeira de reembolsos"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={user?.pushEventRefundRequested ?? true}
+                    disabled={pushPreferenceSaving}
+                    onChange={(_, checked) =>
+                      void changePushPreference(
+                        'pushEventRefundRequested',
+                        checked,
+                      )
+                    }
+                  />
+                }
+                label="Pedidos de reembolso de inscrições em eventos"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={user?.pushLibraryOverdue ?? true}
+                    disabled={pushPreferenceSaving}
+                    onChange={(_, checked) =>
+                      void changePushPreference('pushLibraryOverdue', checked)
+                    }
+                  />
+                }
+                label="Empréstimos de livros em atraso"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={user?.pushLibraryReservationReady ?? true}
+                    disabled={pushPreferenceSaving}
+                    onChange={(_, checked) =>
+                      void changePushPreference(
+                        'pushLibraryReservationReady',
+                        checked,
+                      )
+                    }
+                  />
+                }
+                label="Exemplares disponíveis para as minhas reservas"
+              />
+              {pushPreferenceSaving && (
+                <Typography role="status">Salvando preferência…</Typography>
+              )}
+              {pushPreferenceSaved && (
+                <Alert severity="success">
+                  Preferência de notificações salva.
+                </Alert>
+              )}
+              {pushPreferenceError && (
+                <Alert severity="error">{pushPreferenceError}</Alert>
+              )}
+            </Stack>
+          </CardContent>
+        </Card>
+      )}
     </Stack>
   );
 }

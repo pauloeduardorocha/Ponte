@@ -95,6 +95,7 @@ datasource db {
 }
 
 enum UserStatus {
+  PENDING_APPROVAL
   ACTIVE
   INVITED
   DISABLED

@@ -1,3 +1,4 @@
+import { AllowPending } from '../auth/permission.decorator';
 import {
   Controller,
   Get,
@@ -108,7 +109,9 @@ export class VideosService {
 @Controller('videos')
 export class VideosController {
   constructor(private readonly videos: VideosService) {}
-  @Get() latest() {
+  @AllowPending()
+  @Get()
+  latest() {
     return this.videos.latest();
   }
 }

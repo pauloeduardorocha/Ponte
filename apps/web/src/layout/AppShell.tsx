@@ -74,6 +74,12 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
+    label: 'Lista de espera',
+    group: 'Pessoas',
+    to: '/pending-approvals',
+    icon: PeopleAltRounded,
+  },
+  {
     label: 'Todas as playlists',
     group: 'Vídeos',
     to: '/videos',
@@ -198,7 +204,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       (a, b) =>
         navigationGroups.indexOf(a.group) - navigationGroups.indexOf(b.group),
     )
-    .filter(({ to }) => canAccessRoute(to, user?.permissions ?? []));
+    .filter(({ to }) => canAccessRoute(to, user?.permissions ?? [], user));
 
   return (
     <Box className="sidebar">
@@ -413,15 +419,17 @@ export function AppShell({ children }: { children?: ReactNode }) {
           <Typography fontWeight={600} sx={{ flexGrow: 1 }}>
             Painel de A Ponte
           </Typography>
-          <Tooltip title="Notificações">
-            <IconButton
-              component={NavLink}
-              to="/inbox"
-              aria-label="Notificações"
-            >
-              <NotificationBell />
-            </IconButton>
-          </Tooltip>
+          {user?.status !== 'PENDING_APPROVAL' && (
+            <Tooltip title="Notificações">
+              <IconButton
+                component={NavLink}
+                to="/inbox"
+                aria-label="Notificações"
+              >
+                <NotificationBell />
+              </IconButton>
+            </Tooltip>
+          )}
           <ProfileMenu />
         </Toolbar>
       </AppBar>
@@ -453,7 +461,9 @@ export function AppShell({ children }: { children?: ReactNode }) {
       >
         <Box component="header">
           <Toolbar className="header-spacer" />
-          {user && <PushPermissionBanner key={user.id} userId={user.id} />}
+          {user && user.status !== 'PENDING_APPROVAL' && (
+            <PushPermissionBanner key={user.id} userId={user.id} />
+          )}
         </Box>
         <Container maxWidth="xl" className="dashboard-content">
           <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>

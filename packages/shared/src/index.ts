@@ -200,7 +200,7 @@ export interface CurrentUser {
   id: string;
   name: string;
   email: string;
-  status: 'ACTIVE' | 'INVITED' | 'DISABLED';
+  status: 'ACTIVE' | 'INVITED' | 'DISABLED' | 'PENDING_APPROVAL';
   memberId?: string | null;
   roles?: string[];
   permissions: Permission[];
@@ -235,4 +235,17 @@ export interface Page<T> {
   total: number;
   page: number;
   pageSize: number;
+}
+
+/** Approval is restricted to the church's administrators and pastors. */
+export function canApproveRegistrations(
+  user: Pick<CurrentUser, 'roles' | 'status'> | null | undefined,
+): boolean {
+  return (
+    user?.status === 'ACTIVE' &&
+    (user.roles?.some((role) =>
+      ['SUPER_ADMIN', 'ADMIN', 'PASTOR'].includes(role),
+    ) ??
+      false)
+  );
 }

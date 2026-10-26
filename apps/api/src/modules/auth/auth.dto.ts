@@ -1,6 +1,8 @@
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
+  IsDateString,
+  Matches,
   IsEmail,
   IsIn,
   IsString,
@@ -55,7 +57,7 @@ export class LoginDto {
   password!: string;
 }
 
-export class RegisterDto extends LoginDto {
+export class CreateAccountDto extends LoginDto {
   @IsString()
   @MinLength(12)
   @MaxLength(128)
@@ -68,6 +70,23 @@ export class RegisterDto extends LoginDto {
   @MinLength(1)
   @MaxLength(120)
   name!: string;
+}
+
+export class RegisterDto extends CreateAccountDto {
+  @ApiProperty({ format: 'date', example: '1990-05-20' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @IsDateString({ strict: true })
+  birthDate!: string;
+
+  @ApiProperty({ example: '+351 912 345 678' })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  @IsString()
+  @MaxLength(32)
+  @Matches(/^\+?[\d ()-]+$/)
+  @Matches(/^(?:\D*\d){7,15}\D*$/)
+  phone!: string;
 }
 
 export class ChangePasswordDto {

@@ -76,8 +76,19 @@ describe('Finance HTTP with isolated PostgreSQL', () => {
         password = 'Finance-test-password-2026';
       const reg = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({ email, password, name: 'Finance test' })
+        .send({
+          phone: '+351 912345678',
+          birthDate: '1990-05-20',
+          email,
+          password,
+          name: 'Finance test',
+        })
         .expect(201);
+      // This fixture exercises approved member/operator behavior.
+      await db.user.update({
+        where: { id: reg.body.id as string },
+        data: { status: 'ACTIVE' },
+      });
       if (codes.length) {
         await db.permission.createMany({
           data: codes.map((code) => ({ code })),

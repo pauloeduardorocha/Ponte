@@ -9,6 +9,7 @@ export const STATUS_LABELS: Record<string, string> = {
   INVITED: 'Convidado',
   DISABLED: 'Desativado',
   PENDING: 'Pendente',
+  PENDING_APPROVAL: 'Aguardando aprovação',
   COMPLETED: 'Concluído',
   CANCELLED: 'Cancelado',
   PENDING_INVENTORY: 'Por conferir',

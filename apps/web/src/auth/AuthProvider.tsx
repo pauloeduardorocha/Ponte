@@ -210,15 +210,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider value={value}>
       <AccountThemeProvider>
         {children}
-        {state.status === 'authenticated' && state.user && (
-          <Suspense fallback={null}>
-            <PushPermissionPrompt
-              key={state.user.id}
-              userId={state.user.id}
-              blocked={!!enrollment}
-            />
-          </Suspense>
-        )}
+        {state.status === 'authenticated' &&
+          state.user &&
+          state.user.status !== 'PENDING_APPROVAL' && (
+            <Suspense fallback={null}>
+              <PushPermissionPrompt
+                key={state.user.id}
+                userId={state.user.id}
+                blocked={!!enrollment}
+              />
+            </Suspense>
+          )}
         {enrollment &&
           state.status === 'authenticated' &&
           state.user?.id === enrollment.userId && (

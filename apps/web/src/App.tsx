@@ -104,6 +104,12 @@ const VideosPage = lazy(() =>
   import('./pages/VideosPage').then((m) => ({ default: m.VideosPage })),
 );
 
+const PendingApprovalsPage = lazy(() =>
+  import('./pages/PendingApprovalsPage').then((m) => ({
+    default: m.PendingApprovalsPage,
+  })),
+);
+
 export function App({ children }: { children?: ReactNode }) {
   return (
     <AuthProvider>
@@ -131,6 +137,10 @@ export function App({ children }: { children?: ReactNode }) {
                 <Route
                   path="operations"
                   element={<OperationsDashboardPage />}
+                />
+                <Route
+                  path="pending-approvals"
+                  element={<PendingApprovalsPage />}
                 />
                 <Route path="inbox" element={<InboxPage />} />
                 <Route path="my-events" element={<EventWorkspace />} />

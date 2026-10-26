@@ -25,7 +25,7 @@ import type {
   RegistrationResponseJSON,
 } from '@simplewebauthn/server';
 import { AuthRequest } from './auth.guard';
-import { Public } from './permission.decorator';
+import { Public, AllowPending } from './permission.decorator';
 import { PasskeysService } from './passkeys.service';
 import { REFRESH_TTL_MS } from './auth.service';
 
@@ -58,6 +58,7 @@ export class PasskeyRegisterDto {
   name!: string;
 }
 
+@AllowPending()
 @ApiTags('Autenticacao')
 @Controller('auth/passkeys')
 @Throttle({ default: { limit: 10, ttl: 60_000 } })

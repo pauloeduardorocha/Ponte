@@ -15,7 +15,7 @@ export function FullPageLoader() {
 
 /** Allows access only to authenticated users; otherwise redirects to login. */
 export function RequireAuth() {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const location = useLocation();
 
   if (status === 'loading') {
@@ -25,6 +25,11 @@ export function RequireAuth() {
     const state = { from: location };
     return <Navigate to="/login" replace state={state} />;
   }
+  if (
+    user?.status === 'PENDING_APPROVAL' &&
+    !canAccessRoute(location.pathname, [], user)
+  )
+    return <ForbiddenPage />;
   return <Outlet />;
 }
 
@@ -78,7 +83,7 @@ export function RequirePermission({
 export function RequireRouteAccess() {
   const { user } = useAuth();
   const { pathname } = useLocation();
-  return canAccessRoute(pathname, user?.permissions ?? []) ? (
+  return canAccessRoute(pathname, user?.permissions ?? [], user) ? (
     <Outlet />
   ) : (
     <ForbiddenPage />

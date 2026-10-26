@@ -170,13 +170,15 @@ describe('Authentication', () => {
 
     await change(/^Nome/, 'Novo');
     await change(/E-mail/, 'novo@igreja.org');
+    await change(/Telefone/, '+351 912 345 678');
+    await change(/Data de nascimento/, '1990-05-20');
     await change(/^Senha/, 'segredo123456');
     await change(/Confirmar senha/, 'segredo123456');
     fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));
 
     expect(
       await screen.findByText(
-        'Conta criada com sucesso. Entre com seus dados.',
+        'Conta criada. Entre para assistir aos vídeos e ver os aniversariantes enquanto aguarda aprovação.',
       ),
     ).toBeInTheDocument();
     const registration = requests.find((r) => r.path === '/auth/register');
@@ -184,9 +186,32 @@ describe('Authentication', () => {
       name: 'Novo',
       email: 'novo@igreja.org',
       password: 'segredo123456',
+      phone: '+351 912 345 678',
+      birthDate: '1990-05-20',
     });
     expect(requests.some((r) => r.path === '/auth/me')).toBe(false);
     expect(getAccessToken()).toBeNull();
+  });
+
+  it('requires birthday and phone before submitting public registration', async () => {
+    const requests = mockApi(anonymousRoutes);
+    renderApp('/register');
+    await change(/^Nome/, 'Novo');
+    await change(/E-mail/, 'novo@igreja.org');
+    await change(/^Senha/, 'segredo123456');
+    await change(/Confirmar senha/, 'segredo123456');
+    fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));
+    await waitFor(() =>
+      expect(screen.getByLabelText(/Telefone/)).toHaveAttribute(
+        'aria-invalid',
+        'true',
+      ),
+    );
+    expect(screen.getByLabelText(/Data de nascimento/)).toHaveAttribute(
+      'aria-invalid',
+      'true',
+    );
+    expect(requests.some((r) => r.path === '/auth/register')).toBe(false);
   });
 
   it('validates password confirmation on registration', async () => {
@@ -195,6 +220,8 @@ describe('Authentication', () => {
 
     await change(/^Nome/, 'Novo');
     await change(/E-mail/, 'novo@igreja.org');
+    await change(/Telefone/, '+351 912 345 678');
+    await change(/Data de nascimento/, '1990-05-20');
     await change(/^Senha/, 'segredo123456');
     await change(/Confirmar senha/, 'outra12345678');
     fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));

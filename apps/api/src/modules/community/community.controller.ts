@@ -14,7 +14,7 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
-import { Permission } from '../auth/permission.decorator';
+import { Permission, AllowPending } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { OperationsModule } from '../operations/operations.controller';
 import { OperationsService } from '../operations/operations.service';
@@ -33,7 +33,9 @@ export class CommunityController {
     private readonly db: PrismaService,
     private readonly operations: OperationsService,
   ) {}
-  @Get('birthdays') async birthdays() {
+  @AllowPending()
+  @Get('birthdays')
+  async birthdays() {
     // Dates of birth have no timezone; only today's date follows Lisbon time.
     return this.db.$queryRaw<{ id: string; name: string }[]>`
       SELECT id, name FROM members

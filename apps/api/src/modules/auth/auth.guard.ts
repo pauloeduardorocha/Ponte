@@ -4,12 +4,13 @@ import {
   ExecutionContext,
   Injectable,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import type { CurrentUser } from '@church/shared';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import { PUBLIC_KEY } from './permission.decorator';
+import { PUBLIC_KEY, PENDING_ALLOWED_KEY } from './permission.decorator';
 
 export interface AuthRequest extends Request {
   user: CurrentUser;
@@ -35,6 +36,14 @@ export class AuthGuard implements CanActivate {
     const match = /^Bearer ([^\s]+)$/.exec(request.headers.authorization ?? '');
     if (!match?.[1]) throw new UnauthorizedException();
     const session = await this.auth.authenticate(match[1]);
+    if (
+      session.user.status === 'PENDING_APPROVAL' &&
+      !this.reflector.getAllAndOverride<boolean>(PENDING_ALLOWED_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ])
+    )
+      throw new ForbiddenException('Conta aguardando aprovação');
     const audit = auditContext.getStore();
     if (audit) audit.userId = session.user.id;
     request.user = session.user;

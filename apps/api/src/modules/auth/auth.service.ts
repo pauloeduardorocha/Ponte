@@ -5,6 +5,7 @@ import {
 } from '../audit/audit-context';
 import {
   ConflictException,
+  BadRequestException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -19,7 +20,12 @@ import {
 import { createHmac, randomBytes, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 import { PrismaService } from '../../database/prisma.service';
-import { ChangePasswordDto, RegisterDto, ResetPasswordDto } from './auth.dto';
+import {
+  ChangePasswordDto,
+  CreateAccountDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from './auth.dto';
 import { PasswordResetDelivery } from './password-reset.delivery';
 
 const userInclude = {
@@ -45,13 +51,18 @@ export const safeUser = (user: Identity): CurrentUser => ({
   name: user.name,
   email: user.email,
   status: user.status,
-  permissions: PERMISSIONS.filter(
-    (code) =>
-      MEMBER_PERMISSIONS.some((permission) => permission === code) ||
-      user.userRoles.some(({ role }) =>
-        role.permissions.some(({ permission }) => permission.code === code),
-      ),
-  ),
+  permissions:
+    user.status === 'PENDING_APPROVAL'
+      ? []
+      : PERMISSIONS.filter(
+          (code) =>
+            MEMBER_PERMISSIONS.some((permission) => permission === code) ||
+            user.userRoles.some(({ role }) =>
+              role.permissions.some(
+                ({ permission }) => permission.code === code,
+              ),
+            ),
+        ),
 });
 const ACCESS_TTL_SECONDS = 900;
 export const REFRESH_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -119,6 +130,17 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
+    if (dto.birthDate > new Date().toISOString().slice(0, 10))
+      throw new BadRequestException(
+        'A data de nascimento não pode estar no futuro',
+      );
+    return this.createAccount(dto, 'PENDING_APPROVAL');
+  }
+
+  async createAccount(
+    dto: CreateAccountDto & Partial<Pick<RegisterDto, 'phone' | 'birthDate'>>,
+    status: 'ACTIVE' | 'PENDING_APPROVAL' = 'ACTIVE',
+  ) {
     const passwordHash = await argon2.hash(dto.password, {
       type: argon2.argon2id,
     });
@@ -130,8 +152,15 @@ export class AuthService {
             name: dto.name,
             email: dto.email,
             passwordHash,
-            status: 'ACTIVE',
-            member: { create: { name: dto.name, email: dto.email } },
+            status,
+            member: {
+              create: {
+                name: dto.name,
+                email: dto.email,
+                phone: dto.phone,
+                birthDate: dto.birthDate ? new Date(dto.birthDate) : undefined,
+              },
+            },
           },
           include: userInclude,
         });
@@ -171,7 +200,12 @@ export class AuthService {
       user?.passwordHash ?? (await this.dummyHash),
       password,
     );
-    if (!valid || !user || user.status !== 'ACTIVE' || user.deletedAt) {
+    if (
+      !valid ||
+      !user ||
+      !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
+      user.deletedAt
+    ) {
       await this.db.$transaction(async (tx) => {
         await bindAudit(tx);
         const now = new Date();
@@ -223,7 +257,7 @@ export class AuthService {
       });
       if (
         current.passwordHash !== user.passwordHash ||
-        current.status !== 'ACTIVE' ||
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(current.status) ||
         current.deletedAt
       )
         throw new UnauthorizedException();
@@ -279,7 +313,10 @@ export class AuthService {
         where: { id: credential.userId },
         include: userInclude,
       });
-      if (user.status !== 'ACTIVE' || user.deletedAt)
+      if (
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
+        user.deletedAt
+      )
         throw new UnauthorizedException();
       const changed = await tx.passkey.updateMany({
         where: { id, counter },
@@ -340,7 +377,7 @@ export class AuthService {
       session.userId !== claims.sub ||
       session.revokedAt ||
       session.expiresAt <= new Date() ||
-      session.user.status !== 'ACTIVE' ||
+      !['ACTIVE', 'PENDING_APPROVAL'].includes(session.user.status) ||
       session.user.deletedAt
     )
       throw new UnauthorizedException('Sessão expirada');
@@ -381,7 +418,7 @@ export class AuthService {
       }
       if (
         current.expiresAt <= new Date() ||
-        user.status !== 'ACTIVE' ||
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
         user.deletedAt
       )
         return null;
@@ -447,7 +484,7 @@ export class AuthService {
       await tx.$queryRaw`SELECT id FROM users WHERE id = ${userId}::uuid FOR UPDATE`;
       const user = await tx.user.findUniqueOrThrow({ where: { id: userId } });
       if (
-        user.status !== 'ACTIVE' ||
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) ||
         user.deletedAt ||
         !(await argon2.verify(user.passwordHash, dto.currentPassword))
       )
@@ -475,7 +512,11 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.db.user.findUnique({ where: { email } });
-    if (user?.status === 'ACTIVE' && !user.deletedAt) {
+    if (
+      user &&
+      ['ACTIVE', 'PENDING_APPROVAL'].includes(user.status) &&
+      !user.deletedAt
+    ) {
       const token = randomBytes(32).toString('base64url');
       const expiresAt = new Date(Date.now() + RESET_TTL_MS);
       const queued = await this.db.$transaction(async (tx) => {
@@ -484,7 +525,11 @@ export class AuthService {
         const current = await tx.user.findUniqueOrThrow({
           where: { id: user.id },
         });
-        if (current.status !== 'ACTIVE' || current.deletedAt) return false;
+        if (
+          !['ACTIVE', 'PENDING_APPROVAL'].includes(current.status) ||
+          current.deletedAt
+        )
+          return false;
         await tx.passwordReset.updateMany({
           where: { userId: user.id, usedAt: null },
           data: { usedAt: new Date() },
@@ -531,7 +576,7 @@ export class AuthService {
       if (
         current.usedAt ||
         current.expiresAt <= new Date() ||
-        current.user.status !== 'ACTIVE' ||
+        !['ACTIVE', 'PENDING_APPROVAL'].includes(current.user.status) ||
         current.user.deletedAt
       )
         throw new UnauthorizedException('Token inválido ou expirado');

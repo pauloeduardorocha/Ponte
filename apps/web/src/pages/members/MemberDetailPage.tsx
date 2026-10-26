@@ -1,3 +1,4 @@
+import { STATUS_LABELS } from '../../lib/status-labels';
 import { RolesDialog } from './MemberRolesDialog';
 import { useAuth } from '../../auth/auth-context';
 import { apiRequest } from '../../lib/api';
@@ -214,10 +215,10 @@ export function MemberDetailPage() {
             <Stack spacing={2}>
               <Typography variant="h6">Acesso à plataforma</Typography>
               <Typography>
-                {data.user.email} ·{' '}
-                {data.user.status === 'ACTIVE' ? 'Ativo' : 'Desativado'}
+                {data.user.email} · {STATUS_LABELS[data.user.status]}
               </Typography>
               {hasPermission('USER_UPDATE') &&
+                data.user.status !== 'PENDING_APPROVAL' &&
                 data.user.id !== currentUser?.id && (
                   <Button
                     disabled={access.isPending}

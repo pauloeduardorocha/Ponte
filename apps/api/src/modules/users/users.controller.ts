@@ -1,3 +1,4 @@
+import { canApproveRegistrations } from '@church/shared';
 import {
   ApiTags,
   ApiBearerAuth,
@@ -34,7 +35,7 @@ import {
 } from 'class-validator';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthService } from '../auth/auth.service';
-import { RegisterDto } from '../auth/auth.dto';
+import { CreateAccountDto } from '../auth/auth.dto';
 import { AuthRequest } from '../auth/auth.guard';
 import { Permission } from '../auth/permission.decorator';
 import { PageQuery } from '../members/member.dto';
@@ -82,6 +83,66 @@ export class UsersController {
     private readonly auth: AuthService,
   ) {}
 
+  @Get('pending-approvals')
+  async pendingApprovals(@Req() req: AuthRequest, @Query() query: PageQuery) {
+    if (!canApproveRegistrations(req.user)) throw new ForbiddenException();
+    const { page, pageSize, search } = query;
+    const where: Prisma.UserWhereInput = {
+      status: 'PENDING_APPROVAL',
+      deletedAt: null,
+      ...(search
+        ? {
+            OR: [
+              { name: { contains: search, mode: 'insensitive' as const } },
+              { email: { contains: search, mode: 'insensitive' as const } },
+            ],
+          }
+        : {}),
+    };
+    const [items, total] = await this.db.$transaction(
+      [
+        this.db.user.findMany({
+          where,
+          select: {
+            ...userSelect,
+            createdAt: true,
+            member: { select: { phone: true, birthDate: true } },
+          },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+          orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+        }),
+        this.db.user.count({ where }),
+      ],
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+    return { items, total, page, pageSize };
+  }
+
+  @Post(':id/approve')
+  async approve(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthRequest,
+  ) {
+    if (!canApproveRegistrations(req.user)) throw new ForbiddenException();
+    return this.db.$transaction(async (tx) => {
+      await bindAudit(tx);
+      await tx.$queryRaw`SELECT id FROM users WHERE id = ${id}::uuid FOR UPDATE`;
+      const user = await tx.user.findUnique({ where: { id } });
+      if (!user || user.deletedAt)
+        throw new NotFoundException('Usuário não encontrado');
+      if (user.status !== 'PENDING_APPROVAL')
+        throw new ConflictException('Esta conta não está aguardando aprovação');
+      // Approval grants ordinary member access, never previously assigned elevated roles.
+      await tx.userRole.deleteMany({ where: { userId: id } });
+      return tx.user.update({
+        where: { id },
+        data: { status: 'ACTIVE' },
+        select: userSelect,
+      });
+    });
+  }
+
   @Get()
   @Permission('USER_READ')
   async list(@Query() query: PageQuery) {
@@ -115,8 +176,8 @@ export class UsersController {
 
   @Post()
   @Permission('USER_CREATE')
-  create(@Body() dto: RegisterDto) {
-    return this.auth.register(dto);
+  create(@Body() dto: CreateAccountDto) {
+    return this.auth.createAccount(dto);
   }
 
   @Patch(':id/status')
@@ -140,6 +201,10 @@ export class UsersController {
       });
       if (!user || user.deletedAt)
         throw new NotFoundException('Usuário não encontrado');
+      if (user.status === 'PENDING_APPROVAL')
+        throw new ConflictException(
+          'Use a lista de espera para aprovar esta conta',
+        );
       if (
         user.userRoles.some((r) => r.role.name === 'SUPER_ADMIN') &&
         !request.user.permissions.includes('PERMISSION_MANAGE')

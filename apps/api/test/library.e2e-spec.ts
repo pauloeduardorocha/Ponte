@@ -136,8 +136,19 @@ describe('Library HTTP (isolated real PostgreSQL)', () => {
       const password = 'Library-test-password-2026';
       const registered = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({ email, password, name: 'Library operator' })
+        .send({
+          phone: '+351 912345678',
+          birthDate: '1990-05-20',
+          email,
+          password,
+          name: 'Library operator',
+        })
         .expect(201);
+      // This fixture exercises approved member/operator behavior.
+      await db.user.update({
+        where: { id: registered.body.id as string },
+        data: { status: 'ACTIVE' },
+      });
       const id = registered.body.id as string;
       if (codes.length) {
         for (const code of codes)

@@ -120,7 +120,13 @@ securityIntegration('Restricted database login (isolated PostgreSQL)', () => {
   it('registers an account and commits the identity/audit triggers using runtime privileges', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ name: 'Synthetic security probe', email, password })
+      .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
+        name: 'Synthetic security probe',
+        email,
+        password,
+      })
       .expect(201);
     const user = await runtime.user.findUniqueOrThrow({ where: { email } });
     expect(user.memberId).toBeTruthy();

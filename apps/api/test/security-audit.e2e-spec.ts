@@ -22,8 +22,19 @@ describe('Security and audit HTTP (isolated PostgreSQL)', () => {
     const email = `${randomUUID()}@security.example`;
     const reg = await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email, password, name: 'Security test' })
+      .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
+        email,
+        password,
+        name: 'Security test',
+      })
       .expect(201);
+    // This fixture exercises approved member/operator behavior.
+    await db.user.update({
+      where: { id: reg.body.id as string },
+      data: { status: 'ACTIVE' },
+    });
     if (codes.length) {
       const permissions = await db.permission.findMany({
         where: { code: { in: codes } },

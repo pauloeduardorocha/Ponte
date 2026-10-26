@@ -24,8 +24,9 @@ import {
   UpdatePreferencesDto,
 } from './auth.dto';
 import { AuthRequest } from './auth.guard';
-import { Public } from './permission.decorator';
+import { Public, AllowPending } from './permission.decorator';
 
+@AllowPending()
 @ApiTags('Autenticacao')
 @Controller('auth')
 @Throttle({ default: { limit: 10, ttl: 60_000 } })

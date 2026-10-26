@@ -90,8 +90,19 @@ describe('Church operations with isolated PostgreSQL', () => {
         password = 'Operations-test-password-2026';
       const registered = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({ name: 'Operations test', email, password })
+        .send({
+          phone: '+351 912345678',
+          birthDate: '1990-05-20',
+          name: 'Operations test',
+          email,
+          password,
+        })
         .expect(201);
+      // This fixture exercises approved member/operator behavior.
+      await db.user.update({
+        where: { id: registered.body.id as string },
+        data: { status: 'ACTIVE' },
+      });
       await db.permission.createMany({
         data: codes.map((code) => ({ code })),
         skipDuplicates: true,

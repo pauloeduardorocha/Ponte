@@ -80,8 +80,19 @@ describe('EVENT_MANAGER RBAC and event scope (isolated PostgreSQL)', () => {
         password = 'Events-test-password-2026';
       const registered = await request(app.getHttpServer())
         .post('/api/v1/auth/register')
-        .send({ name: 'Event test', email, password })
+        .send({
+          phone: '+351 912345678',
+          birthDate: '1990-05-20',
+          name: 'Event test',
+          email,
+          password,
+        })
         .expect(201);
+      // This fixture exercises approved member/operator behavior.
+      await db.user.update({
+        where: { id: registered.body.id as string },
+        data: { status: 'ACTIVE' },
+      });
       const role = await db.role.upsert({
         where: { name: roleName },
         create: { name: roleName },

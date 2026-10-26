@@ -5447,7 +5447,8 @@
         },
         "tags": [
           "Autenticacao"
-        ]
+        ],
+        "description": "Creates a PENDING_APPROVAL account with no member permissions. Stores phone and birthDate on the linked member. Pending accounts may authenticate, manage their own account, and read videos and birthdays; other authenticated content is forbidden until approval."
       }
     },
     "/api/v1/auth/refresh": {
@@ -5939,7 +5940,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/RegisterDto"
+                "$ref": "#/components/schemas/CreateAccountDto"
               }
             }
           }
@@ -11566,6 +11567,103 @@
           }
         }
       }
+    },
+    "/api/v1/users/pending-approvals": {
+      "get": {
+        "operationId": "UsersController_pendingApprovals",
+        "description": "Active SUPER_ADMIN, ADMIN or PASTOR only. Lists nondeleted PENDING_APPROVAL accounts, oldest first. Includes id, name, email, status, createdAt and member phone/birthDate.",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1,
+              "maximum": 100000
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated items, total, page and pageSize"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Administrator or pastor required"
+          }
+        }
+      }
+    },
+    "/api/v1/users/{id}/approve": {
+      "post": {
+        "operationId": "UsersController_approve",
+        "description": "Active SUPER_ADMIN, ADMIN or PASTOR only. Atomically changes a pending account to ACTIVE, clearing any previously assigned roles and granting ordinary member access. Generic status updates cannot approve pending accounts.",
+        "tags": [
+          "Usuarios"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Approved account: id, name, email, status"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Administrator or pastor required"
+          },
+          "404": {
+            "description": "Missing or deleted account"
+          },
+          "409": {
+            "description": "Account is not pending approval"
+          }
+        }
+      }
     }
   },
   "info": {
@@ -12772,19 +12870,33 @@
           },
           "password": {
             "type": "string",
-            "minLength": 1,
+            "minLength": 12,
             "maxLength": 128
           },
           "name": {
             "type": "string",
             "minLength": 1,
             "maxLength": 120
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "Required phone number with 7 to 15 digits; optional + prefix, spaces, parentheses and hyphens.",
+            "example": "+351 912345678"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Required valid date YYYY-MM-DD, not in the future.",
+            "example": "1990-05-20"
           }
         },
         "required": [
           "email",
           "password",
-          "name"
+          "name",
+          "phone",
+          "birthDate"
         ]
       },
       "ChangePasswordDto": {
@@ -14245,6 +14357,31 @@
             "pattern": "^(?=.*[1-9])(?:0|[1-9]\\d{0,9})(?:\\.\\d{1,2})?$"
           }
         }
+      },
+      "CreateAccountDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 12,
+            "maxLength": 128
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "name"
+        ]
       }
     }
   }

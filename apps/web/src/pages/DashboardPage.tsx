@@ -35,6 +35,26 @@ type Community = {
   }[];
 };
 export function DashboardPage() {
+  const { user } = useAuth();
+  if (user?.status === 'PENDING_APPROVAL')
+    return (
+      <Stack spacing={3}>
+        <Typography variant="h4" component="h1">
+          Olá, {user.name}
+        </Typography>
+        <Alert severity="info">
+          Sua conta está aguardando aprovação de um administrador ou pastor.
+          Enquanto isso, você pode assistir aos vídeos da igreja e ver os
+          aniversariantes.
+        </Alert>
+        <YouTubeCarousel />
+        <BirthdaysCard />
+      </Stack>
+    );
+  return <ApprovedDashboard />;
+}
+
+function ApprovedDashboard() {
   const { hasPermission, user } = useAuth();
   const canCommunity = ['MEMBER_READ', 'VISITOR_READ', 'EVENT_READ'].some((p) =>
     user?.permissions.some((code) => code === p),

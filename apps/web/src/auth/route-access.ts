@@ -1,3 +1,4 @@
+import { canApproveRegistrations, type CurrentUser } from '@church/shared';
 import { matchPath } from 'react-router-dom';
 import { AUDIT_PERMISSIONS } from '../lib/audit-permissions';
 import type { Permission } from '../lib/types';
@@ -52,8 +53,14 @@ const routeAccess: readonly AccessRule[] = [
 export function canAccessRoute(
   url: string,
   permissions: readonly Permission[],
+  user?: Pick<CurrentUser, 'status' | 'roles'> | null,
 ): boolean {
   const pathname = url.split(/[?#]/)[0] ?? '';
+  if (user?.status === 'PENDING_APPROVAL')
+    return ['/', '/account', '/videos', '/videos/:playlistId'].some((path) =>
+      matchPath(path, pathname),
+    );
+  if (pathname === '/pending-approvals') return canApproveRegistrations(user);
   const rule = routeAccess.find(({ path }) => matchPath(path, pathname));
   if (!rule) return false;
   const prefix = rule.prefix;

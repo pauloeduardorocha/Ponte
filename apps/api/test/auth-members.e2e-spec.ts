@@ -1,3 +1,4 @@
+import { MEMBER_PERMISSIONS } from '@church/shared';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
@@ -45,7 +46,13 @@ integration('Authentication and members (real PostgreSQL)', () => {
   const register = (address: string) =>
     request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: address, name: 'Test User', password });
+      .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
+        email: address,
+        name: 'Test User',
+        password,
+      });
   const login = (address: string, pass = password) =>
     request(app.getHttpServer())
       .post('/api/v1/auth/login')
@@ -88,6 +95,10 @@ integration('Authentication and members (real PostgreSQL)', () => {
     const adminEmail = email();
     const admin = await register(adminEmail).expect(201);
     adminId = admin.body.id as string;
+    await db.user.update({
+      where: { id: adminId },
+      data: { status: 'ACTIVE' },
+    });
     const codes = [
       'USER_READ',
       'USER_CREATE',
@@ -122,6 +133,10 @@ integration('Authentication and members (real PostgreSQL)', () => {
       .accessToken as string;
     const address = email();
     normalId = (await register(address).expect(201)).body.id as string;
+    await db.user.update({
+      where: { id: normalId },
+      data: { status: 'ACTIVE' },
+    });
     normalToken = (await login(address).expect(200)).body.accessToken as string;
   }, 30000);
 
@@ -157,11 +172,20 @@ integration('Authentication and members (real PostgreSQL)', () => {
     await register(address).expect(409);
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: email(), name: 'Attack', password, roles: ['ADMIN'] })
+      .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
+        email: email(),
+        name: 'Attack',
+        password,
+        roles: ['ADMIN'],
+      })
       .expect(400);
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
       .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
         email: email(),
         name: 'Attack',
         password,
@@ -170,7 +194,13 @@ integration('Authentication and members (real PostgreSQL)', () => {
       .expect(400);
     await request(app.getHttpServer())
       .post('/api/v1/auth/register')
-      .send({ email: 'bad', name: ' ', password: 'short' })
+      .send({
+        phone: '+351 912345678',
+        birthDate: '1990-05-20',
+        email: 'bad',
+        name: ' ',
+        password: 'short',
+      })
       .expect(400);
   });
 
@@ -558,7 +588,9 @@ integration('Authentication and members (real PostgreSQL)', () => {
       .set(bearer(adminToken))
       .send({ name: 'Managed', email: address, password })
       .expect(201);
-    expect(created.body.permissions).toEqual([]);
+    expect(created.body.permissions).toEqual(
+      expect.arrayContaining([...MEMBER_PERMISSIONS]),
+    );
     const id = created.body.id as string;
     const first = await login(address);
     await request(app.getHttpServer())
@@ -605,6 +637,7 @@ integration('Authentication and members (real PostgreSQL)', () => {
     const address = email();
     const user = await register(address).expect(201);
     const userId = user.body.id as string;
+    await db.user.update({ where: { id: userId }, data: { status: 'ACTIVE' } });
     const roleId = roleIds[0];
     if (!roleId) throw new Error('No test role');
     await db.userRole.create({ data: { userId, roleId } });

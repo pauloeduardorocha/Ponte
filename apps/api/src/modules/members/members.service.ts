@@ -144,6 +144,10 @@ export class MembersService {
         }
         if (dto.status === 'INACTIVE') {
           const account = await tx.user.findUnique({ where: { memberId: id } });
+          if (account?.status === 'PENDING_APPROVAL')
+            throw new ConflictException(
+              'A conta deve ser aprovada pela lista de espera antes de alterar o acesso.',
+            );
           if (account) {
             const admin = await tx.userRole.findFirst({
               where: { userId: account.id, role: { name: 'SUPER_ADMIN' } },
