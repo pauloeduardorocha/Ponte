@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { channelVideos } from './youtube-channel';
+import { youtubeApiVideos } from './youtube-api';
 
 export const CHANNEL_URL = 'https://www.youtube.com/@IGREJAPONTE';
 export const FEED_URL =
@@ -84,14 +85,19 @@ export class VideosService {
   private async refresh(): Promise<VideoFeed> {
     try {
       let items: ChurchVideo[];
-      try {
-        const response = await fetch(FEED_URL, {
-          signal: AbortSignal.timeout(8000),
-        });
-        if (!response.ok) throw new Error('YouTube unavailable');
-        items = parseVideos(await response.text());
-      } catch {
-        items = await channelVideos(CHANNEL_URL);
+      const apiKey = process.env.YOUTUBE_API_KEY?.trim();
+      if (apiKey) {
+        items = await youtubeApiVideos(apiKey);
+      } else {
+        try {
+          const response = await fetch(FEED_URL, {
+            signal: AbortSignal.timeout(8000),
+          });
+          if (!response.ok) throw new Error('YouTube unavailable');
+          items = parseVideos(await response.text());
+        } catch {
+          items = await channelVideos(CHANNEL_URL);
+        }
       }
       this.cached = {
         channelUrl: CHANNEL_URL,

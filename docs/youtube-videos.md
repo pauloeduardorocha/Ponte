@@ -37,6 +37,14 @@ Até 12 vídeos ordenados por publicação decrescente. Lista vazia é válida. 
 
 ## Integração
 
+Para produção, configurar `YOUTUBE_API_KEY` exclusivamente no servidor (Vercel → Environment Variables → Production) e fazer novo deploy. Ativar **YouTube Data API v3** no projeto Google Cloud da chave e restringir a chave a essa API. Nunca usar prefixo `VITE_` nem incluir a chave em commits ou mensagens.
+
+Com a chave configurada, a API consulta `channels.list(part=contentDetails)` para descobrir a playlist de uploads e `playlistItems.list(part=snippet,contentDetails,maxResults=12)` para carregar os vídeos. Usa `contentDetails.videoPublishedAt`, a data de publicação do vídeo, em vez da data de inclusão na playlist. São duas chamadas por atualização bem-sucedida por instância, mantendo o cache e o contrato existentes. Falhas de credenciais, quota ou rede preservam cache anterior/503 e o intervalo de repetição; não desencadeiam scraping de páginas.
+
+Sem a chave, mantém-se a integração pública abaixo, sujeita a indisponibilidade. Em 26/10/2026 o feed devolveu 404 e as páginas de vídeos individuais devolveram intermitentemente HTML de CAPTCHA com HTTP 200. Portanto, a alternativa HTML não garante recuperação e a correção para produção depende da configuração da chave.
+
+Referências oficiais: [playlistItems.list](https://developers.google.com/youtube/v3/docs/playlistItems/list) e [campos de playlistItem](https://developers.google.com/youtube/v3/docs/playlistItems).
+
 Feed Atom público: `https://www.youtube.com/feeds/videos.xml?channel_id=UCJjDDzfbKwIZoiyIXVhsh0Q`. O ID foi confirmado nos metadados do canal @IGREJAPONTE. Não requer chave de API. O feed contém uma janela limitada de publicações, podendo incluir transmissões e Shorts.
 
 Cache em memória por instância durante 10 minutos, pedidos simultâneos agrupados, timeout de 8 segundos e intervalo de 1 minuto após falhas. A interface consulta novamente a cada 10 minutos enquanto aberta. Uma reinicialização elimina o cache. O link para o canal permanece disponível durante falhas.
