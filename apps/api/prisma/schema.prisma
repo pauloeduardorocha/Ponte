@@ -107,6 +107,7 @@ model User {
   pushEventRefundRequested     Boolean               @default(true) @map("push_event_refund_requested")
   pushLibraryOverdue           Boolean               @default(true) @map("push_library_overdue")
   pushLibraryReservationReady  Boolean               @default(true) @map("push_library_reservation_ready")
+  pushBirthdays Boolean @default(true) @map("push_birthdays")
   pushSubscriptions            PushSubscription[]
   passkeys              Passkey[]
   managedEvents         EventManagerAssignment[] @relation("EventManager")
@@ -1388,4 +1389,11 @@ model ScheduleAttachment {
 
   @@index([scheduleId], map: "schedule_attachments_schedule_idx")
   @@map("schedule_attachments")
+}
+
+model BirthdayPushDay {
+  day DateTime @id @db.Date
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("birthday_push_days")
 }

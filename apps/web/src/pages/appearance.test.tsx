@@ -160,6 +160,7 @@ describe('Account appearance', () => {
   });
 
   it.each([
+    ['Aniversariantes do dia', 'pushBirthdays'],
     [
       'Novos pedidos na fila financeira de reembolsos',
       'pushReimbursementRequested',

@@ -15,9 +15,11 @@ import { QueryError } from './PageParts';
 export function BirthdaysCard() {
   const { user } = useAuth();
   const query = useQuery({
-    queryKey: ['community', 'birthdays', user?.id],
+    queryKey: ['community', 'birthdays', 'week', user?.id],
     queryFn: () =>
-      apiRequest<{ id: string; name: string }[]>('/community/birthdays'),
+      apiRequest<{ id: string; name: string; birthday: string }[]>(
+        '/community/birthdays?period=week',
+      ),
     staleTime: 60000,
     refetchInterval: 60000,
   });
@@ -28,7 +30,7 @@ export function BirthdaysCard() {
           <Stack direction="row" spacing={1} alignItems="center">
             <CakeOutlinedIcon color="primary" />
             <Typography component="h2" variant="h6">
-              Aniversariantes do dia
+              Aniversariantes da semana
             </Typography>
           </Stack>
           {query.isPending && (
@@ -44,7 +46,7 @@ export function BirthdaysCard() {
             (query.data.length ? (
               <>
                 <Typography color="text.secondary">
-                  Hoje é dia de celebrar! Parabéns aos aniversariantes.
+                  Celebramos os aniversariantes desta semana!
                 </Typography>
                 <Stack
                   component="ul"
@@ -66,13 +68,16 @@ export function BirthdaysCard() {
                         {member.name.charAt(0).toLocaleUpperCase('pt-PT')}
                       </Avatar>
                       <Typography fontWeight={600}>{member.name}</Typography>
+                      <Typography color="text.secondary">
+                        {member.birthday}
+                      </Typography>
                     </Stack>
                   ))}
                 </Stack>
               </>
             ) : (
               <Typography color="text.secondary">
-                Nenhum aniversariante hoje.
+                Nenhum aniversariante nesta semana.
               </Typography>
             ))}
         </Stack>

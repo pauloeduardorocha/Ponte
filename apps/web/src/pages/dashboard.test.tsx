@@ -48,13 +48,14 @@ describe('Permission scoped dashboard', () => {
     mockApi({
       ...sessionRoutes(makeUser([])),
       'GET /community/birthdays': {
-        body: [{ id: 'birthday', name: 'Maria Santos' }],
+        body: [{ id: 'birthday', name: 'Maria Santos', birthday: '27/10' }],
       },
     });
     renderApp('/');
     expect(await screen.findByText('Maria Santos')).toBeInTheDocument();
+    expect(screen.getByText('27/10')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Aniversariantes do dia' }),
+      screen.getByRole('heading', { name: 'Aniversariantes da semana' }),
     ).toBeInTheDocument();
   });
   it('shows an empty birthday card', async () => {
@@ -64,7 +65,7 @@ describe('Permission scoped dashboard', () => {
     });
     renderApp('/');
     expect(
-      await screen.findByText('Nenhum aniversariante hoje.'),
+      await screen.findByText('Nenhum aniversariante nesta semana.'),
     ).toBeInTheDocument();
   });
   it('offers a personal empty state and never fetches protected indicators for members', async () => {
@@ -108,7 +109,7 @@ describe('Personal member dashboard', () => {
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
       'Últimos vídeos da igreja',
-      'Aniversariantes do dia',
+      'Aniversariantes da semana',
       'Próximas escalas',
       'Meu grupo familiar',
       'Próximos eventos',
@@ -186,7 +187,7 @@ describe('Personal member dashboard', () => {
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
       'Últimos vídeos da igreja',
-      'Aniversariantes do dia',
+      'Aniversariantes da semana',
       'Próximas escalas',
       'Meu grupo familiar',
       'Reembolsos pendentes',

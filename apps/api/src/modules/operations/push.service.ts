@@ -41,7 +41,8 @@ export type SystemPushPreference =
   | 'pushReimbursementRequested'
   | 'pushEventRefundRequested'
   | 'pushLibraryOverdue'
-  | 'pushLibraryReservationReady';
+  | 'pushLibraryReservationReady'
+  | 'pushBirthdays';
 
 // Endpoints are client input. Never allow arbitrary outbound requests or redirects.
 export function validatePushEndpoint(endpoint: string) {

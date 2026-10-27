@@ -69,7 +69,8 @@ export function AccountPage() {
       | 'pushReimbursementRequested'
       | 'pushEventRefundRequested'
       | 'pushLibraryOverdue'
-      | 'pushLibraryReservationReady',
+      | 'pushLibraryReservationReady'
+      | 'pushBirthdays',
     value: boolean,
   ) {
     setPushPreferenceSaving(true);
@@ -319,6 +320,18 @@ export function AccountPage() {
                   />
                 }
                 label="Exemplares disponíveis para as minhas reservas"
+              />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={user?.pushBirthdays ?? true}
+                    disabled={pushPreferenceSaving}
+                    onChange={(_, checked) =>
+                      void changePushPreference('pushBirthdays', checked)
+                    }
+                  />
+                }
+                label="Aniversariantes do dia"
               />
               {pushPreferenceSaving && (
                 <Typography role="status">Salvando preferência…</Typography>

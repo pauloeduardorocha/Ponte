@@ -11,12 +11,13 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { Permission, AllowPending } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { OperationsModule } from '../operations/operations.controller';
+import { BirthdayPushService } from './birthday-push.service';
 import { OperationsService } from '../operations/operations.service';
 import {
   CommunityQuery,
@@ -35,7 +36,30 @@ export class CommunityController {
   ) {}
   @AllowPending()
   @Get('birthdays')
-  async birthdays() {
+  @ApiQuery({
+    name: 'period',
+    required: false,
+    enum: ['day', 'week'],
+    description: 'Semana de segunda a domingo em Europe/Lisbon; padrão: dia.',
+  })
+  async birthdays(@Query('period') period?: string) {
+    if (period === 'week') {
+      return this.db.$queryRaw<
+        { id: string; name: string; birthday: string }[]
+      >`
+        SELECT m.id, m.name, to_char(d.day, 'DD/MM') AS birthday
+        FROM members m
+        CROSS JOIN generate_series(
+          date_trunc('week', CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon'),
+          date_trunc('week', CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon') + interval '6 days',
+          interval '1 day'
+        ) AS d(day)
+        WHERE m.status = 'ACTIVE' AND m.anonymized_at IS NULL
+          AND EXTRACT(MONTH FROM m.birth_date) = EXTRACT(MONTH FROM d.day)
+          AND EXTRACT(DAY FROM m.birth_date) = EXTRACT(DAY FROM d.day)
+        ORDER BY d.day, m.name, m.id
+      `;
+    }
     // Dates of birth have no timezone; only today's date follows Lisbon time.
     return this.db.$queryRaw<{ id: string; name: string }[]>`
       SELECT id, name FROM members
@@ -186,5 +210,9 @@ export class CommunityController {
     );
   }
 }
-@Module({ imports: [OperationsModule], controllers: [CommunityController] })
+@Module({
+  imports: [OperationsModule],
+  controllers: [CommunityController],
+  providers: [BirthdayPushService],
+})
 export class CommunityModule {}

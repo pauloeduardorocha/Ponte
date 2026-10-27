@@ -16,6 +16,7 @@ describe('Account preferences HTTP contract', () => {
     pushEventRefundRequested: true,
     pushLibraryOverdue: true,
     pushLibraryReservationReady: true,
+    pushBirthdays: true,
   };
   const update = jest.fn(async ({ data }: { data: Partial<typeof user> }) => {
     Object.assign(
@@ -30,6 +31,7 @@ describe('Account preferences HTTP contract', () => {
       pushEventRefundRequested: user.pushEventRefundRequested,
       pushLibraryOverdue: user.pushLibraryOverdue,
       pushLibraryReservationReady: user.pushLibraryReservationReady,
+      pushBirthdays: user.pushBirthdays,
     };
   });
   const db = {
@@ -74,6 +76,7 @@ describe('Account preferences HTTP contract', () => {
       pushEventRefundRequested: true,
       pushLibraryOverdue: true,
       pushLibraryReservationReady: true,
+      pushBirthdays: true,
     });
   });
 
@@ -100,6 +103,7 @@ describe('Account preferences HTTP contract', () => {
           pushEventRefundRequested: true,
           pushLibraryOverdue: true,
           pushLibraryReservationReady: true,
+          pushBirthdays: true,
         },
       });
     },
@@ -125,6 +129,7 @@ describe('Account preferences HTTP contract', () => {
         pushEventRefundRequested: true,
         pushLibraryOverdue: true,
         pushLibraryReservationReady: true,
+        pushBirthdays: true,
       },
     });
   });
@@ -133,6 +138,8 @@ describe('Account preferences HTTP contract', () => {
     { colorMode: 'auto' },
     { colorMode: null },
     { pushLibraryOverdue: 'false' },
+    { pushBirthdays: 'false' },
+    { pushBirthdays: null },
     { colorMode: 'dark', userId: 'someone-else' },
   ])('rejects an invalid body %j', async (body) => {
     await request(app.getHttpServer())
@@ -141,6 +148,18 @@ describe('Account preferences HTTP contract', () => {
       .send(body)
       .expect(400);
     expect(update).not.toHaveBeenCalled();
+  });
+
+  it('saves birthday opt-out', async () => {
+    const response = await request(app.getHttpServer())
+      .patch('/api/v1/auth/preferences')
+      .set('Authorization', 'Bearer access')
+      .send({ pushBirthdays: false })
+      .expect(200);
+    expect(response.body).toMatchObject({
+      pushBirthdays: false,
+      pushLibraryOverdue: true,
+    });
   });
 
   it('requires authentication', async () => {

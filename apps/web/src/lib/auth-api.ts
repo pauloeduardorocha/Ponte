@@ -40,7 +40,8 @@ export type PushPreferenceKey =
   | 'pushReimbursementRequested'
   | 'pushEventRefundRequested'
   | 'pushLibraryOverdue'
-  | 'pushLibraryReservationReady';
+  | 'pushLibraryReservationReady'
+  | 'pushBirthdays';
 
 export function updatePreferences(preferences: {
   pushReimbursementRequested?: boolean;
@@ -48,6 +49,7 @@ export function updatePreferences(preferences: {
   pushEventRefundRequested?: boolean;
   pushLibraryOverdue?: boolean;
   pushLibraryReservationReady?: boolean;
+  pushBirthdays?: boolean;
 }) {
   return apiRequest<{
     pushReimbursementRequested: boolean;
@@ -55,6 +57,7 @@ export function updatePreferences(preferences: {
     pushEventRefundRequested: boolean;
     pushLibraryOverdue: boolean;
     pushLibraryReservationReady: boolean;
+    pushBirthdays: boolean;
   }>('/auth/preferences', {
     method: 'PATCH',
     body: preferences,

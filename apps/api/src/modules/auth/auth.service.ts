@@ -46,6 +46,7 @@ export const safeUser = (user: Identity): CurrentUser => ({
   pushEventRefundRequested: user.pushEventRefundRequested,
   pushLibraryOverdue: user.pushLibraryOverdue,
   pushLibraryReservationReady: user.pushLibraryReservationReady,
+  pushBirthdays: user.pushBirthdays,
   roles: user.userRoles.map(({ role }) => role.name),
   memberId: user.memberId,
   id: user.id,
@@ -113,6 +114,7 @@ export class AuthService {
       pushEventRefundRequested?: boolean;
       pushLibraryOverdue?: boolean;
       pushLibraryReservationReady?: boolean;
+      pushBirthdays?: boolean;
     },
   ) {
     return this.db.$transaction(async (tx) => {
@@ -126,6 +128,7 @@ export class AuthService {
           pushEventRefundRequested: true,
           pushLibraryOverdue: true,
           pushLibraryReservationReady: true,
+          pushBirthdays: true,
         },
       });
     });

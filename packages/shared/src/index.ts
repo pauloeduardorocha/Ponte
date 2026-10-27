@@ -197,6 +197,7 @@ export interface CurrentUser {
   pushEventRefundRequested?: boolean;
   pushLibraryOverdue?: boolean;
   pushLibraryReservationReady?: boolean;
+  pushBirthdays?: boolean;
   id: string;
   name: string;
   email: string;

@@ -16,6 +16,11 @@ export class UpdatePreferencesDto {
   @ApiProperty({ required: false, default: true })
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
+  pushBirthdays?: boolean;
+
+  @ApiProperty({ required: false, default: true })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean()
   pushReimbursementRequested?: boolean;
 
   @ApiProperty({

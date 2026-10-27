@@ -21,12 +21,10 @@ describe('Birthday card access', () => {
         {
           provide: AuthService,
           useValue: {
-            authenticate: jest
-              .fn()
-              .mockResolvedValue({
-                user: { id: 'member', permissions: [] },
-                sessionId: 'session',
-              }),
+            authenticate: jest.fn().mockResolvedValue({
+              user: { id: 'member', permissions: [] },
+              sessionId: 'session',
+            }),
           },
         },
         { provide: APP_GUARD, useClass: AuthGuard },
@@ -51,6 +49,17 @@ describe('Birthday card access', () => {
       .set('Authorization', 'Bearer member')
       .expect(200)
       .expect([{ id: 'birthday', name: 'Maria Santos' }]);
+  });
+  it('returns weekly dates without exposing birth years', async () => {
+    query.mockResolvedValue([
+      { id: 'birthday', name: 'Maria Santos', birthday: '27/10' },
+    ]);
+    await request(app.getHttpServer())
+      .get('/community/birthdays?period=week')
+      .set('Authorization', 'Bearer member')
+      .expect(200)
+      .expect([{ id: 'birthday', name: 'Maria Santos', birthday: '27/10' }]);
+    expect(query.mock.calls[0][0].join('')).toContain("date_trunc('week'");
   });
   it('returns an empty list when nobody has a birthday', async () => {
     query.mockResolvedValue([]);
