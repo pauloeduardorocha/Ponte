@@ -48,8 +48,9 @@ Implementação, política proposta e ativação: [backup e recuperação](backu
 
 ## 3. Entrega confiável de notificações — alta prioridade
 
-**Estado:** implementado e validado localmente em 27/10/2026. Publicação,
-migration e configuração do worker ainda pendentes.
+**Estado:** versão 1.1.6 publicada e migration/privilégios aplicados em produção
+em 27/10/2026. Endpoint do worker validado com segredo dedicado; falta habilitar
+e confirmar a primeira execução do agendamento no GitHub.
 
 Problema original: `OperationsService.notificationAction` chamava o provedor
 externo dentro da transação que bloqueava a notificação, permitindo um envio
@@ -59,7 +60,8 @@ envio após commit, com reconciliação explícita de resultados incertos.
 - [x] Persistir a intenção de envio junto da alteração de estado (transactional outbox).
 - [x] Processar fora da transação com idempotência, tentativas limitadas e recuperação.
 - [x] Preservar agendamentos manuais e públicos/permissões; bloquear cancelamento em envio ativo.
-- [ ] Publicar e aplicar migration/privilégios; configurar segredo dedicado e ativar worker.
+- [x] Publicar e aplicar migration/privilégios; configurar segredo dedicado.
+- [ ] Habilitar o agendamento do worker.
 - [ ] Confirmar processamento real em produção e alertas do agendamento.
 
 Aceite: falhas antes/depois do envio não perdem mensagens nem causam duplicação sem controle.
