@@ -65,6 +65,90 @@ describe('Video playlists', () => {
     );
   });
 
+  it('selects a video beside the player, loads more and resets selection on navigation', async () => {
+    const [first, second] = videoPlaylists;
+    const video = (id: string, title: string, position: number) => ({
+      id,
+      title,
+      position,
+      thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    });
+    mockApi({
+      ...sessionRoutes(makeUser([])),
+      [`GET /videos/playlists/${first.id}`]: (request) => ({
+        body: {
+          items: request.query.get('pageToken')
+            ? [video('ccccccccccc', 'Mensagem três', 2)]
+            : [
+                video('aaaaaaaaaaa', 'Mensagem um', 0),
+                video('bbbbbbbbbbb', 'Mensagem dois', 1),
+              ],
+          nextPageToken: request.query.get('pageToken')
+            ? undefined
+            : 'next-token',
+          stale: false,
+        },
+      }),
+      [`GET /videos/playlists/${second.id}`]: {
+        body: { items: [], stale: false },
+      },
+    });
+    renderApp(`/videos/${first.id}`);
+    const message = await screen.findByRole('button', {
+      name: /Mensagem dois/,
+    });
+    fireEvent.click(message);
+    expect(message).toHaveAttribute('aria-pressed', 'true');
+    const player = screen.getByTitle(`Vídeos da playlist: ${first.title}`);
+    const src = new URL(player.getAttribute('src')!);
+    expect(src.pathname).toBe('/embed/bbbbbbbbbbb');
+    expect(src.searchParams.get('list')).toBe(first.id);
+    expect(src.searchParams.get('index')).toBe('1');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Carregar mais vídeos' }),
+    );
+    expect(
+      await screen.findByRole('button', { name: /Mensagem três/ }),
+    ).toBeInTheDocument();
+    fireEvent.click(
+      within(screen.getByRole('list', { name: 'Vídeos' })).getByRole('link', {
+        name: second.title,
+      }),
+    );
+    const next = await screen.findByTitle(
+      `Vídeos da playlist: ${second.title}`,
+    );
+    expect(
+      new URL(next.getAttribute('src')!).searchParams.get('autoplay'),
+    ).toBe('0');
+    expect(
+      screen.queryByRole('button', { name: /Mensagem dois/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        'Não há vídeos públicos disponíveis nesta playlist.',
+      ),
+    ).toBeInTheDocument();
+  });
+
+  it('keeps the player and YouTube link usable if the list fails', async () => {
+    const first = videoPlaylists[0];
+    mockApi({
+      ...sessionRoutes(makeUser([])),
+      [`GET /videos/playlists/${first.id}`]: { status: 503 },
+    });
+    renderApp(`/videos/${first.id}`);
+    expect(
+      await screen.findByRole('button', { name: 'Tentar novamente' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTitle(`Vídeos da playlist: ${first.title}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir no YouTube' }),
+    ).toBeInTheDocument();
+  });
+
   it('handles an unknown playlist without embedding arbitrary content', async () => {
     mockApi(sessionRoutes(makeUser([])));
     renderApp('/videos/unknown');

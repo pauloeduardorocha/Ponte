@@ -1,4 +1,5 @@
 import { Logger } from '@nestjs/common';
+import type { PlaylistVideo, PlaylistVideoPage } from '@church/shared';
 import type { ChurchVideo } from './videos.module';
 
 const CHANNEL_ID = 'UCJjDDzfbKwIZoiyIXVhsh0Q';
@@ -27,7 +28,7 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
-export async function youtubeApiVideos(apiKey: string): Promise<ChurchVideo[]> {
+function youtubeApiClient(apiKey: string) {
   const signal = AbortSignal.timeout(8000);
   const get = async (resource: string, params: Record<string, string>) => {
     const url = new URL(`https://www.googleapis.com/youtube/v3/${resource}`);
@@ -59,6 +60,11 @@ export async function youtubeApiVideos(apiKey: string): Promise<ChurchVideo[]> {
     return record(await response.json());
   };
 
+  return get;
+}
+
+export async function youtubeApiVideos(apiKey: string): Promise<ChurchVideo[]> {
+  const get = youtubeApiClient(apiKey);
   const channel = await get('channels', {
     part: 'contentDetails',
     id: CHANNEL_ID,
@@ -102,4 +108,47 @@ export async function youtubeApiVideos(apiKey: string): Promise<ChurchVideo[]> {
   return [...videos.values()]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, 12);
+}
+
+export async function youtubePlaylistPage(
+  apiKey: string,
+  playlistId: string,
+  pageToken?: string,
+): Promise<PlaylistVideoPage> {
+  const get = youtubeApiClient(apiKey);
+  const result = await get('playlistItems', {
+    part: 'snippet,contentDetails,status',
+    playlistId,
+    maxResults: '50',
+    ...(pageToken ? { pageToken } : {}),
+  });
+  if (!Array.isArray(result.items))
+    throw new Error('Invalid YouTube API items');
+  const items: PlaylistVideo[] = [];
+  for (const item of result.items) {
+    const snippet = record(record(item).snippet);
+    const id = record(record(item).contentDetails).videoId;
+    if (
+      typeof id !== 'string' ||
+      !/^[\w-]{11}$/.test(id) ||
+      typeof snippet.title !== 'string' ||
+      !snippet.title.trim() ||
+      !Number.isInteger(snippet.position) ||
+      Number(snippet.position) < 0 ||
+      record(record(item).status).privacyStatus !== 'public'
+    )
+      continue;
+    items.push({
+      id,
+      title: snippet.title,
+      position: Number(snippet.position),
+      thumbnailUrl: `https://i.ytimg.com/vi/${id}/hqdefault.jpg`,
+    });
+  }
+  return {
+    items: items.sort((a, b) => a.position - b.position),
+    ...(typeof result.nextPageToken === 'string' && result.nextPageToken
+      ? { nextPageToken: result.nextPageToken }
+      : {}),
+  };
 }

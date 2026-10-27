@@ -249,3 +249,18 @@ export function canApproveRegistrations(
       false)
   );
 }
+export { videoPlaylists } from './video-playlists';
+export type PlaylistVideo = {
+  id: string;
+  title: string;
+  thumbnailUrl: string;
+  position: number;
+};
+export type PlaylistVideoPage = {
+  items: PlaylistVideo[];
+  nextPageToken?: string;
+};
+export type PlaylistVideoFeed = PlaylistVideoPage & {
+  updatedAt: string;
+  stale: boolean;
+};

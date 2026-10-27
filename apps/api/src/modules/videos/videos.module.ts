@@ -4,11 +4,14 @@ import {
   Get,
   Injectable,
   Module,
+  Param,
+  Query,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { channelVideos } from './youtube-channel';
 import { youtubeApiVideos } from './youtube-api';
+import { PlaylistVideosService } from './playlist-videos.service';
 
 export const CHANNEL_URL = 'https://www.youtube.com/@IGREJAPONTE';
 export const FEED_URL =
@@ -120,7 +123,18 @@ export class VideosService {
 // AuthGuard global: disponível a qualquer conta autenticada, sem permissão administrativa.
 @Controller('videos')
 export class VideosController {
-  constructor(private readonly videos: VideosService) {}
+  constructor(
+    private readonly videos: VideosService,
+    private readonly playlists: PlaylistVideosService,
+  ) {}
+  @AllowPending()
+  @Get('playlists/:playlistId')
+  playlist(
+    @Param('playlistId') playlistId: string,
+    @Query('pageToken') pageToken?: string,
+  ) {
+    return this.playlists.page(playlistId, pageToken);
+  }
   @AllowPending()
   @Get()
   latest() {
@@ -128,5 +142,8 @@ export class VideosController {
   }
 }
 
-@Module({ controllers: [VideosController], providers: [VideosService] })
+@Module({
+  controllers: [VideosController],
+  providers: [VideosService, PlaylistVideosService],
+})
 export class VideosModule {}

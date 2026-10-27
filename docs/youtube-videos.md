@@ -2,11 +2,11 @@
 
 ## Menu de playlists
 
-O menu **Vídeos** está disponível a todas as contas autenticadas, mesmo sem permissões. Inclui **Todas as playlists** (`/videos`) e um submenu por playlist (`/videos/:playlistId`). O catálogo em `apps/web/src/lib/video-playlists.ts` contém as 27 playlists públicas verificadas no canal @IGREJAPONTE em 22/10/2026, incluindo a consulta da continuação da listagem do canal.
+O menu **Vídeos** está disponível a todas as contas autenticadas, mesmo sem permissões. Inclui **Todas as playlists** (`/videos`) e um submenu por playlist (`/videos/:playlistId`). O catálogo partilhado em `packages/shared/src/video-playlists.ts` (reexportado pelo frontend) contém as 27 playlists públicas verificadas no canal @IGREJAPONTE em 22/10/2026, incluindo a consulta da continuação da listagem do canal.
 
-Cada página incorpora o reprodutor oficial da playlist, sem reprodução automática, com seleção de vídeos no menu do próprio reprodutor e link alternativo para abrir no YouTube. O reprodutor é recriado ao mudar de playlist para interromper o vídeo anterior. IDs fora do catálogo mostram uma mensagem de playlist não encontrada.
+Cada página incorpora o reprodutor oficial da playlist, sem reprodução automática, com uma lista de vídeos ao lado do reprodutor (abaixo no telemóvel) e link alternativo para abrir no YouTube. O reprodutor é recriado ao mudar de playlist para interromper o vídeo anterior. IDs fora do catálogo mostram uma mensagem de playlist não encontrada.
 
-Os vídeos de cada playlist são carregados diretamente pelo YouTube e acompanham as alterações da playlist. Novas playlists e alterações de nome devem ser atualizadas no catálogo local; não há sincronização automática do catálogo. Esta funcionalidade não requer chave de API nem novos endpoints. Vídeos privados, removidos ou com incorporação desativada dependem das regras do YouTube.
+Os vídeos de cada playlist são carregados diretamente pelo YouTube e acompanham as alterações da playlist. Novas playlists e alterações de nome devem ser atualizadas no catálogo local; não há sincronização automática do catálogo. A lista lateral usa a chave `YOUTUBE_API_KEY` exclusivamente no servidor; o reprodutor continua disponível se a consulta da lista falhar. Vídeos privados, removidos ou com incorporação desativada dependem das regras do YouTube.
 
 Referência do reprodutor: https://developers.google.com/youtube/player_parameters#Selecting_Content_to_Play
 
@@ -54,3 +54,14 @@ Cache em memória por instância durante 10 minutos, pedidos simultâneos agrupa
 Referência oficial do formato: https://developers.google.com/youtube/v3/guides/push_notifications
 
 Se o feed falhar (incluindo resposta 404), a API consulta a página pública de vídeos do canal e os metadados estruturados dos vídeos. Essa alternativa mantém o contrato e as datas reais de publicação, consulta até 12 vídeos com concorrência máxima de quatro e prazo total de oito segundos. Como depende do HTML do YouTube, mudanças no formato podem exigir manutenção. Se ambas as fontes falharem, mantém o comportamento de cache anterior/503.
+
+
+## Lista de vídeos de uma playlist
+
+`GET /api/v1/videos/playlists/:playlistId?pageToken=...` exige a mesma autenticação do carrossel, inclusive contas pendentes e sem permissões administrativas. Aceita apenas IDs do catálogo partilhado (404 para outros IDs) e tokens não vazios de até 1024 caracteres (400 quando inválidos).
+
+A resposta contém `items: [{ id, title, thumbnailUrl, position }]`, `nextPageToken` opcional, `updatedAt` e `stale`. Cada página consulta até 50 itens de `playlistItems.list`, preserva a ordem original e exclui vídeos privados/removidos sem metadados públicos. Não ordena por data. A interface permite carregar páginas seguintes. A chave e os erros completos do Google nunca são enviados ao cliente.
+
+Cache por playlist e token durante 10 minutos, agrupamento de pedidos simultâneos, limite de 200 páginas em memória e prazo de 8 segundos por consulta. Falhas preservam a página anterior com `stale: true`; sem cache devolvem 503, com intervalo de repetição de 1 minuto. Uma reinicialização elimina o cache.
+
+Selecionar um item muda o vídeo do reprodutor na posição original da playlist e permite iniciar a reprodução após esse clique. A seleção da lista indica o último item escolhido; os controlos internos do YouTube continuam independentes. Mudar de playlist repõe a seleção e interrompe o vídeo anterior. A abertura inicial mantém `autoplay=0`.

@@ -12,6 +12,7 @@ import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import YouTube from '@mui/icons-material/YouTube';
 import { Link, useParams } from 'react-router-dom';
 import { videoPlaylists } from '../lib/video-playlists';
+import { PlaylistPlayer } from '../components/PlaylistPlayer';
 
 export function VideosPage() {
   const { playlistId } = useParams();
@@ -46,7 +47,7 @@ export function VideosPage() {
           </Typography>
           <Typography color="text.secondary">
             {playlist
-              ? 'Assista aos vídeos e escolha outras mensagens no menu do reprodutor.'
+              ? 'Escolha um vídeo na lista para assistir às mensagens desta playlist.'
               : 'Mensagens, louvores e séries da Igreja Ponte. Escolha uma playlist para assistir.'}
           </Typography>
         </Box>
@@ -73,27 +74,9 @@ export function VideosPage() {
           >
             Todas as playlists
           </Button>
-          <Box
-            key={playlist.id}
-            component="iframe"
-            title={`Vídeos da playlist: ${playlist.title}`}
-            src={`https://www.youtube-nocookie.com/embed?listType=playlist&list=${playlist.id}&autoplay=0&hl=pt`}
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            sx={{
-              width: '100%',
-              aspectRatio: '16 / 9',
-              minHeight: 240,
-              border: 0,
-              borderRadius: 2,
-              bgcolor: 'grey.900',
-            }}
-          />
+          <PlaylistPlayer key={playlist.id} playlist={playlist} />
           <Typography variant="body2" color="text.secondary">
-            Use o ícone de lista no reprodutor para escolher os vídeos desta
-            playlist. Se um vídeo não estiver disponível aqui, use “Abrir no
-            YouTube”.
+            Se um vídeo não estiver disponível aqui, use “Abrir no YouTube”.
           </Typography>
         </>
       ) : (
