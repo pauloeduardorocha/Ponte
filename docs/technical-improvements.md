@@ -69,7 +69,7 @@ ReferÃªncia: [notificaÃ§Ãµes](notifications.md).
 
 ## 4. EvoluÃ§Ã£o do armazenamento de anexos â€” mÃ©dia prioridade
 
-**Estado:** pendente.
+**Estado:** fora do escopo por decisão do utilizador; manter o armazenamento atual.
 
 O armazenamento atual suporta binÃ¡rios no PostgreSQL; anexos de escalas tambÃ©m usam
 `Bytes`. Medir volume e crescimento antes de escolher uma migraÃ§Ã£o.
@@ -82,7 +82,10 @@ Aceite: acessos continuam protegidos e a migraÃ§Ã£o/restauraÃ§Ã£o preserva todos
 
 ## 5. DivisÃ£o dos maiores mÃ³dulos â€” mÃ©dia prioridade
 
-**Estado:** pendente.
+**Estado:** implementado localmente; serviços por domínio e painéis da biblioteca separados.
+Regressão aprovada: 158 testes de integração + 14 de privilégios, 94 unitários
+das operações, 23 da biblioteca, TypeScript e lint. Sem push/deploy nesta etapa.
+Referência: [organização dos módulos](module-structure.md).
 
 `OperationsService` concentra visitantes, acompanhamento, grupos, ministÃ©rios,
 escalas, notificaÃ§Ãµes e dashboard; `LibraryPage` reÃºne muitas telas e aÃ§Ãµes.
