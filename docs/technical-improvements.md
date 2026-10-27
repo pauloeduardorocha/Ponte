@@ -6,8 +6,8 @@ Cada item deve ser executado e validado separadamente.
 
 ## 1. Validação automática antes da publicação — alta prioridade
 
-**Estado:** concluído e validado localmente em 27/10/2026. Publicação do workflow
-e configuração dos checks obrigatórios na branch ainda pendentes.
+**Estado:** publicado na main em 27/10/2026 (`add53db`), CI aprovado e deploy
+1.1.4 verificado. Proteção da branch configurada pelo utilizador.
 
 Problema: verificações locais disponíveis, mas sem workflow de CI versionado;
 testes com PostgreSQL têm requisitos diferentes e algumas suítes podem ser ignoradas
@@ -23,11 +23,13 @@ quando a URL não está configurada.
 
 Implementação e comandos: [CI e testes locais](ci.md).
 O workflow verifica alterações; exigir os checks para merge depende também das regras
-de proteção da branch no GitHub. Publicação/deploy não fazem parte desta etapa.
+de proteção da branch no GitHub.
 
 ## 2. Recuperação de dados — alta prioridade
 
-**Estado:** pendente.
+**Estado:** cópias encriptadas implementadas e ensaio local aprovado em 27/10/2026.
+Destino escolhido: Google Drive. Ativação depende da autorização OAuth e dos
+secrets do workflow; RPO/RTO de produção ainda não demonstrados.
 
 A documentação de segurança registra cópias independentes e ensaios completos de
 restauro como pendentes; confirmar o estado real da infraestrutura ao iniciar.
@@ -39,6 +41,7 @@ restauro como pendentes; confirmar o estado real da infraestrutura ao iniciar.
 
 Aceite: recuperação demonstrada da aplicação e de documentos, com tempos medidos.
 Referência: [segurança do banco](database-security.md).
+Implementação, política proposta e ativação: [backup e recuperação](backup-recovery.md).
 
 ## 3. Entrega confiável de notificações — alta prioridade
 

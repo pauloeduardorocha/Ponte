@@ -13,6 +13,9 @@ apps/api/generated/
 apps/api/prisma/*.db
 
 private-storage/
+backups/
+*.dump
+*.rclone.conf
 .neon
 
 .vercel

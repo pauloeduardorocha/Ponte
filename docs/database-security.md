@@ -119,12 +119,16 @@ O ensaio valida a restauração e a leitura do catálogo, não a integridade de
 todos os dados, nem uma recuperação completa da aplicação. A produção não foi
 substituída. Nunca executar `snapshots finalize` nesta branch de ensaio.
 
-Continuam pendentes cópias regulares independentes, encriptadas, com retenção
+Na inspeção original continuavam pendentes cópias regulares independentes, encriptadas, com retenção
 definida e ensaios de restauro. A cópia manual existente não cobre alterações
 posteriores à sua criação. O plano gratuito não oferece a mesma política de
 snapshots agendados e retenção dos planos pagos. Uma alternativa externa deve
 usar `pg_dump` por ligação direta, destino encriptado e monitorização das
 execuções; não guardar dumps em texto simples no repositório.
+
+Atualização de 27/10/2026: implementação e ensaio reproduzível descritos em
+[backup e recuperação](backup-recovery.md), com destino escolhido Google Drive.
+A ativação externa e a demonstração do RPO/RTO de produção continuam pendentes.
 
 ## Rede e conta administrativa
 

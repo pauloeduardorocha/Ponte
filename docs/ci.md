@@ -8,6 +8,8 @@ acionamento manual. Existem dois checks independentes:
   banco e cria os builds de produção.
 - **PostgreSQL integration and restricted login:** executa as suítes reais com
   PostgreSQL 17 descartável e verifica também os privilégios do login de execução.
+  Inclui um segundo ensaio com PostgreSQL 18 (versão atual da produção), backup
+  encriptado, restauro e verificação da API e dos documentos recuperados.
 
 Node está definido em `.node-version`. O CI não usa segredos de produção, não
 publica coleções, não faz deploy e não altera regras de proteção de branches.
@@ -23,6 +25,7 @@ Requisitos: Node da `.node-version`, npm e Docker com Compose v2 e suporte a
 npm ci
 npm run test:unit
 npm run test:integration
+npm run test:recovery
 npm run typecheck
 npm run lint
 npm run build

@@ -1,0 +1,70 @@
+name: Encrypted database backup
+
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      initialize:
+        description: Initialize the dedicated empty repository (first run only)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ponte-database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: vars.PONTE_BACKUPS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PGHOST: ${{ secrets.BACKUP_PGHOST }}
+      PGDATABASE: ${{ secrets.BACKUP_PGDATABASE }}
+      PGUSER: ${{ secrets.BACKUP_PGUSER }}
+      PGPASSWORD: ${{ secrets.BACKUP_PGPASSWORD }}
+      PGSSLMODE: require
+      PRIVATE_STORAGE_DRIVER: database
+      RESTIC_REPOSITORY: rclone:gdrive:ponte-backups/production
+      RESTIC_PASSWORD: ${{ secrets.BACKUP_RESTIC_PASSWORD }}
+      RCLONE_CONFIG_GDRIVE_TYPE: drive
+      RCLONE_CONFIG_GDRIVE_SCOPE: drive.file
+      RCLONE_CONFIG_GDRIVE_CLIENT_ID: ${{ secrets.BACKUP_DRIVE_CLIENT_ID }}
+      RCLONE_CONFIG_GDRIVE_CLIENT_SECRET: ${{ secrets.BACKUP_DRIVE_CLIENT_SECRET }}
+      RCLONE_CONFIG_GDRIVE_TOKEN: ${{ secrets.BACKUP_DRIVE_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Build PostgreSQL 18 backup tools
+        run: docker build -f scripts/backup.Dockerfile -t ponte-backup scripts
+      - name: Validate Drive credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          for name in RCLONE_CONFIG_GDRIVE_CLIENT_ID RCLONE_CONFIG_GDRIVE_CLIENT_SECRET RCLONE_CONFIG_GDRIVE_TOKEN; do
+            [[ -n "${!name}" ]] || { echo "Missing $name" >&2; exit 1; }
+          done
+      - name: Back up and retain encrypted copies
+        shell: bash
+        env:
+          INITIALIZE: ${{ inputs.initialize == true && 'true' || 'false' }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e PGHOST -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSSLMODE \
+            -e PRIVATE_STORAGE_DRIVER -e RESTIC_REPOSITORY -e RESTIC_PASSWORD \
+            -e RCLONE_CONFIG_GDRIVE_TYPE -e RCLONE_CONFIG_GDRIVE_SCOPE \
+            -e RCLONE_CONFIG_GDRIVE_CLIENT_ID -e RCLONE_CONFIG_GDRIVE_CLIENT_SECRET \
+            -e RCLONE_CONFIG_GDRIVE_TOKEN -e INITIALIZE \
+            --entrypoint bash ponte-backup -euo pipefail -c '
+              if [[ "$INITIALIZE" == true ]]; then restic init; fi
+              bash /opt/ponte/backup-database.sh
+              restic forget --host ponte --tag ponte-database --group-by host,paths \
+                --keep-within 7d --keep-weekly 4 --keep-monthly 3 --prune
+            '
+      - name: Failure instructions
+        if: failure()
+        run: echo 'Backup failed. Follow docs/backup-recovery.md; check Actions notifications and the age of the last successful snapshot.' >> "$GITHUB_STEP_SUMMARY"

@@ -6,10 +6,19 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-if (process.argv.slice(2).some((arg) => arg !== '--security-only')) {
-  throw new Error('Usage: test-integration.mjs [--security-only]');
+if (
+  process.argv
+    .slice(2)
+    .some((arg) => !['--security-only', '--recovery-only'].includes(arg))
+) {
+  throw new Error(
+    'Usage: test-integration.mjs [--security-only|--recovery-only]',
+  );
 }
+const recoveryOnly = process.argv.includes('--recovery-only');
 const securityOnly = process.argv.includes('--security-only');
+if (securityOnly && recoveryOnly)
+  throw new Error('Choose one integration mode.');
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const api = join(root, 'apps/api');
 const apiRequire = createRequire(join(api, 'package.json'));
@@ -20,7 +29,9 @@ const storage = mkdtempSync(join(tmpdir(), 'ponte-ci-'));
 const env = {
   ...process.env,
   NODE_ENV: 'test',
+  RECOVERY_DRILL: '',
   PONTE_TEST_POSTGRES_DB: database,
+  PONTE_TEST_POSTGRES_VERSION: recoveryOnly ? '18' : '17',
   PONTE_TEST_POSTGRES_PASSWORD: randomBytes(36).toString('base64url'),
   JWT_ACCESS_SECRET: randomBytes(48).toString('base64url'),
   JWT_REFRESH_SECRET: randomBytes(48).toString('base64url'),
@@ -75,6 +86,7 @@ const dockerPrefix = nativeDocker
       'env',
       `PONTE_TEST_POSTGRES_DB=${env.PONTE_TEST_POSTGRES_DB}`,
       `PONTE_TEST_POSTGRES_PASSWORD=${env.PONTE_TEST_POSTGRES_PASSWORD}`,
+      `PONTE_TEST_POSTGRES_VERSION=${env.PONTE_TEST_POSTGRES_VERSION}`,
       'docker',
     ];
 const composeArgs = [
@@ -104,7 +116,9 @@ wslSession?.on('error', () => {
 });
 
 try {
-  console.log(`Starting isolated PostgreSQL 17 (${project}).`);
+  console.log(
+    `Starting isolated PostgreSQL ${env.PONTE_TEST_POSTGRES_VERSION} (${project}).`,
+  );
   compose('up', '-d', '--wait', '--wait-timeout', '120');
   const binding = run(docker, [...composeArgs, 'port', 'postgres', '5432'], {
     capture: true,
@@ -138,7 +152,45 @@ try {
     'CREATE ROLE church_runtime NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS',
   );
   node(apiRequire.resolve('prisma/build/index.js'), ['migrate', 'deploy']);
-  if (!securityOnly)
+  if (recoveryOnly) {
+    compose(
+      'exec',
+      '-T',
+      '--user',
+      'root',
+      'postgres',
+      'apk',
+      'add',
+      '--no-cache',
+      'bash',
+      'restic',
+      'rclone',
+      'diffutils',
+    );
+    for (const file of [
+      'backup-database.sh',
+      'restore-database.sh',
+      'test-recovery.sh',
+    ]) {
+      compose('cp', `scripts/${file}`, `postgres:/tmp/${file}`);
+    }
+    compose(
+      'exec',
+      '-T',
+      'postgres',
+      'env',
+      'PGHOST=127.0.0.1',
+      `PGDATABASE=${database}`,
+      'PGUSER=church_test',
+      `PGPASSWORD=${env.PONTE_TEST_POSTGRES_PASSWORD}`,
+      'bash',
+      '/tmp/test-recovery.sh',
+    );
+    url.pathname = '/ponte_restore_drill';
+    env.DATABASE_URL = env.TEST_DATABASE_URL = url.toString();
+    env.RECOVERY_DRILL = 'true';
+  }
+  if (!securityOnly && !recoveryOnly)
     node(jest, [
       '--config',
       'jest.integration.config.cjs',
@@ -165,6 +217,7 @@ try {
     '--runInBand',
     '--runTestsByPath',
     'test/database-runtime.e2e-spec.ts',
+    ...(recoveryOnly ? ['test/recovery.e2e-spec.ts'] : []),
   ]);
 } catch (error) {
   console.error(error.message);

@@ -708,6 +708,11 @@ O runner provisiona um banco descartável dedicado no Docker Compose de testes,
 sem reutilizar a conexão da aplicação. Consulte [CI e testes locais](docs/ci.md)
 e [o acabamento e a validação](docs/UX_FINISH.md).
 
+Backup encriptado para Google Drive e ensaio local de restauração:
+[procedimento de backup e recuperação](docs/backup-recovery.md).
+Execute `npm run test:recovery` para validar a recuperação num PostgreSQL 18
+descartável, incluindo documentos e privilégios da API.
+
 ## Operação e vida da igreja — Etapa 9
 
 Visitantes e eventos foram ampliados preservando seus dados e endpoints legados.
