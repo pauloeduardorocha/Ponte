@@ -67,7 +67,9 @@ da auditoria:
 - `GET /api/v1/audit/frontend-errors/:id`: registro completo; 404 se ausente.
   Pagina aceita 1 a 100000; pageSize aceita 1 a 100.
 
-Cada registro persistido gera email transacional pela Bird com todos os campos
+Registros com `apiStatus` 401 ou 403 são persistidos e continuam disponíveis na
+auditoria, mas não geram email. Os demais registros persistidos geram email
+transacional pela Bird com todos os campos
 em tabela HTML escapada e texto simples. Os dados passam pela limpeza existente
 e a versao do cliente e preservada. Configure `FRONTEND_ERROR_EMAIL_TO` no
 ambiente privado da API, junto de `BIRD_API_KEY` e `BIRD_EMAIL_FROM`.

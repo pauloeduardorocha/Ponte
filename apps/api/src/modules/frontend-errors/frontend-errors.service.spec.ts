@@ -97,6 +97,23 @@ describe('Frontend error alerts', () => {
     send.mockRejectedValue(new Error('provider unavailable'));
     await expect(service.create(dto)).resolves.toEqual({ accepted: true });
   });
+  it.each([401, 403])('persists HTTP %i without sending an email', async (apiStatus) => {
+    const { service, send, create } = setup();
+    await expect(
+      service.create({ ...dto, eventType: 'api', apiStatus }),
+    ).resolves.toEqual({ accepted: true });
+    expect(create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ apiStatus }),
+      }),
+    );
+    expect(send).not.toHaveBeenCalled();
+  });
+  it.each([400, 404, 429, 500, 503])('continues emailing HTTP %i', async (apiStatus) => {
+    const { service, send } = setup();
+    await service.create({ ...dto, eventType: 'api', apiStatus });
+    expect(send).toHaveBeenCalledTimes(1);
+  });
   it('does not send when saving fails', async () => {
     const { service, send, create } = setup();
     create.mockRejectedValue(new Error('database unavailable'));

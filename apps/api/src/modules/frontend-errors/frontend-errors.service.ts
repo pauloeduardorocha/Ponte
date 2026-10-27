@@ -86,6 +86,9 @@ export class FrontendErrorsService {
         logs,
       },
     });
+    if (dto.apiStatus === 401 || dto.apiStatus === 403) {
+      return { accepted: true };
+    }
     const to = this.config.get<string>('FRONTEND_ERROR_EMAIL_TO', '').trim();
     if (to && this.email.configured) {
       const escape = (value: string) =>
