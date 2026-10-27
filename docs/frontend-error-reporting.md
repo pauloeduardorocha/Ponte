@@ -67,6 +67,22 @@ da auditoria:
 - `GET /api/v1/audit/frontend-errors/:id`: registro completo; 404 se ausente.
   Pagina aceita 1 a 100000; pageSize aceita 1 a 100.
 
+### Gráficos e indicadores
+
+`GET /api/v1/audit/frontend-errors/stats` exige as mesmas permissões de auditoria
+e retorna `{ rows: [{ kind, label, count }] }`. A agregação ocorre no Postgres,
+sem carregar mensagens, stacks ou identificadores de utilizadores no navegador.
+O período inclui hoje e os 29 dias anteriores, com limites de calendário em UTC,
+usando `created_at` (hora de recebimento). A timeline inclui dias com zero erros.
+
+A página apresenta pizza por tipo, evolução diária com valores consultáveis,
+total do período, total de hoje, utilizadores identificados distintos (exclui
+registros sem utilizador) e falhas HTTP 5xx. Rankings mostram até oito status
+HTTP, rotas, versões, navegadores e sistemas operativos mais frequentes, com
+categorias explícitas para dados ausentes. Os gráficos incluem 401 e 403,
+mesmo sem alertas por email, e independem da paginação da tabela. Falhas no
+carregamento das estatísticas não impedem a consulta da lista ou dos detalhes.
+
 Registros com `apiStatus` 401 ou 403 são persistidos e continuam disponíveis na
 auditoria, mas não geram email. Os demais registros persistidos geram email
 transacional pela Bird com todos os campos

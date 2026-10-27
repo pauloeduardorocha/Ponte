@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import { apiRequest } from '../lib/api';
 import { formatDateTime } from '../lib/format';
+import { FrontendErrorCharts } from './FrontendErrorCharts';
 
 interface ErrorSummary {
   id: string;
@@ -57,6 +58,7 @@ export function FrontendErrorsPage() {
       <Typography color="text.secondary">
         Ocorrências dos últimos 30 dias, da mais recente para a mais antiga.
       </Typography>
+      <FrontendErrorCharts />
       {errors.isError && (
         <Alert severity="error">
           Não foi possível carregar os erros de frontend.

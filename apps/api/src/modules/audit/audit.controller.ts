@@ -10,6 +10,7 @@ import {
 import { Permission } from '../auth/permission.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import { PageQuery } from '../members/member.dto';
+import { frontendErrorStatsSql } from './frontend-error-stats';
 import {
   IsDateString,
   IsOptional,
@@ -113,6 +114,14 @@ export class AuditController {
       this.db.frontendErrorReport.count(),
     ]);
     return { items, total, page: q.page, pageSize: q.pageSize };
+  }
+
+  @Get('frontend-errors/stats')
+  async frontendErrorStats() {
+    const rows = await this.db.$queryRaw<
+      Array<{ kind: string; label: string; count: number }>
+    >(frontendErrorStatsSql);
+    return { rows };
   }
 
   @Get('frontend-errors/:id')

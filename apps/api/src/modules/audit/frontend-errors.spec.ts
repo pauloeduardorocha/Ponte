@@ -4,6 +4,15 @@ import { PageQuery } from '../members/member.dto';
 import { AuditController } from './audit.controller';
 
 describe('Audit frontend errors', () => {
+  it('returns aggregated statistics without loading report details', async () => {
+    const rows = [{ kind: 'metrics', label: 'total', count: 167 }];
+    const query = jest.fn().mockResolvedValue(rows);
+    const controller = new AuditController({
+      $queryRaw: query,
+    } as unknown as PrismaService);
+    await expect(controller.frontendErrorStats()).resolves.toEqual({ rows });
+    expect(query).toHaveBeenCalledTimes(1);
+  });
   it('pages on the server with a stable order and total', async () => {
     const findMany = jest.fn().mockResolvedValue([{ id: 'error' }]);
     const count = jest.fn().mockResolvedValue(51);
