@@ -147,6 +147,16 @@ devolve somente `{ processed, sent, pending, failed, skipped }`. O rate limit
 global continua aplicável. O workflow usa HTTPS, recusa redirecionamentos e
 registra apenas essas contagens; falhas definitivas/incertas tornam o job vermelho.
 
+Em produção, o workflow chama diretamente
+`https://www.igrejaponte.com/api/v1/internal/notification-outbox/process`.
+O domínio sem `www` redireciona com HTTP 308; não o usar para esta chamada, pois
+o worker recusa redirecionamentos e não deve encaminhar o segredo a outra origem.
+
+Publicação em 27/10/2026: API/web 1.1.6 e migration verificadas em produção,
+incluindo privilégios de `church_app`. O worker respondeu 401 sem credencial e
+201 com o segredo dedicado, com fila vazia e sem envios externos. A primeira
+execução do workflow deve confirmar também o secret/configuração do GitHub.
+
 A primeira tentativa após uma criação imediata funciona sem o agendamento.
 Recuperação após interrupção e retentativas dependem do worker ativo. Um canal
 temporariamente sem provedor configurado fica pendente até restabelecer a
