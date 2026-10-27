@@ -14,6 +14,7 @@ import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import * as D from './operations.dto';
 import { initialPasswordHash } from '../members/member-identity';
 import { PushService } from './push.service';
+import { NotificationOutboxService } from './notification-outbox.service';
 import type { PrivateUpload } from '../finance/storage.service';
 import { randomUUID } from 'node:crypto';
 import { occupiedRegistrations } from '../events/registration-capacity';
@@ -72,7 +73,14 @@ export class OperationsService {
     @Inject(NOTIFICATION_PROVIDERS)
     private readonly providers: NotificationProvider[],
     @Optional() private readonly push?: PushService,
+    @Optional() private readonly outbox?: NotificationOutboxService,
   ) {}
+  private get deliveries() {
+    return (
+      this.outbox ??
+      new NotificationOutboxService(this.db, this.providers, this.push)
+    );
+  }
   all(user: CurrentUser) {
     return user.permissions.includes('OPERATION_SCOPE_ALL');
   }
@@ -1886,7 +1894,7 @@ export class OperationsService {
               user,
             );
           }
-          return tx.notification.createManyAndReturn({
+          const notifications = await tx.notification.createManyAndReturn({
             data: ids.map((id) => ({
               ...message,
               ...(recipientMemberIds
@@ -1899,6 +1907,12 @@ export class OperationsService {
             })),
             select: { id: true },
           });
+          await this.deliveries.enqueue(
+            tx,
+            notifications.map((n) => n.id),
+            !!dto.scheduledAt,
+          );
+          return notifications;
         }
         const filters: Prisma.MemberWhereInput[] = [];
         if (smallGroupIds) {
@@ -1984,7 +1998,7 @@ export class OperationsService {
           throw new BadRequestException(
             'Nenhum membro ativo encontrado para esta seleção.',
           );
-        return tx.notification.createManyAndReturn({
+        const notifications = await tx.notification.createManyAndReturn({
           data: members.map((m) => ({
             ...message,
             recipientMemberId: m.id,
@@ -1995,13 +2009,21 @@ export class OperationsService {
           })),
           select: { id: true },
         });
+        await this.deliveries.enqueue(
+          tx,
+          notifications.map((n) => n.id),
+          !!dto.scheduledAt,
+        );
+        return notifications;
       });
       let sent = 0,
-        failed = 0;
+        failed = 0,
+        pending = dto.scheduledAt ? created.length : 0;
       if (!dto.scheduledAt) {
         for (const n of created) {
           const result = await this.notificationAction(n.id, user);
           if (result.status === 'SENT') sent++;
+          else if (result.status === 'PENDING') pending++;
           else failed++;
         }
       }
@@ -2009,14 +2031,15 @@ export class OperationsService {
         total: created.length,
         sent,
         failed,
-        pending: dto.scheduledAt ? created.length : 0,
-        status: dto.scheduledAt
-          ? 'PENDING'
-          : failed
-            ? sent
-              ? 'PARTIAL'
-              : 'FAILED'
-            : 'SENT',
+        pending,
+        status:
+          pending === created.length
+            ? 'PENDING'
+            : sent === created.length
+              ? 'SENT'
+              : failed === created.length
+                ? 'FAILED'
+                : 'PARTIAL',
       };
     }
     const created = await this.write(async (tx) => {
@@ -2025,58 +2048,22 @@ export class OperationsService {
         { memberId: dto.recipientMemberId, visitorId: dto.recipientVisitorId },
         user,
       );
-      return tx.notification.create({
+      const notification = await tx.notification.create({
         data: {
           ...message,
           scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : undefined,
           createdByUserId: user.id,
         },
       });
+      await this.deliveries.enqueue(tx, [notification.id], !!dto.scheduledAt);
+      return notification;
     });
     return dto.scheduledAt
       ? created
       : this.notificationAction(created.id, user);
   }
   async notificationAction(id: string, user: CurrentUser, cancel = false) {
-    const result = await this.write(async (tx) => {
-      await tx.$queryRaw`SELECT id FROM notifications WHERE id=${id}::uuid FOR UPDATE`;
-      const n = await tx.notification.findFirst({
-        where: { id, ...(!this.all(user) ? { createdByUserId: user.id } : {}) },
-      });
-      if (!n) throw new NotFoundException();
-      if (n.status !== 'PENDING')
-        throw new ConflictException('Notificação já processada.');
-      if (cancel)
-        return tx.notification.update({
-          where: { id },
-          data: { status: 'CANCELLED' },
-        });
-      if (n.scheduledAt && n.scheduledAt > new Date())
-        throw new ConflictException('Aguarde a data agendada.');
-      const provider = this.providers.find((p) => p.channel === n.channel);
-      if (!provider)
-        throw new ConflictException(
-          'Canal preparado; configure um provedor antes de enviar.',
-        );
-      try {
-        await provider.send(n, tx);
-      } catch {
-        return tx.notification.update({
-          where: { id },
-          data: {
-            status: 'FAILED',
-            error: 'Falha no provedor de comunicação.',
-          },
-        });
-      }
-      return tx.notification.update({
-        where: { id },
-        data: { status: 'SENT', sentAt: new Date(), error: null },
-      });
-    });
-    if (!cancel && result.channel === 'INTERNAL' && result.status === 'SENT')
-      await this.notifyInternal(result);
-    return result;
+    return this.deliveries.dispatch(id, user, cancel);
   }
   async notifyInternal(
     notification: Parameters<PushService['notifyInternal']>[0],

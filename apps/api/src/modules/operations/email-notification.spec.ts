@@ -10,6 +10,7 @@ import { DatabaseModule } from '../../database/database.module';
 import { PrismaService } from '../../database/prisma.service';
 import { PermissionGuard } from '../auth/permission.guard';
 import { OperationsModule } from './operations.controller';
+import { notificationDeliveryMock } from '../../../test/fixtures/notification-delivery-mock';
 
 const memberId = '63b80123-eefa-4f48-a877-6cfdcdd4b724';
 const visitorId = '73b80123-eefa-4f48-a877-6cfdcdd4b724';
@@ -26,6 +27,7 @@ describe('Email notifications HTTP flow (real providers, mocked Bird and databas
   let user: CurrentUser;
   const records = new Map<string, Notification>();
   const db = {
+    notificationDelivery: notificationDeliveryMock(),
     $transaction: jest.fn(),
     $queryRaw: jest.fn(),
     user: { findUnique: jest.fn() },
@@ -78,6 +80,8 @@ describe('Email notifications HTTP flow (real providers, mocked Bird and databas
   beforeEach(() => {
     jest.clearAllMocks();
     records.clear();
+    db.notificationDelivery.reset();
+    db.$queryRaw.mockImplementation(async () => [{ now: new Date() }]);
     user = {
       id: memberId,
       permissions: ['NOTIFICATION_SEND', 'OPERATION_SCOPE_ALL'],
@@ -153,6 +157,56 @@ describe('Email notifications HTTP flow (real providers, mocked Bird and databas
       .post(`/operations/notifications/${result.body.id}/send`)
       .expect(409);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reuses the exact serialized Bird body and stable key after a lost response', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('simulated lost response'));
+    const created = await request(app.getHttpServer())
+      .post('/operations/notifications')
+      .send({ ...payload, recipientMemberId: memberId })
+      .expect(201);
+    expect(created.body.status).toBe('PENDING');
+    await db.notificationDelivery.update({
+      where: { notificationId: created.body.id },
+      data: { availableAt: new Date(0) },
+    });
+    const result = await request(app.getHttpServer())
+      .post(`/operations/notifications/${created.body.id}/send`)
+      .expect(201);
+    expect(result.body.status).toBe('SENT');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const first = fetchMock.mock.calls[0]![1]!;
+    const retry = fetchMock.mock.calls[1]![1]!;
+    expect(typeof first.body).toBe('string');
+    expect(retry.body).toBe(first.body);
+    expect(retry.headers).toEqual(first.headers);
+  });
+
+  it('requires reconciliation if the Bird credential changes during an uncertain delivery', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('simulated lost response'));
+    const created = await request(app.getHttpServer())
+      .post('/operations/notifications')
+      .send({ ...payload, recipientMemberId: memberId })
+      .expect(201);
+    const row = await db.notificationDelivery.findUniqueOrThrow({
+      where: { notificationId: created.body.id },
+    });
+    expect(JSON.stringify(row.payload)).not.toContain('bk_eu1_test-key');
+    await db.notificationDelivery.update({
+      where: { notificationId: created.body.id },
+      data: { availableAt: new Date(0) },
+    });
+    const rotated = await application('bk_eu1_other-workspace');
+    try {
+      const result = await request(rotated.getHttpServer())
+        .post(`/operations/notifications/${created.body.id}/send`)
+        .expect(201);
+      expect(result.body.status).toBe('FAILED');
+      expect(result.body.error).toContain('sem confirmação');
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    } finally {
+      await rotated.close();
+    }
   });
 
   it.each([
@@ -241,13 +295,13 @@ describe('Email notifications HTTP flow (real providers, mocked Bird and databas
     expect(result.body).toEqual({
       total: 2,
       sent: 1,
-      failed: 1,
-      pending: 0,
+      failed: 0,
+      pending: 1,
       status: 'PARTIAL',
     });
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(
-      [...records.values()].find((n) => n.status === 'FAILED')?.error,
+      [...records.values()].find((n) => n.status === 'PENDING')?.error,
     ).toBe('Falha no provedor de comunicação.');
     const keys = fetchMock.mock.calls.map(
       ([, init]) =>

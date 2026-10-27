@@ -9,15 +9,23 @@ import { fileURLToPath } from 'node:url';
 if (
   process.argv
     .slice(2)
-    .some((arg) => !['--security-only', '--recovery-only'].includes(arg))
+    .some(
+      (arg) =>
+        ![
+          '--security-only',
+          '--recovery-only',
+          '--notifications-only',
+        ].includes(arg),
+    )
 ) {
   throw new Error(
-    'Usage: test-integration.mjs [--security-only|--recovery-only]',
+    'Usage: test-integration.mjs [--security-only|--recovery-only|--notifications-only]',
   );
 }
 const recoveryOnly = process.argv.includes('--recovery-only');
 const securityOnly = process.argv.includes('--security-only');
-if (securityOnly && recoveryOnly)
+const notificationsOnly = process.argv.includes('--notifications-only');
+if ([securityOnly, recoveryOnly, notificationsOnly].filter(Boolean).length > 1)
   throw new Error('Choose one integration mode.');
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const api = join(root, 'apps/api');
@@ -206,6 +214,14 @@ try {
       '--testPathIgnorePatterns',
       'health.e2e-spec.ts',
       'database-runtime.e2e-spec.ts',
+      ...(notificationsOnly
+        ? [
+            '--runTestsByPath',
+            'test/notification-outbox.e2e-spec.ts',
+            'test/notifications.e2e-spec.ts',
+            'test/operations.e2e-spec.ts',
+          ]
+        : []),
     ]);
 
   // Exercise production privileges on the same disposable container, after the

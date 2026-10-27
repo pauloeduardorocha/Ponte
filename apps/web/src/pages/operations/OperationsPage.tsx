@@ -573,12 +573,12 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                 resource !== 'notifications'
                   ? 'Cadastro salvo com sucesso.'
                   : batch?.total !== undefined
-                    ? `Destinatários: ${batch.total}. Enviadas: ${batch.sent}. Falhas: ${batch.failed}. Agendadas: ${batch.pending}.`
+                    ? `Destinatários: ${batch.total}. Enviadas: ${batch.sent}. Falhas: ${batch.failed}. Pendentes: ${batch.pending}.`
                     : status === 'SENT'
                       ? 'Notificação enviada.'
                       : status === 'FAILED'
                         ? 'Não foi possível enviar a notificação. Consulte a situação do envio.'
-                        : 'Notificação salva com agendamento.',
+                        : 'Notificação salva. Entrega pendente.',
               severity:
                 resource === 'notifications' &&
                 (status === 'FAILED' || status === 'PARTIAL')

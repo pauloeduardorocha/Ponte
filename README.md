@@ -786,6 +786,25 @@ dispositivo, tanto no navegador como na PWA. Consulte a [configuração de push,
 contratos e limitações](docs/notifications.md). Email, SMS e WhatsApp continuam
 dependendo de provedores externos.
 
+Os envios administrativos agora gravam uma **outbox** na mesma transação da
+notificação e chamam o provedor após o commit. E-mails têm até três tentativas
+na janela idempotente; entregas sem confirmação ficam sinalizadas para revisão.
+Agendamentos continuam com envio manual. A interface distingue mensagens
+enviadas, falhas e pendentes (incluindo retentativas).
+
+Para ativar a recuperação de envios interrompidos:
+
+1. Aplicar a migration/privilégios com `npm run db:deploy --workspace @church/api`
+   antes de iniciar a nova versão da API.
+2. Configurar o mesmo `NOTIFICATION_OUTBOX_SECRET` exclusivo (32 ou mais caracteres
+   aleatórios) na API Vercel e nos secrets do GitHub Actions.
+3. Definir a variável GitHub `PONTE_NOTIFICATION_OUTBOX_ENABLED=true`.
+4. Executar **Actions → Process notification outbox → Run workflow** e conferir
+   as contagens. O processamento usa lotes de até dez mensagens, a cada cinco
+   minutos quando o agendamento está habilitado.
+
+Consultar [estados, garantias, limites e reconciliação](docs/notifications.md#outbox-de-notificações-operacionais).
+
 ## Faturas do e-fatura
 
 A busca está integrada à importação bancária e o scraper faz parte da API.

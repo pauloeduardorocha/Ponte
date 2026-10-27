@@ -3,7 +3,16 @@ import type { Notification, Prisma } from '@prisma/client';
 import { PushService } from './push.service';
 export interface NotificationProvider {
   readonly channel: string;
-  send(notification: Notification, tx: Prisma.TransactionClient): Promise<void>;
+  readonly idempotentRetry?: boolean;
+  prepare?(
+    notification: Notification,
+    db: Prisma.TransactionClient,
+  ): Promise<Prisma.InputJsonObject>;
+  send(
+    notification: Notification,
+    db: Prisma.TransactionClient,
+    payload?: Prisma.JsonValue | null,
+  ): Promise<void>;
 }
 @Injectable()
 export class InternalNotificationProvider implements NotificationProvider {

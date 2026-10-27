@@ -7,6 +7,7 @@ import type { NotificationProvider } from './notification.provider';
 @Injectable()
 export class EmailNotificationProvider implements NotificationProvider {
   readonly channel = 'EMAIL';
+  readonly idempotentRetry = true;
 
   constructor(private readonly email: BirdEmailService) {}
 
@@ -14,8 +15,10 @@ export class EmailNotificationProvider implements NotificationProvider {
     return this.email.configured;
   }
 
-  async send(notification: Notification, tx: Prisma.TransactionClient) {
-    // Reuse the locked delivery transaction instead of a second pool connection.
+  async prepare(
+    notification: Notification,
+    tx: Prisma.TransactionClient,
+  ): Promise<Prisma.InputJsonObject> {
     let recipient: string | null | undefined;
     if (notification.recipientMemberId && !notification.recipientVisitorId) {
       const member = await tx.member.findFirst({
@@ -58,14 +61,28 @@ export class EmailNotificationProvider implements NotificationProvider {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;')
       .replace(/\r\n|\r|\n/g, '<br>');
-    await this.email.send({
-      to,
-      subject: notification.subject?.trim() || 'Notificação — Igreja Ponte',
-      text: notification.content,
-      html: `<p>${html}</p>`,
-      // Free-form announcements must respect the provider's unsubscribe list.
-      category: 'marketing',
-      idempotencyKey: `notification-${notification.id}`,
-    });
+    return {
+      body: this.email.serialize({
+        from: this.email.sender,
+        to,
+        subject: notification.subject?.trim() || 'Notificação — Igreja Ponte',
+        text: notification.content,
+        html: `<p>${html}</p>`,
+        // Free-form announcements must respect the provider's unsubscribe list.
+        category: 'marketing',
+      }),
+      credentialFingerprint: this.email.credentialFingerprint,
+    };
+  }
+  async send(
+    notification: Notification,
+    db: Prisma.TransactionClient,
+    payload?: Prisma.JsonValue | null,
+  ) {
+    const prepared = payload ?? (await this.prepare(notification, db));
+    const body = (prepared as Prisma.JsonObject).body;
+    if (typeof body !== 'string')
+      throw new Error('Payload de e-mail indisponível.');
+    await this.email.sendSerialized(body, `notification-${notification.id}`);
   }
 }

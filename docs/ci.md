@@ -35,6 +35,11 @@ npm run build
 sem banco incluem os testes HTTP de health com Prisma simulado e os testes
 Node do worker e-Fatura; os testes do frontend usam Vitest/jsdom.
 
+Para verificar especificamente notificações/outbox, execute
+`npm run test:integration -- --notifications-only`: são incluídos os testes reais
+de notificações, operação e falhas da outbox, seguidos da verificação do login
+restrito. O CI normal também executa essas suítes na integração completa.
+
 ## PostgreSQL de testes
 
 `npm run test:integration` prepara o shared/Prisma e executa
