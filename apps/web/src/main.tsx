@@ -9,6 +9,7 @@ import './styles.css';
 import { PwaControls } from './components/PwaControls';
 import { getAccessToken } from './lib/api';
 import { initFrontendErrorReporting } from './lib/frontend-error-reporting';
+import { FrontendErrorBoundary } from './components/FrontendErrorBoundary';
 
 initFrontendErrorReporting(getAccessToken);
 
@@ -22,9 +23,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App>
-          <PwaControls />
-        </App>
+        <FrontendErrorBoundary>
+          <App />
+        </FrontendErrorBoundary>
+        <PwaControls />
         <Analytics />
         <SpeedInsights />
       </BrowserRouter>

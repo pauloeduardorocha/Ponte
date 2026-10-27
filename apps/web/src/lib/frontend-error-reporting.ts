@@ -1,4 +1,5 @@
 import { APP_VERSION } from './app-version';
+import { checkForAppUpdate } from './app-update';
 
 type EventType = 'runtime' | 'unhandled_rejection' | 'console' | 'api';
 type Report = {
@@ -86,6 +87,7 @@ export function reportFrontendError(eventType: EventType, message: unknown, extr
   if (pending.length >= 20) pending.shift();
   pending.push(baseReport(eventType, message, extra));
   void flush();
+  if (eventType !== 'api') void checkForAppUpdate();
 }
 
 export function reportApiFailure(details: { path: string; method: string; status?: number; requestId?: string; message: string }) {

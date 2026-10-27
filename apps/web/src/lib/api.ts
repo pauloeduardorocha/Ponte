@@ -1,5 +1,6 @@
 import type { AuthSession } from './types';
 import { reportApiFailure } from './frontend-error-reporting';
+import { messageAfterUpdateCheck } from './app-update';
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
@@ -150,7 +151,12 @@ async function send(
       method: options.method ?? 'GET',
       message: 'Falha de rede ao chamar API.',
     });
-    throw new ApiError(0, DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE);
+    throw new ApiError(
+      0,
+      await messageAfterUpdateCheck(
+        DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE,
+      ),
+    );
   }
 
   if (!response.ok) {
@@ -176,7 +182,11 @@ async function send(
     });
     throw new ApiError(
       response.status,
-      withErrorReference(extractMessage(data, response.status), data),
+      response.status >= 500
+        ? await messageAfterUpdateCheck(
+            withErrorReference(extractMessage(data, response.status), data),
+          )
+        : withErrorReference(extractMessage(data, response.status), data),
       data,
     );
   }

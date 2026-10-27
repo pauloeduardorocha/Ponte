@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Alert,
   Box,
@@ -11,6 +11,11 @@ import {
 } from '@mui/material';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { applyPwaUpdate } from '../lib/pwa-update';
+import {
+  getAvailableVersion,
+  subscribeToAppUpdate,
+  UPDATE_MESSAGE,
+} from '../lib/app-update';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
@@ -26,6 +31,11 @@ interface RelatedApp {
 }
 
 export function PwaControls() {
+  const availableVersion = useSyncExternalStore(
+    subscribeToAppUpdate,
+    getAvailableVersion,
+  );
+  const [dismissedVersion, setDismissedVersion] = useState<string | null>(null);
   const [installPrompt, setInstallPrompt] = useState<InstallPrompt | null>(
     null,
   );
@@ -61,7 +71,7 @@ export function PwaControls() {
     setUpdating(true);
     setUpdateError(null);
     try {
-      await applyPwaUpdate();
+      await applyPwaUpdate(undefined, !!availableVersion);
     } catch (error) {
       setUpdateError(
         error instanceof Error
@@ -169,12 +179,22 @@ export function PwaControls() {
         </DialogActions>
       </Dialog>
       <Snackbar
-        open={needRefresh}
+        open={
+          needRefresh ||
+          (!!availableVersion && availableVersion !== dismissedVersion)
+        }
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
           severity={updateError ? 'error' : 'info'}
-          onClose={updating ? undefined : () => setNeedRefresh(false)}
+          onClose={
+            updating
+              ? undefined
+              : () => {
+                  setNeedRefresh(false);
+                  setDismissedVersion(availableVersion);
+                }
+          }
           action={
             <Button
               color="inherit"
@@ -192,7 +212,9 @@ export function PwaControls() {
           {updateError ??
             (updating
               ? 'A aplicar a nova versão…'
-              : 'Nova versão disponível. Guarde as alterações antes de atualizar.')}
+              : availableVersion
+                ? UPDATE_MESSAGE
+                : 'Nova versão disponível. Guarde as alterações antes de atualizar.')}
         </Alert>
       </Snackbar>
     </>

@@ -29,11 +29,16 @@ function waitForState(worker: ServiceWorker, ready: () => boolean) {
 }
 
 /** Reload only after the user accepts and the replacement worker is active. */
-export async function applyPwaUpdate(reload = () => window.location.reload()) {
+export async function applyPwaUpdate(
+  reload = () => window.location.reload(),
+  checkForUpdate = false,
+) {
   const registration =
     'serviceWorker' in navigator
       ? await navigator.serviceWorker.getRegistration()
       : undefined;
+
+  if (checkForUpdate && registration) await registration.update();
 
   // Another tab may already have activated the version advertised by the banner.
   if (!registration?.waiting && !registration?.installing) {

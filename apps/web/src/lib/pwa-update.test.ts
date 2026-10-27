@@ -25,6 +25,29 @@ afterEach(() => {
 });
 
 describe('User-confirmed PWA update', () => {
+  it('checks the registration on explicit acceptance before activating the new worker', async () => {
+    const worker = new Worker();
+    const registration = {
+      waiting: null as Worker | null,
+      installing: null,
+      update: vi.fn(),
+    };
+    registration.update.mockImplementation(async () => {
+      registration.waiting = worker;
+    });
+    Object.defineProperty(navigator, 'serviceWorker', {
+      configurable: true,
+      value: { getRegistration: vi.fn().mockResolvedValue(registration) },
+    });
+    const reload = vi.fn();
+    const result = applyPwaUpdate(reload, true);
+    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledOnce());
+    expect(registration.update).toHaveBeenCalledOnce();
+    expect(reload).not.toHaveBeenCalled();
+    worker.change('activated');
+    await result;
+    expect(reload).toHaveBeenCalledOnce();
+  });
   it('reloads only after the waiting worker is activated, even without a controlling event', async () => {
     const worker = new Worker();
     register(worker);

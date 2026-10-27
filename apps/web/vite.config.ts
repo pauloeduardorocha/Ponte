@@ -3,6 +3,7 @@ import { loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { resolve } from 'node:path';
+import { APP_VERSION } from './src/lib/app-version';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, resolve(process.cwd(), '..', '..'), '');
@@ -10,6 +11,16 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      {
+        name: 'ponte-app-version',
+        generateBundle() {
+          this.emitFile({
+            type: 'asset',
+            fileName: 'app-version.json',
+            source: JSON.stringify({ version: APP_VERSION }),
+          });
+        },
+      },
       VitePWA({
         registerType: 'prompt',
         includeAssets: ['logo.png', 'favicon.ico', 'icons/*.png'],

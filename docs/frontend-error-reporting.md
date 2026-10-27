@@ -77,3 +77,31 @@ resposta `{ accepted: true }`. Nao ha retentativa automatica. A chave de
 idempotencia usa o ID do registro. O pedido aguarda o envio, com timeout de
 10 segundos do adaptador. A retencao continua em 30 dias, com limpeza oportunista
 a cada seis horas. Aceitacao pela Bird nao comprova entrega na caixa de entrada.
+
+## Verificação de versão após erros
+
+O build publica `/app-version.json` com a mesma `APP_VERSION` usada no rodapé
+e nos relatórios. Esse arquivo não entra no precache do PWA. A consulta usa
+`cache: no-store`, URL com timestamp e não depende da API nem da autenticação.
+
+Após registrar falhas de rede ou HTTP 5xx, o cliente aguarda até 2,5 segundos
+para consultar a versão antes de apresentar a mensagem. Se houver uma versão
+semanticamente superior, apresenta um aviso com botão **Atualizar**. Erros de
+validação, sessão e permissão (HTTP 4xx) mantêm suas mensagens e fluxos existentes.
+Consultas simultâneas compartilham o mesmo pedido e há intervalo mínimo de
+10 segundos entre verificações, evitando consultas em cascata.
+
+Erros globais e de console também disparam a consulta. Uma barreira de erros
+React registra falhas de renderização (incluindo carregamento de rotas) e mostra
+uma mensagem de espera antes de escolher entre o aviso de atualização e a
+mensagem normal de falha. Os controles de atualização ficam fora dessa barreira.
+Falhas de rede, versão igual/antiga, resposta inválida ou timeout na consulta
+preservam a mensagem original, sem gerar novos relatórios por causa da consulta.
+
+A atualização só acontece depois do clique: o service worker verifica o novo
+build e aguarda sua ativação antes de recarregar. Sem service worker, o botão
+recarrega a página. Fechar o aviso mantém os dados em memória. Atualizar pode
+descartar formulários e anexos ainda não guardados; o aviso pede para guardá-los.
+Nenhuma operação de gravação é repetida por esse mecanismo. A renovação de
+sessão em 401 continua com o comportamento anterior. Os relatórios mantêm a
+versão do cliente que sofreu a falha, mesmo quando há atualização disponível.

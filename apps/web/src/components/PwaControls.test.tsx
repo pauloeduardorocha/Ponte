@@ -13,6 +13,13 @@ import { applyPwaUpdate } from '../lib/pwa-update';
 const sw = vi.hoisted(() => ({
   refresh: false,
   dismiss: vi.fn(),
+  version: null as string | null,
+}));
+vi.mock('../lib/app-update', () => ({
+  getAvailableVersion: () => sw.version,
+  subscribeToAppUpdate: () => () => {},
+  UPDATE_MESSAGE:
+    'Há uma atualização disponível. Guarde as alterações e atualize para continuar.',
 }));
 vi.mock('virtual:pwa-register/react', () => ({
   useRegisterSW: () => ({
@@ -24,6 +31,7 @@ vi.mock('../lib/pwa-update', () => ({ applyPwaUpdate: vi.fn() }));
 beforeEach(() => {
   localStorage.clear();
   sw.refresh = false;
+  sw.version = null;
   vi.mocked(applyPwaUpdate).mockReset().mockResolvedValue(undefined);
   vi.stubGlobal(
     'matchMedia',
@@ -37,25 +45,53 @@ afterEach(() => {
 });
 
 describe('PWA installation and updates', () => {
+  it('offers a version discovered after an error even without a waiting worker', () => {
+    sw.version = '99.0.0';
+    render(<PwaControls />);
+    expect(
+      screen.getByText(/Há uma atualização disponível/),
+    ).toBeInTheDocument();
+    expect(applyPwaUpdate).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
+    expect(applyPwaUpdate).toHaveBeenCalledWith(undefined, true);
+  });
   it('remembers dismissal of the iOS installation instructions', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
     const view = render(<PwaControls />);
     fireEvent.click(screen.getByRole('button', { name: 'Instalar aplicação' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Já instalei / Não mostrar novamente' }));
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Já instalei / Não mostrar novamente',
+      }),
+    );
     view.unmount();
     render(<PwaControls />);
-    expect(screen.queryByRole('button', { name: 'Instalar aplicação' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Instalar aplicação' }),
+    ).not.toBeInTheDocument();
   });
 
   it('hides installation when the browser detects this installed PWA', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
-    const getInstalledRelatedApps = vi.fn().mockResolvedValue([
-      { platform: 'webapp', url: new URL('/manifest.webmanifest', window.location.origin).href },
-    ]);
-    Object.defineProperty(navigator, 'getInstalledRelatedApps', { configurable: true, value: getInstalledRelatedApps });
+    const getInstalledRelatedApps = vi
+      .fn()
+      .mockResolvedValue([
+        {
+          platform: 'webapp',
+          url: new URL('/manifest.webmanifest', window.location.origin).href,
+        },
+      ]);
+    Object.defineProperty(navigator, 'getInstalledRelatedApps', {
+      configurable: true,
+      value: getInstalledRelatedApps,
+    });
     try {
       render(<PwaControls />);
-      await waitFor(() => expect(screen.queryByRole('button', { name: 'Instalar aplicação' })).not.toBeInTheDocument());
+      await waitFor(() =>
+        expect(
+          screen.queryByRole('button', { name: 'Instalar aplicação' }),
+        ).not.toBeInTheDocument(),
+      );
     } finally {
       Reflect.deleteProperty(navigator, 'getInstalledRelatedApps');
     }
@@ -63,12 +99,21 @@ describe('PWA installation and updates', () => {
 
   it('preserves manual installation if related-app detection fails', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
-    const getInstalledRelatedApps = vi.fn().mockRejectedValue(new Error('Unavailable'));
-    Object.defineProperty(navigator, 'getInstalledRelatedApps', { configurable: true, value: getInstalledRelatedApps });
+    const getInstalledRelatedApps = vi
+      .fn()
+      .mockRejectedValue(new Error('Unavailable'));
+    Object.defineProperty(navigator, 'getInstalledRelatedApps', {
+      configurable: true,
+      value: getInstalledRelatedApps,
+    });
     try {
       render(<PwaControls />);
-      await act(async () => { await Promise.resolve(); });
-      expect(screen.getByRole('button', { name: 'Instalar aplicação' })).toBeInTheDocument();
+      await act(async () => {
+        await Promise.resolve();
+      });
+      expect(
+        screen.getByRole('button', { name: 'Instalar aplicação' }),
+      ).toBeInTheDocument();
     } finally {
       Reflect.deleteProperty(navigator, 'getInstalledRelatedApps');
     }
