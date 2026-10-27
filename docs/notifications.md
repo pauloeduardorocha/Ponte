@@ -34,7 +34,7 @@ Não há atualmente estados separados de rejeição de reembolso nem lembretes r
 - `roleIds`: array de UUIDs das roles de contas ativas vinculadas a membros; exige também `OPERATION_SCOPE_ALL`.
 - `allMembers: true`: todos os membros ativos; exige também `OPERATION_SCOPE_ALL`.
 
-Arrays aceitam entre 1 e 100 IDs. A seleção inclui a união dos participantes atuais (`active: true`, `leftAt: null`) e dos líderes, co-líderes e anfitriões cadastrados nos grupos/ministérios. Membros inativos ou anonimizados são excluídos. Cada membro recebe uma única mensagem mesmo se pertencer a várias opções selecionadas. Cada mensagem conserva seu próprio estado de envio e leitura no histórico e na caixa pessoal. Os destinatários do agendamento são definidos no momento da criação; o envio após a data continua manual, por mensagem.
+Arrays aceitam entre 1 e 100 IDs. A seleção inclui a união dos participantes atuais (`active: true`, `leftAt: null`) e dos líderes, co-líderes e anfitriões cadastrados nos grupos/ministérios. Membros inativos ou anonimizados são excluídos. Cada membro recebe uma única mensagem mesmo se pertencer a várias opções selecionadas. Cada mensagem conserva seu próprio estado de envio e leitura no histórico e na caixa pessoal. Os destinatários do agendamento são definidos no momento da criação; o envio é automático a partir da data, na próxima execução disponível do worker.
 
 O envio coletivo retorna `{ total, sent, failed, pending, status }`, com status `SENT`, `FAILED`, `PARTIAL` ou `PENDING`. Falhas do provedor em um destinatário não impedem a tentativa aos seguintes. `pending` inclui mensagens agendadas e mensagens aguardando retentativa; a interface apresenta **Pendentes**. Seleção ambígua ou sem membros ativos retorna 400; acesso global sem escopo retorna 403; grupo, ministério ou role inexistente/inacessível retorna 404. O envio individual mantém a resposta de notificação, incluindo seu estado.
 
@@ -57,7 +57,7 @@ O formulário usa multiselect com pesquisa, caixas de seleção e nomes selecion
 
 Enviar INTERNAL preserva a mensagem no banco antes de tentar avisar os dispositivos inscritos. Uma falha push não desfaz a entrega interna. PUSH usa a mesma caixa de entrada e exige configuração e ao menos um dispositivo que aceite o envio; falhas ficam FAILED. Inscrições expiradas (404/410) são removidas. O alerta usa o assunto como título (ou “A Ponte” quando ausente) e a mensagem como corpo. Mensagens longas recebem uma prévia com reticências para respeitar o limite de tamanho do push; a mensagem completa continua na caixa interna. O clique abre `/inbox` e exige a sessão normal.
 
-Criar uma notificação sem `scheduledAt` persiste a mensagem e a intenção de entrega na mesma transação e tenta enviá-la depois do commit. A resposta pode ser `SENT`, `FAILED` ou `PENDING` quando aguarda uma retentativa. Canais sem provedor retornam 409 antes de criar um envio imediato. Com `scheduledAt`, o registro fica `PENDING` e a intenção fica retida para envio manual após a data; o worker não libera agendamentos automaticamente. Notificações de eventos também avisam os dispositivos inscritos após persistir as mensagens.
+Criar uma notificação sem `scheduledAt` persiste a mensagem e a intenção de entrega na mesma transação e tenta enviá-la depois do commit. A resposta pode ser `SENT`, `FAILED` ou `PENDING` quando aguarda uma retentativa. Canais sem provedor retornam 409 antes de criar um envio imediato. Com `scheduledAt`, o registro fica `PENDING` e a intenção fica `HELD` até a data; o worker a libera automaticamente a partir desse instante, segundo o relógio do PostgreSQL. Isso também vale para agendamentos pendentes já existentes. Datas futuras são filtradas antes de limitar o lote, para não bloquear mensagens vencidas. O horário é um limite mínimo: o envio depende da próxima execução do worker, prevista a cada cinco minutos e sujeita a atrasos do GitHub, indisponibilidade e tamanho da fila. Notificações de eventos também avisam os dispositivos inscritos após persistir as mensagens.
 
 ## Outbox de notificações operacionais
 
@@ -71,7 +71,7 @@ esta outbox cobre os envios administrativos de `/operations/notifications`.
 
 | Estado da intenção | Comportamento                                                                               |
 | ------------------ | ------------------------------------------------------------------------------------------- |
-| `HELD`             | Agendamento ou mensagem PENDING anterior à migration; envio manual preservado               |
+| `HELD`             | Agendamento aguardando a data; pendência antiga sem data continua manual               |
 | `READY`            | Intenção confirmada aguardando primeira tentativa ou backoff                                |
 | `PROCESSING`       | Reserva de dois minutos com token exclusivo; envio e cancelamento concorrentes retornam 409 |
 | `DELIVERED`        | Persistência interna ou aceitação pelo provedor confirmada; notificação `SENT`              |
@@ -124,9 +124,9 @@ Referência do provedor: [idempotência Bird](https://bird.com/docs/guides/idemp
    `npm run db:deploy --workspace @church/api`, usando `ADMIN_DATABASE_URL` direto
    do proprietário. Esse comando reaplica os privilégios do login restrito para
    a nova tabela. Aplicar a migration **antes** de iniciar a nova versão da API.
-   Pendências criadas pela versão antiga, inclusive durante a troca de versão,
-   preservam o envio manual e devem ser revisadas antes de reenviar; não são
-   reproduzidas automaticamente pelo worker novo.
+   Pendências antigas sem `scheduledAt` preservam o envio manual e devem ser
+   revisadas antes de reenviar. Agendamentos pendentes com intenção `HELD` são
+   liberados automaticamente quando a data chega, incluindo os já existentes.
 2. Configurar uma chave aleatória exclusiva com pelo menos 32 caracteres como
    `NOTIFICATION_OUTBOX_SECRET` na API (Vercel) e como secret do mesmo nome no
    GitHub Actions. Guardá-la no gestor de senhas e publicar a configuração da API.
@@ -161,8 +161,11 @@ A primeira tentativa após uma criação imediata funciona sem o agendamento.
 Recuperação após interrupção e retentativas dependem do worker ativo. Um canal
 temporariamente sem provedor configurado fica pendente até restabelecer a
 configuração e não bloqueia os outros canais no lote. Lotes grandes podem exigir
-várias execuções. Agendamentos `HELD` continuam manuais; ao enviar após a data,
-passam pelas mesmas garantias e limites. O cancelamento bloqueia intenções ainda
+várias execuções. Agendamentos `HELD` com data vencida passam pelas mesmas
+garantias e limites dos envios imediatos. Podem ser cancelados antes da reserva
+de envio; disputas entre envio manual, worker e cancelamento são serializadas
+no banco. Não há nova migration nem nova credencial para ativar esse comportamento.
+O cancelamento bloqueia intenções ainda
 não iniciadas; uma entrega já iniciada precisa primeiro concluir ou ser reconciliada.
 
 ### Testes da outbox
@@ -177,6 +180,21 @@ transporte, aceitação antes de falha no commit final, disputa entre workers,
 cancelamento, backoff, janela idempotente, mudança de destinatário/payload,
 limite de tentativas e tokens antigos. Os testes de segurança verificam também o
 processamento da outbox com o login restrito. O CI normal inclui essas suítes.
+
+O envio agendado cobre os canais EMAIL, PUSH e INTERNAL com transportes simulados:
+nenhum envio antes da data, datas futuras sem bloquear o lote, recuperação de
+agendamentos vencidos após reiniciar o worker, backoff, cancelamento antes da
+reserva e dois workers concorrentes sem duplicação. Pendências antigas sem data
+continuam fora do processamento automático.
+
+Validação do envio automático em 27/10/2026: 38 testes de integração de
+notificações/operações e 14 do login restrito aprovados com PostgreSQL 17
+descartável via Docker Compose; 43 testes unitários dos provedores, públicos e
+worker, 26 do formulário, TypeScript de API/web e lint dos arquivos alterados
+aprovados. No worktree Windows foi usado temporariamente o glob
+`**/test/**/*.e2e-spec.ts`, pois o Jest não reconheceu o caminho expandido com
+`.codex`; a configuração original foi restaurada após a execução. Transportes
+externos foram simulados, sem enviar e-mail ou push reais.
 
 Validação local em 27/10/2026: 153 testes de integração e 14 do login restrito
 aprovados; os dois testes exclusivos de documentos do modo `--recovery-only`

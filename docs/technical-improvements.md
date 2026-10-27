@@ -59,7 +59,7 @@ envio após commit, com reconciliação explícita de resultados incertos.
 
 - [x] Persistir a intenção de envio junto da alteração de estado (transactional outbox).
 - [x] Processar fora da transação com idempotência, tentativas limitadas e recuperação.
-- [x] Preservar agendamentos manuais e públicos/permissões; bloquear cancelamento em envio ativo.
+- [x] Enviar agendamentos automaticamente a partir da data; preservar públicos/permissões e bloquear cancelamento em envio ativo.
 - [x] Publicar e aplicar migration/privilégios; configurar segredo dedicado.
 - [ ] Habilitar o agendamento do worker.
 - [ ] Confirmar processamento real em produção e alertas do agendamento.

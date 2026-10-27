@@ -244,7 +244,7 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
     expect(provider.send).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps scheduled/legacy messages manual and cancels a ready intent without transport', async () => {
+  it('keeps unscheduled legacy messages manual and cancels a ready intent without transport', async () => {
     const held = await queued('EMAIL', true);
     const ready = await queued();
     await worker.dispatch(ready.id, user, true);
@@ -254,6 +254,107 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
     expect(provider.send).not.toHaveBeenCalled();
     expect((await worker.dispatch(held.id, user)).status).toBe('SENT');
   });
+
+  async function scheduled(at: Date, channel = 'EMAIL') {
+    const n = await operations.sendNotification(
+      {
+        channel,
+        content: 'Scheduled message',
+        recipientMemberId: memberId,
+        scheduledAt: at.toISOString(),
+      },
+      user,
+    );
+    if (!('id' in n)) throw new Error('Expected an individual notification');
+    return n;
+  }
+
+  async function databaseNow() {
+    const [clock] = await db.$queryRaw<
+      { now: Date }[]
+    >`SELECT clock_timestamp() AS now`;
+    if (!clock) throw new Error('Database clock unavailable');
+    return clock.now;
+  }
+
+  it('does not send early or let future schedules fill the bounded worker batch', async () => {
+    const now = await databaseNow();
+    const future = new Date(now.getTime() + 60 * 60_000);
+    const held = await scheduled(future);
+    for (let i = 0; i < 10; i++) await scheduled(future);
+    // Also guard READY intents, not only HELD schedules.
+    await db.notificationDelivery.update({
+      where: { notificationId: held.id },
+      data: { state: 'READY' },
+    });
+    const due = await scheduled(new Date(now.getTime() - 60_000));
+    expect(provider.send).not.toHaveBeenCalled();
+    await expect(worker.dispatch(held.id, user)).rejects.toThrow(
+      'data agendada',
+    );
+    expect(await worker.process()).toMatchObject({
+      processed: 1,
+      sent: 1,
+      skipped: 0,
+    });
+    expect(provider.send).toHaveBeenCalledTimes(1);
+    expect(provider.send.mock.calls[0][0].id).toBe(due.id);
+    expect((await delivery(held.id)).attempts).toBe(0);
+  });
+
+  it('recovers overdue schedules, retries safely, and never sends a cancelled schedule', async () => {
+    const now = await databaseNow();
+    const cancelled = await scheduled(new Date(now.getTime() + 60_000));
+    await worker.dispatch(cancelled.id, user, true);
+    await db.notification.update({
+      where: { id: cancelled.id },
+      data: { scheduledAt: new Date(now.getTime() - 60_000) },
+    });
+    const overdue = await scheduled(new Date(now.getTime() - 86_400_000));
+    provider.send.mockRejectedValueOnce(new BirdDeliveryError(true, false));
+    const restarted = new NotificationOutboxService(db as PrismaService, [
+      provider,
+    ]);
+    expect(await restarted.process()).toMatchObject({
+      processed: 1,
+      pending: 1,
+    });
+    expect(await restarted.process()).toMatchObject({ processed: 0 });
+    await due(overdue.id);
+    expect(await restarted.process()).toMatchObject({ sent: 1 });
+    expect((await delivery(cancelled.id)).state).toBe('CANCELLED');
+    expect(provider.send.mock.calls.every(([n]) => n.id === overdue.id)).toBe(
+      true,
+    );
+  });
+
+  it.each(['EMAIL', 'PUSH', 'INTERNAL'])(
+    'sends a due %s schedule once across competing workers',
+    async (channel) => {
+      const transport = {
+        channel,
+        send: jest.fn().mockResolvedValue(undefined),
+      };
+      const scheduledWorker = new NotificationOutboxService(
+        db as PrismaService,
+        [transport],
+      );
+      const n = await scheduled(
+        new Date((await databaseNow()).getTime() - 60_000),
+        channel,
+      );
+      const results = await Promise.all([
+        scheduledWorker.process(),
+        scheduledWorker.process(),
+      ]);
+      expect(results.reduce((sum, result) => sum + result.sent, 0)).toBe(1);
+      expect((await delivery(n.id)).state).toBe('DELIVERED');
+      expect(transport.send).toHaveBeenCalledTimes(
+        channel === 'INTERNAL' ? 0 : 1,
+      );
+      expect(await scheduledWorker.process()).toMatchObject({ processed: 0 });
+    },
+  );
 
   it('retries an uncertain email with the frozen body, same identity and bounded backoff', async () => {
     const n = await queued();

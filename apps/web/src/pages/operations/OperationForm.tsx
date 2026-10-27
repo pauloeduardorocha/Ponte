@@ -398,7 +398,7 @@ export function OperationForm({
                     helperText={
                       form.formState.errors[f.key]?.message ??
                       (f.key === 'scheduledAt'
-                        ? 'Sem agendamento, a notificação será enviada imediatamente. Horário deste dispositivo.'
+                        ? 'Sem agendamento, a notificação será enviada imediatamente. Com agendamento, o envio será automático a partir da data, na próxima execução do processamento (a cada cinco minutos, sujeito a atrasos). Horário deste dispositivo.'
                         : undefined)
                     }
                   />

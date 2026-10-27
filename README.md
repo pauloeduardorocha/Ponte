@@ -789,7 +789,10 @@ dependendo de provedores externos.
 Os envios administrativos agora gravam uma **outbox** na mesma transação da
 notificação e chamam o provedor após o commit. E-mails têm até três tentativas
 na janela idempotente; entregas sem confirmação ficam sinalizadas para revisão.
-Agendamentos continuam com envio manual. A interface distingue mensagens
+Notificações agendadas são enviadas automaticamente a partir da data indicada,
+na próxima execução disponível do worker (prevista a cada cinco minutos,
+sujeita a atrasos do GitHub). Pendências antigas sem data continuam manuais.
+A interface distingue mensagens
 enviadas, falhas e pendentes (incluindo retentativas).
 
 Para ativar a recuperação de envios interrompidos:
