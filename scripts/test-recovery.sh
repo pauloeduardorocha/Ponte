@@ -42,4 +42,5 @@ fingerprint > /tmp/after.txt
 diff -u /tmp/before.txt /tmp/after.txt
 # Refuse an existing database even with a valid archive.
 if bash /tmp/restore-database.sh; then exit 1; fi
+SNAPSHOT_PREFIX="$RESTORE_SNAPSHOT" bash /tmp/rehearse-recovery.sh
 echo "All tables and binary documents recovered; elapsed=${SECONDS}s (started=${started}s)."

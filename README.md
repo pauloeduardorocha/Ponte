@@ -708,10 +708,59 @@ O runner provisiona um banco descartável dedicado no Docker Compose de testes,
 sem reutilizar a conexão da aplicação. Consulte [CI e testes locais](docs/ci.md)
 e [o acabamento e a validação](docs/UX_FINISH.md).
 
-Backup encriptado para Google Drive e ensaio local de restauração:
-[procedimento de backup e recuperação](docs/backup-recovery.md).
-Execute `npm run test:recovery` para validar a recuperação num PostgreSQL 18
-descartável, incluindo documentos e privilégios da API.
+## Backup e recuperação
+
+Os backups usam PostgreSQL 18, Restic e rclone no **GitHub Actions**, com destino
+encriptado no **Google Drive**. A aplicação permanece na Vercel. O workflow exige
+`PRIVATE_STORAGE_DRIVER=database`: documentos privados e anexos de escalas entram
+na mesma cópia do banco. Instalações com filesystem precisam de uma cópia
+coordenada do banco e do volume de documentos.
+
+Configuração inicial de OAuth, secrets, utilizador de leitura do Neon e senha
+Restic: [guia de backup e recuperação](docs/backup-recovery.md). Guardar a senha
+Restic num gestor de senhas independente; ela é necessária para recuperar os dados.
+
+### Executar um backup
+
+1. Abrir [Actions → Encrypted database backup](https://github.com/pauloeduardorocha/Ponte/actions/workflows/backup.yml).
+2. Clicar em **Run workflow** e selecionar a branch `main`.
+3. Manter **Initialize the dedicated empty repository** desmarcado nas execuções
+   normais. Marcar apenas para criar um repositório dedicado que ainda não existe.
+4. Iniciar e confirmar o job com sucesso, a mensagem `snapshot ... saved` e a
+   verificação `no errors were found`. Guardar o ID do snapshot para o ensaio.
+
+O agendamento depende da variável `PONTE_BACKUPS_ENABLED=true` e está configurado
+para cada seis horas, no minuto 23, UTC. A retenção mantém todas as cópias de sete
+dias, uma semanal por quatro semanas e uma mensal por três meses. Ativar as
+notificações de falha do GitHub Actions e acompanhar a última execução bem sucedida.
+Se a inicialização já criou o repositório, uma tentativa seguinte deve usar uma
+nova execução com **Initialize desmarcado**, mesmo que o primeiro dump tenha falhado.
+
+### Testar o restauro de uma cópia do Drive
+
+1. Abrir [Actions → Drive backup recovery drill](https://github.com/pauloeduardorocha/Ponte/actions/workflows/recovery.yml).
+2. Clicar em **Run workflow** e selecionar `main`.
+3. No campo **snapshot**, informar o ID completo ou prefixo único com pelo menos
+   oito caracteres. A primeira cópia real tem o prefixo `4ccfd51f`.
+4. Iniciar e confirmar o job `recovery` com sucesso e a mensagem
+   `database/documents/runtime login verified`.
+
+O ensaio lê a cópia do Drive, restaura num PostgreSQL descartável em memória e
+verifica migrations, conteúdo dos documentos e acesso com login restrito. Reutiliza
+os secrets do Drive e do Restic; não recebe credenciais do banco Neon. O container
+é removido ao terminar e não são publicados artifacts com dados recuperados.
+O resultado valida a cópia e o banco restaurado; o restabelecimento completo da
+aplicação e a promoção para produção seguem o [procedimento operacional](docs/backup-recovery.md#recuperação-operacional).
+
+### Ensaio local com dados sintéticos
+
+```sh
+npm run test:recovery
+```
+
+Esse comando provisiona PostgreSQL 18 descartável via Docker Compose, gera a URL
+automaticamente e valida backup/restauro, documentos e privilégios da API com
+dados sintéticos, sem depender do Google Drive ou dos secrets de produção.
 
 ## Operação e vida da igreja — Etapa 9
 

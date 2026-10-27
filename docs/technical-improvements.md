@@ -28,8 +28,10 @@ de proteção da branch no GitHub.
 ## 2. Recuperação de dados — alta prioridade
 
 **Estado:** cópias encriptadas implementadas e ensaio local aprovado em 27/10/2026.
-Destino escolhido: Google Drive. Ativação depende da autorização OAuth e dos
-secrets do workflow; RPO/RTO de produção ainda não demonstrados.
+Destino escolhido: Google Drive, com primeira cópia real e verificação estrutural
+aprovadas (`4ccfd51f`). Agendamento habilitado. Workflow manual de ensaio permite
+restaurar a cópia real num container isolado; a execução externa desse ensaio e
+o RPO/RTO completo da aplicação ainda precisam ser demonstrados.
 
 A documentação de segurança registra cópias independentes e ensaios completos de
 restauro como pendentes; confirmar o estado real da infraestrutura ao iniciar.

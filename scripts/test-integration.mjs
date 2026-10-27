@@ -166,14 +166,22 @@ try {
       'restic',
       'rclone',
       'diffutils',
+      'jq',
     );
     for (const file of [
       'backup-database.sh',
       'restore-database.sh',
       'test-recovery.sh',
+      'rehearse-recovery.sh',
     ]) {
       compose('cp', `scripts/${file}`, `postgres:/tmp/${file}`);
     }
+    compose('exec', '-T', 'postgres', 'mkdir', '-p', '/opt/ponte');
+    compose(
+      'cp',
+      'apps/api/prisma/runtime-privileges.sql',
+      'postgres:/opt/ponte/runtime-privileges.sql',
+    );
     compose(
       'exec',
       '-T',

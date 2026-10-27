@@ -1,0 +1,53 @@
+name: Drive backup recovery drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot:
+        description: Snapshot ID or unique hexadecimal prefix (at least 8 characters)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+# Restic checks take exclusive locks; serialize with backup/retention operations.
+concurrency:
+  group: ponte-database-backup
+  cancel-in-progress: false
+
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RESTIC_REPOSITORY: rclone:gdrive:ponte-backups/production
+      RESTIC_PASSWORD: ${{ secrets.BACKUP_RESTIC_PASSWORD }}
+      RCLONE_CONFIG_GDRIVE_TYPE: drive
+      RCLONE_CONFIG_GDRIVE_SCOPE: drive.file
+      RCLONE_CONFIG_GDRIVE_CLIENT_ID: ${{ secrets.BACKUP_DRIVE_CLIENT_ID }}
+      RCLONE_CONFIG_GDRIVE_CLIENT_SECRET: ${{ secrets.BACKUP_DRIVE_CLIENT_SECRET }}
+      RCLONE_CONFIG_GDRIVE_TOKEN: ${{ secrets.BACKUP_DRIVE_TOKEN }}
+      SNAPSHOT_PREFIX: ${{ inputs.snapshot }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Validate snapshot selector
+        shell: bash
+        run: '[[ "$SNAPSHOT_PREFIX" =~ ^[0-9a-f]{8,64}$ ]]'
+      - name: Build recovery tools
+        run: docker build -f scripts/backup.Dockerfile -t ponte-recovery scripts
+      - name: Restore and verify the selected Drive backup
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --name "ponte-restore-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --tmpfs /var/lib/postgresql --tmpfs /tmp --shm-size=1g \
+            --mount "type=bind,source=${GITHUB_WORKSPACE}/apps/api/prisma/runtime-privileges.sql,target=/opt/ponte/runtime-privileges.sql,readonly" \
+            -e RESTIC_REPOSITORY -e RESTIC_PASSWORD -e SNAPSHOT_PREFIX \
+            -e RCLONE_CONFIG_GDRIVE_TYPE -e RCLONE_CONFIG_GDRIVE_SCOPE \
+            -e RCLONE_CONFIG_GDRIVE_CLIENT_ID -e RCLONE_CONFIG_GDRIVE_CLIENT_SECRET \
+            -e RCLONE_CONFIG_GDRIVE_TOKEN \
+            --entrypoint bash ponte-recovery /opt/ponte/rehearse-recovery.sh
+      - name: Remove disposable recovery container
+        if: always()
+        run: docker rm -f "ponte-restore-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" 2>/dev/null || true

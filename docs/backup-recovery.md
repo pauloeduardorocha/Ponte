@@ -10,7 +10,11 @@ histórico e não exige mudança de plano.
 Implementação preparada para Google Drive com **Restic + rclone**. Os dados são
 encriptados antes de sair da máquina; não usar a pasta sincronizada do Drive
 como repositório local. Restic acessa diretamente a API via rclone.
-Não há cópias agendadas ativas até concluir a configuração abaixo.
+Configuração externa concluída em 27/10/2026. Primeira cópia real aprovada:
+snapshot `4ccfd51f`, aproximadamente 8,3 MiB armazenados, verificação estrutural
+sem erros e retenção aplicada. [Execução no GitHub](https://github.com/pauloeduardorocha/Ponte/actions/runs/40551281770).
+O agendamento está habilitado; essa execução foi manual. O restauro dessa cópia
+real ainda precisa ser acionado e validado pelo procedimento abaixo.
 
 Política inicial proposta, a confirmar com o responsável pela operação:
 
@@ -113,6 +117,32 @@ A imagem `scripts/backup.Dockerfile` contém essas ferramentas. Não passar valo
 secretos em argumentos Docker; usar `-e NOME_DA_VARIAVEL` e o ambiente do processo.
 
 ## Recuperar em ambiente isolado
+
+### Ensaio manual pelo GitHub Actions
+
+Para verificar uma cópia do Drive sem instalar ferramentas no computador:
+
+1. Abrir **Actions → Drive backup recovery drill → Run workflow**.
+2. Selecionar `main` e informar em `snapshot` o ID completo ou prefixo único de
+   pelo menos oito caracteres; para a primeira cópia, usar `4ccfd51f`.
+3. Acionar **Run workflow** e acompanhar o job `recovery`.
+4. Confirmar sucesso e a mensagem `Recovered snapshot ... database/documents/runtime login verified`.
+
+O workflow usa apenas os secrets do Drive e a senha Restic. Baixa e desencripta
+o dump em memória (`tmpfs`), inicia um cluster PostgreSQL 18 descartável e
+restaura atomicamente. Confere migrations concluídas, conteúdo dos documentos,
+tamanhos dos anexos e permissões de leitura com um login de runtime recém-criado.
+Não recebe endereço nem credenciais do Neon. Não executa a API, notificações,
+Bird, Stripe ou Web Push. Os logs mostram somente resultados e contagens;
+diagnósticos SQL que poderiam conter registros ficam no armazenamento temporário.
+Não publica artifacts de banco ou documentos. O container é removido ao terminar.
+O bloqueio de concorrência é compartilhado com o workflow de backup/retenção.
+
+O sucesso comprova a leitura e restauração da cópia real e o acesso SQL restrito;
+não demonstra o restabelecimento completo da aplicação Vercel, login HTTP com
+utilizadores reais, nem a promoção de um banco recuperado para produção.
+
+### Recuperação operacional
 
 1. Selecionar uma cópia íntegra anterior ao incidente. Registrar o ID **completo**,
    data e commit da aplicação. Suspender notificações e integrações no ambiente
