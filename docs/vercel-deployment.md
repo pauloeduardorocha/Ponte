@@ -1,5 +1,16 @@
 # Vercel + Neon deployment
 
+## Compatibilidade do runtime NestJS
+
+Os pacotes `@nestjs/common`, `@nestjs/core` e `@nestjs/platform-express` devem
+usar a mesma versão major. O adaptador Express permanece na linha 11 enquanto
+o núcleo estiver na 11. Um build bem-sucedido não comprova que a função inicia:
+antes de promover um deploy, confirme `/api/v1/health` na URL da implantação.
+O override de `multer` em `2.5.0` preserva a correção de segurança do parser
+multipart sem exigir uma migração do framework para Nest 12.
+A versão 12 do adaptador isolada resultou em `Cannot find module
+'@nestjs/platform-express'` no runtime da Vercel, apesar do build aprovado.
+
 For current database credentials, migrations and recovery procedures, see
 [database security](database-security.md). The API must use the restricted
 `church_app` login; keep the migration owner outside its runtime environment.
