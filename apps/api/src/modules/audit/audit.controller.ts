@@ -91,6 +91,39 @@ export class AuditController {
       pageSize: q.pageSize,
     };
   }
+  @Get('frontend-errors')
+  async frontendErrors(@Query() q: PageQuery) {
+    const [items, total] = await Promise.all([
+      this.db.frontendErrorReport.findMany({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (q.page - 1) * q.pageSize,
+        take: q.pageSize,
+        select: {
+          id: true,
+          occurredAt: true,
+          createdAt: true,
+          eventType: true,
+          message: true,
+          route: true,
+          apiStatus: true,
+          userId: true,
+          device: true,
+        },
+      }),
+      this.db.frontendErrorReport.count(),
+    ]);
+    return { items, total, page: q.page, pageSize: q.pageSize };
+  }
+
+  @Get('frontend-errors/:id')
+  async frontendError(@Param('id', ParseUUIDPipe) id: string) {
+    const record = await this.db.frontendErrorReport.findUnique({
+      where: { id },
+    });
+    if (!record) throw new NotFoundException();
+    return record;
+  }
+
   @Get(':id')
   async get(@Param('id', ParseUUIDPipe) id: string) {
     const record = await this.db.auditLog.findUnique({ where: { id } });

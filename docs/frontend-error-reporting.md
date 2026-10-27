@@ -53,3 +53,27 @@ O utilizador confirmou que abria a câmera por Carregar documentos, não pelo bo
 O alvo de 768 KiB agora é comum a todas as imagens preparadas, incluindo galeria, seletor comum, arrastar/soltar e botão de câmera. Imagens já menores continuam preservadas; imagens maiores são reencodadas em JPEG com maior dimensão até 2560 pixels. Os PDFs mantêm seu limite existente. O limite do lote não foi alterado: esta mitigação por imagem não comprova um limite agregado inferior da infraestrutura.
 
 Dois testes de formulário percorrem os seletores com e sem capture e inspecionam o ficheiro efetivamente enviado no FormData, verificando JPEG abaixo de 768 KiB para uma origem de 1.576.060 bytes. A documentação oficial da Vercel descreve limite de 4,5 MB com 413 FUNCTION_PAYLOAD_TOO_LARGE (https://vercel.com/docs/errors/function_payload_too_large); portanto, os 503 observados abaixo desse tamanho não comprovam esse limite padrão. Não foi encontrado limite menor explícito no vercel.json. A causa na infraestrutura continua não demonstrada.
+
+## Consulta na auditoria e alertas
+
+A tela Auditoria inclui tabela paginada no servidor (10, 25, 50 ou 100 itens),
+com detalhes completos em um dialogo. Ambas as rotas exigem todas as permissoes
+da auditoria:
+
+- `GET /api/v1/audit/frontend-errors?page=1&pageSize=25`: retorna
+  `{ items, total, page, pageSize }`, ordenado por `createdAt DESC, id DESC`.
+  Stack e logs completos sao carregados apenas no detalhe.
+- `GET /api/v1/audit/frontend-errors/:id`: registro completo; 404 se ausente.
+  Pagina aceita 1 a 100000; pageSize aceita 1 a 100.
+
+Cada registro persistido gera email transacional pela Bird com todos os campos
+em tabela HTML escapada e texto simples. Os dados passam pela limpeza existente
+e a versao do cliente e preservada. Configure `FRONTEND_ERROR_EMAIL_TO` no
+ambiente privado da API, junto de `BIRD_API_KEY` e `BIRD_EMAIL_FROM`.
+O destinatario nao fica embutido no codigo.
+
+Falha ou falta de configuracao gera aviso generico e preserva o registro e a
+resposta `{ accepted: true }`. Nao ha retentativa automatica. A chave de
+idempotencia usa o ID do registro. O pedido aguarda o envio, com timeout de
+10 segundos do adaptador. A retencao continua em 30 dias, com limpeza oportunista
+a cada seis horas. Aceitacao pela Bird nao comprova entrega na caixa de entrada.

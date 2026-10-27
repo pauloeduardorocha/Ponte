@@ -1,3 +1,4 @@
+import { FrontendErrorsPanel } from './FrontendErrorsPanel';
 import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { formatDateTime } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
@@ -165,6 +166,7 @@ export function AuditPage() {
           onPageChange={(_, next) => setPage(next)}
         />
       </Card>
+      <FrontendErrorsPanel />
       <Dialog
         open={!!selected}
         onClose={() => setSelected(null)}
