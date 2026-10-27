@@ -20,6 +20,7 @@ import {
 import { apiRequest } from '../lib/api';
 import { formatDateTime } from '../lib/format';
 import { FrontendErrorCharts } from './FrontendErrorCharts';
+import { FrontendErrorDetailMap, FrontendErrorMap } from './FrontendErrorMap';
 
 interface ErrorSummary {
   id: string;
@@ -29,7 +30,13 @@ interface ErrorSummary {
   route: string;
   userId: string | null;
   apiStatus: number | null;
-  device: { appVersion?: string } | null;
+  device: {
+    appVersion?: string;
+    network?: {
+      ipAddress?: string;
+      geo?: { country?: string; region?: string; city?: string };
+    };
+  } | null;
 }
 
 export function FrontendErrorsPage() {
@@ -59,6 +66,7 @@ export function FrontendErrorsPage() {
         Ocorrências dos últimos 30 dias, da mais recente para a mais antiga.
       </Typography>
       <FrontendErrorCharts />
+      <FrontendErrorMap onSelect={setSelected} />
       {errors.isError && (
         <Alert severity="error">
           Não foi possível carregar os erros de frontend.
@@ -78,6 +86,8 @@ export function FrontendErrorsPage() {
                 'Rota',
                 'Versão',
                 'HTTP',
+                'IP',
+                'Localização aproximada',
                 'Detalhes',
               ].map((label) => (
                 <TableCell key={label}>{label}</TableCell>
@@ -95,6 +105,18 @@ export function FrontendErrorsPage() {
                 <TableCell>{error.route}</TableCell>
                 <TableCell>{error.device?.appVersion ?? '—'}</TableCell>
                 <TableCell>{error.apiStatus ?? '—'}</TableCell>
+                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                  {error.device?.network?.ipAddress ?? '—'}
+                </TableCell>
+                <TableCell>
+                  {[
+                    error.device?.network?.geo?.city,
+                    error.device?.network?.geo?.region,
+                    error.device?.network?.geo?.country,
+                  ]
+                    .filter(Boolean)
+                    .join(', ') || '—'}
+                </TableCell>
                 <TableCell>
                   <Button onClick={() => setSelected(error.id)}>
                     Ver erro
@@ -104,7 +126,7 @@ export function FrontendErrorsPage() {
             ))}
             {errors.data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7}>Nenhum erro encontrado.</TableCell>
+                <TableCell colSpan={9}>Nenhum erro encontrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -137,6 +159,12 @@ export function FrontendErrorsPage() {
             <Alert severity="error">
               Não foi possível carregar os detalhes do erro.
             </Alert>
+          )}
+          {detail.data && (
+            <FrontendErrorDetailMap
+              key={String(detail.data.id)}
+              report={detail.data}
+            />
           )}
           {detail.data && (
             <Table aria-label="Detalhes do erro">

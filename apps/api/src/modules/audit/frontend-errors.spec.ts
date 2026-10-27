@@ -4,6 +4,31 @@ import { PageQuery } from '../members/member.dto';
 import { AuditController } from './audit.controller';
 
 describe('Audit frontend errors', () => {
+  it('includes only valid numeric coordinates on the map and counts unlocated reports', async () => {
+    const valid = {
+      id: 'a',
+      latitude: 0,
+      longitude: -9,
+      route: '/',
+      eventType: 'api',
+    };
+    const query = jest
+      .fn()
+      .mockResolvedValue([
+        valid,
+        { id: 'b', latitude: null, longitude: null },
+        { id: 'c', latitude: 91, longitude: 1 },
+        { id: 'd', latitude: '38', longitude: -9 },
+        { id: 'e', latitude: 38, longitude: Infinity },
+      ]);
+    const controller = new AuditController({
+      $queryRaw: query,
+    } as unknown as PrismaService);
+    await expect(controller.frontendErrorMap()).resolves.toEqual({
+      total: 5,
+      points: [valid],
+    });
+  });
   it('returns aggregated statistics without loading report details', async () => {
     const rows = [{ kind: 'metrics', label: 'total', count: 167 }];
     const query = jest.fn().mockResolvedValue(rows);

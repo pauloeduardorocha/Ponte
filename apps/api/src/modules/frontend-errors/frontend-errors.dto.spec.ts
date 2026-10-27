@@ -17,31 +17,60 @@ describe('CreateFrontendErrorDto', () => {
   };
 
   it('accepts bounded device and log context', async () => {
-    expect(await validate(plainToInstance(CreateFrontendErrorDto, valid))).toHaveLength(0);
+    expect(
+      await validate(plainToInstance(CreateFrontendErrorDto, valid)),
+    ).toHaveLength(0);
   });
 
   it('accepts a versioned report with the production whitelist', async () => {
     const dto = plainToInstance(CreateFrontendErrorDto, {
-      ...valid, device: { ...valid.device, appVersion: '0.1.1' },
+      ...valid,
+      device: { ...valid.device, appVersion: '0.1.1' },
     });
-    expect(await validate(dto, { whitelist: true, forbidNonWhitelisted: true })).toHaveLength(0);
+    expect(
+      await validate(dto, { whitelist: true, forbidNonWhitelisted: true }),
+    ).toHaveLength(0);
     expect(dto.device?.appVersion).toBe('0.1.1');
   });
 
-  it.each(['invalid', 42, '1.2.3<script>', '1'.repeat(33)])('rejects invalid appVersion %p', async (appVersion) => {
-    const dto = plainToInstance(CreateFrontendErrorDto, {
-      ...valid, device: { ...valid.device, appVersion },
-    });
-    expect(await validate(dto)).not.toHaveLength(0);
-  });
+  it.each(['invalid', 42, '1.2.3<script>', '1'.repeat(33)])(
+    'rejects invalid appVersion %p',
+    async (appVersion) => {
+      const dto = plainToInstance(CreateFrontendErrorDto, {
+        ...valid,
+        device: { ...valid.device, appVersion },
+      });
+      expect(await validate(dto)).not.toHaveLength(0);
+    },
+  );
 
   it('rejects unknown fields, invalid types and oversized logs', async () => {
     const invalid = plainToInstance(CreateFrontendErrorDto, {
       ...valid,
       userId: 'attacker-controlled',
       apiStatus: 700,
-      logs: Array.from({ length: 21 }, () => ({ level: 'error', message: 'x' })),
+      logs: Array.from({ length: 21 }, () => ({
+        level: 'error',
+        message: 'x',
+      })),
     });
-    expect(await validate(invalid, { whitelist: true, forbidNonWhitelisted: true })).not.toHaveLength(0);
+    expect(
+      await validate(invalid, { whitelist: true, forbidNonWhitelisted: true }),
+    ).not.toHaveLength(0);
+  });
+  it('rejects client-supplied network and location context', async () => {
+    const dto = plainToInstance(CreateFrontendErrorDto, {
+      ...valid,
+      device: {
+        ...valid.device,
+        network: {
+          ipAddress: '198.51.100.1',
+          geo: { latitude: 1, longitude: 2 },
+        },
+      },
+    });
+    expect(
+      await validate(dto, { whitelist: true, forbidNonWhitelisted: true }),
+    ).not.toHaveLength(0);
   });
 });

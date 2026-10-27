@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { requestTrace } from '../../common/request-trace';
 import { CreateFrontendErrorDto } from './frontend-errors.dto';
+import type { FrontendErrorNetwork } from './frontend-error-network';
 
 const RETENTION_DAYS = 30;
 const SENSITIVE = [
@@ -49,7 +50,11 @@ export class FrontendErrorsService {
     private readonly config: ConfigService,
   ) {}
 
-  async create(dto: CreateFrontendErrorDto, userId?: string) {
+  async create(
+    dto: CreateFrontendErrorDto,
+    userId?: string,
+    network?: FrontendErrorNetwork,
+  ) {
     const now = Date.now();
     if (now - this.lastCleanup > 6 * 60 * 60 * 1000) {
       this.lastCleanup = now;
@@ -82,7 +87,9 @@ export class FrontendErrorsService {
         apiMethod: dto.apiMethod,
         apiStatus: dto.apiStatus,
         userAgent: dto.userAgent ? clean(dto.userAgent, 1024) : undefined,
-        device: dto.device as object | undefined,
+        device: network
+          ? { ...dto.device, network }
+          : (dto.device as object | undefined),
         logs,
       },
     });

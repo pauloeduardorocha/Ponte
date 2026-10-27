@@ -10,7 +10,10 @@ import {
 import { Permission } from '../auth/permission.decorator';
 import { PrismaService } from '../../database/prisma.service';
 import { PageQuery } from '../members/member.dto';
-import { frontendErrorStatsSql } from './frontend-error-stats';
+import {
+  frontendErrorMapSql,
+  frontendErrorStatsSql,
+} from './frontend-error-stats';
 import {
   IsDateString,
   IsOptional,
@@ -122,6 +125,30 @@ export class AuditController {
       Array<{ kind: string; label: string; count: number }>
     >(frontendErrorStatsSql);
     return { rows };
+  }
+
+  @Get('frontend-errors/map')
+  async frontendErrorMap() {
+    const rows = await this.db.$queryRaw<
+      Array<{
+        id: string;
+        createdAt: Date;
+        eventType: string;
+        route: string;
+        latitude: unknown;
+        longitude: unknown;
+      }>
+    >(frontendErrorMapSql);
+    const points = rows.filter(
+      (row) =>
+        typeof row.latitude === 'number' &&
+        Number.isFinite(row.latitude) &&
+        Math.abs(row.latitude) <= 90 &&
+        typeof row.longitude === 'number' &&
+        Number.isFinite(row.longitude) &&
+        Math.abs(row.longitude) <= 180,
+    );
+    return { total: rows.length, points };
   }
 
   @Get('frontend-errors/:id')

@@ -1,5 +1,15 @@
 import { Prisma } from '@prisma/client';
 
+export const frontendErrorMapSql = Prisma.sql`
+  SELECT id, created_at AS "createdAt", event_type AS "eventType", route,
+    device #> '{network,geo,latitude}' AS latitude,
+    device #> '{network,geo,longitude}' AS longitude
+  FROM frontend_error_reports
+  WHERE created_at >= (date_trunc('day', now() AT TIME ZONE 'UTC') - interval '29 days') AT TIME ZONE 'UTC'
+    AND created_at <= now()
+  ORDER BY created_at DESC, id DESC
+`;
+
 // Aggregate in Postgres: never transfer messages, stacks or individual users.
 // Calendar days and today's count use the same explicit UTC boundary.
 export const frontendErrorStatsSql = Prisma.sql`

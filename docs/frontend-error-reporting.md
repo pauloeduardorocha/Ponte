@@ -18,6 +18,40 @@ Mensagens, stack traces e logs passam por redação de tokens Bearer/JWT, emails
 
 Para investigar um caso, correlacione `created_at`, `user_id`, `request_id` e `client_request_id`. O `request_id` identifica o pedido de ingestão; `client_request_id` referencia a falha original observada pelo browser.
 
+## IP e localização aproximada
+
+Novos relatórios incluem contexto obtido pela API em `device.network`:
+`ipAddress`, `ipSource` (`vercel` ou `connection`) e, quando disponível,
+`geo: { source: 'vercel', country, region, city, latitude, longitude }`.
+Não há migração de schema: o contexto usa o JSON existente e acompanha a
+retenção de 30 dias. A versão do cliente é preservada. O DTO público não aceita
+`network` enviado pelo cliente. A captura acontece no recebimento do relatório;
+se o erro ficou na fila offline, a rede pode ser diferente da rede da ocorrência.
+
+Somente em runtime Vercel de produção/preview (`VERCEL=1` e `VERCEL_ENV` igual
+a `production` ou `preview`) são usados `x-vercel-forwarded-for` e cabeçalhos
+`x-vercel-ip-*`. Fora desse ambiente, só se usa o endereço da conexão TCP,
+sem confiar em cabeçalhos de proxy. IPs, coordenadas e códigos são validados;
+cidades passam por decodificação e limite de tamanho. A posição é estimada
+por IP, não é GPS e pode refletir VPN, proxy ou rede da operadora. Não se faz
+consulta de geocodificação externa nem se solicita permissão de localização.
+
+A tabela exibe IP e cidade/região/país. Os detalhes mostram um mapa com marcador
+quando existem coordenadas válidas. Os emails permitidos incluem o contexto
+no campo `device`; 401/403 continuam sem email. Registros antigos não são
+preenchidos retroativamente.
+
+`GET /api/v1/audit/frontend-errors/map` exige as mesmas permissões da auditoria
+e retorna `{ total, points: [{ id, createdAt, eventType, route, latitude, longitude }] }`,
+no mesmo período UTC de 30 dias dos gráficos. `total` inclui erros sem localização;
+`points` contém apenas coordenadas numéricas válidas, sem IPs, mensagens ou logs.
+O mapa geral considera todas as páginas, agrupa coordenadas idênticas com contagem
+e permite abrir cada erro pelo marcador ou pela lista de ocorrências localizadas.
+O mapa usa Leaflet e tiles OpenStreetMap com atribuição; o navegador do auditor
+carrega os tiles desse provedor. A falha do mapa não bloqueia a tabela de erros.
+
+Referência dos cabeçalhos: https://vercel.com/docs/headers/request-headers.
+
 ## Envio de reembolsos e falhas de infraestrutura (2026-10-23)
 
 O envio multipart e o download de reembolsos usam o mesmo transporte autenticado das chamadas JSON. Uma resposta 401 renova a sessão uma vez e repete o envio com os mesmos documentos; uma resposta 503 ou uma falha de rede não repete automaticamente a gravação. A interface distingue falha de rede, excesso de tamanho (413), indisponibilidade (502/503) e demora do servidor (504), quando a resposta não contém uma mensagem própria. Antes de repetir um envio de resultado incerto, o utilizador deve conferir os pedidos guardados.
