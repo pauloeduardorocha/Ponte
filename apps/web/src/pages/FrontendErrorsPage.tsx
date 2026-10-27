@@ -31,7 +31,7 @@ interface ErrorSummary {
   device: { appVersion?: string } | null;
 }
 
-export function FrontendErrorsPanel() {
+export function FrontendErrorsPage() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export function FrontendErrorsPanel() {
   });
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Erros de frontend</Typography>
+      <Typography variant="h4">Erros de frontend</Typography>
       <Typography color="text.secondary">
         Ocorrências dos últimos 30 dias, da mais recente para a mais antiga.
       </Typography>

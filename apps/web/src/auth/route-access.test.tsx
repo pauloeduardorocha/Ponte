@@ -38,6 +38,7 @@ describe('Direct route authorization', () => {
     '/library',
     '/finance',
     '/audit',
+    '/audit/errors',
     '/unknown-module',
   ])(
     'denies %s before mounting the page or requesting its data',

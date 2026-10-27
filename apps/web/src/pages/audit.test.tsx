@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   makeUser,
@@ -10,19 +10,30 @@ import {
 import { AUDIT_PERMISSIONS } from '../lib/audit-permissions';
 describe('Audit access', () => {
   beforeEach(resetTestState);
-  it('requires access to every sensitive domain before loading audit data', async () => {
-    const requests = mockApi({ ...sessionRoutes(makeUser(['AUDIT_READ'])) });
-    renderApp('/audit');
-    expect(
-      await screen.findByText('Você não tem permissão para acessar esta área.'),
-    ).toBeInTheDocument();
-    expect(requests.some((r) => r.path.startsWith('/audit'))).toBe(false);
-    expect(
-      screen.queryByRole('link', { name: 'Auditoria' }),
-    ).not.toBeInTheDocument();
-  });
+  it.each(['/audit', '/audit/errors'])(
+    'requires all audit permissions before loading %s',
+    async (route) => {
+      const requests = mockApi({ ...sessionRoutes(makeUser(['AUDIT_READ'])) });
+      renderApp(route);
+      expect(
+        await screen.findByText(
+          'Você não tem permissão para acessar esta área.',
+        ),
+      ).toBeInTheDocument();
+      expect(requests.some((r) => r.path.startsWith('/audit'))).toBe(false);
+      expect(
+        screen.queryByRole('link', { name: 'Registros de auditoria' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('link', { name: 'Erros de frontend' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: 'Auditoria' }),
+      ).not.toBeInTheDocument();
+    },
+  );
   it('shows immutable before/after records without mutation actions', async () => {
-    mockApi({
+    const requests = mockApi({
       ...sessionRoutes(makeUser(AUDIT_PERMISSIONS)),
       'GET /audit': {
         body: {
@@ -50,6 +61,12 @@ describe('Audit access', () => {
     expect(screen.getByText(/"name": "Depois"/)).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: /Excluir|Apagar|Editar/ }),
+    ).not.toBeInTheDocument();
+    expect(requests.some((r) => r.path === '/audit/frontend-errors')).toBe(
+      false,
+    );
+    expect(
+      screen.queryByRole('table', { name: 'Erros de frontend' }),
     ).not.toBeInTheDocument();
   });
   it('loads frontend error details on demand and requests the next backend page', async () => {
@@ -79,7 +96,7 @@ describe('Audit access', () => {
         },
       },
     });
-    renderApp('/audit');
+    renderApp('/audit/errors');
     fireEvent.click(await screen.findByRole('button', { name: 'Ver erro' }));
     expect(
       await screen.findByText('Stack completa do erro'),
@@ -102,5 +119,33 @@ describe('Audit access', () => {
     expect(
       requests.some((r) => r.path === '/audit/frontend-errors/error-1'),
     ).toBe(true);
+    expect(requests.some((r) => r.path === '/audit')).toBe(false);
+  });
+  it('groups both pages under Auditoria and selects only the current page', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(AUDIT_PERMISSIONS)),
+      'GET /audit': { body: { items: [], total: 0 } },
+      'GET /audit/frontend-errors': { body: { items: [], total: 0 } },
+    });
+    renderApp('/audit');
+    const group = await screen.findByRole('list', { name: 'Auditoria' });
+    const audit = within(group).getByRole('link', {
+      name: 'Registros de auditoria',
+    });
+    const errors = within(group).getByRole('link', {
+      name: 'Erros de frontend',
+    });
+    expect(audit).toHaveAttribute('href', '/audit');
+    expect(audit).toHaveAttribute('aria-current', 'page');
+    expect(errors).not.toHaveAttribute('aria-current');
+    fireEvent.click(errors);
+    expect(
+      await screen.findByRole('heading', { name: 'Erros de frontend' }),
+    ).toBeInTheDocument();
+    expect(errors).toHaveAttribute('aria-current', 'page');
+    expect(audit).not.toHaveAttribute('aria-current');
+    expect(
+      screen.queryByRole('table', { name: 'Registros de auditoria' }),
+    ).not.toBeInTheDocument();
   });
 });

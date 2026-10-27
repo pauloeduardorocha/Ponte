@@ -56,7 +56,8 @@ Dois testes de formulário percorrem os seletores com e sem capture e inspeciona
 
 ## Consulta na auditoria e alertas
 
-A tela Auditoria inclui tabela paginada no servidor (10, 25, 50 ou 100 itens),
+A página Erros de frontend (`/audit/errors`), no grupo Auditoria do menu, inclui
+tabela paginada no servidor (10, 25, 50 ou 100 itens),
 com detalhes completos em um dialogo. Ambas as rotas exigem todas as permissoes
 da auditoria:
 

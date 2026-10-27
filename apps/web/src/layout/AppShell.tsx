@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import AccountBalanceRounded from '@mui/icons-material/AccountBalanceRounded';
 import AdminPanelSettingsRounded from '@mui/icons-material/AdminPanelSettingsRounded';
+import BugReportRounded from '@mui/icons-material/BugReportRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import DashboardRounded from '@mui/icons-material/DashboardRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
@@ -61,7 +62,7 @@ const navigationGroups = [
   'Financeiro',
   'Vídeos',
   'Comunicação',
-  'Administração',
+  'Auditoria',
 ] as const;
 type NavigationGroup = (typeof navigationGroups)[number];
 const headerlessGroups: readonly NavigationGroup[] = ['Início', 'Biblioteca'];
@@ -115,10 +116,16 @@ const navigation: NavigationItem[] = [
     icon: DashboardRounded,
   },
   {
-    label: 'Auditoria',
-    group: 'Administração',
+    label: 'Registros de auditoria',
+    group: 'Auditoria',
     to: '/audit',
     icon: AdminPanelSettingsRounded,
+  },
+  {
+    label: 'Erros de frontend',
+    group: 'Auditoria',
+    to: '/audit/errors',
+    icon: BugReportRounded,
   },
   { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
   {
@@ -191,6 +198,7 @@ const navigation: NavigationItem[] = [
 
 function isNavigationActive(to: string, location: { pathname: string }) {
   const [pathname] = to.split('?');
+  if (pathname === '/audit') return location.pathname === pathname;
   return (
     location.pathname === pathname ||
     (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
@@ -203,7 +211,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
     navigationGroups.filter(
       (group) =>
-        (group === 'Datas' || group === 'Vídeos') &&
+        (group === 'Datas' || group === 'Vídeos' || group === 'Auditoria') &&
         navigation.some(
           (item) =>
             item.group === group && isNavigationActive(item.to, location),

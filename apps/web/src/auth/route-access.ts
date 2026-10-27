@@ -34,6 +34,7 @@ const routeAccess: readonly AccessRule[] = [
     ],
   },
   { path: '/audit', all: AUDIT_PERMISSIONS },
+  { path: '/audit/errors', all: AUDIT_PERMISSIONS },
   { path: '/members', all: ['MEMBER_READ'] },
   { path: '/members/new', all: ['MEMBER_CREATE'] },
   { path: '/members/:id/edit', all: ['MEMBER_UPDATE'] },

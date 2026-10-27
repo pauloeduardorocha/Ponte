@@ -459,7 +459,7 @@ describe('Permissions', () => {
     expect(
       within(nav).queryByRole('link', { name: 'Tesouraria' }),
     ).not.toBeInTheDocument();
-    for (const name of ['Administração', 'Operação', 'Eventos']) {
+    for (const name of ['Auditoria', 'Operação', 'Eventos']) {
       expect(
         within(nav).queryByRole('button', { name }),
       ).not.toBeInTheDocument();

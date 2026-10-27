@@ -83,6 +83,11 @@ const FinancePage = lazy(() =>
 const AuditPage = lazy(() =>
   import('./pages/AuditPage').then((m) => ({ default: m.AuditPage })),
 );
+const FrontendErrorsPage = lazy(() =>
+  import('./pages/FrontendErrorsPage').then((m) => ({
+    default: m.FrontendErrorsPage,
+  })),
+);
 const OperationsDashboardPage = lazy(() =>
   import('./pages/operations/OperationsDashboardPage').then((m) => ({
     default: m.OperationsDashboardPage,
@@ -195,6 +200,7 @@ export function App({ children }: { children?: ReactNode }) {
                 />
                 <Route path="finance" element={<FinancePage />} />
                 <Route path="audit" element={<AuditPage />} />
+                <Route path="audit/errors" element={<FrontendErrorsPage />} />
                 <Route
                   path="visitors"
                   element={
