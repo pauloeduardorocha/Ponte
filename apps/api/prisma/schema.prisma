@@ -1172,10 +1172,31 @@ model Notification {
   creator            User      @relation("NotificationCreator", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: NoAction, map: "notification_creator_fk")
   createdAt          DateTime  @default(now())
 
+  delivery NotificationDelivery?
+
   @@index([status, scheduledAt])
   @@index([recipientMemberId, createdAt])
   @@index([recipientVisitorId, createdAt])
   @@map("notifications")
+}
+
+model NotificationDelivery {
+  notificationId String       @id @db.Uuid
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  state          String       @default("READY") @db.VarChar(20)
+  attempts       Int          @default(0)
+  uncertain      Boolean      @default(false)
+  availableAt    DateTime     @default(now()) @db.Timestamptz(6)
+  firstAttemptAt DateTime?    @db.Timestamptz(6)
+  lockedUntil    DateTime?    @db.Timestamptz(6)
+  claimToken     String?      @db.Uuid
+  payload        Json?
+  createdAt      DateTime     @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime     @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@index([state, availableAt], map: "notification_deliveries_state_available_idx")
+  @@index([state, lockedUntil], map: "notification_deliveries_state_lease_idx")
+  @@map("notification_deliveries")
 }
 
 model PushSubscription {

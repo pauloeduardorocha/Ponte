@@ -8,20 +8,22 @@ import { PrismaService } from '../../database/prisma.service';
 import { OperationsController } from './operations.controller';
 import { OperationsService } from './operations.service';
 import { PermissionGuard } from '../auth/permission.guard';
+import { notificationDeliveryMock } from '../../../test/fixtures/notification-delivery-mock';
 
 const ids = [
   '63b80123-eefa-4f48-a877-6cfdcdd4b724',
   '73b80123-eefa-4f48-a877-6cfdcdd4b724',
 ];
-const base = { channel: 'INTERNAL', content: 'Aviso' };
+const base = { channel: 'EMAIL', content: 'Aviso' };
 
 describe('Notification audiences HTTP contract (mocked database)', () => {
   let app: INestApplication;
   let user: CurrentUser;
   let service: OperationsService;
   const records = new Map<string, Notification>();
-  const provider = { channel: 'INTERNAL', send: jest.fn() };
+  const provider = { channel: 'EMAIL', send: jest.fn() };
   const db = {
+    notificationDelivery: notificationDeliveryMock(),
     $transaction: jest.fn(),
     $queryRaw: jest.fn(),
     user: { findUnique: jest.fn() },
@@ -63,6 +65,8 @@ describe('Notification audiences HTTP contract (mocked database)', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     records.clear();
+    db.notificationDelivery.reset();
+    db.$queryRaw.mockImplementation(async () => [{ now: new Date() }]);
     user = {
       id: ids[0],
       permissions: ['NOTIFICATION_SEND', 'OPERATION_SCOPE_ALL'],

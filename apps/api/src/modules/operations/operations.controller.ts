@@ -44,6 +44,8 @@ import { PushController } from './push.controller';
 import { NotificationCountDto } from './push.dto';
 import { EmailModule } from '../email/email.module';
 import { EmailNotificationProvider } from './email-notification.provider';
+import { NotificationOutboxService } from './notification-outbox.service';
+import { NotificationWorkerController } from './notification-worker.controller';
 @ApiTags('Operacao da igreja')
 @ApiBearerAuth()
 @Controller('operations')
@@ -530,7 +532,7 @@ export class OperationsController {
   @ApiOperation({
     summary: 'Criar uma notificação',
     description:
-      'Selecione exatamente um público: recipientMemberId, recipientVisitorId, recipientMemberIds, recipientVisitorIds, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays aceitam entre 1 e 100 UUIDs e removem IDs repetidos. Destinatários explícitos são validados antes da criação. Grupos e ministérios respeitam o escopo de gestão; roles e todos os membros exigem OPERATION_SCOPE_ALL. Sem scheduledAt, tenta enviar imediatamente. Com scheduledAt, cria PENDING para envio manual após a data. O envio coletivo retorna total, sent, failed, pending e status (SENT, FAILED, PARTIAL ou PENDING); o individual preserva sua resposta. Canal sem provedor retorna 409 antes da criação de envio imediato.',
+      'Selecione exatamente um público: recipientMemberId, recipientVisitorId, recipientMemberIds, recipientVisitorIds, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays aceitam entre 1 e 100 UUIDs e removem IDs repetidos. Destinatários explícitos são validados antes da criação. Grupos e ministérios respeitam o escopo de gestão; roles e todos os membros exigem OPERATION_SCOPE_ALL. Sem scheduledAt, persiste uma intenção durável e tenta enviar após o commit; falhas transitórias podem retornar PENDING. Com scheduledAt, cria PENDING para envio manual após a data. O envio coletivo retorna total, sent, failed, pending e status (SENT, FAILED, PARTIAL ou PENDING); o individual preserva sua resposta. Canal sem provedor retorna 409 antes da criação de envio imediato.',
   })
   @Permission('NOTIFICATION_SEND')
   notify(@Body() dto: D.NotificationDto, @Req() r: AuthRequest) {
@@ -580,9 +582,10 @@ export class OperationsController {
 }
 @Module({
   imports: [EmailModule],
-  controllers: [OperationsController, PushController],
+  controllers: [OperationsController, PushController, NotificationWorkerController],
   providers: [
     OperationsService,
+    NotificationOutboxService,
     InternalNotificationProvider,
     PushService,
     PushNotificationProvider,

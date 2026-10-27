@@ -36,7 +36,7 @@ Não há atualmente estados separados de rejeição de reembolso nem lembretes r
 
 Arrays aceitam entre 1 e 100 IDs. A seleção inclui a união dos participantes atuais (`active: true`, `leftAt: null`) e dos líderes, co-líderes e anfitriões cadastrados nos grupos/ministérios. Membros inativos ou anonimizados são excluídos. Cada membro recebe uma única mensagem mesmo se pertencer a várias opções selecionadas. Cada mensagem conserva seu próprio estado de envio e leitura no histórico e na caixa pessoal. Os destinatários do agendamento são definidos no momento da criação; o envio após a data continua manual, por mensagem.
 
-O envio coletivo retorna `{ total, sent, failed, pending, status }`, com status `SENT`, `FAILED`, `PARTIAL` ou `PENDING`. Falhas do provedor em um destinatário não impedem a tentativa aos seguintes. O formulário apresenta as quatro contagens, incluindo envios parciais. Seleção ambígua ou sem membros ativos retorna 400; acesso global sem escopo retorna 403; grupo, ministério ou role inexistente/inacessível retorna 404. O envio individual mantém sua resposta anterior.
+O envio coletivo retorna `{ total, sent, failed, pending, status }`, com status `SENT`, `FAILED`, `PARTIAL` ou `PENDING`. Falhas do provedor em um destinatário não impedem a tentativa aos seguintes. `pending` inclui mensagens agendadas e mensagens aguardando retentativa; a interface apresenta **Pendentes**. Seleção ambígua ou sem membros ativos retorna 400; acesso global sem escopo retorna 403; grupo, ministério ou role inexistente/inacessível retorna 404. O envio individual mantém a resposta de notificação, incluindo seu estado.
 
 `GET /operations/notification-audiences/:kind` aceita `small-groups`, `ministries` ou `roles` e os parâmetros `search`, `page` e `pageSize` (máximo 100). Exige `NOTIFICATION_SEND` e retorna `{ items: [{ id, name }], total, page, pageSize }`. Apenas opções no escopo autorizado são oferecidas. Roles usam o nome de exibição quando disponível e exigem escopo global. Os campos de seleção no formulário permitem várias opções da mesma categoria.
 
@@ -57,7 +57,126 @@ O formulário usa multiselect com pesquisa, caixas de seleção e nomes selecion
 
 Enviar INTERNAL preserva a mensagem no banco antes de tentar avisar os dispositivos inscritos. Uma falha push não desfaz a entrega interna. PUSH usa a mesma caixa de entrada e exige configuração e ao menos um dispositivo que aceite o envio; falhas ficam FAILED. Inscrições expiradas (404/410) são removidas. O alerta usa o assunto como título (ou “A Ponte” quando ausente) e a mensagem como corpo. Mensagens longas recebem uma prévia com reticências para respeitar o limite de tamanho do push; a mensagem completa continua na caixa interna. O clique abre `/inbox` e exige a sessão normal.
 
-Criar uma notificação sem `scheduledAt` tenta enviá-la imediatamente e devolve o estado final (`SENT` ou `FAILED`). Canais sem provedor retornam 409 antes de criar um envio imediato. Com `scheduledAt`, o registro fica `PENDING` e o envio continua manual após a data; não há agendador automático. Notificações de eventos também avisam os dispositivos inscritos após persistir as mensagens.
+Criar uma notificação sem `scheduledAt` persiste a mensagem e a intenção de entrega na mesma transação e tenta enviá-la depois do commit. A resposta pode ser `SENT`, `FAILED` ou `PENDING` quando aguarda uma retentativa. Canais sem provedor retornam 409 antes de criar um envio imediato. Com `scheduledAt`, o registro fica `PENDING` e a intenção fica retida para envio manual após a data; o worker não libera agendamentos automaticamente. Notificações de eventos também avisam os dispositivos inscritos após persistir as mensagens.
+
+## Outbox de notificações operacionais
+
+`notification_deliveries` mantém uma intenção única por notificação. As mensagens
+e as intenções são criadas atomicamente, incluindo os públicos coletivos. O envio
+externo acontece depois de confirmar uma reserva curta no banco; nenhum pedido
+Bird/Web Push ocorre dentro da transação que bloqueia a mensagem. A caixa
+`INTERNAL` é entregue inteiramente no banco, com um alerta push best-effort depois
+do commit. Os quatro avisos automáticos do catálogo acima continuam best-effort;
+esta outbox cobre os envios administrativos de `/operations/notifications`.
+
+| Estado da intenção | Comportamento                                                                               |
+| ------------------ | ------------------------------------------------------------------------------------------- |
+| `HELD`             | Agendamento ou mensagem PENDING anterior à migration; envio manual preservado               |
+| `READY`            | Intenção confirmada aguardando primeira tentativa ou backoff                                |
+| `PROCESSING`       | Reserva de dois minutos com token exclusivo; envio e cancelamento concorrentes retornam 409 |
+| `DELIVERED`        | Persistência interna ou aceitação pelo provedor confirmada; notificação `SENT`              |
+| `FAILED`           | Rejeição definitiva ou falha conhecida; notificação `FAILED`                                |
+| `UNCERTAIN`        | Não há confirmação segura do resultado; notificação `FAILED` com indicação de revisão       |
+| `CANCELLED`        | Intenção cancelada antes de iniciar o envio; notificação `CANCELLED`                        |
+
+O worker recupera intenções `READY` vencidas e reservas expiradas. A posse do token
+é conferida ao confirmar o resultado: um worker antigo não sobrescreve a tentativa
+atual. As mensagens continuam no histórico quando uma tentativa falha.
+
+E-mails usam a chave estável `notification-<id>` e guardam o corpo JSON já serializado,
+incluindo destinatário e remetente, antes da primeira chamada. Uma impressão SHA-256
+da credencial detecta mudanças de configuração sem guardar a chave Bird. A Bird documenta proteção de
+aceitação idempotente por **três horas** para a mesma chave e pedido idêntico.
+Esta implementação limita a recuperação a **duas horas** e **três tentativas**,
+com espera mínima de um minuto e depois cinco minutos. Erros de transporte,
+timeout, HTTP 409/429 e 5xx podem ser retentados; respostas repetidas de rejeição
+continuam sujeitas ao limite de tentativas. O mesmo corpo e a mesma chave são
+usados mesmo quando a primeira resposta se perde.
+
+O destinatário é revalidado antes de cada tentativa. Mudança de endereço, conta
+inativa/anonimizada, alteração do payload/remetente/credencial ou expiração da janela segura
+interrompem o reenvio. Se uma tentativa anterior puder ter sido aceita, o resultado
+fica `UNCERTAIN`; o payload é conservado para reconciliação. Após entrega confirmada,
+cancelamento ou falha conhecida, a cópia adicional do payload é removida da outbox.
+O histórico original da notificação segue a retenção existente.
+
+Reservas, prazos e backoff usam o relógio do PostgreSQL, evitando decisões diferentes
+entre instâncias da API. O cancelamento também é recusado quando uma tentativa
+anterior ainda pode ter sido aceita, mesmo durante o backoff.
+
+Web Push não oferece aqui uma garantia equivalente de aceitação idempotente:
+um resultado incerto ou uma reserva expirada fica para revisão, sem reenvio
+automático. A tag estável da notificação ajuda os navegadores a substituir alertas,
+mas não comprova uma única entrega. Para `INTERNAL`, o push de aviso continua sem
+garantia e a mensagem permanece acessível na caixa.
+
+`SENT` de EMAIL/PUSH significa **aceitação**, não entrega na caixa de e-mail,
+exibição no dispositivo ou leitura. Antes de recriar uma mensagem marcada como
+entrega sem confirmação, conferir o histórico do provedor pela chave/ID e
+reconciliar o resultado. A aplicação não rearma automaticamente mensagens
+`FAILED`/`UNCERTAIN` nem cria uma nova chave para contornar uma rejeição.
+
+Referência do provedor: [idempotência Bird](https://bird.com/docs/guides/idempotency).
+
+### Ativar o processamento de recuperação
+
+1. Publicar a migration `20261027190000_notification_outbox` com
+   `npm run db:deploy --workspace @church/api`, usando `ADMIN_DATABASE_URL` direto
+   do proprietário. Esse comando reaplica os privilégios do login restrito para
+   a nova tabela. Aplicar a migration **antes** de iniciar a nova versão da API.
+   Pendências criadas pela versão antiga, inclusive durante a troca de versão,
+   preservam o envio manual e devem ser revisadas antes de reenviar; não são
+   reproduzidas automaticamente pelo worker novo.
+2. Configurar uma chave aleatória exclusiva com pelo menos 32 caracteres como
+   `NOTIFICATION_OUTBOX_SECRET` na API (Vercel) e como secret do mesmo nome no
+   GitHub Actions. Guardá-la no gestor de senhas e publicar a configuração da API.
+   Não reutilizar JWT, senha do banco, senha Restic ou credencial Bird.
+3. Criar a variável GitHub `PONTE_NOTIFICATION_OUTBOX_ENABLED=true`.
+4. Em **Actions → Process notification outbox → Run workflow**, selecionar `main`
+   e executar. Sem pendências, todas as contagens retornam zero.
+5. Confirmar o sucesso, ativar notificações de falha do Actions e acompanhar o
+   histórico de notificações. O workflow está agendado para cada cinco minutos;
+   atrasos/inatividade do GitHub não constituem SLA de entrega.
+
+O endpoint `POST /api/v1/internal/notification-outbox/process` exige
+`Authorization: Bearer <NOTIFICATION_OUTBOX_SECRET>`. O endpoint não usa JWT de
+utilizador, não aceita destinatários, conteúdo nem tamanho de lote do cliente e
+não aparece no Swagger público. Sem uma chave forte configurada, responde 503;
+credencial ausente/incorreta responde 401. Processa no máximo dez mensagens e
+devolve somente `{ processed, sent, pending, failed, skipped }`. O rate limit
+global continua aplicável. O workflow usa HTTPS, recusa redirecionamentos e
+registra apenas essas contagens; falhas definitivas/incertas tornam o job vermelho.
+
+A primeira tentativa após uma criação imediata funciona sem o agendamento.
+Recuperação após interrupção e retentativas dependem do worker ativo. Um canal
+temporariamente sem provedor configurado fica pendente até restabelecer a
+configuração e não bloqueia os outros canais no lote. Lotes grandes podem exigir
+várias execuções. Agendamentos `HELD` continuam manuais; ao enviar após a data,
+passam pelas mesmas garantias e limites. O cancelamento bloqueia intenções ainda
+não iniciadas; uma entrega já iniciada precisa primeiro concluir ou ser reconciliada.
+
+### Testes da outbox
+
+```sh
+npm run test:integration -- --notifications-only
+```
+
+Usa PostgreSQL real descartável via Compose e transportes simulados, sem enviar
+mensagens reais. Cobre rollback da criação, falha no commit da reserva antes do
+transporte, aceitação antes de falha no commit final, disputa entre workers,
+cancelamento, backoff, janela idempotente, mudança de destinatário/payload,
+limite de tentativas e tokens antigos. Os testes de segurança verificam também o
+processamento da outbox com o login restrito. O CI normal inclui essas suítes.
+
+Validação local em 27/10/2026: 153 testes de integração e 14 do login restrito
+aprovados; os dois testes exclusivos de documentos do modo `--recovery-only`
+ficaram ignorados na rodada normal. A suíte unitária completa da API passou
+(51 arquivos, 430 testes), incluindo replay do corpo exato e mudança de credencial.
+Frontend: 40 testes de operações/formulários aprovados.
+TypeScript de API e web, ESLint dos arquivos alterados, build de produção,
+parsing do workflow/OpenAPI e revisão do diff aprovados. Os testes Node e-Fatura
+passaram com a exclusão de navegador Linux esperada no Windows. Não foram
+enviados e-mails/push reais nem aplicada migration em produção nesta etapa.
 
 A remoção pessoal grava `inboxDeletedAt`: mensagens removidas deixam de aparecer na caixa, na contagem de não lidas e nas operações de leitura, mas continuam no histórico administrativo. O agendamento usa o seletor nativo de data e hora, convertido do fuso do dispositivo para UTC ao salvar.
 

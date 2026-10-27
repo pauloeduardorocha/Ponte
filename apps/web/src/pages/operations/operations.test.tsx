@@ -33,6 +33,7 @@ describe('Operational workflows', () => {
   });
   it.each([
     ['SENT', 'Notificação enviada.', 'success'],
+    ['PENDING', 'Notificação salva. Entrega pendente.', 'success'],
     [
       'FAILED',
       'Não foi possível enviar a notificação. Consulte a situação do envio.',

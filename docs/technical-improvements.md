@@ -30,8 +30,9 @@ de proteção da branch no GitHub.
 **Estado:** cópias encriptadas implementadas e ensaio local aprovado em 27/10/2026.
 Destino escolhido: Google Drive, com primeira cópia real e verificação estrutural
 aprovadas (`4ccfd51f`). Agendamento habilitado. Workflow manual de ensaio permite
-restaurar a cópia real num container isolado; a execução externa desse ensaio e
-o RPO/RTO completo da aplicação ainda precisam ser demonstrados.
+restaurar a cópia real num container isolado. O ensaio externo passou em 27/10/2026:
+30 segundos, 17 documentos lidos e permissões verificadas. O RPO/RTO completo
+da aplicação ainda precisa ser demonstrado.
 
 A documentação de segurança registra cópias independentes e ensaios completos de
 restauro como pendentes; confirmar o estado real da infraestrutura ao iniciar.
@@ -47,15 +48,19 @@ Implementação, política proposta e ativação: [backup e recuperação](backu
 
 ## 3. Entrega confiável de notificações — alta prioridade
 
-**Estado:** pendente.
+**Estado:** implementado e validado localmente em 27/10/2026. Publicação,
+migration e configuração do worker ainda pendentes.
 
-`OperationsService.notificationAction` chama o provedor externo dentro da transação
-que bloqueia a notificação. Um envio pode ocorrer antes de uma falha no commit.
+Problema original: `OperationsService.notificationAction` chamava o provedor
+externo dentro da transação que bloqueava a notificação, permitindo um envio
+antes de falha no commit. A implementação usa intenção durável, reserva curta e
+envio após commit, com reconciliação explícita de resultados incertos.
 
-- Persistir a intenção de envio junto da alteração de estado (transactional outbox).
-- Processar fora da transação com idempotência, tentativas limitadas e recuperação.
-- Definir o comportamento de agendamentos; hoje o envio após a data é manual.
-- Preservar preferências, permissões, públicos e regras de cancelamento.
+- [x] Persistir a intenção de envio junto da alteração de estado (transactional outbox).
+- [x] Processar fora da transação com idempotência, tentativas limitadas e recuperação.
+- [x] Preservar agendamentos manuais e públicos/permissões; bloquear cancelamento em envio ativo.
+- [ ] Publicar e aplicar migration/privilégios; configurar segredo dedicado e ativar worker.
+- [ ] Confirmar processamento real em produção e alertas do agendamento.
 
 Aceite: falhas antes/depois do envio não perdem mensagens nem causam duplicação sem controle.
 Referência: [notificações](notifications.md).

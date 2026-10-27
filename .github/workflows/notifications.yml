@@ -1,0 +1,40 @@
+name: Process notification outbox
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ponte-notification-outbox
+  cancel-in-progress: false
+
+jobs:
+  process:
+    if: vars.PONTE_NOTIFICATION_OUTBOX_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Process a bounded batch
+        env:
+          OUTBOX_SECRET: ${{ secrets.NOTIFICATION_OUTBOX_SECRET }}
+        run: |
+          node --input-type=module <<'NODE'
+          const secret = process.env.OUTBOX_SECRET;
+          if (!secret || secret.length < 32) throw new Error('Configure NOTIFICATION_OUTBOX_SECRET.');
+          const response = await fetch('https://igrejaponte.com/api/v1/internal/notification-outbox/process', {
+            method: 'POST', redirect: 'error',
+            headers: { Authorization: `Bearer ${secret}` },
+            signal: AbortSignal.timeout(165000),
+          }).catch(() => { throw new Error('Notification worker request failed.'); });
+          if (!response.ok) throw new Error(`Notification worker returned HTTP ${response.status}.`);
+          const result = await response.json();
+          for (const key of ['processed', 'sent', 'pending', 'failed', 'skipped']) {
+            if (!Number.isInteger(result[key]) || result[key] < 0) throw new Error('Invalid worker response.');
+          }
+          console.log(JSON.stringify(Object.fromEntries(['processed', 'sent', 'pending', 'failed', 'skipped'].map(key => [key, result[key]]))));
+          if (result.failed > 0) throw new Error('Some deliveries failed or require reconciliation; review the notification history.');
+          NODE

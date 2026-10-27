@@ -167,4 +167,33 @@ securityIntegration('Restricted database login (isolated PostgreSQL)', () => {
       .expect(200);
     expect(res.body).toBeDefined();
   });
+
+  it('processes a durable internal notification with the restricted application login', async () => {
+    const user = await runtime.user.findUniqueOrThrow({ where: { email } });
+    const { NotificationOutboxService } =
+      await import('../src/modules/operations/notification-outbox.service');
+    const worker = app.get(NotificationOutboxService);
+    const notification = await runtime.$transaction(async (tx) => {
+      const n = await tx.notification.create({
+        data: {
+          recipientMemberId: user.memberId!,
+          createdByUserId: user.id,
+          channel: 'INTERNAL',
+          content: 'Restricted outbox fixture',
+        },
+      });
+      await tx.notificationDelivery.create({ data: { notificationId: n.id } });
+      return n;
+    });
+    try {
+      expect((await worker.dispatch(notification.id)).status).toBe('SENT');
+      expect(
+        await runtime.notificationDelivery.findUniqueOrThrow({
+          where: { notificationId: notification.id },
+        }),
+      ).toMatchObject({ state: 'DELIVERED' });
+    } finally {
+      await runtime.notification.delete({ where: { id: notification.id } });
+    }
+  });
 });

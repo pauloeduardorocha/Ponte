@@ -12,6 +12,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { AuthService } from '../auth/auth.service';
 import { OperationsController } from './operations.controller';
 import { OperationsService } from './operations.service';
+import { notificationDeliveryMock } from '../../../test/fixtures/notification-delivery-mock';
 import { InternalNotificationProvider } from './notification.provider';
 import { PushController } from './push.controller';
 import {
@@ -51,7 +52,8 @@ const message = {
 
 function setup() {
   const db = {
-    $queryRaw: jest.fn(),
+    notificationDelivery: notificationDeliveryMock(),
+    $queryRaw: jest.fn().mockImplementation(async () => [{ now: new Date() }]),
     $transaction: jest.fn(),
     user: { findUnique: jest.fn().mockResolvedValue({ memberId: 'member' }) },
     visitor: {
