@@ -58,8 +58,11 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
   it('is idempotent, preserves edited data/passwords and assigns least-privilege roles', async () => {
     seed();
     const first = await db.user.findMany({ orderBy: { email: 'asc' } });
-    expect(first).toHaveLength(6);
-    expect(await db.member.count()).toBe(3);
+    // Identity triggers create an account for each of the three sample members
+    // and a member for each of the six explicitly provisioned demo accounts.
+    expect(first).toHaveLength(9);
+    expect(await db.member.count()).toBe(9);
+    expect(first.every((user) => user.memberId !== null)).toBe(true);
     expect(await db.loan.count()).toBe(2);
     expect(await db.smallGroup.count()).toBe(1);
     expect(await db.smallGroupMember.count()).toBe(2);
@@ -143,7 +146,7 @@ integration('Development seed (isolated PostgreSQL schema)', () => {
     expect(second.map((user) => [user.id, user.passwordHash])).toEqual(
       first.map((user) => [user.id, user.passwordHash]),
     );
-    expect(await db.member.count()).toBe(3);
+    expect(await db.member.count()).toBe(9);
     expect(
       (await db.member.findUniqueOrThrow({ where: { id: member.id } })).notes,
     ).toBe('Preserve existing edit');

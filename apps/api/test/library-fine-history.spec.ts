@@ -13,6 +13,7 @@ import {
   LibraryQuery,
 } from '../src/modules/library/library.dto';
 import { PERMISSION_ANY_KEY } from '../src/modules/auth/permission.decorator';
+import { PushService } from '../src/modules/operations/push.service';
 
 function fixture() {
   const payments = Array.from({ length: 43 }, (_, id) => ({
@@ -37,7 +38,13 @@ function fixture() {
   const db = {
     $transaction: async (fn: (client: typeof tx) => unknown) => fn(tx),
   };
-  return { service: new LibraryService(db as unknown as PrismaService), tx };
+  return {
+    service: new LibraryService(
+      db as unknown as PrismaService,
+      {} as PushService,
+    ),
+    tx,
+  };
 }
 
 describe('Paginated fine movements', () => {

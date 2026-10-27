@@ -116,14 +116,11 @@ describe('Security and audit HTTP (isolated PostgreSQL)', () => {
     });
     admin = await user([...PERMISSIONS]);
     member = await user();
-    profileId = (
-      await db.member.create({
-        data: { name: 'Private member', email: 'private@member.example' },
-      })
-    ).id;
-    await db.user.update({
-      where: { id: member.id },
-      data: { memberId: profileId },
+    profileId = (await db.user.findUniqueOrThrow({ where: { id: member.id } }))
+      .memberId!;
+    await db.member.update({
+      where: { id: profileId },
+      data: { name: 'Private member', email: 'private@member.example' },
     });
   }, 60000);
   afterAll(async () => {
@@ -142,7 +139,12 @@ describe('Security and audit HTTP (isolated PostgreSQL)', () => {
       .send({ name: 'Rectified member' })
       .expect(200);
     const log = await db.auditLog.findFirstOrThrow({
-      where: { action: 'DATA_Member_UPDATE', entityId: profileId },
+      where: {
+        action: 'DATA_Member_UPDATE',
+        entityId: profileId,
+        oldValues: { path: ['name'], equals: 'Private member' },
+        newValues: { path: ['name'], equals: 'Rectified member' },
+      },
       orderBy: { createdAt: 'desc' },
     });
     expect(log.userId).toBe(admin.id);
@@ -273,7 +275,7 @@ describe('Security and audit HTTP (isolated PostgreSQL)', () => {
       { roleIds: [powerful.id] },
       limited.token,
     ).expect(403);
-    const target = await user();
+    const target = await user(['MEMBER_READ']);
     await patch(`/users/${target.id}/roles`, { roleIds: [] }).expect(200);
     await get('/auth/me', target.token).expect(401);
     expect(
@@ -497,12 +499,12 @@ describe('Security and audit HTTP (isolated PostgreSQL)', () => {
   });
   it('retains contribution evidence when an anonymization request has financial history', async () => {
     const target = await user();
-    const profile = await db.member.create({
+    const targetMemberId = (
+      await db.user.findUniqueOrThrow({ where: { id: target.id } })
+    ).memberId!;
+    const profile = await db.member.update({
+      where: { id: targetMemberId },
       data: { name: 'Financial privacy member' },
-    });
-    await db.user.update({
-      where: { id: target.id },
-      data: { memberId: profile.id },
     });
     const account = await db.bankAccount.findFirstOrThrow();
     const category = await db.financialCategory.findFirstOrThrow({

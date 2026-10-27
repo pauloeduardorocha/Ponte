@@ -60,7 +60,18 @@ describe('reimbursement transport', () => {
       status: 503,
       message: expect.stringContaining('Confira se o pedido foi guardado'),
     });
-    expect(fetch).toHaveBeenCalledTimes(1);
+    const writes = fetch.mock.calls.filter(
+      ([, options]) => options?.method === 'POST',
+    );
+    expect(writes).toHaveLength(1);
+    expect(writes[0]?.[0]).toBe('/api/v1/reimbursements');
+    expect(
+      fetch.mock.calls.every(
+        ([path, options]) =>
+          options?.method === 'POST' ||
+          String(path).startsWith('/app-version.json?'),
+      ),
+    ).toBe(true);
     expect(reportApiFailure).toHaveBeenCalledWith(
       expect.objectContaining({
         method: 'POST',

@@ -49,7 +49,16 @@ describe('Member access without roles', () => {
           incomeCategories: [{ name: 'PRIVATE' }],
         },
       ]);
-    const db = { $transaction: jest.fn(async (fn) => fn({ $queryRaw: raw })) };
+    const db = {
+      $transaction: jest.fn(async (fn) =>
+        fn({
+          $queryRaw: raw,
+          bankTransaction: {
+            aggregate: jest.fn().mockResolvedValue({ _max: { date: null } }),
+          },
+        }),
+      ),
+    };
     const service = new FinanceService(
       db as unknown as PrismaService,
       {} as StorageService,
@@ -57,6 +66,7 @@ describe('Member access without roles', () => {
     const result = await service.dashboard(user, { month: '2026-01' });
     expect(result).toEqual({
       month: '2026-01',
+      bankDataThrough: null,
       balances: [
         { currency: 'EUR', income: '200', expenses: '50', balance: '150' },
       ],

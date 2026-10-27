@@ -194,10 +194,13 @@ describe('e-Fatura integration', () => {
   });
   it('uses the included source worker when the first resolved asset is absent', async () => {
     const { service, worker } = fixture();
-    (existsSync as jest.Mock)
-      .mockReturnValueOnce(false)
-      .mockReturnValueOnce(false)
-      .mockReturnValue(true);
+    (existsSync as jest.Mock).mockImplementation((path: string) => {
+      const normalized = path.replaceAll('\\', '/');
+      return (
+        !normalized.includes('/efatura-runtime/') &&
+        normalized.endsWith('/src/modules/banking/efatura/worker.cjs')
+      );
+    });
     const pending = service.fetch(
       { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
       user,

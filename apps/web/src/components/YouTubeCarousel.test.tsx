@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { beforeEach, expect, it } from 'vitest';
 import {
   makeUser,
@@ -30,7 +30,8 @@ it('shows latest videos to a member without administrative permissions', async (
     },
   });
   renderApp('/');
-  const video = await screen.findByRole('link', {
+  const main = await screen.findByRole('main');
+  const video = await within(main).findByRole('link', {
     name: 'Assistir: Reunião Família (abre no YouTube)',
   });
   expect(video).toHaveAttribute(

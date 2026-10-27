@@ -87,9 +87,16 @@ securityIntegration('Restricted database login (isolated PostgreSQL)', () => {
     'CREATE TABLE public.security_forbidden_probe (id integer)',
     'CREATE TEMP TABLE security_forbidden_probe (id integer)',
     'SELECT * FROM public._prisma_migrations LIMIT 0',
-    'SET ROLE neondb_owner',
+    'SET ROLE migration_owner',
     'CREATE ROLE security_forbidden_probe',
   ])('denies privileged SQL: %s', async (sql) => {
+    if (sql === 'SET ROLE migration_owner') {
+      const [owner] = await admin.$queryRaw<
+        { role: string }[]
+      >`SELECT current_user AS role`;
+      if (!owner) throw new Error('Migration owner lookup returned no role');
+      sql = `SET ROLE "${owner.role.replaceAll('"', '""')}"`;
+    }
     let denied = false;
     try {
       await runtime.$transaction(async (tx) => {

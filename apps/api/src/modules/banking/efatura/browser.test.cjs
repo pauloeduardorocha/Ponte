@@ -28,22 +28,47 @@ test('launches the configured system browser without downloading Chromium', asyn
   }
 });
 
-test('bundled Chromium matches the Puppeteer supported major version', () => {
-  const { readFileSync } = require('node:fs');
-  const { resolve, dirname } = require('node:path');
-  const manifest = JSON.parse(
-    readFileSync(
-      resolve(
-        dirname(require.resolve('@sparticuz/chromium')),
-        '../package.json',
-      ),
-    ),
-  );
-  assert.equal(
-    puppeteer.PUPPETEER_REVISIONS.chrome.split('.')[0],
-    manifest.version.split('.')[0],
-  );
-});
+test(
+  'production browser supports the page operations used by invoice extraction',
+  {
+    skip:
+      process.platform !== 'linux' && !process.env.PUPPETEER_EXECUTABLE_PATH,
+    timeout: 30000,
+  },
+  async () => {
+    // Test the actual CDP behavior rather than equating package major versions.
+    // Local HTML only: no portal, credentials, downloads or remote network access.
+    const browser = await launchBrowser();
+    try {
+      const page = await browser.newPage();
+      await page.setRequestInterception(true);
+      page.on('request', (request) => {
+        void request.abort();
+      });
+      await page.setContent(`<input name="start"><button id="search"
+      onclick="document.querySelector('tbody').innerHTML='<tr><td>Invoice</td><td>42.50</td></tr>'">Search</button>
+      <table><tbody></tbody></table>`);
+      await page.waitForSelector('input[name="start"]', { visible: true });
+      await page.type('input[name="start"]', '2026-10-01');
+      assert.equal(
+        await page.$eval('input', (input) => input.value),
+        '2026-10-01',
+      );
+      await page.click('#search');
+      await page.waitForFunction(
+        () => document.querySelectorAll('tbody tr').length === 1,
+      );
+      assert.deepEqual(
+        await page.$$eval('tbody td', (cells) =>
+          cells.map((cell) => cell.textContent),
+        ),
+        ['Invoice', '42.50'],
+      );
+    } finally {
+      await browser.close();
+    }
+  },
+);
 
 test('awaits Puppeteer default arguments before launching serverless Chromium', async () => {
   const platform = Object.getOwnPropertyDescriptor(process, 'platform');

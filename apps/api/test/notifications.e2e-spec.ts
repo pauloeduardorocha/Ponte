@@ -16,6 +16,7 @@ import { PermissionGuard } from '../src/modules/auth/permission.guard';
 import { OperationsModule } from '../src/modules/operations/operations.controller';
 import { EventsService } from '../src/modules/events/events.service';
 import { OperationsService } from '../src/modules/operations/operations.service';
+import { PushService } from '../src/modules/operations/push.service';
 
 jest.mock('web-push', () => ({
   ...jest.requireActual('web-push'),
@@ -313,7 +314,11 @@ describe('Notifications on disposable PostgreSQL', () => {
       .mocked(webPush.sendNotification)
       .mockRejectedValue({ statusCode: 410 });
     const operations = app.get(OperationsService);
-    const events = new EventsService(db as PrismaService, operations);
+    const events = new EventsService(
+      db as PrismaService,
+      operations,
+      app.get(PushService),
+    );
     expect(
       await events.notify(
         event.id,

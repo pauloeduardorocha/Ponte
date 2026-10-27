@@ -85,7 +85,7 @@ describe('Church operations with isolated PostgreSQL', () => {
       }),
     );
     await app.init();
-    async function user(codes: string[]) {
+    async function user(codes: string[], roleName: string = randomUUID()) {
       const email = randomUUID() + '@operations.example',
         password = 'Operations-test-password-2026';
       const registered = await request(app.getHttpServer())
@@ -112,7 +112,7 @@ describe('Church operations with isolated PostgreSQL', () => {
       });
       const role = await db.role.create({
         data: {
-          name: randomUUID(),
+          name: roleName,
           permissions: {
             create: permissions.map((p) => ({ permissionId: p.id })),
           },
@@ -132,6 +132,7 @@ describe('Church operations with isolated PostgreSQL', () => {
     }
     const actor = await user(
       PERMISSIONS.filter((p) => !p.startsWith('FINANCE_')),
+      'ADMIN',
     );
     actorId = actor.id;
     token = actor.token;
@@ -157,21 +158,21 @@ describe('Church operations with isolated PostgreSQL', () => {
     leaderToken = leader.token;
     normalToken = (await user([])).token;
     leaderId = (
-      await db.member.create({
-        data: {
-          name: 'Leader Person',
-          email: 'private@operations.example',
-          phone: '12345',
-          notes: 'PRIVATE ADMIN NOTES',
-        },
+      await db.user.findUniqueOrThrow({
+        where: { id: leaderUserId },
       })
-    ).id;
+    ).memberId!;
+    await db.member.update({
+      where: { id: leaderId },
+      data: {
+        name: 'Leader Person',
+        email: 'private@operations.example',
+        phone: '12345',
+        notes: 'PRIVATE ADMIN NOTES',
+      },
+    });
     otherId = (await db.member.create({ data: { name: 'Other Person' } })).id;
     thirdId = (await db.member.create({ data: { name: 'Third Person' } })).id;
-    await db.user.update({
-      where: { id: leaderUserId },
-      data: { memberId: leaderId },
-    });
   }, 60000);
   afterAll(async () => {
     if (app) await app.close();
@@ -413,11 +414,23 @@ describe('Church operations with isolated PostgreSQL', () => {
     }).expect(409);
   });
   it('blocks overlapping assignments and preserves replacement chain', async () => {
+    const ministry = (
+      await post('/ministries', {
+        name: 'Reception team',
+        leaderMemberId: leaderId,
+      }).expect(201)
+    ).body as { id: string };
+    for (const memberId of [otherId, thirdId]) {
+      await post(`/ministries/${ministry.id}/participants`, {
+        memberId,
+      }).expect(201);
+    }
     const first = await event('2026-12-12T19:00:00Z', '2026-12-12T21:00:00Z');
     const second = await event('2026-12-12T20:00:00Z', '2026-12-12T22:00:00Z');
     const makeSchedule = async (eventId: string) =>
       (
         await post('/schedules', {
+          ministryId: ministry.id,
           eventId,
           title: 'Volunteers',
           date: '2026-12-12T19:00:00Z',
@@ -454,12 +467,19 @@ describe('Church operations with isolated PostgreSQL', () => {
     }).expect(409);
   });
   it('rejects changes that introduce conflicts and permits only the assigned volunteer to respond', async () => {
+    const ministry = (
+      await post('/ministries', {
+        name: 'Welcome team',
+        leaderMemberId: leaderId,
+      }).expect(201)
+    ).body as { id: string };
     const first = await event('2026-12-20T19:00:00Z', '2026-12-20T20:00:00Z');
     const second = await event('2026-12-20T21:00:00Z', '2026-12-20T22:00:00Z');
     const schedules: string[] = [];
     for (const e of [first, second]) {
       const row = (
         await post('/schedules', {
+          ministryId: ministry.id,
           eventId: e.id,
           title: 'No overlap',
           date: '2026-12-20T19:00:00Z',

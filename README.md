@@ -5,6 +5,9 @@ Inclui autenticação JWT, usuários, autorização centralizada, membros, visit
 eventos, biblioteca, financeiro, importação bancária, relatórios e auditoria.
 A infraestrutura, health check e proxy Nginx/Vite são preservados.
 
+Plano de evolução: [melhorias técnicas](docs/technical-improvements.md).
+Validação automática e PostgreSQL local descartável: [CI e testes](docs/ci.md).
+
 ## Serviços e painéis de administração
 
 - Domínio e DNS de `igrejaponte.com`: [register.domains](https://register.domains/).
@@ -375,28 +378,23 @@ ações e consultas sem autorização; a API permanece a autoridade.
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test
 npm run build
 npm run format:check
 ```
 
 Jest executa os testes da API; Vitest executa os testes da aplicação web.
-Testes unitários de segurança/rate limits e health não precisam de banco.
-Para também executar integrações HTTP reais e teste idempotente do seed:
+`npm run test:unit` executa os testes sem banco. `npm run test:integration`
+inicia PostgreSQL 17 descartável com `docker-compose.test.yml`, extrai a URL,
+aplica migrations e executa as integrações HTTP, seed e privilégios do login
+restrito. Docker/Compose são necessários apenas para a integração.
 
-```powershell
-# Banco local/teste já migrado; nunca aponte para produção.
-$env:TEST_DATABASE_URL = 'postgresql://USUARIO:SENHA@localhost:5432/BANCO?schema=public'
-npm run test
-```
-
-A suite HTTP da biblioteca **exige** TEST_DATABASE_URL e falha sem ela; não é
-silenciosamente ignorada. Biblioteca e seed aplicam migrations em schemas
-aleatórios exclusivos e removem apenas esses schemas após fechar a aplicação.
-As integrações antigas de auth/member continuam opt-in, usam identificadores
-aleatórios e só removem seus registros. Aponte a variável para um banco local
-de testes exclusivo, já migrado, nunca produção ou banco com dados de terceiros.
-Não há reset do banco/container/volume.
+`npm test` executa ambos em sequência. Não é necessário configurar
+`TEST_DATABASE_URL`: o runner fornece a conexão isolada e remove somente seu
+próprio projeto ao terminar. O banco/volume do Compose principal são preservados.
+Consulte [CI e testes locais](docs/ci.md) para a organização das suítes e os checks
+do GitHub Actions.
 
 A suite cobre concorrência de empréstimos e limites por membro, devolução,
 renovação/limites/fila, UTC/carência, diária congelada, pagamentos parciais,
@@ -700,15 +698,15 @@ Após novas tabelas, reaplique os grants revisados. Não use o seed em produçã
 Para executar a regressão com PostgreSQL real:
 
 ```powershell
-$env:TEST_DATABASE_URL='postgresql://usuario:senha@localhost:5432/banco_de_testes?schema=public'
 npm run lint
+npm run typecheck
 npm run test
 npm run build
 ```
 
-Use banco de testes dedicado. As suítes financeiras/bancárias/seed criam schemas
-isolados; algumas suítes de identidade/biblioteca criam e removem seus próprios
-fixtures no schema informado. Consulte [o acabamento e a validação](docs/UX_FINISH.md).
+O runner provisiona um banco descartável dedicado no Docker Compose de testes,
+sem reutilizar a conexão da aplicação. Consulte [CI e testes locais](docs/ci.md)
+e [o acabamento e a validação](docs/UX_FINISH.md).
 
 ## Operação e vida da igreja — Etapa 9
 

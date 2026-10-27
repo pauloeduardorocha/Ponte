@@ -24,6 +24,7 @@ import { UsersController } from '../users/users.controller';
 import { CommunityController } from '../community/community.controller';
 import { OperationsService } from '../operations/operations.service';
 import { VideosController, VideosService } from '../videos/videos.module';
+import { PlaylistVideosService } from '../videos/playlist-videos.service';
 
 const pending = {
   id: '11111111-1111-4111-8111-111111111111',
@@ -93,6 +94,7 @@ describe('Pending approval HTTP authorization', () => {
         },
         { provide: OperationsService, useValue: {} },
         { provide: VideosService, useValue: { latest: () => ({ items: [] }) } },
+        { provide: PlaylistVideosService, useValue: {} },
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_GUARD, useClass: PermissionGuard },
       ],

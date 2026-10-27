@@ -26,6 +26,7 @@ describe('Permission scoped dashboard', () => {
       },
     });
     renderApp('/');
+    await screen.findByRole('main');
     expect(
       await screen.findByRole('link', {
         name: 'Membros ativos: 2. Abrir lista',

@@ -28,6 +28,8 @@ export default tseslint.config(
       'apps/api/scripts/*.cjs',
       'apps/api/prisma/library-production/*.cjs',
       'apps/api/prisma/bootstrap-production.cjs',
+      'apps/api/jest.*.cjs',
+      'apps/api/test/*.cjs',
     ],
     languageOptions: {
       sourceType: 'commonjs',
@@ -41,6 +43,10 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },
+  },
+  {
+    files: ['scripts/*.mjs'],
+    languageOptions: { globals: globals.node },
   },
   {
     files: ['apps/web/src/**/*.{ts,tsx}'],

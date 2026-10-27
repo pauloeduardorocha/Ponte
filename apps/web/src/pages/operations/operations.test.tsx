@@ -414,8 +414,9 @@ describe('Operational workflows', () => {
       },
     });
     renderApp('/');
+    const main = await screen.findByRole('main');
     expect(
-      await screen.findByRole('link', {
+      await within(main).findByRole('link', {
         name: 'Pessoas em integração: 1. Abrir lista',
       }),
     ).toBeInTheDocument();

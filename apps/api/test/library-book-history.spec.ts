@@ -6,6 +6,7 @@ import { LibraryController } from '../src/modules/library/library.controller';
 import { PrismaService } from '../src/database/prisma.service';
 import { PageQuery } from '../src/modules/members/member.dto';
 import { PERMISSION_KEY } from '../src/modules/auth/permission.decorator';
+import { PushService } from '../src/modules/operations/push.service';
 
 function fixture() {
   const stored = {
@@ -45,7 +46,13 @@ function fixture() {
   const db = {
     $transaction: async (fn: (client: typeof tx) => unknown) => fn(tx),
   };
-  return { service: new LibraryService(db as unknown as PrismaService), tx };
+  return {
+    service: new LibraryService(
+      db as unknown as PrismaService,
+      {} as PushService,
+    ),
+    tx,
+  };
 }
 
 describe('Catalog book circulation history', () => {

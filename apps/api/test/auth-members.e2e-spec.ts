@@ -6,6 +6,7 @@ import { PrismaClient } from '@prisma/client';
 import { randomBytes, randomUUID } from 'node:crypto';
 import * as argon2 from 'argon2';
 import request from 'supertest';
+import { execFileSync } from 'node:child_process';
 import { AppModule } from '../src/app.module';
 import {
   PasswordResetDelivery,
@@ -19,8 +20,8 @@ integration('Authentication and members (real PostgreSQL)', () => {
   let app: INestApplication;
   let db: PrismaClient;
   const suffix = randomUUID();
+  const schema = `auth_test_${suffix.replaceAll('-', '')}`;
   const password = 'Testing-only-password-2026';
-  const emails: string[] = [];
   const memberIds: string[] = [];
   const roleIds: string[] = [];
   const deliveries: PasswordResetMessage[] = [];
@@ -32,7 +33,6 @@ integration('Authentication and members (real PostgreSQL)', () => {
 
   function email() {
     const value = `test-${suffix}-${sequence++}@ponte.example`;
-    emails.push(value);
     return value;
   }
 
@@ -44,26 +44,31 @@ integration('Authentication and members (real PostgreSQL)', () => {
     return value;
   };
   const register = (address: string) =>
-    request(app.getHttpServer())
-      .post('/api/v1/auth/register')
-      .send({
-        phone: '+351 912345678',
-        birthDate: '1990-05-20',
-        email: address,
-        name: 'Test User',
-        password,
-      });
+    request(app.getHttpServer()).post('/api/v1/auth/register').send({
+      phone: '+351 912345678',
+      birthDate: '1990-05-20',
+      email: address,
+      name: 'Test User',
+      password,
+    });
   const login = (address: string, pass = password) =>
     request(app.getHttpServer())
       .post('/api/v1/auth/login')
       .send({ email: address, password: pass });
 
   beforeAll(async () => {
-    process.env.DATABASE_URL = databaseUrl;
+    const url = new URL(databaseUrl!);
+    url.searchParams.set('schema', schema);
+    process.env.DATABASE_URL = url.toString();
+    execFileSync(
+      process.execPath,
+      [require.resolve('prisma/build/index.js'), 'migrate', 'deploy'],
+      { env: process.env, stdio: 'pipe' },
+    );
     process.env.JWT_ACCESS_SECRET = randomBytes(48).toString('hex');
     process.env.JWT_REFRESH_SECRET = randomBytes(48).toString('hex');
     process.env.CORS_ORIGIN = 'http://localhost:5173';
-    db = new PrismaClient({ datasources: { db: { url: databaseUrl } } });
+    db = new PrismaClient({ datasources: { db: { url: url.toString() } } });
     const module = await Test.createTestingModule({ imports: [AppModule] })
       .overrideProvider(ThrottlerStorage)
       .useValue({
@@ -141,24 +146,11 @@ integration('Authentication and members (real PostgreSQL)', () => {
   }, 30000);
 
   afterAll(async () => {
+    await app?.close();
     if (db) {
-      const users = await db.user.findMany({
-        where: { email: { in: emails } },
-        select: { id: true },
-      });
-      const ids = users.map(({ id }) => id);
-      await db.passwordReset.deleteMany({ where: { userId: { in: ids } } });
-      await db.refreshToken.deleteMany({ where: { userId: { in: ids } } });
-      await db.userRole.deleteMany({ where: { userId: { in: ids } } });
-      await db.user.deleteMany({ where: { id: { in: ids } } });
-      await db.rolePermission.deleteMany({
-        where: { roleId: { in: roleIds } },
-      });
-      await db.role.deleteMany({ where: { id: { in: roleIds } } });
-      await db.member.deleteMany({ where: { id: { in: memberIds } } });
+      await db.$executeRawUnsafe(`DROP SCHEMA IF EXISTS "${schema}" CASCADE`);
       await db.$disconnect();
     }
-    await app?.close();
   });
 
   it('registers a normal user, hashes the password and never accepts roles or permissions', async () => {
@@ -479,7 +471,7 @@ integration('Authentication and members (real PostgreSQL)', () => {
         .post('/api/v1/members')
         .set(bearer(adminToken))
         .send({
-          name: `${suffix}-${name}`,
+          name: `crud-${suffix}-${name}`,
           email: `${name.toLowerCase()}@ponte.example`,
           status: name === 'C' ? 'INACTIVE' : 'ACTIVE',
           birthDate: '2000-02-29',
@@ -491,7 +483,7 @@ integration('Authentication and members (real PostgreSQL)', () => {
       .get('/api/v1/members')
       .set(bearer(adminToken))
       .query({
-        search: suffix,
+        search: `crud-${suffix}`,
         status: 'ACTIVE',
         page: 2,
         pageSize: 1,
@@ -503,7 +495,7 @@ integration('Authentication and members (real PostgreSQL)', () => {
       total: 2,
       page: 2,
       pageSize: 1,
-      items: [{ name: `${suffix}-A` }],
+      items: [{ name: `crud-${suffix}-A` }],
     });
     expect(response.body.items).toHaveLength(1);
     const id = memberIds[0];
@@ -514,12 +506,17 @@ integration('Authentication and members (real PostgreSQL)', () => {
     await request(app.getHttpServer())
       .patch(`/api/v1/members/${id}`)
       .set(bearer(adminToken))
-      .send({ name: 'Edited', email: null, birthDate: null, notes: 'Note' })
+      .send({
+        name: 'Edited',
+        email: 'edited@ponte.example',
+        birthDate: null,
+        notes: 'Note',
+      })
       .expect(200)
       .expect((result) => {
         expect(result.body).toMatchObject({
           name: 'Edited',
-          email: null,
+          email: 'edited@ponte.example',
           birthDate: null,
           notes: 'Note',
         });
@@ -527,18 +524,23 @@ integration('Authentication and members (real PostgreSQL)', () => {
     await request(app.getHttpServer())
       .delete(`/api/v1/members/${id}`)
       .set(bearer(adminToken))
-      .expect(204);
+      .expect(409);
     await request(app.getHttpServer())
       .get(`/api/v1/members/${id}`)
       .set(bearer(adminToken))
+      .expect(200);
+    const missingId = randomUUID();
+    await request(app.getHttpServer())
+      .get(`/api/v1/members/${missingId}`)
+      .set(bearer(adminToken))
       .expect(404);
     await request(app.getHttpServer())
-      .patch(`/api/v1/members/${id}`)
+      .patch(`/api/v1/members/${missingId}`)
       .set(bearer(adminToken))
       .send({ name: 'Missing' })
       .expect(404);
     await request(app.getHttpServer())
-      .delete(`/api/v1/members/${id}`)
+      .delete(`/api/v1/members/${missingId}`)
       .set(bearer(adminToken))
       .expect(404);
     await request(app.getHttpServer())
