@@ -137,5 +137,21 @@ describe('Statement parsers', () => {
     expect(
       transactionFingerprint('a', { ...row, direction: 'DEBIT' }),
     ).not.toBe(transactionFingerprint('a', row));
+    const withoutBankId = { ...row, bankIdentifier: null };
+    expect(transactionFingerprint('a', withoutBankId)).not.toBe(
+      transactionFingerprint('a', {
+        ...withoutBankId,
+        description: 'Outro texto',
+      }),
+    );
+    expect(
+      transactionFingerprint('a', { ...withoutBankId, reference: '' }),
+    ).not.toBe(
+      transactionFingerprint('a', {
+        ...withoutBankId,
+        reference: '',
+        description: 'Outro texto',
+      }),
+    );
   });
 });

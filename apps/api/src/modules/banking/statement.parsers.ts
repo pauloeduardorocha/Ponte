@@ -412,6 +412,11 @@ export function transactionFingerprint(
         t.direction,
         canonical(t.reference),
         canonical(t.bankIdentifier ?? ''),
+        // Legacy fingerprints omitted this fallback and collided for unrelated
+        // operations with the same date and amount. Existing hashes stay intact.
+        ...(!canonical(t.bankIdentifier ?? '')
+          ? [canonical(t.description)]
+          : []),
       ]),
     )
     .digest('hex');

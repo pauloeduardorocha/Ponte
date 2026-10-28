@@ -530,7 +530,7 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
     const ambiguous = (
       await upload(
         f.accountId,
-        Buffer.from('date,description,amount\n2026-10-07,Pagamento,20.00'),
+        Buffer.from('date,description,amount\n2026-10-07,Uma descrição,20.00'),
       ).expect(201)
     ).body;
     const duplicate = (await rows(ambiguous.id))[0]!;

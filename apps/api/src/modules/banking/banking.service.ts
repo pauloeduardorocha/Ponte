@@ -391,6 +391,7 @@ export class BankingService {
         const existing = await tx.bankTransaction.findMany({
           where: {
             import: { accountId },
+            status: { not: 'REJECTED' },
             date: {
               in: [...new Set(parsed.map((r) => r.date))].map(
                 (d) => new Date(d),
@@ -399,10 +400,12 @@ export class BankingService {
           },
           select: {
             id: true,
+            importId: true,
             date: true,
             amount: true,
             direction: true,
             reference: true,
+            description: true,
             bankIdentifier: true,
             fingerprint: true,
           },
@@ -440,27 +443,52 @@ export class BankingService {
         const expenses: Prisma.ExpenseCreateManyInput[] = [];
         const reconciliations: Prisma.BankReconciliationCreateManyInput[] = [];
         const audits: Prisma.AuditLogCreateManyInput[] = [];
+        // Match occurrences across statements, not separate lines of one statement.
+        // Consume one occurrence per previous import so overlapping files do not
+        // inflate the number of matches available for a later statement.
+        const consumedMatches = new Set<string>();
         for (const row of parsed) {
           const fingerprint = transactionFingerprint(accountId, row);
-          const dup = existing.find(
-            (t) =>
-              t.fingerprint === fingerprint ||
-              (t.date.toISOString().slice(0, 10) === row.date &&
-                t.amount.abs().equals(row.amount) &&
-                t.direction === row.direction &&
-                ((!row.reference && !row.bankIdentifier) ||
-                  (row.bankIdentifier &&
-                    canonical(t.bankIdentifier ?? '') ===
-                      canonical(row.bankIdentifier)) ||
-                  (row.reference &&
-                    canonical(t.reference) === canonical(row.reference)))),
-          );
+          const bankId = canonical(row.bankIdentifier ?? '');
+          const sameBankId = (t: (typeof existing)[number]) =>
+            Boolean(bankId && bankId === canonical(t.bankIdentifier ?? ''));
+          const matches = existing.filter((t) => {
+            if (
+              t.date.toISOString().slice(0, 10) !== row.date ||
+              !t.amount.abs().equals(row.amount) ||
+              t.direction !== row.direction
+            )
+              return false;
+            if (sameBankId(t)) return true;
+            // Different bank IDs identify different operations. Without a unique
+            // ID, identical rows in the same statement are legitimate occurrences.
+            if (
+              t.importId === imported.id ||
+              consumedMatches.has(t.id) ||
+              (bankId && canonical(t.bankIdentifier ?? ''))
+            )
+              return false;
+            if (
+              canonical(row.reference) &&
+              canonical(t.reference) &&
+              canonical(row.reference) !== canonical(t.reference)
+            )
+              return false;
+            return canonical(t.description) === canonical(row.description);
+          });
+          // Prefer a unique identifier over a weaker description/reference match.
+          const dup = matches.find(sameBankId) ?? matches[0];
+          if (dup && !sameBankId(dup)) {
+            const matchedImports = new Set<string>();
+            for (const match of matches) {
+              if (!matchedImports.has(match.importId)) {
+                consumedMatches.add(match.id);
+                matchedImports.add(match.importId);
+              }
+            }
+          }
           const confirmedDuplicate = Boolean(
-            dup &&
-            (repeatedFile ||
-              (row.bankIdentifier &&
-                canonical(dup.bankIdentifier ?? '') ===
-                  canonical(row.bankIdentifier))),
+            repeatedFile || (dup && sameBankId(dup)),
           );
           const manualMatch = (
             row.direction === 'CREDIT' ? manualIncomes : manualExpenses
@@ -470,7 +498,7 @@ export class BankingService {
               entry.amount.equals(row.amount),
           );
           const id = randomUUID();
-          const register = !dup && !manualMatch;
+          const register = !confirmedDuplicate && !dup && !manualMatch;
           const created: Prisma.BankTransactionCreateManyInput = {
             id,
             importId: imported.id,
@@ -492,19 +520,23 @@ export class BankingService {
               defaultCategories[
                 row.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE'
               ].id,
-            duplicateReason: dup
-              ? `${confirmedDuplicate ? 'Duplicado ignorado' : 'Possível correspondência'} com movimento ${dup.id}`
-              : manualMatch
-                ? `Possível correspondência com ${row.direction === 'CREDIT' ? 'receita' : 'despesa'} já cadastrada ${manualMatch.id}`
-                : null,
+            duplicateReason: repeatedFile
+              ? `Duplicado ignorado: arquivo já confirmado ${repeatedFile.id}`
+              : dup
+                ? `${confirmedDuplicate ? 'Duplicado ignorado' : 'Possível correspondência'} com movimento ${dup.id}`
+                : manualMatch
+                  ? `Possível correspondência com ${row.direction === 'CREDIT' ? 'receita' : 'despesa'} já cadastrada ${manualMatch.id}`
+                  : null,
           };
           movements.push(created);
           existing.push({
             id,
+            importId: imported.id,
             date: new Date(row.date),
             amount: new Prisma.Decimal(row.amount),
             direction: row.direction,
             reference: row.reference,
+            description: row.description,
             bankIdentifier: row.bankIdentifier,
             fingerprint,
           });
