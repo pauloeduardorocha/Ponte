@@ -23,7 +23,6 @@ export function LibraryDashboardPanel() {
   const dashboard = useQuery({
     queryKey: ['library', 'dashboard', page, pageSize],
     queryFn: () => api.getLibraryDashboard({ page, pageSize }),
-    staleTime: 30000,
   });
   if (dashboard.isPending)
     return <CircularProgress aria-label="Carregando painel da biblioteca" />;

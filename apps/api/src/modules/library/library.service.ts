@@ -9,6 +9,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import type { BookAvailability } from '@church/shared';
 import { PrismaService } from '../../database/prisma.service';
 import { PushService } from '../operations/push.service';
 import { LibraryPageQuery as PageQuery } from './library.dto';
@@ -90,6 +91,18 @@ function presentBook({ copies, categories, ...book }: CatalogueBook) {
 
 @Injectable()
 export class LibraryService implements OnModuleInit, OnModuleDestroy {
+  async bookAvailability(ids: string[]): Promise<BookAvailability[]> {
+    const books = await this.db.book.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, copies: { select: { status: true } } },
+    });
+    return books.map((book) => ({
+      bookId: book.id,
+      quantity: book.copies.length,
+      available: book.copies.filter((copy) => copy.status === 'AVAILABLE')
+        .length,
+    }));
+  }
   private timer?: NodeJS.Timeout;
   private readonly logger = new Logger(LibraryService.name);
 

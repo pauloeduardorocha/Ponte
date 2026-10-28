@@ -197,6 +197,28 @@
         ],
         "type": "object"
       },
+      "BookAvailabilityDto": {
+        "properties": {
+          "available": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "bookId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "quantity": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "bookId",
+          "quantity",
+          "available"
+        ],
+        "type": "object"
+      },
       "BookDto": {
         "properties": {
           "author": {
@@ -11354,6 +11376,57 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_CREATE"
+        ]
+      }
+    },
+    "/api/v1/library/books/availability": {
+      "get": {
+        "operationId": "LibraryController_availability",
+        "parameters": [
+          {
+            "description": "Até 100 IDs de livros separados por vírgula.",
+            "explode": false,
+            "in": "query",
+            "name": "ids",
+            "required": true,
+            "schema": {
+              "items": {
+                "format": "uuid",
+                "type": "string"
+              },
+              "maxItems": 100,
+              "minItems": 1,
+              "type": "array",
+              "uniqueItems": true
+            },
+            "style": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BookAvailabilityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Biblioteca"
+        ],
+        "x-permissions-all": [
+          "LIBRARY_BOOK_READ"
         ]
       }
     },

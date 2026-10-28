@@ -1,7 +1,8 @@
-import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
+import { PartialType, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   ArrayUnique,
   IsArray,
   IsBoolean,
@@ -20,6 +21,13 @@ import {
   ValidateIf,
 } from 'class-validator';
 import { PageQuery } from '../members/member.dto';
+import type { BookAvailability } from '@church/shared';
+
+export class BookAvailabilityDto implements BookAvailability {
+  @ApiProperty({ format: 'uuid' }) bookId!: string;
+  @ApiProperty({ minimum: 0, type: 'integer' }) quantity!: number;
+  @ApiProperty({ minimum: 0, type: 'integer' }) available!: number;
+}
 
 export class LibraryPageQuery extends PageQuery {
   @ApiPropertyOptional({
@@ -29,6 +37,22 @@ export class LibraryPageQuery extends PageQuery {
     maximum: 100,
   })
   override pageSize: number = 10;
+}
+
+export class BookAvailabilityQuery {
+  @ApiProperty({
+    type: [String],
+    description: 'Até 100 IDs de livros separados por vírgula.',
+  })
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.split(',') : value,
+  )
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(100)
+  @ArrayUnique()
+  @IsUUID('all', { each: true })
+  ids!: string[];
 }
 
 export const COPY_STATUSES = [

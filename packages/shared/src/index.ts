@@ -40,6 +40,12 @@ export interface FrontendErrorStats {
   rows: FrontendErrorStat[];
 }
 
+export interface BookAvailability {
+  bookId: string;
+  quantity: number;
+  available: number;
+}
+
 export const PERMISSIONS = [
   'COMMUNITY_READ',
   'FINANCE_SUMMARY_READ',

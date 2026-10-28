@@ -97,7 +97,7 @@ describe('reimbursement transport', () => {
       reimbursementFileRequest('', new FormData()),
     ).rejects.toMatchObject({
       status: 0,
-      message: 'Não foi possível conectar ao servidor.',
+      message: 'Falha de comunicação. Confira se o pedido foi guardado antes de tentar novamente.',
     });
     expect(fetch).toHaveBeenCalledTimes(2);
   });

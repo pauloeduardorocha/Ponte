@@ -13,6 +13,7 @@ import {
 } from './library-actions';
 import { Paged } from './LibraryPaged';
 import type { Page } from '@church/shared';
+import { useBookAvailability } from '../../lib/use-book-availability';
 export function CatalogPanel({
   books,
   page,
@@ -30,6 +31,7 @@ export function CatalogPanel({
   open: OpenLibraryAction;
   setDetailBook: (book: api.Book) => void;
 }) {
+  const availability = useBookAvailability(books.items.map((book) => book.id));
   return (
     <Paged
       total={books.total}
@@ -180,7 +182,17 @@ export function CatalogPanel({
               </Typography>
               <Typography>{book.keywords?.join(', ')}</Typography>
               <Typography>
-                Exemplares: {book.quantity} · Disponíveis: {book.available}
+                Exemplares:{' '}
+                {availability.isError
+                  ? '—'
+                  : (availability.values.get(book.id)?.quantity ?? '—')}{' '}
+                · Disponíveis:{' '}
+                {availability.isFetching
+                  ? 'Verificando…'
+                  : availability.isError
+                    ? 'Indisponível para consulta'
+                    : (availability.values.get(book.id)?.available ??
+                      'Não informado')}
               </Typography>
               <Typography variant="caption">
                 ID: {book.id} · ISBN: {book.isbn}

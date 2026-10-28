@@ -1,4 +1,9 @@
-import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiQuery,
+} from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -18,6 +23,8 @@ import {
   AdjustmentDto,
   BookDto,
   BookQuery,
+  BookAvailabilityQuery,
+  BookAvailabilityDto,
   CloseLoanDto,
   CopyDto,
   CopyQuery,
@@ -67,6 +74,26 @@ export class LibraryController {
   @Permission('LIBRARY_BOOK_READ')
   keywords(@Query() query: PageQuery) {
     return this.library.bookOptions('keyword', query);
+  }
+
+  @Get('books/availability')
+  @ApiQuery({
+    name: 'ids',
+    required: true,
+    style: 'form',
+    explode: false,
+    schema: {
+      type: 'array',
+      items: { type: 'string', format: 'uuid' },
+      minItems: 1,
+      maxItems: 100,
+      uniqueItems: true,
+    },
+  })
+  @ApiOkResponse({ type: [BookAvailabilityDto] })
+  @Permission('LIBRARY_BOOK_READ')
+  availability(@Query() query: BookAvailabilityQuery) {
+    return this.library.bookAvailability(query.ids);
   }
 
   @Get('books/:id')

@@ -101,6 +101,7 @@ export function MemberDetailPage() {
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: ['member', id] });
       await queryClient.invalidateQueries({ queryKey: ['members'] });
+      await queryClient.invalidateQueries({ queryKey: ['community', 'birthdays'] });
       navigate('/members', {
         replace: true,
         state: { notice: 'Membro excluído com sucesso.' },

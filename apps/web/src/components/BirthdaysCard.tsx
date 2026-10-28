@@ -11,6 +11,7 @@ import CakeOutlinedIcon from '@mui/icons-material/CakeOutlined';
 import { useAuth } from '../auth/auth-context';
 import { apiRequest } from '../lib/api';
 import { QueryError } from './PageParts';
+import { CachedQueryStatus } from './CachedQueryStatus';
 
 export function BirthdaysCard() {
   const { user } = useAuth();
@@ -20,8 +21,7 @@ export function BirthdaysCard() {
       apiRequest<{ id: string; name: string; birthday: string }[]>(
         '/community/birthdays?period=week',
       ),
-    staleTime: 60 * 60_000,
-    refetchInterval: 60 * 60_000,
+    refetchInterval: 24 * 60 * 60_000,
   });
   return (
     <Card variant="outlined">
@@ -42,6 +42,12 @@ export function BirthdaysCard() {
               onRetry={() => void query.refetch()}
             />
           )}
+          <CachedQueryStatus
+            updatedAt={query.dataUpdatedAt}
+            refreshing={query.isFetching}
+            onRefresh={() => void query.refetch()}
+            label="aniversariantes"
+          />
           {query.data &&
             (query.data.length ? (
               <>

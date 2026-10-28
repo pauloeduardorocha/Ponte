@@ -4,11 +4,17 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { onSessionExpired, refreshSession, setAccessToken } from '../lib/api';
+import {
+  ApiError,
+  onSessionExpired,
+  refreshSession,
+  setAccessToken,
+} from '../lib/api';
 import * as authApi from '../lib/auth-api';
 import {
   loginWithPasskey as passkeyLogin,
@@ -56,6 +62,8 @@ const ANONYMOUS: AuthState = {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
+  const restoreAfterReconnect = useRef(false);
+  const identityRevision = useRef(0);
   const [enrollment, setEnrollment] = useState<{
     userId: string;
     password: string;
@@ -70,6 +78,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const clearSession = useCallback(
     (notice?: string) => {
+      identityRevision.current++;
+      restoreAfterReconnect.current = false;
       setEnrollment(null);
       void stopBrowserPush().catch(() => undefined);
       setAccessToken(null);
@@ -81,50 +91,78 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let active = true;
+    let restoring = false;
 
     async function restoreSession() {
+      if (restoring) return;
+      restoring = true;
+      const revision = identityRevision.current;
+      restoreAfterReconnect.current = false;
       try {
         const session = await refreshSession();
+        if (revision !== identityRevision.current) return;
         if (!session) {
           if (active) setState(ANONYMOUS);
           return;
         }
         const user = await authApi.fetchCurrentUser();
-        if (active) setState({ ...ANONYMOUS, status: 'authenticated', user });
+        if (active && revision === identityRevision.current)
+          setState({ ...ANONYMOUS, status: 'authenticated', user });
       } catch (error) {
-        if (active) {
+        if (active && revision === identityRevision.current) {
+          restoreAfterReconnect.current =
+            error instanceof ApiError &&
+            (error.status === 0 || error.status >= 500);
           setAccessToken(null);
           setState({ ...ANONYMOUS, sessionError: errorMessage(error) });
         }
+      } finally {
+        restoring = false;
       }
     }
 
+    const reconnect = () => {
+      if (active && restoreAfterReconnect.current) {
+        setState({ ...ANONYMOUS, status: 'loading' });
+        void restoreSession();
+      }
+    };
+    window.addEventListener('online', reconnect);
     void restoreSession();
     return () => {
       active = false;
+      window.removeEventListener('online', reconnect);
     };
   }, []);
 
   useEffect(() => onSessionExpired(() => clearSession()), [clearSession]);
 
-  const login = useCallback(async (email: string, password: string) => {
-    await authApi.login(email, password);
-    try {
-      const user = await authApi.fetchCurrentUser();
-      resumeAutomaticPasskeyLogin();
-      setEnrollment(
-        passkeysSupported() && shouldOfferPasskey(user.id)
-          ? { userId: user.id, password }
-          : null,
-      );
-      setState({ ...ANONYMOUS, status: 'authenticated', user });
-    } catch (error) {
-      setAccessToken(null);
-      throw error;
-    }
-  }, []);
+  const login = useCallback(
+    async (email: string, password: string) => {
+      identityRevision.current++;
+      restoreAfterReconnect.current = false;
+      queryClient.clear();
+      await authApi.login(email, password);
+      try {
+        const user = await authApi.fetchCurrentUser();
+        resumeAutomaticPasskeyLogin();
+        setEnrollment(
+          passkeysSupported() && shouldOfferPasskey(user.id)
+            ? { userId: user.id, password }
+            : null,
+        );
+        setState({ ...ANONYMOUS, status: 'authenticated', user });
+      } catch (error) {
+        setAccessToken(null);
+        throw error;
+      }
+    },
+    [queryClient],
+  );
 
   const loginWithPasskey = useCallback(async () => {
+    identityRevision.current++;
+    restoreAfterReconnect.current = false;
     const session = await passkeyLogin();
     setEnrollment(null);
     queryClient.clear();
@@ -132,6 +170,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [queryClient]);
 
   const logout = useCallback(async () => {
+    identityRevision.current++;
+    restoreAfterReconnect.current = false;
     pauseAutomaticPasskeyLogin();
     try {
       await disablePush().catch(() => stopBrowserPush().catch(() => undefined));

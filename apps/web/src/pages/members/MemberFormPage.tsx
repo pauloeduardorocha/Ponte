@@ -108,6 +108,9 @@ function MemberForm({
     onSuccess: async (saved) => {
       queryClient.setQueryData(['member', saved.id], saved);
       await queryClient.invalidateQueries({ queryKey: ['members'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['community', 'birthdays'],
+      });
       onSaved(saved);
     },
     onError: (err) => setError(errorMessage(err)),

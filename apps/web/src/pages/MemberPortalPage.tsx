@@ -3,7 +3,7 @@ import { formatDateTime } from '../lib/format';
 import { useAuth } from '../auth/auth-context';
 import { useState } from 'react';
 
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import {
   Alert,
@@ -28,6 +28,7 @@ import { RecordTable, RecordRow } from '../components/RecordTable';
 import { PageHeader, QueryError } from '../components/PageParts';
 
 import { useDebouncedValue } from '../lib/use-debounced-value';
+import { useBookAvailability } from '../lib/use-book-availability';
 
 type Resource = 'events' | 'small-groups' | 'ministries' | 'books';
 
@@ -64,6 +65,7 @@ const titles = {
 };
 
 export function MemberPortalPage({ resource }: { resource: Resource }) {
+  const client = useQueryClient();
   const { hasPermission } = useAuth();
   const managePermission = {
     events: 'EVENT_READ',
@@ -99,6 +101,10 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
     queryFn: () => apiRequest<Entry>(`/member-portal/small-groups/${groupId}`),
     enabled: !!groupId,
   });
+  const availability = useBookAvailability(
+    data.data?.items.map((entry) => entry.id) ?? [],
+    resource === 'books',
+  );
 
   const reserve = useMutation({
     mutationFn: (bookId: string) =>
@@ -106,6 +112,11 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
         method: 'POST',
         body: { bookId },
       }),
+    onSuccess: () =>
+      Promise.all([
+        client.invalidateQueries({ queryKey: ['library'] }),
+        client.invalidateQueries({ queryKey: ['member-portal'] }),
+      ]),
   });
 
   return (
@@ -230,8 +241,18 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
               >
                 {resource === 'books' && (
                   <Typography>
-                    Exemplares: {entry.quantity ?? 0} · Disponíveis:{' '}
-                    {entry.available ?? 0}
+                    Exemplares:{' '}
+                    {availability.isError
+                      ? '—'
+                      : (availability.values.get(entry.id)?.quantity ??
+                        '—')}{' '}
+                    · Disponíveis:{' '}
+                    {availability.isFetching
+                      ? 'Verificando…'
+                      : availability.isError
+                        ? 'Indisponível para consulta'
+                        : (availability.values.get(entry.id)?.available ??
+                          'Não informado')}
                   </Typography>
                 )}
                 {resource === 'books' && (

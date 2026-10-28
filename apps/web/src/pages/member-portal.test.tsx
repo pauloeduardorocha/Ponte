@@ -74,6 +74,9 @@ describe('Basic member experience', () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser(['LIBRARY_BOOK_READ'])),
       'GET /library/books': { body: { items: [book], total: 1 } },
+      'GET /library/books/availability': {
+        body: [{ bookId: 'b1', quantity: 2, available: 1 }],
+      },
       'GET /library/books/b1': { body: book },
       'GET /library/books/b1/history': ({ query }) => ({
         body: {
@@ -98,7 +101,7 @@ describe('Basic member experience', () => {
       await screen.findByRole('img', { name: 'Capa de Livro completo' }),
     ).toHaveAttribute('src', book.cover);
     expect(
-      screen.getByText('Exemplares: 2 · Disponíveis: 1'),
+      await screen.findByText('Exemplares: 2 · Disponíveis: 1'),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Reservar' }),

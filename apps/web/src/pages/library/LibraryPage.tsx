@@ -1,12 +1,13 @@
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { BookCatalogDetails } from './BookCatalogDetails';
+import { CachedQueryStatus } from '../../components/CachedQueryStatus';
 import { MemberPortalPage } from '../MemberPortalPage';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { EntitySelect } from '../../components/EntitySelect';
 import { LibraryDashboardPanel } from './LibraryDashboardPanel';
 import { useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
   Autocomplete,
@@ -64,6 +65,7 @@ export function LibraryPage() {
   );
 }
 function LibraryManagementPage() {
+  const client = useQueryClient();
   const { hasPermission } = useAuth();
   const tabs = [
     ['catalog', 'Catálogo', 'LIBRARY_BOOK_READ'],
@@ -115,6 +117,7 @@ function LibraryManagementPage() {
     queryFn: () =>
       api.listBooks({ page, pageSize, search, author, category, available }),
     enabled: tab === 'catalog',
+    ...(available ? { staleTime: 0, refetchInterval: 30_000 } : {}),
   });
   const copies = useQuery({
     queryKey: ['library', 'copies', page, pageSize, search, bookId, status],
@@ -181,6 +184,17 @@ function LibraryManagementPage() {
       <PageHeader
         title="Biblioteca"
         subtitle="Catálogo, circulação, reservas e multas"
+      />
+      <CachedQueryStatus
+        updatedAt={current.dataUpdatedAt}
+        refreshing={current.isFetching}
+        onRefresh={() => {
+          void current.refetch();
+          void client.invalidateQueries({
+            queryKey: ['library', 'availability'],
+          });
+        }}
+        label="biblioteca"
       />
       <Can permission="LIBRARY_DASHBOARD_READ">
         <LibraryDashboardPanel />

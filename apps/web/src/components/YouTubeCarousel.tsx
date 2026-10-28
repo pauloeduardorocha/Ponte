@@ -1,4 +1,5 @@
 import { formatDate } from '../lib/format';
+import { retryQuery } from '../lib/query-retry';
 import { useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -33,9 +34,8 @@ export function YouTubeCarousel() {
   const query = useQuery({
     queryKey: ['church-videos'],
     queryFn: () => apiRequest<{ items: Video[]; stale: boolean }>('/videos'),
-    staleTime: 10 * 60_000,
-    refetchInterval: 10 * 60_000,
-    retry: 1,
+    refetchInterval: 6 * 60 * 60_000,
+    retry: retryQuery,
   });
   const scroll = (direction: number) => {
     const element = track.current;

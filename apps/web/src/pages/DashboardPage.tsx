@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime } from '../lib/format';
+import { retryQuery } from '../lib/query-retry';
 import { MemberDashboard } from './MemberDashboard';
 import { BirthdaysCard } from '../components/BirthdaysCard';
 import { YouTubeCarousel } from '../components/YouTubeCarousel';
@@ -62,14 +63,13 @@ function ApprovedDashboard() {
   const health = useQuery({
     queryKey: ['health'],
     queryFn: getHealth,
-    retry: 1,
+    retry: retryQuery,
     staleTime: 60000,
   });
   const community = useQuery({
     queryKey: ['community', 'dashboard'],
     queryFn: () => apiRequest<Community>('/community/dashboard'),
     enabled: canCommunity,
-    staleTime: 30000,
   });
   const d = community.data;
   return (

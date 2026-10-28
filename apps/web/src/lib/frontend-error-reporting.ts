@@ -99,6 +99,23 @@ export function reportApiFailure(details: { path: string; method: string; status
   });
 }
 
+/** Recovered reads are breadcrumbs, not new error reports. Never include query values. */
+export function recordApiRecovery(details: {
+  path: string;
+  attempts: number;
+  durationMs: number;
+}) {
+  breadcrumbs.push({
+    level: 'warn',
+    at: new Date().toISOString(),
+    message: safeText(
+      `Consulta GET recuperada: ${details.path.split(/[?#]/, 1)[0]}; tentativas=${details.attempts}; duração=${details.durationMs}ms.`,
+      500,
+    ),
+  });
+  if (breadcrumbs.length > 20) breadcrumbs.shift();
+}
+
 export function initFrontendErrorReporting(getToken: () => string | null) {
   if (initialized || typeof window === 'undefined') return;
   initialized = true;

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { retryQuery } from '../lib/query-retry';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -29,8 +30,7 @@ export function PlaylistPlayer({
         `/videos/playlists/${playlist.id}${pageParam ? `?pageToken=${encodeURIComponent(pageParam)}` : ''}`,
       ),
     getNextPageParam: (page) => page.nextPageToken,
-    staleTime: 10 * 60_000,
-    retry: 1,
+    retry: retryQuery,
   });
   const videos = query.data?.pages.flatMap((page) => page.items) ?? [];
   const selectedPosition = selected?.position ?? videos[0]?.position;

@@ -36,7 +36,7 @@ export function LibraryMultiAutocomplete({
     getNextPageParam: (last) =>
       last.page * last.pageSize < last.total ? last.page + 1 : undefined,
     enabled: open && !props.disabled && search === debounced,
-    staleTime: 30_000,
+    staleTime: endpoint.startsWith('/library/copies') ? 0 : 6 * 60 * 60_000,
     refetchOnWindowFocus: false,
   });
   const items =

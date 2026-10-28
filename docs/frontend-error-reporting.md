@@ -137,6 +137,82 @@ A persistência, a auditoria, os gráficos e a retenção de 30 dias continuam a
 Outros emails transacionais da aplicação não são alterados. A suspensão entra
 em vigor quando a versão com esta alteração é implantada.
 
+## Recuperação de rede e diagnóstico (1.3.0)
+
+O transporte repete somente GET com falha de comunicação, até três tentativas,
+com esperas de 500 ms e 1500 ms. Há limite de 15 segundos até os cabeçalhos por
+tentativa e orçamento total de 30 segundos. Timeout e indicação offline não
+disparam novas tentativas automáticas. POST/PATCH/DELETE não são repetidos por
+falhas de rede; têm espera máxima de 90 segundos até os cabeçalhos (15 segundos
+para renovação de sessão). A renovação única após 401 mantém o contrato existente.
+Esses limites não abrangem a leitura posterior do corpo ou de downloads.
+
+Ao esgotar tentativas, um único relatório inclui tipo (`network`, `offline` ou
+`timeout`), nome limitado da exceção, duração, número de tentativas, indicação
+`navigator.onLine` e visibilidade da aba. Não se capturam mensagens/stack da
+exceção de fetch, URLs completas, corpos, tokens ou conteúdo dos documentos.
+Falhas na serialização do pedido não são classificadas como falhas de rede.
+Leituras recuperadas não geram erro: ficam nos últimos 20 breadcrumbs em memória,
+sem query string, e aparecem no contexto de um relatório posterior se houver.
+React Query não repete erros de transporte já esgotados nem HTTP 4xx. Consultas
+HTTP 5xx mantêm até uma repetição nas configurações que já a permitiam.
+
+Falhas transitórias em `/auth/refresh` preservam o token em memória; somente
+401 confirmado encerra a sessão. Uma consulta posterior pode renovar novamente.
+Se a restauração inicial falhar por rede/5xx, o evento `online` permite tentar
+restaurá-la. Login/logout manuais cancelam essa recuperação inicial. Tentativas
+GET pendentes não voltam a enviar tokens de uma sessão que tenha sido alterada.
+
+O aviso offline orienta a manter a página aberta. Consultas pausadas retomam na
+reconexão. Gravações offline falham imediatamente e não ficam numa fila para
+ser enviadas automaticamente depois. Dados já carregados permanecem no cache
+se uma atualização falhar, respeitando as permissões e os ciclos da sessão.
+
+### Cache de consultas no cliente
+
+O cache React Query é somente em memória; respostas autenticadas não entram em
+localStorage, IndexedDB nem no cache do service worker. Recarregar/fechar a página
+descarta esse cache. Login, login com passkey, logout e expiração da sessão
+limpam as consultas para impedir reutilização entre contas.
+
+| Consultas | Validade antes de nova consulta | Retenção quando inativas |
+| --- | --- | --- |
+| Aniversariantes da semana | 1 dia | 25 horas |
+| Financeiro, reembolsos e lookups financeiros | 1 hora | 65 minutos |
+| Catálogo da biblioteca, livros no portal e outras consultas | 6 horas | 6 horas e 5 minutos |
+| Disponibilidade, exemplares, empréstimos, reservas e painéis da biblioteca | Sem validade para reutilização | 6 horas e 5 minutos |
+
+Consultas operacionais (saúde, auditoria, notificações e status de pagamentos)
+mantêm verificação atualizada. Financeiro
+e biblioteca revalidam consultas ao voltar à aba quando desatualizadas e sempre
+na reconexão. Os filtros e páginas continuam nas chaves do cache. Gravações
+financeiras invalidam `finance`; operações da biblioteca e reservas invalidam
+também o portal. Alterar/excluir membros invalida aniversariantes. O resumo
+financeiro, a biblioteca e os aniversariantes mostram a hora da última resposta
+e permitem atualização manual. A resposta da API continua sendo a fonte dos
+valores e da autorização das gravações; o cache não confirma disponibilidade
+de um livro nem saldo para autorizar uma operação.
+
+### Disponibilidade separada do catálogo
+
+`GET /api/v1/library/books/availability?ids=<UUIDs separados por vírgula>`
+exige `LIBRARY_BOOK_READ`, aceita 1 a 100 IDs únicos e retorna
+`[{ bookId, quantity, available }]`. Consulta somente o ID e status dos
+exemplares; `available` conta apenas status `AVAILABLE`. Livros inexistentes
+não aparecem. Não altera o contrato da listagem do catálogo.
+
+Os catálogos administrativo e do portal reutilizam os metadados por 6 horas,
+mas buscam as quantidades separadamente, em lote, ao montar a tela, voltar à
+aba, reconectar e a cada 30 segundos enquanto visíveis. Se a consulta falhar,
+não exibem a disponibilidade antiga como atual. Filtros por disponibilidade,
+listas de exemplares, empréstimos, reservas e painéis operacionais não usam
+os tempos longos de cache. Os seletores de exemplares consultam dados atuais.
+
+Essa atualização é por consulta, não por WebSocket: outro utilizador pode
+alterar o estado entre duas consultas. As transações de reserva/empréstimo
+continuam validando o estado atual no servidor. Reservar um livro sem exemplar
+disponível continua permitindo entrar na fila, conforme a regra existente.
+
 ## Verificação de versão após erros
 
 O build publica `/app-version.json` com a mesma `APP_VERSION` usada no rodapé

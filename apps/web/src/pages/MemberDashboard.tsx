@@ -93,7 +93,6 @@ export function MemberDashboard() {
   const query = useQuery({
     queryKey: ['member-portal', 'dashboard', user?.id],
     queryFn: () => apiRequest<Dashboard>('/member-portal/dashboard'),
-    staleTime: 30000,
   });
   if (query.isPending)
     return (

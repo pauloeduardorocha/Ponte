@@ -1,6 +1,10 @@
 import type { AuthSession } from './types';
-import { reportApiFailure } from './frontend-error-reporting';
+import {
+  recordApiRecovery,
+  reportApiFailure,
+} from './frontend-error-reporting';
 import { messageAfterUpdateCheck } from './app-update';
+import { NetworkFailure, networkRequest } from './network-request';
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
@@ -132,30 +136,60 @@ async function send(
           0,
         )
       : undefined;
+  // Serialization errors are programming/validation failures, not network failures.
+  const body =
+    options.body instanceof FormData
+      ? options.body
+      : options.body === undefined
+        ? undefined
+        : JSON.stringify(options.body);
+  const generation = authGeneration;
   let response: Response;
   try {
-    response = await fetch(buildUrl(path, options.query), {
-      method: options.method ?? 'GET',
-      headers,
-      body:
-        options.body instanceof FormData
-          ? options.body
-          : options.body === undefined
-            ? undefined
-            : JSON.stringify(options.body),
-      credentials: 'include',
-    });
-  } catch {
+    const result = await networkRequest(
+      buildUrl(path, options.query),
+      {
+        method: options.method ?? 'GET',
+        headers,
+        body,
+        credentials: 'include',
+      },
+      () => generation === authGeneration,
+      path === '/auth/refresh' ? 15_000 : undefined,
+    );
+    response = result.response;
+    if (response.ok && result.attempts > 1)
+      recordApiRecovery({
+        path,
+        attempts: result.attempts,
+        durationMs: result.durationMs,
+      });
+  } catch (error) {
+    if (!(error instanceof NetworkFailure)) throw error;
+    const diagnostics = error.diagnostics;
+    const uncertainWrite =
+      options.method && options.method !== 'GET' && !path.startsWith('/auth/');
+    if (diagnostics.kind === 'cancelled')
+      throw new ApiError(0, 'A sessão mudou durante a consulta.', diagnostics);
     reportApiFailure({
       path,
       method: options.method ?? 'GET',
-      message: 'Falha de rede ao chamar API.',
+      message: `Falha de comunicação ao chamar API; tipo=${diagnostics.kind}; exceção=${diagnostics.exception}; duração=${diagnostics.durationMs}ms; tentativas=${diagnostics.attempts}; online=${diagnostics.online}; visibilidade=${diagnostics.visibility}.`,
     });
     throw new ApiError(
       0,
       await messageAfterUpdateCheck(
-        DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE,
+        diagnostics.kind === 'timeout'
+          ? uncertainWrite
+            ? 'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.'
+            : 'O servidor demorou a responder. Tente novamente.'
+          : diagnostics.kind === 'offline'
+            ? 'Sem conexão. Tente novamente quando a rede voltar.'
+            : uncertainWrite
+              ? 'Falha de comunicação. Confira se o pedido foi guardado antes de tentar novamente.'
+              : (DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE),
       ),
+      diagnostics,
     );
   }
 
@@ -213,8 +247,10 @@ export function refreshSession(): Promise<AuthSession | null> {
       return session;
     } catch (error) {
       if (generation !== authGeneration) return null;
-      accessToken = null;
-      if (error instanceof ApiError && error.status === 401) return null;
+      if (error instanceof ApiError && error.status === 401) {
+        accessToken = null;
+        return null;
+      }
       throw error;
     } finally {
       refreshPromise = null;

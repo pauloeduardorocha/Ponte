@@ -89,6 +89,9 @@ function routes() {
   return {
     ...sessionRoutes(makeUser([...staff])),
     'GET /library/books': { body: page([book]) },
+    'GET /library/books/availability': {
+      body: [{ bookId: book.id, quantity: 2, available: 1 }],
+    },
     'GET /library/book-options/authors': {
       body: page([{ id: 'Autora Ponte', name: 'Autora Ponte' }]),
     },
@@ -222,7 +225,8 @@ describe('Library frontend', () => {
     await confirm();
     expect(
       requests.find(
-        (request) => request.method === 'POST' && request.path === '/library/books',
+        (request) =>
+          request.method === 'POST' && request.path === '/library/books',
       )?.body,
     ).toMatchObject({ keywords: ['Novo assunto'] });
   });
@@ -257,7 +261,7 @@ describe('Library frontend', () => {
       screen.getByRole('img', { name: 'Capa de Livro Ponte' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Exemplares: 2 · Disponíveis: 1'),
+      await screen.findByText('Exemplares: 2 · Disponíveis: 1'),
     ).toBeInTheDocument();
     fill('Pesquisa', 'ponte');
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Autor' }));
@@ -271,25 +275,77 @@ describe('Library frontend', () => {
     );
     fireEvent.click(await screen.findByRole('option', { name: 'Disponível' }));
     await waitFor(() =>
-      expect(requests.at(-1)?.query.get('available')).toBe('true'),
+      expect(
+        requests
+          .filter((request) => request.path === '/library/books')
+          .at(-1)
+          ?.query.get('available'),
+      ).toBe('true'),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
-    await waitFor(() => expect(requests.at(-1)?.query.get('page')).toBe('2'));
-    expect(requests.at(-1)?.query.get('search')).toBe('ponte');
-    expect(requests.at(-1)?.query.get('author')).toBe('Autora Ponte');
-    expect(requests.at(-1)?.query.get('category')).toBe('Comunidade');
-    expect(requests.at(-1)?.query.get('pageSize')).toBe('10');
+    await waitFor(() =>
+      expect(
+        requests
+          .filter((request) => request.path === '/library/books')
+          .at(-1)
+          ?.query.get('page'),
+      ).toBe('2'),
+    );
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('search'),
+    ).toBe('ponte');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('author'),
+    ).toBe('Autora Ponte');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('category'),
+    ).toBe('Comunidade');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('pageSize'),
+    ).toBe('10');
     await screen.findByText(/^Página 2 ·/);
     fireEvent.mouseDown(
       screen.getByRole('combobox', { name: 'Registos por página' }),
     );
     fireEvent.click(await screen.findByRole('option', { name: '50' }));
     await waitFor(() =>
-      expect(requests.at(-1)?.query.get('pageSize')).toBe('50'),
+      expect(
+        requests
+          .filter((request) => request.path === '/library/books')
+          .at(-1)
+          ?.query.get('pageSize'),
+      ).toBe('50'),
     );
-    expect(requests.at(-1)?.query.get('page')).toBe('1');
-    expect(requests.at(-1)?.query.get('search')).toBe('ponte');
-    expect(requests.at(-1)?.query.get('category')).toBe('Comunidade');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('page'),
+    ).toBe('1');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('search'),
+    ).toBe('ponte');
+    expect(
+      requests
+        .filter((request) => request.path === '/library/books')
+        .at(-1)
+        ?.query.get('category'),
+    ).toBe('Comunidade');
   });
   it('creates a full book and copy, and surfaces API errors instead of closing the form', async () => {
     const requests = mockApi({
@@ -364,7 +420,7 @@ describe('Library frontend', () => {
     ).not.toBeInTheDocument();
     expect(
       requests.filter((r) => r.path.startsWith('/library/')).map((r) => r.path),
-    ).toEqual(['/library/books']);
+    ).toEqual(['/library/books', '/library/books/availability']);
   });
   it('does not expose or request library history to MEMBER_READ alone', async () => {
     const requests = mockApi({

@@ -40,6 +40,7 @@ export function ActionDialog({
     mutationFn: (values: Record<string, string>) => action.run(values),
     onSuccess: async () => {
       await client.invalidateQueries({ queryKey: ['library'] });
+      await client.invalidateQueries({ queryKey: ['member-portal'] });
       await client.invalidateQueries({ queryKey: ['entity-options'] });
       onSaved();
       close();

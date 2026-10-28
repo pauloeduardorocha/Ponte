@@ -1,4 +1,5 @@
 import { formatDateOnly, formatDateTime } from '../lib/format';
+import { CachedQueryStatus } from '../components/CachedQueryStatus';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -73,7 +74,6 @@ export function FinancialDashboardPanel() {
     enabled:
       hasPermission('FINANCE_DASHBOARD_READ') ||
       hasPermission('FINANCE_SUMMARY_READ'),
-    staleTime: 30000,
   });
   const accounts = useQuery({
     queryKey: ['finance', 'dashboard-accounts'],
@@ -83,7 +83,6 @@ export function FinancialDashboardPanel() {
         { query: { pageSize: 100 } },
       ),
     enabled: hasPermission('FINANCE_ACCOUNT_READ'),
-    staleTime: 60000,
   });
   const money = (v: string, currency: string) =>
     new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(
@@ -155,6 +154,12 @@ export function FinancialDashboardPanel() {
           aria-label="Carregando painel financeiro"
         />
       )}
+      <CachedQueryStatus
+        updatedAt={data.dataUpdatedAt}
+        refreshing={data.isFetching}
+        onRefresh={() => void data.refetch()}
+        label="resumo financeiro"
+      />
       {data.isError && (
         <Alert
           severity="error"
