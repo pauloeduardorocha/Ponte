@@ -50,6 +50,52 @@ describe('e-Fatura integration', () => {
     return { service, worker, db, invoices };
   }
   beforeEach(() => jest.clearAllMocks());
+  it.each([
+    [
+      'normalize_page',
+      'INVOICE_OUTSIDE_PERIOD',
+      'normalize_page',
+      'INVOICE_OUTSIDE_PERIOD',
+    ],
+    ['private-secret', 'private-secret', 'unknown', 'UNKNOWN'],
+  ])(
+    'logs only approved extraction diagnostics (%s)',
+    async (operation, failureCode, expectedOperation, expectedCode) => {
+      const { service, worker, invoices } = fixture();
+      const warn = jest
+        .spyOn(Logger.prototype, 'warn')
+        .mockImplementation(() => {});
+      try {
+        const pending = service.fetch(
+          { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
+          user,
+        );
+        const rejected = expect(pending).rejects.toThrow('ler as faturas');
+        await new Promise(setImmediate);
+        worker.emit('message', {
+          error: 'CONSULTATION_FAILED',
+          stage: 'extraction',
+          operation,
+          failureCode,
+          field: 'private-secret',
+        });
+        worker.emit('exit', 1);
+        await rejected;
+        const logs = warn.mock.calls.map(([message]) => String(message));
+        expect(logs.map((message) => JSON.parse(message))).toContainEqual(
+          expect.objectContaining({
+            event: 'efatura.consultation.failed',
+            operation: expectedOperation,
+            failureCode: expectedCode,
+          }),
+        );
+        expect(logs.join('')).not.toContain('private-secret');
+        expect(invoices.upload).not.toHaveBeenCalled();
+      } finally {
+        warn.mockRestore();
+      }
+    },
+  );
   it('sends credentials only through IPC, derives the full statement period and imports the result', async () => {
     const { service, worker, invoices } = fixture();
     const dto = {

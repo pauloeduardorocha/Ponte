@@ -30,6 +30,14 @@ um seletor específico. A ausência de botão de pesquisa interrompe a consulta.
 
 Os logs registram somente o código de falha e a etapa (inicialização, login,
 filtros ou extração), sem senha, NIF, dados das faturas ou URLs de sessão.
+Falhas de extração incluem também a operação que falhou (por exemplo,
+`read_rows`, `advance_page` ou `wait_next_page`). Códigos específicos distinguem
+configuração de colunas inválida (`INVOICE_MAPPING_INVALID`), faturas fora do
+período (`INVOICE_OUTSIDE_PERIOD`), página repetida (`INVOICE_PAGE_REPEATED`) e
+limite de faturas (`INVOICE_LIMIT_EXCEEDED`). Operações e códigos são validados
+por uma lista fechada na API; mensagens e stacks do portal não são registradas.
+O código `PORTAL_ERROR` de versões anteriores não permite recuperar a causa
+original: nesses casos é necessário repetir a consulta com este diagnóstico.
 
 ## Colunas e links
 

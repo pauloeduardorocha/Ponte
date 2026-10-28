@@ -4,6 +4,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
 
 (async () => {
   let stage = 'launch';
+  let operation = 'browser_launch';
   let config = await new Promise((resolve) => process.once('message', resolve));
   const period = validatePeriod(config.period);
   const recipientNif = config.nif;
@@ -15,6 +16,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
   try {
     const page = await browser.newPage();
     stage = 'login';
+    operation = 'portal_login';
     process.send({ stage });
     // Aceder diretamente ao URL de login que forneceu
     await page.goto(
@@ -58,24 +60,39 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     );
 
     stage = 'filters';
+    operation = 'apply_filters';
     process.send({ stage });
     await applyDateFilters(page, period, process.env.EFATURA_FILTER_SUBMIT);
     // 5. Extração de dados da tabela (#documentos)
     stage = 'extraction';
+    operation = 'wait_table';
     process.send({ stage });
     const seletorLinhas = 'table#documentos tbody tr';
     const seletorProxima = '#documentos_paginate li.next:not(.disabled) a';
     await page.waitForSelector(seletorLinhas);
 
+    operation = 'read_headers';
     const headers = await page.$$eval('table#documentos thead th', (cells) =>
       cells.map((cell) => cell.innerText.trim()),
     );
     const faturas = [];
     const paginas = new Set();
-    const mapping = JSON.parse(process.env.EFATURA_COLUMNS || '{}');
+    operation = 'parse_mapping';
+    let mapping;
+    try {
+      mapping = JSON.parse(process.env.EFATURA_COLUMNS || '{}');
+      if (!mapping || typeof mapping !== 'object' || Array.isArray(mapping))
+        throw new Error();
+    } catch {
+      throw Object.assign(new Error('INVOICE_MAPPING_INVALID'), {
+        code: 'INVOICE_MAPPING_INVALID',
+      });
+    }
+    operation = 'validate_headers';
     normalizeInvoices([], headers, recipientNif, mapping);
 
     while (true) {
+      operation = 'read_rows';
       const faturasPagina = await page.evaluate((seletor) => {
         const linhas = Array.from(document.querySelectorAll(seletor));
 
@@ -99,6 +116,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
           })
           .filter((f) => f !== null);
       }, seletorLinhas);
+      operation = 'normalize_page';
       const normalizedPage = normalizeInvoices(
         faturasPagina,
         headers,
@@ -110,20 +128,29 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
           (invoice) => invoice.date < period.start || invoice.date > period.end,
         )
       )
-        throw new Error(
-          'Filtros nao aplicados: fatura fora do periodo; extracao interrompida nesta pagina.',
+        throw Object.assign(
+          new Error(
+            'Filtros nao aplicados: fatura fora do periodo; extracao interrompida nesta pagina.',
+          ),
+          { code: 'INVOICE_OUTSIDE_PERIOD' },
         );
 
       const signature = JSON.stringify(faturasPagina);
       if (paginas.has(signature))
-        throw new Error(
-          'Pagina repetida: exportacao interrompida para evitar duplicidades.',
+        throw Object.assign(
+          new Error(
+            'Pagina repetida: exportacao interrompida para evitar duplicidades.',
+          ),
+          { code: 'INVOICE_PAGE_REPEATED' },
         );
       paginas.add(signature);
       faturas.push(...faturasPagina);
       if (faturas.length > 10000)
-        throw new Error('Limite de 10000 faturas. Reduza o periodo no portal.');
+        throw Object.assign(new Error('Limite de faturas excedido.'), {
+          code: 'INVOICE_LIMIT_EXCEEDED',
+        });
 
+      operation = 'check_next_page';
       const temProxima = await page.evaluate(() => {
         const proxima = document.querySelector('#documentos_paginate li.next');
         return Boolean(
@@ -135,6 +162,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
 
       if (!temProxima) break;
 
+      operation = 'capture_pagination';
       const estadoAnterior = await page.evaluateHandle(() => {
         const tabela = document.querySelector('table#documentos');
         const jquery = window.jQuery;
@@ -161,6 +189,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       });
 
       try {
+        operation = 'advance_page';
         const avancouPelaApi = await page.evaluate((anterior) => {
           const configuracao = anterior.configuracao;
           if (!configuracao) return false;
@@ -181,6 +210,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
 
         if (!avancouPelaApi) await page.click(seletorProxima);
 
+        operation = 'wait_next_page';
         await page.waitForFunction(
           (anterior) => {
             const tabela = document.querySelector('table#documentos tbody');
@@ -242,14 +272,18 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       }
     }
 
+    operation = 'normalize_result';
     const invoices = normalizeInvoices(faturas, headers, recipientNif, mapping);
     if (
       invoices.some(
         (invoice) => invoice.date < period.start || invoice.date > period.end,
       )
     )
-      throw new Error(
-        'O portal retornou faturas fora do intervalo. Verifique a aplicacao dos filtros; arquivo nao exportado.',
+      throw Object.assign(
+        new Error(
+          'O portal retornou faturas fora do intervalo. Verifique a aplicacao dos filtros; arquivo nao exportado.',
+        ),
+        { code: 'INVOICE_OUTSIDE_PERIOD' },
       );
     const result = {
       schemaVersion: 1,
@@ -264,6 +298,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
         links: row.links.filter((link) => safePortalLink(link.url)),
       })),
     };
+    operation = 'send_result';
     await new Promise((resolve, reject) =>
       process.send({ result }, (error) => (error ? reject(error) : resolve())),
     );
@@ -274,6 +309,10 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       'INVOICE_AMOUNT_INVALID',
       'INVOICE_LINK_AMBIGUOUS',
       'INVOICE_IDENTITY_INVALID',
+      'INVOICE_MAPPING_INVALID',
+      'INVOICE_OUTSIDE_PERIOD',
+      'INVOICE_PAGE_REPEATED',
+      'INVOICE_LIMIT_EXCEEDED',
     ];
     const failureCode = extractionCodes.includes(error.code)
       ? error.code
@@ -292,7 +331,13 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     ].includes(error.field)
       ? error.field
       : undefined;
-    process.send({ error: 'CONSULTATION_FAILED', stage, failureCode, field });
+    process.send({
+      error: 'CONSULTATION_FAILED',
+      stage,
+      operation,
+      failureCode,
+      field,
+    });
     process.exitCode = 1;
   } finally {
     await browser.close();

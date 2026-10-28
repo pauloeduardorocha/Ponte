@@ -189,6 +189,7 @@ export class EfaturaService {
           stage?: string;
           failureCode?: string;
           field?: string;
+          operation?: string;
         }) => {
           if (
             ['launch', 'login', 'filters', 'extraction'].includes(
@@ -216,6 +217,24 @@ export class EfaturaService {
                 requestId: trace?.requestId,
                 code,
                 stage: workerStage,
+                operation: [
+                  'portal_login',
+                  'apply_filters',
+                  'wait_table',
+                  'read_headers',
+                  'parse_mapping',
+                  'validate_headers',
+                  'read_rows',
+                  'normalize_page',
+                  'check_next_page',
+                  'capture_pagination',
+                  'advance_page',
+                  'wait_next_page',
+                  'normalize_result',
+                  'send_result',
+                ].includes(message.operation ?? '')
+                  ? message.operation
+                  : 'unknown',
                 failureCode: [
                   'FILTER_SUBMIT_NOT_FOUND',
                   'PORTAL_TIMEOUT',
@@ -225,6 +244,10 @@ export class EfaturaService {
                   'INVOICE_AMOUNT_INVALID',
                   'INVOICE_LINK_AMBIGUOUS',
                   'INVOICE_IDENTITY_INVALID',
+                  'INVOICE_MAPPING_INVALID',
+                  'INVOICE_OUTSIDE_PERIOD',
+                  'INVOICE_PAGE_REPEATED',
+                  'INVOICE_LIMIT_EXCEEDED',
                 ].includes(message.failureCode ?? '')
                   ? message.failureCode
                   : 'UNKNOWN',
