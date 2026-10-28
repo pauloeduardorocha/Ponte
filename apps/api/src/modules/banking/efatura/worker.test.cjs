@@ -10,6 +10,7 @@ async function runWorker({
   repeat = false,
   readError,
   empty = false,
+  filterError,
 } = {}) {
   const messages = [];
   const page = {
@@ -62,7 +63,11 @@ async function runWorker({
           : name === './filters.cjs'
             ? {
                 validatePeriod: (period) => period,
-                applyDateFilters: async () => ({ empty }),
+                applyDateFilters: async () => {
+                  if (filterError) throw filterError;
+                  return { empty };
+                },
+                watchPortalResponses: () => ({ dispose: () => {} }),
               }
             : require(name),
     },
@@ -109,6 +114,18 @@ test('worker still returns valid invoices through IPC', async () => {
     1,
   );
   assert.ok(!messages.some((message) => message.error));
+});
+
+test('worker preserves safe portal HTTP failures and does not return invoices', async () => {
+  for (const code of ['PORTAL_RATE_LIMITED', 'PORTAL_HTTP_ERROR']) {
+    const { messages, exitCode } = await runWorker({
+      filterError: Object.assign(new Error('private-response'), { code }),
+    });
+    assert.equal(exitCode, 1);
+    assert.equal(messages.find((message) => message.error)?.failureCode, code);
+    assert.ok(!messages.some((message) => message.result));
+    assert.doesNotMatch(JSON.stringify(messages), /private-response/);
+  }
 });
 
 test('worker returns no invoices when the portal hides stale rows after an empty search', async () => {

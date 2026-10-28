@@ -4,6 +4,7 @@ const { createInterface } = require('node:readline');
 const {
   validatePeriod,
   applyDateFilters,
+  watchPortalResponses,
 } = require('../src/modules/banking/efatura/filters.cjs');
 const {
   inspectDateFilters,
@@ -31,6 +32,7 @@ async function main() {
     defaultViewport: null,
   });
   const page = await browser.newPage();
+  const portalResponses = watchPortalResponses(page);
   const log = (event, details = {}) =>
     console.log(JSON.stringify({ event, ...details }));
   try {
@@ -61,7 +63,12 @@ async function main() {
       if (requestDates(request)) log('filter_request_failed');
     });
     try {
-      await applyDateFilters(page, period, process.env.EFATURA_FILTER_SUBMIT);
+      await applyDateFilters(
+        page,
+        period,
+        process.env.EFATURA_FILTER_SUBMIT,
+        portalResponses,
+      );
     } catch (error) {
       if (error.name !== 'TimeoutError') throw error;
       log('filter_wait_timeout');
@@ -132,7 +139,11 @@ async function main() {
     log('diagnostic_complete');
   } catch (error) {
     log('diagnostic_failed', {
-      code: ['FILTER_SUBMIT_NOT_FOUND'].includes(error.code)
+      code: [
+        'FILTER_SUBMIT_NOT_FOUND',
+        'PORTAL_RATE_LIMITED',
+        'PORTAL_HTTP_ERROR',
+      ].includes(error.code)
         ? error.code
         : 'LOCAL_DIAGNOSTIC_FAILED',
       timeout: error.name === 'TimeoutError',
@@ -151,16 +162,25 @@ async function main() {
             page,
             period,
             process.env.EFATURA_FILTER_SUBMIT,
+            portalResponses,
           );
         if (['inspect', 'apply'].includes(command.trim()))
           log('manual_snapshot', await inspectDateFilters(page, period));
       } catch (error) {
-        log('local_control_failed', { timeout: error.name === 'TimeoutError' });
+        log('local_control_failed', {
+          timeout: error.name === 'TimeoutError',
+          code: ['PORTAL_RATE_LIMITED', 'PORTAL_HTTP_ERROR'].includes(
+            error.code,
+          )
+            ? error.code
+            : 'LOCAL_DIAGNOSTIC_FAILED',
+        });
       }
     });
     await new Promise((resolve) => browser.once('disconnected', resolve));
     input.close();
   }
+  portalResponses.dispose();
 }
 
 main().catch(() => {

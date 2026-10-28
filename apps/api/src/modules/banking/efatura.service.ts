@@ -239,6 +239,8 @@ export class EfaturaService {
                   'FILTER_SUBMIT_NOT_FOUND',
                   'PORTAL_TIMEOUT',
                   'PORTAL_ERROR',
+                  'PORTAL_RATE_LIMITED',
+                  'PORTAL_HTTP_ERROR',
                   'INVOICE_COLUMN_UNKNOWN',
                   'INVOICE_DATE_INVALID',
                   'INVOICE_AMOUNT_INVALID',
@@ -267,11 +269,15 @@ export class EfaturaService {
             consultationError = new EfaturaUnavailableException(
               message.error === 'BROWSER_UNAVAILABLE'
                 ? 'browser'
-                : workerStage === 'filters'
-                  ? 'filters'
-                  : workerStage === 'extraction'
-                    ? 'extraction'
-                    : 'portal',
+                : message.failureCode === 'PORTAL_RATE_LIMITED'
+                  ? 'rate_limit'
+                  : message.failureCode === 'PORTAL_HTTP_ERROR'
+                    ? 'portal_response'
+                    : workerStage === 'filters'
+                      ? 'filters'
+                      : workerStage === 'extraction'
+                        ? 'extraction'
+                        : 'portal',
             );
           } else if (message.result) result = message.result;
         },

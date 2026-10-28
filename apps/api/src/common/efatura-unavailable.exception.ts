@@ -8,6 +8,8 @@ export class EfaturaUnavailableException extends ServiceUnavailableException {
       | 'launch'
       | 'browser'
       | 'portal'
+      | 'rate_limit'
+      | 'portal_response'
       | 'filters'
       | 'extraction'
       | 'timeout'
@@ -21,6 +23,10 @@ export class EfaturaUnavailableException extends ServiceUnavailableException {
       portal:
         'Não foi possível consultar as faturas. Confira o NIF e a senha. O portal pode exigir MFA ou CAPTCHA.',
       filters: 'Não foi possível aplicar os filtros de datas no e-Fatura.',
+      rate_limit:
+        'O portal e-Fatura limitou as consultas (HTTP 429). Aguarde antes de tentar novamente.',
+      portal_response:
+        'O portal e-Fatura não conseguiu responder à pesquisa. Tente mais tarde.',
       extraction: 'Não foi possível ler as faturas devolvidas pelo e-Fatura.',
       timeout: 'A consulta ao e-Fatura demorou demasiado. Tente novamente.',
       incomplete: 'A consulta ao e-Fatura não foi concluída.',

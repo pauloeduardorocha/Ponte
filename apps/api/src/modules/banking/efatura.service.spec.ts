@@ -51,6 +51,30 @@ describe('e-Fatura integration', () => {
   }
   beforeEach(() => jest.clearAllMocks());
   it.each([
+    ['PORTAL_RATE_LIMITED', 'limitou as consultas (HTTP 429)'],
+    ['PORTAL_HTTP_ERROR', 'não conseguiu responder à pesquisa'],
+  ])(
+    'exposes a fixed message for %s without importing or retrying',
+    async (failureCode, message) => {
+      const { service, worker, invoices } = fixture();
+      const pending = service.fetch(
+        { bankImportId: 'import-1', nif: '123456789', password: 'secret' },
+        user,
+      );
+      const rejected = expect(pending).rejects.toThrow(message);
+      await new Promise(setImmediate);
+      worker.emit('message', {
+        error: 'CONSULTATION_FAILED',
+        stage: 'filters',
+        failureCode,
+      });
+      worker.emit('exit', 1);
+      await rejected;
+      expect(invoices.upload).not.toHaveBeenCalled();
+      expect(fork).toHaveBeenCalledTimes(1);
+    },
+  );
+  it.each([
     [
       'normalize_page',
       'INVOICE_OUTSIDE_PERIOD',

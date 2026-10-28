@@ -1,5 +1,9 @@
 const { launchBrowser } = require('./browser.cjs');
-const { validatePeriod, applyDateFilters } = require('./filters.cjs');
+const {
+  validatePeriod,
+  applyDateFilters,
+  watchPortalResponses,
+} = require('./filters.cjs');
 const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
 
 (async () => {
@@ -13,8 +17,10 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     await browser.close();
     process.exit(1);
   });
+  let portalResponses;
   try {
     const page = await browser.newPage();
+    portalResponses = watchPortalResponses(page);
     stage = 'login';
     operation = 'portal_login';
     process.send({ stage });
@@ -66,6 +72,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       page,
       period,
       process.env.EFATURA_FILTER_SUBMIT,
+      portalResponses,
     );
     const empty = filterResult?.empty === true;
     // 5. Extração de dados da tabela (#documentos)
@@ -322,6 +329,8 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       'INVOICE_OUTSIDE_PERIOD',
       'INVOICE_PAGE_REPEATED',
       'INVOICE_LIMIT_EXCEEDED',
+      'PORTAL_RATE_LIMITED',
+      'PORTAL_HTTP_ERROR',
     ];
     const failureCode = extractionCodes.includes(error.code)
       ? error.code
@@ -349,6 +358,7 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     });
     process.exitCode = 1;
   } finally {
+    portalResponses?.dispose();
     await browser.close();
     process.disconnect();
   }

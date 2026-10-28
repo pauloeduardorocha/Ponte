@@ -35,6 +35,12 @@ ociosidade de toda a rede, pois pedidos de fundo podem continuar ativos.
 Resultados vazios não reutilizam linhas ocultas da pesquisa anterior.
 Layouts legados sem esses painéis mantêm a espera por ociosidade da rede.
 O formato ISO é o esperado pelo datepicker do portal (`yyyy-mm-dd`).
+As respostas HTTP da pesquisa são monitorizadas desde a abertura da página:
+HTTP 429 interrompe a consulta com `PORTAL_RATE_LIMITED` e pede ao utilizador
+para aguardar; outras respostas HTTP de erro usam `PORTAL_HTTP_ERROR`.
+Não são feitas tentativas automáticas. O portal pode manter os dois painéis
+ocultos depois de um erro HTTP, por isso estes erros são tratados antes de
+esperar pela atualização dos resultados. Não se registam os corpos das respostas.
 
 Os logs registram somente o código de falha e a etapa (inicialização, login,
 filtros ou extração), sem senha, NIF, dados das faturas ou URLs de sessão.

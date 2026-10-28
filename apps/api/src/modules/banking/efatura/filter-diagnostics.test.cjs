@@ -4,8 +4,95 @@ const {
   requestDates,
   inspectDateFilters,
 } = require('./filter-diagnostics.cjs');
-const { applyDateFilters } = require('./filters.cjs');
+const { applyDateFilters, watchPortalResponses } = require('./filters.cjs');
+const { EventEmitter } = require('node:events');
 const { launchBrowser } = require('./browser.cjs');
+
+test('retains an initial 429 until filters start, ignores unrelated hosts, and removes its listener', async () => {
+  const page = Object.assign(new EventEmitter(), {
+    waitForSelector: async () => {},
+    waitForFunction: async () => {},
+    evaluate: async () => {
+      assert.fail('must not submit another search after an initial 429');
+    },
+  });
+  const monitor = watchPortalResponses(page);
+  page.emit('response', {
+    url: () => 'https://unrelated.test/json/obterDocumentosAdquirente.action',
+    status: () => 429,
+  });
+  page.emit('response', {
+    url: () => 'https://faturas.portaldasfinancas.gov.pt/static/script.js',
+    status: () => 429,
+  });
+  page.emit('response', {
+    url: () =>
+      'https://faturas.portaldasfinancas.gov.pt/json/obterDocumentosAdquirente.action?token=private-token',
+    status: () => 429,
+  });
+  try {
+    await assert.rejects(
+      applyDateFilters(
+        page,
+        { start: '2026-10-12', end: '2026-10-27' },
+        undefined,
+        monitor,
+      ),
+      { code: 'PORTAL_RATE_LIMITED', message: 'PORTAL_RATE_LIMITED' },
+    );
+  } finally {
+    monitor.dispose();
+  }
+  assert.equal(page.listenerCount('response'), 0);
+});
+
+test(
+  'real browser stops on search HTTP errors without waiting for hidden panels or retrying',
+  {
+    skip:
+      process.platform !== 'linux' && !process.env.PUPPETEER_EXECUTABLE_PATH,
+    timeout: 30000,
+  },
+  async () => {
+    const browser = await launchBrowser();
+    try {
+      for (const status of [429, 503]) {
+        const page = await browser.newPage();
+        let searches = 0;
+        await page.setRequestInterception(true);
+        page.on('request', (request) => {
+          searches++;
+          void request.respond({
+            status,
+            contentType: 'application/json',
+            headers: { 'access-control-allow-origin': '*' },
+            body: '{"success":false,"message":"private-response"}',
+          });
+        });
+        await page.setContent(`<input id="dataInicioFilter"><input id="dataFimFilter">
+        <div class="searchResults">Old results</div><div class="noSearchResults hide"></div>
+        <button id="search" onclick="document.querySelector('.searchResults').classList.add('hide'); fetch('https://faturas.portaldasfinancas.gov.pt/json/obterDocumentosAdquirente.action?dataInicioFilter=2026-10-12')">Pesquisar</button>`);
+        await assert.rejects(
+          applyDateFilters(
+            page,
+            { start: '2026-10-12', end: '2026-10-27' },
+            '#search',
+          ),
+          {
+            code: status === 429 ? 'PORTAL_RATE_LIMITED' : 'PORTAL_HTTP_ERROR',
+            message:
+              status === 429 ? 'PORTAL_RATE_LIMITED' : 'PORTAL_HTTP_ERROR',
+          },
+        );
+        assert.equal(searches, 1);
+        assert.equal(page.listenerCount('response'), 0);
+        await page.close();
+      }
+    } finally {
+      await browser.close();
+    }
+  },
+);
 
 test(
   'waits for initial and filtered AJAX results rather than global network idle, including empty results',

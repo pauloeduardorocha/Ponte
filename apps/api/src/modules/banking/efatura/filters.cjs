@@ -15,22 +15,68 @@ function validatePeriod(period) {
     );
   return period;
 }
-async function applyDateFilters(page, period, submitSelector) {
+function watchPortalResponses(page) {
+  let rejectFailure;
+  const failure = new Promise((_, reject) => {
+    rejectFailure = reject;
+  });
+  // A response can fail during navigation, before the filter wait is attached.
+  void failure.catch(() => {});
+  const onResponse = (response) => {
+    const url = new URL(response.url());
+    if (
+      url.hostname !== 'faturas.portaldasfinancas.gov.pt' ||
+      url.pathname !== '/json/obterDocumentosAdquirente.action'
+    )
+      return;
+    const status = response.status();
+    const code =
+      status === 429
+        ? 'PORTAL_RATE_LIMITED'
+        : status >= 400
+          ? 'PORTAL_HTTP_ERROR'
+          : undefined;
+    if (code) rejectFailure(Object.assign(new Error(code), { code }));
+  };
+  page.on?.('response', onResponse);
+  return { failure, dispose: () => page.off?.('response', onResponse) };
+}
+
+async function applyDateFilters(page, period, submitSelector, monitor) {
   validatePeriod(period);
-  await page.waitForSelector('#dataInicioFilter', { visible: true });
-  await page.waitForSelector('#dataFimFilter', { visible: true });
+  const ownMonitor = !monitor;
+  monitor ??= watchPortalResponses(page);
+  const controller = new AbortController();
+  try {
+    return await Promise.race([
+      monitor.failure,
+      applyDateFiltersInternal(page, period, submitSelector, controller.signal),
+    ]);
+  } finally {
+    controller.abort();
+    if (ownMonitor) monitor.dispose();
+  }
+}
+
+async function applyDateFiltersInternal(page, period, submitSelector, signal) {
+  signal.throwIfAborted();
+  await page.waitForSelector('#dataInicioFilter', { visible: true, signal });
+  await page.waitForSelector('#dataFimFilter', { visible: true, signal });
   // The portal starts an initial AJAX search on page load. Its late response
   // must finish before another search can safely update the same table.
-  await page.waitForFunction(() => {
-    const results = document.querySelector('.searchResults');
-    const empty = document.querySelector('.noSearchResults');
-    return (
-      !results ||
-      !empty ||
-      !results.classList.contains('hide') ||
-      !empty.classList.contains('hide')
-    );
-  });
+  await page.waitForFunction(
+    () => {
+      const results = document.querySelector('.searchResults');
+      const empty = document.querySelector('.noSearchResults');
+      return (
+        !results ||
+        !empty ||
+        !results.classList.contains('hide') ||
+        !empty.classList.contains('hide')
+      );
+    },
+    { signal },
+  );
   const usesResultPanels = await page.evaluate(({ start, end }) => {
     for (const [id, value] of [
       ['dataInicioFilter', start],
@@ -47,8 +93,9 @@ async function applyDateFilters(page, period, submitSelector) {
     );
   }, period);
   // Allow an explicit selector when the portal changes its filter form.
+  signal.throwIfAborted();
   if (submitSelector) {
-    await page.waitForSelector(submitSelector, { visible: true });
+    await page.waitForSelector(submitSelector, { visible: true, signal });
     await page.click(submitSelector);
   } else {
     const submitted = await page.evaluate(() => {
@@ -95,16 +142,19 @@ async function applyDateFilters(page, period, submitSelector) {
   if (usesResultPanels) {
     // searchAction hides both panels synchronously. The success callback shows
     // exactly one after updating DataTables; background requests do not matter.
-    await page.waitForFunction(() => {
-      const results = document.querySelector('.searchResults');
-      const empty = document.querySelector('.noSearchResults');
-      return (
-        results &&
-        empty &&
-        (!results.classList.contains('hide') ||
-          !empty.classList.contains('hide'))
-      );
-    });
+    await page.waitForFunction(
+      () => {
+        const results = document.querySelector('.searchResults');
+        const empty = document.querySelector('.noSearchResults');
+        return (
+          results &&
+          empty &&
+          (!results.classList.contains('hide') ||
+            !empty.classList.contains('hide'))
+        );
+      },
+      { signal },
+    );
     return page.evaluate(() => ({
       empty:
         !document
@@ -114,7 +164,7 @@ async function applyDateFilters(page, period, submitSelector) {
     }));
   }
   // Compatibility with explicitly configured/legacy portal layouts.
-  await page.waitForNetworkIdle();
+  await page.waitForNetworkIdle({ signal });
   return { empty: false };
 }
-module.exports = { validatePeriod, applyDateFilters };
+module.exports = { validatePeriod, applyDateFilters, watchPortalResponses };
