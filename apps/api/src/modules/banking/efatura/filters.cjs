@@ -19,7 +19,19 @@ async function applyDateFilters(page, period, submitSelector) {
   validatePeriod(period);
   await page.waitForSelector('#dataInicioFilter', { visible: true });
   await page.waitForSelector('#dataFimFilter', { visible: true });
-  await page.evaluate(({ start, end }) => {
+  // The portal starts an initial AJAX search on page load. Its late response
+  // must finish before another search can safely update the same table.
+  await page.waitForFunction(() => {
+    const results = document.querySelector('.searchResults');
+    const empty = document.querySelector('.noSearchResults');
+    return (
+      !results ||
+      !empty ||
+      !results.classList.contains('hide') ||
+      !empty.classList.contains('hide')
+    );
+  });
+  const usesResultPanels = await page.evaluate(({ start, end }) => {
     for (const [id, value] of [
       ['dataInicioFilter', start],
       ['dataFimFilter', end],
@@ -29,6 +41,10 @@ async function applyDateFilters(page, period, submitSelector) {
       input.dispatchEvent(new Event('input', { bubbles: true }));
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
+    return Boolean(
+      document.querySelector('.searchResults') &&
+      document.querySelector('.noSearchResults'),
+    );
   }, period);
   // Allow an explicit selector when the portal changes its filter form.
   if (submitSelector) {
@@ -76,6 +92,29 @@ async function applyDateFilters(page, period, submitSelector) {
         { code: 'FILTER_SUBMIT_NOT_FOUND' },
       );
   }
+  if (usesResultPanels) {
+    // searchAction hides both panels synchronously. The success callback shows
+    // exactly one after updating DataTables; background requests do not matter.
+    await page.waitForFunction(() => {
+      const results = document.querySelector('.searchResults');
+      const empty = document.querySelector('.noSearchResults');
+      return (
+        results &&
+        empty &&
+        (!results.classList.contains('hide') ||
+          !empty.classList.contains('hide'))
+      );
+    });
+    return page.evaluate(() => ({
+      empty:
+        !document
+          .querySelector('.noSearchResults')
+          .classList.contains('hide') &&
+        document.querySelector('.searchResults').classList.contains('hide'),
+    }));
+  }
+  // Compatibility with explicitly configured/legacy portal layouts.
   await page.waitForNetworkIdle();
+  return { empty: false };
 }
 module.exports = { validatePeriod, applyDateFilters };

@@ -118,7 +118,7 @@ describe('Bank statement review', () => {
                 accountId: 'account-1',
                 bankDataThrough: '2026-10-20',
                 gaps: [{ start: '2026-10-01', end: '2026-10-14' }],
-                suggestedPeriod: { start: '2026-10-20', end: '2026-10-23' },
+                suggestedPeriod: { start: '2026-10-20', end: '2026-10-22' },
               }
             : {
                 accountId: 'account-2',
@@ -149,7 +149,7 @@ describe('Bank statement review', () => {
       ),
     ).toBeVisible();
     expect(
-      screen.getByText('Para atualizar: exporte de 20/10/2026 a 23/10/2026.'),
+      screen.getByText('Para atualizar: exporte de 20/10/2026 a 22/10/2026.'),
     ).toBeVisible();
     select('Conta bancária', 'Outra conta (EUR)');
     expect(

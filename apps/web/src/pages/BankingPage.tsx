@@ -884,16 +884,16 @@ export function BankingPage({
                         </Typography>
                       ) : (
                         <Typography>
-                          Não há período adicional a sugerir até hoje.
+                          Não há período adicional a sugerir até ontem.
                         </Typography>
                       )}
                       <Typography variant="body2">
                         Os intervalos são estimados pelas datas dos movimentos
                         de cada ficheiro; podem incluir dias sem atividade
                         bancária. Confirme o período no banco. A sugestão de
-                        atualização inclui o último dia importado para cobrir
-                        exportações parciais; possíveis duplicados ficam para
-                        revisão.
+                        atualização termina ontem e inclui o último dia
+                        importado para cobrir exportações parciais; possíveis
+                        duplicados ficam para revisão.
                       </Typography>
                     </>
                   )}

@@ -62,19 +62,26 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     stage = 'filters';
     operation = 'apply_filters';
     process.send({ stage });
-    await applyDateFilters(page, period, process.env.EFATURA_FILTER_SUBMIT);
+    const filterResult = await applyDateFilters(
+      page,
+      period,
+      process.env.EFATURA_FILTER_SUBMIT,
+    );
+    const empty = filterResult?.empty === true;
     // 5. Extração de dados da tabela (#documentos)
     stage = 'extraction';
     operation = 'wait_table';
     process.send({ stage });
     const seletorLinhas = 'table#documentos tbody tr';
     const seletorProxima = '#documentos_paginate li.next:not(.disabled) a';
-    await page.waitForSelector(seletorLinhas);
+    if (!empty) await page.waitForSelector(seletorLinhas);
 
     operation = 'read_headers';
-    const headers = await page.$$eval('table#documentos thead th', (cells) =>
-      cells.map((cell) => cell.innerText.trim()),
-    );
+    const headers = empty
+      ? []
+      : await page.$$eval('table#documentos thead th', (cells) =>
+          cells.map((cell) => cell.innerText.trim()),
+        );
     const faturas = [];
     const paginas = new Set();
     operation = 'parse_mapping';
@@ -89,9 +96,9 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
       });
     }
     operation = 'validate_headers';
-    normalizeInvoices([], headers, recipientNif, mapping);
+    if (!empty) normalizeInvoices([], headers, recipientNif, mapping);
 
-    while (true) {
+    while (!empty) {
       operation = 'read_rows';
       const faturasPagina = await page.evaluate((seletor) => {
         const linhas = Array.from(document.querySelectorAll(seletor));
@@ -273,7 +280,9 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     }
 
     operation = 'normalize_result';
-    const invoices = normalizeInvoices(faturas, headers, recipientNif, mapping);
+    const invoices = empty
+      ? []
+      : normalizeInvoices(faturas, headers, recipientNif, mapping);
     if (
       invoices.some(
         (invoice) => invoice.date < period.start || invoice.date > period.end,

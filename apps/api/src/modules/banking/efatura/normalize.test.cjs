@@ -169,7 +169,11 @@ test('sets both provided portal filters before submitting and waiting', async ()
   const period = { start: '2026-08-01', end: '2026-10-07' };
   const page = {
     waitForSelector: async (selector) => calls.push(selector),
-    evaluate: async (_fn, value) => calls.push(value),
+    waitForFunction: async () => {},
+    evaluate: async (_fn, value) => {
+      calls.push(value);
+      return false;
+    },
     click: async (selector) => calls.push(selector),
     waitForNetworkIdle: async () => calls.push('idle'),
   };
@@ -187,6 +191,7 @@ test('sets both provided portal filters before submitting and waiting', async ()
 test('fails without a filter submit button instead of waiting for terminal input', async () => {
   const page = {
     waitForSelector: async () => {},
+    waitForFunction: async () => {},
     evaluate: async () => false,
     waitForNetworkIdle: async () => assert.fail('must stop before extracting'),
   };
@@ -214,12 +219,14 @@ test('applies filters through a visible search button outside a form', async () 
   };
   global.document = {
     getElementById: (id) => inputs[id],
+    querySelector: () => null,
     querySelectorAll: () => [button],
   };
   try {
     await applyDateFilters(
       {
         waitForSelector: async () => {},
+        waitForFunction: async () => {},
         evaluate: async (fn, value) => fn(value),
         waitForNetworkIdle: async () => {},
       },
@@ -233,6 +240,7 @@ test('applies filters through a visible search button outside a form', async () 
       applyDateFilters(
         {
           waitForSelector: async () => {},
+          waitForFunction: async () => {},
           evaluate: async (fn, value) => fn(value),
         },
         period,

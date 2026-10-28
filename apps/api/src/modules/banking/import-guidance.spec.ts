@@ -35,7 +35,7 @@ describe('bank import guidance', () => {
       accountId: 'account',
       bankDataThrough: '2026-10-20',
       gaps: [{ start: '2026-10-01', end: '2026-10-14' }],
-      suggestedPeriod: { start: '2026-10-20', end: '2026-10-23' },
+      suggestedPeriod: { start: '2026-10-20', end: '2026-10-22' },
     });
     expect(groupBy).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -66,13 +66,32 @@ describe('bank import guidance', () => {
     jest.setSystemTime(new Date('2026-10-22T23:30:00Z'));
     groupBy.mockResolvedValue([period('2026-10-01', '2026-10-22')]);
     expect((await service.importGuidance('account')).suggestedPeriod?.end).toBe(
-      '2026-10-23',
+      '2026-10-22',
     );
   });
   it('rejects an unknown account', async () => {
     findUnique.mockResolvedValue(null);
     await expect(service.importGuidance('missing')).rejects.toThrow(
       'Conta bancária não encontrada',
+    );
+  });
+  it('can re-export yesterday alone to cover a partial previous export', async () => {
+    groupBy.mockResolvedValue([period('2026-10-01', '2026-10-22')]);
+    expect((await service.importGuidance('account')).suggestedPeriod).toEqual({
+      start: '2026-10-22',
+      end: '2026-10-22',
+    });
+  });
+  it.each([
+    ['2026-01-01T00:30:00Z', '2025-12-31'],
+    ['2026-03-01T12:00:00Z', '2026-02-28'],
+    ['2026-10-25T00:30:00Z', '2026-10-24'],
+    ['2026-10-26T00:30:00Z', '2026-10-25'],
+  ])('ends on the previous Lisbon calendar day at %s', async (now, end) => {
+    jest.setSystemTime(new Date(now));
+    groupBy.mockResolvedValue([period('2025-12-01', '2025-12-02')]);
+    expect((await service.importGuidance('account')).suggestedPeriod?.end).toBe(
+      end,
     );
   });
 });

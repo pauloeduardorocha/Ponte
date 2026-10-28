@@ -779,14 +779,15 @@ export class BankingService {
       month: '2-digit',
       day: '2-digit',
     }).format(new Date());
+    const yesterday = shift(today, -1);
     return {
       accountId,
       bankDataThrough,
       gaps,
       // Include the last imported day, since a previous export may have been partial.
       suggestedPeriod:
-        bankDataThrough && bankDataThrough < today
-          ? { start: bankDataThrough, end: today }
+        bankDataThrough && bankDataThrough <= yesterday
+          ? { start: bankDataThrough, end: yesterday }
           : null,
     };
   }

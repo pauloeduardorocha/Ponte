@@ -163,7 +163,7 @@ export class BankingController {
   @ApiOperation({
     summary: 'Suggest bank import periods for an account',
     description:
-      'Requires FINANCE_BANK_IMPORT and FINANCE_CONTRIBUTION_READ. Estimates gaps between per-file movement date ranges from CONFIRMED and READY_FOR_REVIEW imports (no pagination). Days without activity may appear as gaps. No coverage is inferred before the first movement. The update suggestion includes the last imported day through today in Europe/Lisbon; null when current or without history.',
+      'Requires FINANCE_BANK_IMPORT and FINANCE_CONTRIBUTION_READ. Estimates gaps between per-file movement date ranges from CONFIRMED and READY_FOR_REVIEW imports (no pagination). Days without activity may appear as gaps. No coverage is inferred before the first movement. The update suggestion includes the last imported day through yesterday in Europe/Lisbon, including a single-day re-export when the last movement was yesterday; null when the last movement is today or later, or without history.',
   })
   @ApiOkResponse({
     schema: {

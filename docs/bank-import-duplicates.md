@@ -1,5 +1,11 @@
 # Duplicidade na importação bancária
 
+O período sugerido para exportar o próximo extrato termina em ontem, conforme
+o calendário de Lisboa. O início continua sendo o último dia com movimentos
+importados para cobrir exportações parciais, inclusive quando esse dia é ontem.
+Sem histórico, ou com último movimento de hoje ou posterior, não é sugerido
+um intervalo adicional. Os avisos de lacunas históricas permanecem separados.
+
 A importação preserva todas as linhas de um extrato. Sem identificador bancário
 único, duas linhas do mesmo arquivo são operações distintas, mesmo com data,
 valor, direção e descrição iguais. Isso inclui comissões repetidas e pagamentos
