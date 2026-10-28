@@ -30,6 +30,10 @@ import { errorMessage } from '../lib/errors';
 import { disablePush, stopBrowserPush } from '../lib/push';
 import { AccountThemeProvider } from '../theme/AccountThemeProvider';
 import {
+  activateResponseCache,
+  clearResponseCache,
+} from '../lib/response-cache';
+import {
   AuthContext,
   type AuthContextValue,
   type AuthStatus,
@@ -102,10 +106,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const session = await refreshSession();
         if (revision !== identityRevision.current) return;
         if (!session) {
+          void clearResponseCache();
           if (active) setState(ANONYMOUS);
           return;
         }
         const user = await authApi.fetchCurrentUser();
+        if (!active || revision !== identityRevision.current) return;
+        await activateResponseCache(user);
         if (active && revision === identityRevision.current)
           setState({ ...ANONYMOUS, status: 'authenticated', user });
       } catch (error) {
@@ -142,9 +149,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       identityRevision.current++;
       restoreAfterReconnect.current = false;
       queryClient.clear();
+      await clearResponseCache();
       await authApi.login(email, password);
       try {
         const user = await authApi.fetchCurrentUser();
+        await activateResponseCache(user);
         resumeAutomaticPasskeyLogin();
         setEnrollment(
           passkeysSupported() && shouldOfferPasskey(user.id)
@@ -163,7 +172,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginWithPasskey = useCallback(async () => {
     identityRevision.current++;
     restoreAfterReconnect.current = false;
+    await clearResponseCache();
     const session = await passkeyLogin();
+    await activateResponseCache(session.user);
     setEnrollment(null);
     queryClient.clear();
     setState({ ...ANONYMOUS, status: 'authenticated', user: session.user });

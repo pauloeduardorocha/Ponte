@@ -3611,7 +3611,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3637,7 +3646,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/audit/frontend-errors": {
@@ -3685,7 +3695,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3711,7 +3730,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/audit/frontend-errors/map": {
@@ -3720,7 +3740,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3746,7 +3775,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/audit/frontend-errors/stats": {
@@ -3762,7 +3792,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3788,7 +3827,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/audit/frontend-errors/{id}": {
@@ -3813,7 +3853,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           },
           "404": {
             "description": "Relatório inexistente."
@@ -3842,7 +3891,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/audit/{id}": {
@@ -3860,7 +3910,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3886,7 +3945,8 @@
           "LIBRARY_HISTORY_READ",
           "VISITOR_READ",
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/auth/forgot-password": {
@@ -3971,7 +4031,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3981,7 +4050,8 @@
         ],
         "tags": [
           "Autenticacao"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/auth/passkeys": {
@@ -3997,7 +4067,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4007,7 +4086,8 @@
         ],
         "tags": [
           "Autenticacao"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/auth/passkeys/login/options": {
@@ -4315,7 +4395,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=86400",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4325,7 +4414,8 @@
         ],
         "tags": [
           "A Ponte"
-        ]
+        ],
+        "x-ponte-cache-ttl": 86400
       }
     },
     "/api/v1/community/dashboard": {
@@ -4334,7 +4424,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4344,7 +4443,8 @@
         ],
         "tags": [
           "A Ponte"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/community/events": {
@@ -4394,7 +4494,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4407,7 +4516,8 @@
         ],
         "x-permissions-all": [
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "CommunityController_event",
@@ -4528,7 +4638,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4541,7 +4660,8 @@
         ],
         "x-permissions-all": [
           "VISITOR_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "CommunityController_visitor",
@@ -4763,7 +4883,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4777,7 +4906,8 @@
         ],
         "x-permissions-all": [
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "EventsController_create",
@@ -4835,7 +4965,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -4848,7 +4987,8 @@
         ],
         "x-permissions-all": [
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "patch": {
         "operationId": "EventsController_update",
@@ -5048,7 +5188,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5061,7 +5210,8 @@
         ],
         "x-permissions-all": [
           "EVENT_ATTENDEE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/attendees/{registrationId}/cancel": {
@@ -5362,7 +5512,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5375,7 +5534,8 @@
         ],
         "x-permissions-all": [
           "EVENT_COUPON_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "EventsController_coupon",
@@ -5442,7 +5602,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5456,7 +5625,8 @@
         "x-permissions-all": [
           "EVENT_MANAGER_ASSIGN",
           "OPERATION_SCOPE_ALL"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "EventsController_assign",
@@ -5745,7 +5915,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -5758,7 +5937,8 @@
         ],
         "x-permissions-all": [
           "EVENT_PAYMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/payments/{paymentId}/refunds": {
@@ -5998,7 +6178,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6011,7 +6200,8 @@
         ],
         "x-permissions-all": [
           "EVENT_PAYMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/refunds/{refundId}/approve": {
@@ -6075,7 +6265,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6088,7 +6287,8 @@
         ],
         "x-permissions-all": [
           "EVENT_REGISTRATION_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/registrations": {
@@ -6247,7 +6447,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6260,7 +6469,8 @@
         ],
         "x-permissions-all": [
           "EVENT_REGISTRATION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "EventsController_register",
@@ -6402,7 +6612,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6416,7 +6635,8 @@
         "x-permissions-all": [
           "EVENT_REPORT_READ",
           "EVENT_PAYMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/reports/export": {
@@ -6434,7 +6654,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6449,7 +6678,8 @@
         "x-permissions-all": [
           "EVENT_REPORT_EXPORT",
           "EVENT_PAYMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/sessions": {
@@ -6615,7 +6845,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6628,7 +6867,8 @@
         ],
         "x-permissions-all": [
           "EVENT_ATTENDEE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "EventsController_session",
@@ -6834,7 +7074,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -6847,7 +7096,8 @@
         ],
         "x-permissions-all": [
           "EVENT_ATTENDEE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/events/{id}/tickets": {
@@ -7013,7 +7263,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7026,7 +7285,8 @@
         ],
         "x-permissions-all": [
           "EVENT_TICKET_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "EventsController_ticket",
@@ -7239,7 +7499,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7252,7 +7521,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_ACCOUNT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createAccount",
@@ -7440,7 +7710,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7453,7 +7732,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_ATTACHMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/finance/banking/classify": {
@@ -7568,7 +7848,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7583,7 +7872,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/imports": {
@@ -7777,7 +8067,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7791,7 +8090,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "BankingController_upload",
@@ -7857,7 +8157,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7871,7 +8180,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/imports/{id}/confirm": {
@@ -7921,7 +8231,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -7935,7 +8254,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/finance/banking/members": {
@@ -8129,7 +8449,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8143,7 +8472,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/pending-classification": {
@@ -8152,7 +8482,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8166,7 +8505,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/reconcile": {
@@ -8393,7 +8733,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8407,7 +8756,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/transactions/{id}/attachments": {
@@ -8425,7 +8775,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8439,7 +8798,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "BankingController_attach",
@@ -8603,7 +8963,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8617,7 +8986,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/finance/banking/transactions/{id}/link": {
@@ -8677,7 +9047,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8691,7 +9070,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/banking/undo": {
@@ -8849,7 +9229,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -8862,7 +9251,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_CATEGORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createCategory",
@@ -9058,7 +9448,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9071,7 +9470,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createContribution",
@@ -9269,7 +9669,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9282,7 +9691,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_CATEGORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createCostCenter",
@@ -9389,7 +9799,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9404,7 +9823,8 @@
         "x-permissions-any": [
           "FINANCE_DASHBOARD_READ",
           "FINANCE_SUMMARY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/expenses": {
@@ -9529,7 +9949,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9542,7 +9971,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createExpense",
@@ -9631,7 +10061,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9644,7 +10083,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_ATTACHMENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_upload",
@@ -9818,7 +10258,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -9831,7 +10280,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createIncome",
@@ -10062,7 +10512,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10075,7 +10534,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_INVOICE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/invoices/expense-suggestions/{expenseId}": {
@@ -10093,7 +10553,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10107,7 +10576,8 @@
         "x-permissions-all": [
           "FINANCE_INVOICE_READ",
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/invoices/fetch": {
@@ -10202,7 +10672,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10215,7 +10694,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_INVOICE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/finance/invoices/{id}/expense-association": {
@@ -10414,7 +10894,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10427,7 +10916,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/reports": {
@@ -10601,7 +11091,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10614,7 +11113,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/reports/export": {
@@ -10801,7 +11301,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10814,7 +11323,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/finance/reports/lookups": {
@@ -10847,7 +11357,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10860,7 +11379,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/finance/suppliers": {
@@ -10985,7 +11505,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -10998,7 +11527,8 @@
         ],
         "x-permissions-all": [
           "FINANCE_SUPPLIER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "FinanceController_createSupplier",
@@ -11091,7 +11621,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           },
           "503": {
             "description": "API disponível, mas o banco de dados não está acessível."
@@ -11100,7 +11639,8 @@
         "security": [],
         "tags": [
           "health"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/book-options/authors": {
@@ -11141,7 +11681,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11154,7 +11703,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/library/book-options/categories": {
@@ -11195,7 +11745,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11208,7 +11767,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/library/book-options/keywords": {
@@ -11249,7 +11809,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11262,7 +11831,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/library/books": {
@@ -11333,7 +11903,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11346,7 +11925,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "LibraryController_createBook",
@@ -11414,7 +11994,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11427,7 +12016,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/books/{id}": {
@@ -11474,7 +12064,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11487,7 +12086,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "patch": {
         "operationId": "LibraryController_updateBook",
@@ -11623,7 +12223,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11636,7 +12245,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/categories": {
@@ -11677,7 +12287,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11690,7 +12309,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_BOOK_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/library/copies": {
@@ -11757,7 +12377,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11770,7 +12399,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_COPY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/copies/{id}": {
@@ -11867,7 +12497,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11881,7 +12520,8 @@
         "x-permissions-all": [
           "LIBRARY_COPY_READ",
           "LIBRARY_HISTORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/dashboard": {
@@ -11922,7 +12562,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -11935,7 +12584,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_DASHBOARD_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/fines": {
@@ -11994,7 +12644,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12007,7 +12666,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_FINE_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/fines/{id}/adjustments": {
@@ -12104,7 +12764,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12118,7 +12787,8 @@
         "x-permissions-any": [
           "LIBRARY_FINE_READ",
           "LIBRARY_HISTORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/fines/{id}/payments": {
@@ -12233,7 +12903,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12246,7 +12925,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_LOAN_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "LibraryController_borrow",
@@ -12466,7 +13146,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12479,7 +13168,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_HISTORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/library/members/{id}/history": {
@@ -12528,7 +13218,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12541,7 +13240,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_HISTORY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/library/reservations": {
@@ -12600,7 +13300,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12613,7 +13322,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_RESERVATION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "LibraryController_reserve",
@@ -12697,7 +13407,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12710,7 +13429,8 @@
         ],
         "x-permissions-all": [
           "LIBRARY_SETTINGS_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "patch": {
         "operationId": "LibraryController_updateSettings",
@@ -12749,7 +13469,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12762,7 +13491,8 @@
         ],
         "x-permissions-all": [
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/member-portal/events": {
@@ -12803,7 +13533,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12816,7 +13555,8 @@
         ],
         "x-permissions-all": [
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/member-portal/ministries": {
@@ -12857,7 +13597,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12870,7 +13619,8 @@
         ],
         "x-permissions-all": [
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/member-portal/reservations": {
@@ -12943,7 +13693,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12956,7 +13715,8 @@
         ],
         "x-permissions-all": [
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/member-portal/small-groups/{id}": {
@@ -12974,7 +13734,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -12987,7 +13756,8 @@
         ],
         "x-permissions-all": [
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/members": {
@@ -13069,7 +13839,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13082,7 +13861,8 @@
         ],
         "x-permissions-all": [
           "MEMBER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "MembersController_create",
@@ -13166,7 +13946,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13179,7 +13968,8 @@
         ],
         "x-permissions-all": [
           "MEMBER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "patch": {
         "operationId": "MembersController_update",
@@ -13376,7 +14166,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13389,7 +14188,8 @@
         ],
         "x-permissions-all": [
           "FOLLOWUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/operations/dashboard": {
@@ -13547,7 +14347,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13557,7 +14366,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/operations/events": {
@@ -13708,7 +14518,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13721,7 +14540,8 @@
         ],
         "x-permissions-all": [
           "EVENT_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createEvent",
@@ -13953,7 +14773,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13967,7 +14796,8 @@
         "x-permissions-any": [
           "EVENT_MANAGE",
           "EVENT_REGISTRATION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "OperationsController_register",
@@ -14198,7 +15028,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14211,7 +15050,8 @@
         ],
         "x-permissions-all": [
           "FOLLOWUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createFollowUp",
@@ -14441,7 +15281,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14454,7 +15303,8 @@
         ],
         "x-permissions-all": [
           "FOLLOWUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_interact",
@@ -14502,7 +15352,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14512,7 +15371,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/operations/inbox": {
@@ -14663,7 +15523,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14673,7 +15542,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/operations/inbox/read-all": {
@@ -14715,7 +15585,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14725,7 +15604,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/operations/inbox/{id}": {
@@ -14954,7 +15834,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -14968,7 +15857,8 @@
         "x-permissions-any": [
           "MINISTRY_READ",
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createMinistry",
@@ -15207,7 +16097,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -15221,7 +16120,8 @@
         "x-permissions-any": [
           "MINISTRY_READ",
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_joinministry",
@@ -15474,7 +16374,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -15487,7 +16396,8 @@
         ],
         "x-permissions-all": [
           "NOTIFICATION_SEND"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/operations/notification-templates": {
@@ -15638,7 +16548,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -15651,7 +16570,8 @@
         ],
         "x-permissions-all": [
           "NOTIFICATION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createTemplate",
@@ -15875,7 +16795,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -15888,7 +16817,8 @@
         ],
         "x-permissions-all": [
           "NOTIFICATION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "description": "Selecione exatamente um público: recipientMemberId, recipientVisitorId, recipientMemberIds, recipientVisitorIds, smallGroupIds, ministryIds, roleIds ou allMembers=true. Arrays aceitam entre 1 e 100 UUIDs e removem IDs repetidos. Destinatários explícitos são validados antes da criação. Grupos e ministérios respeitam o escopo de gestão; roles e todos os membros exigem OPERATION_SCOPE_ALL. Sem scheduledAt, persiste uma intenção durável e tenta enviar após o commit; falhas transitórias podem retornar PENDING. Com scheduledAt, cria PENDING para envio automático pelo worker a partir da data, na próxima execução disponível (prevista a cada cinco minutos, sem garantia de horário exato). O envio coletivo retorna total, sent, failed, pending e status (SENT, FAILED, PARTIAL ou PENDING); o individual preserva sua resposta. Canal sem provedor retorna 409 antes da criação de envio imediato.",
@@ -16140,7 +17070,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16150,7 +17089,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/operations/push/config": {
@@ -16166,7 +17106,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16176,7 +17125,8 @@
         ],
         "tags": [
           "Notificacoes push"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/operations/push/subscriptions": {
@@ -16407,7 +17357,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16422,7 +17381,8 @@
         "x-permissions-any": [
           "SCHEDULE_READ",
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "description": "Exige ministryId e liderança no ministério selecionado, ou acesso administrativo global. eventId é opcional e não concede acesso ao ministério.",
@@ -16682,7 +17642,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16696,7 +17665,8 @@
         "x-permissions-any": [
           "SCHEDULE_READ",
           "COMMUNITY_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_assign",
@@ -16904,7 +17874,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -16914,7 +17893,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_uploadAttachment",
@@ -17043,7 +18023,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17053,7 +18042,8 @@
         ],
         "tags": [
           "Operacao da igreja"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/operations/schedules/{id}/attachments/{attachmentId}/chunks/{offset}": {
@@ -17248,7 +18238,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17261,7 +18260,8 @@
         ],
         "x-permissions-all": [
           "SMALL_GROUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createGroup",
@@ -17498,7 +18498,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17511,7 +18520,8 @@
         ],
         "x-permissions-all": [
           "SMALL_GROUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_joingroup",
@@ -17754,7 +18764,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -17767,7 +18786,8 @@
         ],
         "x-permissions-all": [
           "VISITOR_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "OperationsController_createVisitor",
@@ -18039,7 +19059,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18053,7 +19082,8 @@
         "x-permissions-all": [
           "VISITOR_READ",
           "FOLLOWUP_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/privacy/me": {
@@ -18062,7 +19092,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18072,7 +19111,8 @@
         ],
         "tags": [
           "Privacidade"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/privacy/me/consents": {
@@ -18123,7 +19163,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18133,7 +19182,8 @@
         ],
         "tags": [
           "Privacidade"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/privacy/me/requests": {
@@ -18142,7 +19192,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18152,7 +19211,8 @@
         ],
         "tags": [
           "Privacidade"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "PrivacyController_request",
@@ -18252,7 +19312,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18266,7 +19335,8 @@
         "x-permissions-all": [
           "PRIVACY_EXPORT",
           "MEMBER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/privacy/members/{id}/legal-hold": {
@@ -18349,7 +19419,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18363,7 +19442,8 @@
         "x-permissions-all": [
           "PRIVACY_MANAGE",
           "MEMBER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/privacy/requests/{id}": {
@@ -18421,7 +19501,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18434,7 +19523,8 @@
         ],
         "x-permissions-all": [
           "PRIVACY_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "PrivacyController_policy",
@@ -18482,13 +19572,23 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [],
         "tags": [
           "EventSignup"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/public/events/{id}/member-registrations": {
@@ -18559,13 +19659,23 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [],
         "tags": [
           "EventSignup"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/public/events/{id}/profile": {
@@ -18584,7 +19694,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18594,7 +19713,8 @@
         ],
         "tags": [
           "EventSignup"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/public/events/{id}/registrations": {
@@ -18690,7 +19810,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18704,7 +19833,8 @@
         "x-permissions-all": [
           "FINANCE_TRANSACTION_READ",
           "FINANCE_TRANSACTION_UPDATE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "post": {
         "operationId": "ReimbursementsController_create",
@@ -18740,7 +19870,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18750,7 +19889,8 @@
         ],
         "tags": [
           "Reimbursements"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/reimbursements/mine": {
@@ -18805,7 +19945,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18815,7 +19964,8 @@
         ],
         "tags": [
           "Reimbursements"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/reimbursements/movement/{id}": {
@@ -18840,7 +19990,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18854,7 +20013,8 @@
         "x-permissions-all": [
           "FINANCE_BANK_IMPORT",
           "FINANCE_CONTRIBUTION_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/reimbursements/movement/{id}/suggestions": {
@@ -18872,7 +20032,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18887,7 +20056,8 @@
           "FINANCE_RECONCILE",
           "FINANCE_TRANSACTION_READ",
           "FINANCE_TRANSACTION_UPDATE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/reimbursements/profile": {
@@ -18903,7 +20073,16 @@
                 }
               }
             },
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18913,7 +20092,8 @@
         ],
         "tags": [
           "Reimbursements"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/reimbursements/{id}": {
@@ -18957,7 +20137,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -18967,7 +20156,8 @@
         ],
         "tags": [
           "Reimbursements"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       },
       "patch": {
         "operationId": "ReimbursementsController_update",
@@ -19067,7 +20257,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19077,7 +20276,8 @@
         ],
         "tags": [
           "Reimbursements"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/reimbursements/{id}/link": {
@@ -19241,7 +20441,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=3600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19256,7 +20465,8 @@
           "FINANCE_RECONCILE",
           "FINANCE_TRANSACTION_READ",
           "FINANCE_TRANSACTION_UPDATE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 3600
       }
     },
     "/api/v1/stripe/webhook": {
@@ -19321,7 +20531,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19334,7 +20553,8 @@
         ],
         "x-permissions-all": [
           "USER_READ"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "post": {
         "operationId": "UsersController_create",
@@ -19412,7 +20632,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19422,7 +20651,8 @@
         ],
         "tags": [
           "Usuarios"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/users/roles": {
@@ -19431,7 +20661,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19444,7 +20683,8 @@
         ],
         "x-permissions-all": [
           "PERMISSION_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       }
     },
     "/api/v1/users/{id}/approve": {
@@ -19573,7 +20813,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19586,7 +20835,8 @@
         ],
         "x-permissions-all": [
           "PERMISSION_MANAGE"
-        ]
+        ],
+        "x-ponte-cache-ttl": 0
       },
       "patch": {
         "operationId": "UsersController_roles",
@@ -19675,7 +20925,16 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19685,7 +20944,8 @@
         ],
         "tags": [
           "Videos"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/videos/playlists/{playlistId}": {
@@ -19711,7 +20971,16 @@
         ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19721,7 +20990,8 @@
         ],
         "tags": [
           "Videos"
-        ]
+        ],
+        "x-ponte-cache-ttl": 21600
       }
     }
   },

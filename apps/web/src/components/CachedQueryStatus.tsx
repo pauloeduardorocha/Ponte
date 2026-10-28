@@ -1,5 +1,6 @@
 import { Button, Stack, Typography } from '@mui/material';
 import { formatDateTime } from '../lib/format';
+import { invalidateResponseCache } from '../lib/response-cache';
 
 export function CachedQueryStatus({
   updatedAt,
@@ -23,13 +24,15 @@ export function CachedQueryStatus({
       <Typography variant="caption" color="text.secondary" aria-live="polite">
         {refreshing
           ? 'Atualizando dados…'
-          : `Dados atualizados em ${formatDateTime(new Date(updatedAt).toISOString())}`}
+          : `Dados carregados em ${formatDateTime(new Date(updatedAt).toISOString())}`}
       </Typography>
       <Button
         size="small"
         disabled={refreshing}
         aria-label={`Atualizar ${label}`}
-        onClick={onRefresh}
+        onClick={() => {
+          void invalidateResponseCache().then(onRefresh);
+        }}
       >
         Atualizar
       </Button>

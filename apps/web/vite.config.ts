@@ -70,6 +70,8 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
+    // The workspace package emits CommonJS, including the shared HTTP policy.
+    optimizeDeps: { include: ['@church/shared'] },
     build: {
       manifest: true,
       commonjsOptions: {

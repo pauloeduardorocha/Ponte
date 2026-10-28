@@ -313,3 +313,5 @@ export type PlaylistVideoFeed = PlaylistVideoPage & {
   updatedAt: string;
   stale: boolean;
 };
+
+export { HTTP_CACHE_ROUTES, responseCacheTtl } from './http-cache-policy';

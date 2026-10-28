@@ -6,7 +6,8 @@ import { AuditModule } from './modules/audit/audit.module';
 import { auditMiddleware } from './modules/audit/audit-context';
 import { MiddlewareConsumer, NestModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ResponseCacheInterceptor } from './common/response-cache.interceptor';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './modules/health/health.module';
@@ -61,6 +62,7 @@ import { FrontendErrorsModule } from './modules/frontend-errors/frontend-errors.
     FrontendErrorsModule,
   ],
   providers: [
+    { provide: APP_INTERCEPTOR, useClass: ResponseCacheInterceptor },
     { provide: APP_FILTER, useClass: SafeExceptionFilter },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: AuthGuard },

@@ -1,11 +1,19 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryCache, QueryClient } from '@tanstack/react-query';
 import { retryQuery } from './query-retry';
+import { responseDataTime } from './response-cache';
 
-/** Session-only cache. No authenticated responses are written to browser storage. */
+/** React Query memory cache; the API transport also honors HTTP TTL in CacheStorage. */
 export function createQueryClient() {
   const client = new QueryClient({
+    queryCache: new QueryCache({
+      onSuccess(data, query) {
+        const time = responseDataTime(data);
+        if (time) query.setState({ dataUpdatedAt: time });
+      },
+    }),
     defaultOptions: {
       queries: {
+        networkMode: 'offlineFirst',
         staleTime: 6 * 60 * 60_000,
         gcTime: 6 * 60 * 60_000 + 5 * 60_000,
         retry: retryQuery,

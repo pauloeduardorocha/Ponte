@@ -170,10 +170,7 @@ se uma atualização falhar, respeitando as permissões e os ciclos da sessão.
 
 ### Cache de consultas no cliente
 
-O cache React Query é somente em memória; respostas autenticadas não entram em
-localStorage, IndexedDB nem no cache do service worker. Recarregar/fechar a página
-descarta esse cache. Login, login com passkey, logout e expiração da sessão
-limpam as consultas para impedir reutilização entre contas.
+O React Query mantém o cache em memória. Desde 1.3.1, o transporte também persiste respostas GET elegíveis em CacheStorage, seguindo o TTL HTTP e o isolamento por conta/permissões. A idade original da resposta persistida é preservada no React Query, sem reiniciar o TTL ao recarregar. Login/logout e expiração limpam consultas; logout/expiração removem também respostas persistidas. A restauração da mesma conta verificada online pode reutilizar respostas dentro do prazo. Veja [todas as políticas e exceções](http-cache-policy.md).
 
 | Consultas | Validade antes de nova consulta | Retenção quando inativas |
 | --- | --- | --- |

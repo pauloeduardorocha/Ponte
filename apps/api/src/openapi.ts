@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import { MetadataScanner, ModulesContainer, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { responseCacheTtl } from '@church/shared';
 import {
   PERMISSION_ANY_KEY,
   PERMISSION_KEY,
@@ -19,6 +20,25 @@ export function createOpenApiDocument(app: INestApplication) {
     .addCookieAuth('refresh_token', undefined, 'refresh_token')
     .build();
   const document = SwaggerModule.createDocument(app, config);
+  for (const [path, item] of Object.entries(document.paths)) {
+    if (!item?.get) continue;
+    const ttl = responseCacheTtl(path);
+    Object.assign(item.get, { 'x-ponte-cache-ttl': ttl });
+    for (const [status, response] of Object.entries(item.get.responses ?? {})) {
+      if (!response || !/^2/.test(status) || '$ref' in response) continue;
+      response.headers = {
+        ...response.headers,
+        'Cache-Control': {
+          schema: {
+            type: 'string',
+            example: ttl ? `private, max-age=${ttl}` : 'no-store',
+          },
+          description:
+            'TTL privado; erros e consultas de catálogo com filtro available usam no-store.',
+        },
+      };
+    }
+  }
   const operations = new Map(
     Object.values(document.paths).flatMap((path) =>
       Object.values(path ?? {})

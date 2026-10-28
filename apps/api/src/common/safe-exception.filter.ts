@@ -16,6 +16,7 @@ export class SafeExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(SafeExceptionFilter.name);
   catch(error: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
+    response.setHeader('Cache-Control', 'no-store');
     if (error instanceof HttpException && error.getStatus() < 500) {
       const body = error.getResponse();
       response

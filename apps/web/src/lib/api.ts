@@ -5,6 +5,14 @@ import {
 } from './frontend-error-reporting';
 import { messageAfterUpdateCheck } from './app-update';
 import { NetworkFailure, networkRequest } from './network-request';
+import {
+  clearResponseCache,
+  beginResponseCacheMutation,
+  readResponseCache,
+  rememberResponseTime,
+  responseCacheTicket,
+  writeResponseCache,
+} from './response-cache';
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
@@ -66,6 +74,7 @@ export function getAccessToken(): string | null {
 export function setAccessToken(token: string | null): void {
   authGeneration++;
   accessToken = token;
+  if (!token) void clearResponseCache();
 }
 
 /** Subscribes to session expiration (refresh failed after a 401). */
@@ -120,6 +129,29 @@ async function send(
   options: RequestOptions,
   token: string | null,
 ): Promise<Response> {
+  const generation = authGeneration;
+  if (
+    options.method &&
+    options.method !== 'GET' &&
+    !path.startsWith('/auth/') &&
+    path !== '/frontend-errors'
+  ) {
+    const finish = await beginResponseCacheMutation();
+    try {
+      return await sendRequest(path, options, token, generation);
+    } finally {
+      await finish();
+    }
+  }
+  return sendRequest(path, options, token, generation);
+}
+
+async function sendRequest(
+  path: string,
+  options: RequestOptions,
+  token: string | null,
+  generation: number,
+): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (options.body !== undefined && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
@@ -143,16 +175,24 @@ async function send(
       : options.body === undefined
         ? undefined
         : JSON.stringify(options.body);
-  const generation = authGeneration;
+  const url = buildUrl(path, options.query);
+  const cachePath = `${path}${new URL(url, window.location.origin).search}`;
+  const reading = (options.method ?? 'GET') === 'GET';
+  const cacheTicket = responseCacheTicket();
+  if (reading && token) {
+    const cached = await readResponseCache(url, cachePath, cacheTicket);
+    if (cached && generation === authGeneration) return cached;
+  }
   let response: Response;
   try {
     const result = await networkRequest(
-      buildUrl(path, options.query),
+      url,
       {
         method: options.method ?? 'GET',
         headers,
         body,
         credentials: 'include',
+        cache: 'no-store',
       },
       () => generation === authGeneration,
       path === '/auth/refresh' ? 15_000 : undefined,
@@ -223,6 +263,9 @@ async function send(
         : withErrorReference(extractMessage(data, response.status), data),
       data,
     );
+  }
+  if (reading && token && generation === authGeneration) {
+    await writeResponseCache(url, cachePath, response, cacheTicket);
   }
   return response;
 }
@@ -296,7 +339,10 @@ export async function apiRequest<T>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  return (await parseBody(await apiResponse(path, options))) as T;
+  const response = await apiResponse(path, options);
+  const data = await parseBody(response);
+  rememberResponseTime(data, response);
+  return data as T;
 }
 
 /** Optional GET resources may be JSON null or an empty successful response. */
