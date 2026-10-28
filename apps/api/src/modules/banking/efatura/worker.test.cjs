@@ -9,6 +9,7 @@ async function runWorker({
   date = '2026-10-01',
   repeat = false,
   readError,
+  empty = false,
 } = {}) {
   const messages = [];
   const page = {
@@ -61,7 +62,7 @@ async function runWorker({
           : name === './filters.cjs'
             ? {
                 validatePeriod: (period) => period,
-                applyDateFilters: async () => {},
+                applyDateFilters: async () => ({ empty }),
               }
             : require(name),
     },
@@ -107,5 +108,17 @@ test('worker still returns valid invoices through IPC', async () => {
     messages.find((message) => message.result)?.result.invoices.length,
     1,
   );
+  assert.ok(!messages.some((message) => message.error));
+});
+
+test('worker returns no invoices when the portal hides stale rows after an empty search', async () => {
+  const { messages, exitCode } = await runWorker({
+    empty: true,
+    date: '2026-08-01',
+  });
+  assert.equal(exitCode, undefined);
+  const result = messages.find((message) => message.result)?.result;
+  assert.equal(result.invoices.length, 0);
+  assert.equal(result.rawRows.length, 0);
   assert.ok(!messages.some((message) => message.error));
 });

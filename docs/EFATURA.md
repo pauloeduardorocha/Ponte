@@ -27,6 +27,14 @@ O período vem das datas mínima e máxima do extrato. O scraper preenche
 `#dataInicioFilter` e `#dataFimFilter`, aplica a pesquisa e valida as datas
 em todas as páginas. Configure `EFATURA_FILTER_SUBMIT` se o portal exigir
 um seletor específico. A ausência de botão de pesquisa interrompe a consulta.
+A página inicia uma pesquisa AJAX automaticamente. O scraper aguarda a conclusão
+dessa primeira pesquisa antes de preencher outro período e, depois do clique,
+aguarda o portal voltar a mostrar `.searchResults` ou `.noSearchResults`, que
+só são exibidos pelo callback após atualizar a tabela. A espera não depende da
+ociosidade de toda a rede, pois pedidos de fundo podem continuar ativos.
+Resultados vazios não reutilizam linhas ocultas da pesquisa anterior.
+Layouts legados sem esses painéis mantêm a espera por ociosidade da rede.
+O formato ISO é o esperado pelo datepicker do portal (`yyyy-mm-dd`).
 
 Os logs registram somente o código de falha e a etapa (inicialização, login,
 filtros ou extração), sem senha, NIF, dados das faturas ou URLs de sessão.
@@ -38,6 +46,35 @@ limite de faturas (`INVOICE_LIMIT_EXCEEDED`). Operações e códigos são valida
 por uma lista fechada na API; mensagens e stacks do portal não são registradas.
 O código `PORTAL_ERROR` de versões anteriores não permite recuperar a causa
 original: nesses casos é necessário repetir a consulta com este diagnóstico.
+
+## Diagnóstico local dos filtros
+
+Execute na raiz do repositório (substitua o período pelo do extrato):
+
+```powershell
+node apps/api/scripts/diagnose-efatura.cjs --start=2026-10-12 --end=2026-10-27
+```
+
+O comando abre um Chrome/Edge separado, com interface, e aguarda até dez minutos
+pelo login manual nas Finanças. Não passe NIF ou senha pela linha de comando.
+No Windows, encontra Chrome/Edge nos caminhos padrão; para outro local/sistema,
+configure `PUPPETEER_EXECUTABLE_PATH`. O teste reutiliza `applyDateFilters` da
+consulta de produção, percorre as páginas e não importa dados para a API.
+
+O terminal registra `before_filters`, os parâmetros de data reconhecidos em
+`filter_request_dates` e `after_filters` para cada página. Compare as datas
+aceites pelos campos, `earliest`/`latest` e `outsidePeriod`. Campos preenchidos
+corretamente não comprovam que o servidor aplicou o filtro. Parâmetros ausentes
+do diagnóstico também não comprovam que não foram enviados: o diagnóstico só
+reconhece nomes de parâmetros de data específicos em query/form URL-encoded.
+Não registra pedidos completos, cookies, credenciais, emitentes ou documentos.
+Depois de `diagnostic_complete`, o navegador fica aberto para conferência;
+feche-o para encerrar o comando. O teste altera os filtros e a página atual do
+portal, sem modificar faturas.
+Os comandos `inspect`, `apply` e `close` no terminal permitem observar de novo,
+repetir a pesquisa e fechar o navegador. Mesmo após erro, a janela continua
+aberta para inspeção. Um timeout em `filter_wait_timeout` é seguido pela leitura
+dos campos/tabela para distinguir uma pesquisa concluída de tráfego de fundo.
 
 ## Colunas e links
 
