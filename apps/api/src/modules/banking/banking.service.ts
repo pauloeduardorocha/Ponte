@@ -793,8 +793,8 @@ export class BankingService {
   }
   async imports(q: BankQuery) {
     const where = { accountId: q.accountId };
-    return {
-      items: await this.db.bankImport.findMany({
+    const [items, total] = await Promise.all([
+      this.db.bankImport.findMany({
         where,
         select: {
           id: true,
@@ -813,7 +813,31 @@ export class BankingService {
         skip: (q.page - 1) * q.pageSize,
         take: q.pageSize,
       }),
-      total: await this.db.bankImport.count({ where }),
+      this.db.bankImport.count({ where }),
+    ]);
+    const ranges = items.length
+      ? await this.db.bankTransaction.groupBy({
+          by: ['importId'],
+          where: { importId: { in: items.map((item) => item.id) } },
+          _min: { date: true },
+          _max: { date: true },
+        })
+      : [];
+    const periods = new Map(
+      ranges.map((range) => [
+        range.importId,
+        {
+          start: range._min.date?.toISOString().slice(0, 10) ?? null,
+          end: range._max.date?.toISOString().slice(0, 10) ?? null,
+        },
+      ]),
+    );
+    return {
+      items: items.map((item) => ({
+        ...item,
+        period: periods.get(item.id) ?? { start: null, end: null },
+      })),
+      total,
       page: q.page,
       pageSize: q.pageSize,
     };

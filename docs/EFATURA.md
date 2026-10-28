@@ -1,5 +1,13 @@
 # Faturas do e-fatura e movimentos bancários
 
+Em **Financeiro → Faturas**, cada opção do seletor de extrato mostra a data
+inicial e final dos movimentos, seguida do nome do arquivo. Arquivos com o mesmo
+nome continuam distintos pelo ID. O período vem de `period: { start, end }`
+na listagem `GET /finance/banking/imports`, calculado sobre todos os movimentos
+de cada extrato em uma agregação por página, sem consultar um detalhe por opção.
+As datas são `YYYY-MM-DD` na API e apresentadas como `DD/MM/AAAA`; extratos sem
+movimentos têm datas nulas, sem inferir o período a partir do nome ou upload.
+
 Em **Financeiro → Importação bancária**, importe o extrato e responda à pergunta
 **Buscar faturas deste extrato?**. Informe NIF e senha das Finanças ou escolha
 **Agora não**. O serviço usa todas as datas do extrato, independentemente da
