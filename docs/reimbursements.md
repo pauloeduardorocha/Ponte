@@ -33,6 +33,14 @@ Esta versão não inclui OCR, receção automática de WhatsApp/email ou execuç
 
 ## Validação
 
+Um movimento bancário pode não ter qualquer pedido de reembolso associado.
+A consulta opcional `GET /reimbursements/movement/:id` aceita `null` ou uma
+resposta HTTP bem-sucedida sem corpo como ausência de vínculo. O frontend
+normaliza esse resultado para `null`, sem erro de consulta e sem criar ou associar
+um pedido. Essa interpretação também se aplica ao perfil de reembolso ausente.
+Erros de rede, permissões e servidor continuam a ser apresentados. A associação
+de um pedido sugerido continua dependendo de confirmação explícita do usuário.
+
 Os testes da API cobrem privacidade, rejeição de novos pedidos anónimos, beneficiário definido pela sessão e bloqueio de alterações, integridade do pagamento, correspondência de valor/moeda, exclusividade da associação, auditoria e limpeza em falhas. Os testes web cobrem redirecionamento para login, envio autenticado, nova tentativa após erro, bloqueio de pedidos para terceiros, lista pessoal e confirmação da associação pela tesouraria.
 
 ## Contrato IBAN

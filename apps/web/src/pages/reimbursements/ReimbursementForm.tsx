@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import CloudUploadRounded from '@mui/icons-material/CloudUploadRounded';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '../../lib/api';
+import { apiNullableRequest, apiRequest } from '../../lib/api';
 import { useAuth } from '../../auth/auth-context';
 import { DocumentGallery } from '../../components/DocumentGallery';
 import {
@@ -32,7 +32,7 @@ export function ReimbursementForm({
   const profile = useQuery({
     queryKey: ['reimbursement-profile', user?.id],
     queryFn: () =>
-      apiRequest<{ name: string; iban: string | null } | null>(
+      apiNullableRequest<{ name: string; iban: string | null }>(
         '/reimbursements/profile',
       ),
     enabled: Boolean(user),

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   apiRequest,
+  apiNullableRequest,
   getAccessToken,
   onSessionExpired,
   refreshSession,
@@ -11,6 +12,48 @@ import { mockApi } from '../test/utils';
 describe('apiRequest', () => {
   beforeEach(() => setAccessToken(null));
   afterEach(() => vi.unstubAllGlobals());
+
+  it.each([
+    ['JSON null', 200, 'null'],
+    ['empty HTTP 200', 200, null],
+    ['HTTP 204', 204, null],
+  ])(
+    'returns null for an optional resource with %s',
+    async (_, status, body) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockResolvedValue(new Response(body, { status })),
+      );
+      await expect(
+        apiNullableRequest('/reimbursements/movement/id'),
+      ).resolves.toBeNull();
+    },
+  );
+
+  it('preserves a linked optional resource', async () => {
+    const reimbursement = { id: 'request-1', bankTransactionId: 'movement-1' };
+    mockApi({
+      'GET /reimbursements/movement/movement-1': { body: reimbursement },
+    });
+    await expect(
+      apiNullableRequest('/reimbursements/movement/movement-1'),
+    ).resolves.toEqual(reimbursement);
+  });
+
+  it.each([403, 500])(
+    'keeps HTTP %i failures visible for optional resources',
+    async (status) => {
+      mockApi({
+        'GET /reimbursements/movement/id': {
+          status,
+          body: { message: 'Consulta indisponível' },
+        },
+      });
+      await expect(
+        apiNullableRequest('/reimbursements/movement/id'),
+      ).rejects.toMatchObject({ status });
+    },
+  );
 
   it('sends credentials and the bearer token', async () => {
     const requests = mockApi({ 'GET /ping': { body: { ok: true } } });

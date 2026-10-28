@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
-import { apiRequest } from '../../lib/api';
+import { apiNullableRequest, apiRequest } from '../../lib/api';
 import { useAuth } from '../../auth/auth-context';
 import { DocumentGallery } from '../../components/DocumentGallery';
 import {
@@ -89,7 +89,7 @@ export function MovementReimbursement({
   const result = useQuery({
     queryKey: ['reimbursements', 'movement', transactionId],
     queryFn: () =>
-      apiRequest<Reimbursement | null>(
+      apiNullableRequest<Reimbursement>(
         `/reimbursements/movement/${transactionId}`,
       ),
   });

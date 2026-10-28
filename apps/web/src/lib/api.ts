@@ -263,6 +263,11 @@ export async function apiRequest<T>(
   return (await parseBody(await apiResponse(path, options))) as T;
 }
 
+/** Optional GET resources may be JSON null or an empty successful response. */
+export async function apiNullableRequest<T>(path: string): Promise<T | null> {
+  return (await apiRequest<T | null | undefined>(path)) ?? null;
+}
+
 export interface HealthResponse {
   status: 'ok';
 }

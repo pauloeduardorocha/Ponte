@@ -284,20 +284,23 @@ describe('Reimbursements', () => {
     fireEvent.change(iban, { target: { value: '' } });
     expect(save).toBeDisabled();
   });
-  it('blocks submission when the account has no member profile', async () => {
-    mockApi({
-      ...sessionRoutes(makeUser()),
-      ...memberFormRoutes,
-      'GET /reimbursements/profile': { body: null },
-    });
-    renderApp('/pedir-reembolso');
-    await screen.findByText(
-      'O cadastro de reembolsos é exclusivo para membros.',
-    );
-    expect(
-      screen.getByRole('button', { name: 'Guardar pedido' }),
-    ).toBeDisabled();
-  });
+  it.each([{ body: null }, { status: 200 }, { status: 204 }])(
+    'blocks submission without a member profile (%j)',
+    async (reply) => {
+      mockApi({
+        ...sessionRoutes(makeUser()),
+        ...memberFormRoutes,
+        'GET /reimbursements/profile': reply,
+      });
+      renderApp('/pedir-reembolso');
+      await screen.findByText(
+        'O cadastro de reembolsos é exclusivo para membros.',
+      );
+      expect(
+        screen.getByRole('button', { name: 'Guardar pedido' }),
+      ).toBeDisabled();
+    },
+  );
   it('prefills the authenticated member IBAN and submits it', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),

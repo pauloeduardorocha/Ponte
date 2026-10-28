@@ -233,6 +233,80 @@ describe('Bank statement review', () => {
       requests.some((request) => request.path.startsWith('/finance/invoices/')),
     ).toBe(false);
   });
+  it.each([{ body: null }, { status: 200 }, { status: 204 }])(
+    'categorizes an ordinary expense without a reimbursement (%j)',
+    async (reply) => {
+      const requests = mockApi({
+        ...routes(),
+        'GET /finance/banking/transactions': {
+          body: page([
+            {
+              ...row,
+              direction: 'DEBIT',
+              category: null,
+              costCenterId: 'center-1',
+            },
+          ]),
+        },
+        'GET /finance/categories': {
+          body: page([
+            {
+              id: 'expense-category',
+              name: 'Comissões bancárias',
+              kind: 'EXPENSE',
+            },
+          ]),
+        },
+        'GET /finance/banking/transactions/transaction-1/attachments': {
+          body: [],
+        },
+        'GET /reimbursements/movement/transaction-1': reply,
+        'GET /reimbursements/movement/transaction-1/suggestions': { body: [] },
+        'GET /finance/cost-centers': {
+          body: page([{ id: 'center-1', name: 'A Ponte' }]),
+        },
+      });
+      renderApp('/finance?tab=banking');
+      await uploadStatement();
+      // Suggestions only load once the optional lookup succeeds, including when empty.
+      await waitFor(() =>
+        expect(
+          requests.some(
+            (r) =>
+              r.path.endsWith('/transaction-1/suggestions') &&
+              r.path.startsWith('/reimbursements/'),
+          ),
+        ).toBe(true),
+      );
+      const dialog = screen.getByRole('dialog', {
+        name: 'Categorizar movimentação',
+      });
+      expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument();
+      expect(
+        within(dialog).queryByText(/Reembolso de/),
+      ).not.toBeInTheDocument();
+      expect(
+        within(dialog).queryByRole('button', { name: 'Associar reembolso' }),
+      ).not.toBeInTheDocument();
+      select('Categoria', 'Comissões bancárias');
+      expect(screen.getByRole('button', { name: 'Próxima' })).toBeEnabled();
+      fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+      await waitFor(() =>
+        expect(
+          requests.find((r) => r.path === '/finance/banking/classify')?.body,
+        ).toMatchObject({
+          categoryId: 'expense-category',
+          classification: 'EXPENSE',
+        }),
+      );
+      expect(
+        requests.some(
+          (r) =>
+            r.path.endsWith('/link') && r.path.startsWith('/reimbursements/'),
+        ),
+      ).toBe(false);
+    },
+  );
   it('does not offer or fetch invoice suggestions when categorizing income', async () => {
     const requests = mockApi(routes());
     renderApp('/finance?tab=banking');
