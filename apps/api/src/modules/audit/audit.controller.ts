@@ -124,6 +124,7 @@ export class AuditController {
           route: true,
           apiStatus: true,
           userId: true,
+          user: { select: { id: true, name: true, memberId: true } },
           device: true,
         },
       }),
@@ -171,6 +172,7 @@ export class AuditController {
   async frontendError(@Param('id', ParseUUIDPipe) id: string) {
     const record = await this.db.frontendErrorReport.findUnique({
       where: { id },
+      include: { user: { select: { id: true, name: true, memberId: true } } },
     });
     if (!record) throw new NotFoundException();
     return record;

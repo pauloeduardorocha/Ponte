@@ -18,6 +18,7 @@ export interface FrontendErrorSummary {
   message: string;
   route: string;
   userId: string | null;
+  user: { id: string; name: string; memberId: string | null } | null;
   apiStatus: number | null;
   device: FrontendErrorDevice | null;
 }

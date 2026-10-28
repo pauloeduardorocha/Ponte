@@ -52,6 +52,10 @@ describe('Audit frontend errors', () => {
         skip: 50,
         take: 25,
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: expect.objectContaining({
+          userId: true,
+          user: { select: { id: true, name: true, memberId: true } },
+        }),
       }),
     );
     expect(result).toEqual({
@@ -76,5 +80,9 @@ describe('Audit frontend errors', () => {
     await expect(controller.frontendError('missing')).rejects.toBeInstanceOf(
       NotFoundException,
     );
+    expect(findUnique).toHaveBeenCalledWith({
+      where: { id: 'error' },
+      include: { user: { select: { id: true, name: true, memberId: true } } },
+    });
   });
 });

@@ -9,6 +9,13 @@ import type {
   Page,
 } from '@church/shared';
 
+export class FrontendErrorUserDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty({ type: String, format: 'uuid', nullable: true }) memberId!:
+    string | null;
+}
+
 export class FrontendErrorSummaryDto implements FrontendErrorSummary {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ format: 'date-time' }) occurredAt!: string;
@@ -19,6 +26,8 @@ export class FrontendErrorSummaryDto implements FrontendErrorSummary {
   @ApiProperty({ type: String, format: 'uuid', nullable: true }) userId!:
     string | null;
   @ApiProperty({ type: Number, nullable: true }) apiStatus!: number | null;
+  @ApiProperty({ type: FrontendErrorUserDto, nullable: true })
+  user!: FrontendErrorUserDto | null;
   @ApiProperty({
     type: 'object',
     nullable: true,

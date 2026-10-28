@@ -82,6 +82,12 @@ describe('Audit access', () => {
               occurredAt: '2026-10-27T12:00:00Z',
               eventType: 'runtime',
               message: 'Falha de teste',
+              userId: 'account-1',
+              user: {
+                id: 'account-1',
+                name: 'Usuário de teste',
+                memberId: 'member-9',
+              },
               route: '/',
               device: { appVersion: '1.1.1' },
             },
@@ -92,14 +98,31 @@ describe('Audit access', () => {
         body: {
           id: 'error-1',
           stack: 'Stack completa do erro',
+          userId: 'account-1',
+          user: {
+            id: 'account-1',
+            name: 'Usuário de teste',
+            memberId: 'member-9',
+          },
           logs: [{ message: 'Contexto do erro' }],
         },
       },
     });
     renderApp('/audit/errors');
+    expect(
+      await screen.findByRole('link', { name: 'Usuário de teste' }),
+    ).toHaveAttribute('href', '/members/member-9');
     fireEvent.click(await screen.findByRole('button', { name: 'Ver erro' }));
     expect(
       await screen.findByText('Stack completa do erro'),
+    ).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('dialog')).getByRole('link', {
+        name: 'Usuário de teste',
+      }),
+    ).toHaveAttribute('href', '/members/member-9');
+    expect(
+      within(screen.getByRole('dialog')).getByText('account-1'),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Fechar' }));
     const next = await screen.findAllByRole('button', {
@@ -120,6 +143,48 @@ describe('Audit access', () => {
       requests.some((r) => r.path === '/audit/frontend-errors/error-1'),
     ).toBe(true);
     expect(requests.some((r) => r.path === '/audit')).toBe(false);
+  });
+  it('does not create user links for anonymous reports or accounts without a member', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(AUDIT_PERMISSIONS)),
+      'GET /audit/frontend-errors': {
+        body: {
+          total: 2,
+          items: [
+            {
+              id: 'a',
+              occurredAt: '2026-10-28T12:00:00Z',
+              eventType: 'api',
+              message: 'Network error',
+              route: '/',
+              userId: null,
+              user: null,
+            },
+            {
+              id: 'b',
+              occurredAt: '2026-10-28T12:00:00Z',
+              eventType: 'runtime',
+              message: 'Runtime error',
+              route: '/',
+              userId: 'account-only',
+              user: {
+                id: 'account-only',
+                name: 'Conta isolada',
+                memberId: null,
+              },
+            },
+          ],
+        },
+      },
+    });
+    renderApp('/audit/errors');
+    expect(await screen.findByText('Não identificado')).toBeInTheDocument();
+    expect(
+      screen.getByText('Conta isolada (sem cadastro associado)'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('link', { name: /Conta isolada/ }),
+    ).not.toBeInTheDocument();
   });
   it('groups both pages under Auditoria and selects only the current page', async () => {
     mockApi({

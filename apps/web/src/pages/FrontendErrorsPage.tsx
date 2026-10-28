@@ -5,6 +5,7 @@ import type {
 } from '@church/shared';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link as RouterLink } from 'react-router-dom';
 import {
   Alert,
   Button,
@@ -13,6 +14,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Link,
   Stack,
   Table,
   TableBody,
@@ -26,6 +28,24 @@ import { apiRequest } from '../lib/api';
 import { formatDateTime } from '../lib/format';
 import { FrontendErrorCharts } from './FrontendErrorCharts';
 import { FrontendErrorDetailMap, FrontendErrorMap } from './FrontendErrorMap';
+
+function ErrorUser({
+  user,
+  userId,
+}: Pick<FrontendErrorSummary, 'user' | 'userId'>) {
+  if (!user) return <>{userId ?? 'Não identificado'}</>;
+  const name = user.name.trim() || user.id;
+  return user.memberId ? (
+    <Link
+      component={RouterLink}
+      to={`/members/${encodeURIComponent(user.memberId)}`}
+    >
+      {name}
+    </Link>
+  ) : (
+    <>{name} (sem cadastro associado)</>
+  );
+}
 
 export function FrontendErrorsPage() {
   const [page, setPage] = useState(0);
@@ -67,6 +87,7 @@ export function FrontendErrorsPage() {
               {[
                 'Data da ocorrência',
                 'Tipo',
+                'Usuário',
                 'Mensagem',
                 'Rota',
                 'Versão',
@@ -84,6 +105,9 @@ export function FrontendErrorsPage() {
               <TableRow key={error.id}>
                 <TableCell>{formatDateTime(error.occurredAt)}</TableCell>
                 <TableCell>{error.eventType}</TableCell>
+                <TableCell>
+                  <ErrorUser user={error.user} userId={error.userId} />
+                </TableCell>
                 <TableCell sx={{ overflowWrap: 'anywhere', minWidth: 200 }}>
                   {error.message}
                 </TableCell>
@@ -111,7 +135,7 @@ export function FrontendErrorsPage() {
             ))}
             {errors.data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9}>Nenhum erro encontrado.</TableCell>
+                <TableCell colSpan={10}>Nenhum erro encontrado.</TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -154,20 +178,37 @@ export function FrontendErrorsPage() {
           {detail.data && (
             <Table aria-label="Detalhes do erro">
               <TableBody>
-                {Object.entries(detail.data).map(([key, value]) => (
-                  <TableRow key={key}>
-                    <TableCell component="th" scope="row">
-                      {key}
-                    </TableCell>
-                    <TableCell
-                      sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
-                    >
-                      {typeof value === 'object' && value !== null
-                        ? JSON.stringify(value, null, 2)
-                        : String(value ?? '—')}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {Object.entries(detail.data)
+                  .filter(([key]) => key !== 'user')
+                  .map(([key, value]) => (
+                    <TableRow key={key}>
+                      <TableCell component="th" scope="row">
+                        {key === 'userId' ? 'Usuário' : key}
+                      </TableCell>
+                      <TableCell
+                        sx={{
+                          whiteSpace: 'pre-wrap',
+                          overflowWrap: 'anywhere',
+                        }}
+                      >
+                        {key === 'userId' ? (
+                          <>
+                            <ErrorUser
+                              user={detail.data?.user ?? null}
+                              userId={detail.data?.userId ?? null}
+                            />
+                            <Typography variant="caption" display="block">
+                              {detail.data?.userId ?? '—'}
+                            </Typography>
+                          </>
+                        ) : typeof value === 'object' && value !== null ? (
+                          JSON.stringify(value, null, 2)
+                        ) : (
+                          String(value ?? '—')
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
               </TableBody>
             </Table>
           )}

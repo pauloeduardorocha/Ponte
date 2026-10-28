@@ -37,8 +37,8 @@ por IP, não é GPS e pode refletir VPN, proxy ou rede da operadora. Não se faz
 consulta de geocodificação externa nem se solicita permissão de localização.
 
 A tabela exibe IP e cidade/região/país. Os detalhes mostram um mapa com marcador
-quando existem coordenadas válidas. Os emails permitidos incluem o contexto
-no campo `device`; 401/403 continuam sem email. Registros antigos não são
+quando existem coordenadas válidas. O contexto fica disponível no campo
+`device` da auditoria. O envio de emails de erros está suspenso. Registros antigos não são
 preenchidos retroativamente.
 
 `GET /api/v1/audit/frontend-errors/map` exige as mesmas permissões da auditoria
@@ -117,19 +117,25 @@ categorias explícitas para dados ausentes. Os gráficos incluem 401 e 403,
 mesmo sem alertas por email, e independem da paginação da tabela. Falhas no
 carregamento das estatísticas não impedem a consulta da lista ou dos detalhes.
 
-Registros com `apiStatus` 401 ou 403 são persistidos e continuam disponíveis na
-auditoria, mas não geram email. Os demais registros persistidos geram email
-transacional pela Bird com todos os campos
-em tabela HTML escapada e texto simples. Os dados passam pela limpeza existente
-e a versao do cliente e preservada. Configure `FRONTEND_ERROR_EMAIL_TO` no
-ambiente privado da API, junto de `BIRD_API_KEY` e `BIRD_EMAIL_FROM`.
-O destinatario nao fica embutido no codigo.
+### Identificação do usuário e emails suspensos
 
-Falha ou falta de configuracao gera aviso generico e preserva o registro e a
-resposta `{ accepted: true }`. Nao ha retentativa automatica. A chave de
-idempotencia usa o ID do registro. O pedido aguarda o envio, com timeout de
-10 segundos do adaptador. A retencao continua em 30 dias, com limpeza oportunista
-a cada seis horas. Aceitacao pela Bird nao comprova entrega na caixa de entrada.
+`userId` é o ID da conta autenticada na requisição de ingestão, validada pelo
+Bearer token no servidor. Não se aceita ID de usuário fornecido no corpo do
+relatório. Sem sessão válida, o relatório permanece sem usuário identificado.
+O ID da conta (`users.id`) é diferente do ID do cadastro (`members.id`).
+
+Listagem e detalhes retornam também `user: { id, name, memberId } | null`,
+selecionando apenas esses campos da conta relacionada. A UI mostra o nome
+com link para `/members/:memberId`, a ficha unificada de cadastro e acesso.
+Os detalhes preservam a apresentação do `userId`. Contas sem cadastro associado
+mostram o nome sem link; registros anônimos aparecem como Não identificado.
+
+O envio de emails de erros está suspenso para todos os tipos e status HTTP,
+mesmo se `FRONTEND_ERROR_EMAIL_TO` e Bird estiverem configurados. O serviço
+não depende do módulo de email e a ingestão não aguarda nem chama a Bird.
+A persistência, a auditoria, os gráficos e a retenção de 30 dias continuam ativos.
+Outros emails transacionais da aplicação não são alterados. A suspensão entra
+em vigor quando a versão com esta alteração é implantada.
 
 ## Verificação de versão após erros
 

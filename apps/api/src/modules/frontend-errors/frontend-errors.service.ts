@@ -1,6 +1,4 @@
-import { BirdEmailService } from '../email/bird-email.service';
-import { ConfigService } from '@nestjs/config';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { requestTrace } from '../../common/request-trace';
@@ -43,12 +41,7 @@ function cleanRoute(value: string) {
 @Injectable()
 export class FrontendErrorsService {
   private lastCleanup = 0;
-  private readonly logger = new Logger(FrontendErrorsService.name);
-  constructor(
-    private readonly db: PrismaService,
-    private readonly email: BirdEmailService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly db: PrismaService) {}
 
   async create(
     dto: CreateFrontendErrorDto,
@@ -71,7 +64,7 @@ export class FrontendErrorsService {
       at: entry.at ? new Date(entry.at).toISOString() : undefined,
       message: clean(entry.message, 500),
     }));
-    const report = await this.db.frontendErrorReport.create({
+    await this.db.frontendErrorReport.create({
       data: {
         userId,
         requestId: requestTrace.getStore()?.requestId ?? randomUUID(),
@@ -93,55 +86,6 @@ export class FrontendErrorsService {
         logs,
       },
     });
-    if (dto.apiStatus === 401 || dto.apiStatus === 403) {
-      return { accepted: true };
-    }
-    const to = this.config.get<string>('FRONTEND_ERROR_EMAIL_TO', '').trim();
-    if (to && this.email.configured) {
-      const escape = (value: string) =>
-        value.replace(
-          /[&<>"']/g,
-          (char) =>
-            ({
-              '&': '&amp;',
-              '<': '&lt;',
-              '>': '&gt;',
-              '"': '&quot;',
-              "'": '&#39;',
-            })[char]!,
-        );
-      const rows = Object.entries(report).map(([key, value]) => [
-        key,
-        value instanceof Date
-          ? value.toISOString()
-          : typeof value === 'object' && value !== null
-            ? JSON.stringify(value, null, 2)
-            : String(value ?? '—'),
-      ]);
-      try {
-        await this.email.send({
-          to,
-          subject: 'Ponte — Novo erro de frontend',
-          idempotencyKey: `frontend-error-${report.id}`,
-          text: rows.map(([key, value]) => `${key}: ${value}`).join('\n'),
-          html:
-            '<h1>Novo erro de frontend</h1><table border="1" cellpadding="8" style="border-collapse:collapse"><thead><tr><th>Campo</th><th>Detalhes</th></tr></thead><tbody>' +
-            rows
-              .map(
-                ([key, value]) =>
-                  `<tr><th scope="row">${escape(key!)}</th><td style="white-space:pre-wrap;overflow-wrap:anywhere">${escape(value!)}</td></tr>`,
-              )
-              .join('') +
-            '</tbody></table>',
-        });
-      } catch {
-        this.logger.warn(
-          'Frontend error saved, but alert email delivery failed.',
-        );
-      }
-    } else {
-      this.logger.warn('Frontend error alert email is not configured.');
-    }
     return { accepted: true };
   }
 }
