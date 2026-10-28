@@ -12,7 +12,7 @@ export function NotificationBell() {
     queryKey: ['notifications', 'unread', user?.id],
     queryFn: () => apiRequest<{ count: number }>('/operations/inbox/unread'),
     enabled: !!user,
-    refetchInterval: 60_000,
+    refetchInterval: 60 * 60_000,
     retry: false,
   });
   useEffect(() => {

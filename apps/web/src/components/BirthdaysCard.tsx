@@ -20,8 +20,8 @@ export function BirthdaysCard() {
       apiRequest<{ id: string; name: string; birthday: string }[]>(
         '/community/birthdays?period=week',
       ),
-    staleTime: 60000,
-    refetchInterval: 60000,
+    staleTime: 60 * 60_000,
+    refetchInterval: 60 * 60_000,
   });
   return (
     <Card variant="outlined">

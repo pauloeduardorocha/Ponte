@@ -52,7 +52,7 @@ export function InboxPage() {
     [search, setSearch] = useState(''),
     debounced = useDebouncedValue(search);
   const data = useQuery({
-    refetchInterval: 60_000,
+    refetchInterval: 60 * 60_000,
     queryKey: ['operations', 'inbox', page, debounced],
     queryFn: () =>
       apiRequest<{ items: Message[]; total: number }>('/operations/inbox', {

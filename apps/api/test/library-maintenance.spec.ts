@@ -17,6 +17,8 @@ describe('Library maintenance lifecycle', () => {
       library.onModuleInit();
       expect(jest.getTimerCount()).toBe(1);
       await jest.advanceTimersByTimeAsync(60_000);
+      expect(transaction).not.toHaveBeenCalled();
+      await jest.advanceTimersByTimeAsync(59 * 60_000);
       expect(transaction).toHaveBeenCalledTimes(1);
       expect(error).toHaveBeenCalledWith(
         'Library overdue/reservation maintenance failed',

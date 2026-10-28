@@ -103,7 +103,7 @@ export class LibraryService implements OnModuleInit, OnModuleDestroy {
       void this.transaction(async () => undefined).catch(() => {
         this.logger.error('Library overdue/reservation maintenance failed');
       });
-    }, 60_000);
+    }, 60 * 60_000);
     this.timer.unref();
   }
 

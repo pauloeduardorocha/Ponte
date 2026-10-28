@@ -22,7 +22,7 @@ export class BirthdayPushService implements OnModuleInit, OnModuleDestroy {
       void this.deliver().catch(() =>
         this.logger.error('Falha no envio dos aniversariantes.'),
       );
-    }, 60_000);
+    }, 60 * 60_000);
     this.timer.unref();
   }
   onModuleDestroy() {
