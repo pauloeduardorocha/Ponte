@@ -26,6 +26,7 @@ type BankImport = {
   id: string;
   filename: string;
   status: string;
+  period?: { start: string | null; end: string | null };
   _count: { transactions: number };
 };
 
@@ -92,7 +93,10 @@ export function InvoicesPage() {
             <option value="">Selecione um extrato</option>
             {imports.data?.map((item) => (
               <option key={item.id} value={item.id}>
-                {item.filename}
+                {item.period?.start && item.period.end
+                  ? `${formatDateOnly(item.period.start)} a ${formatDateOnly(item.period.end)}`
+                  : 'Período indisponível'}{' '}
+                · {item.filename}
               </option>
             ))}
           </TextField>

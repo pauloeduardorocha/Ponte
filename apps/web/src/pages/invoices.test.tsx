@@ -71,6 +71,7 @@ describe('Financial invoices tab', () => {
               id: 'bank-1',
               filename: 'outubro.csv',
               status: 'CONFIRMED',
+              period: { start: '2026-01-02', end: '2026-10-12' },
               _count: { transactions: 2 },
             },
             {
@@ -79,8 +80,15 @@ describe('Financial invoices tab', () => {
               status: 'UPLOADED',
               _count: { transactions: 0 },
             },
+            {
+              id: 'bank-3',
+              filename: 'outubro.csv',
+              status: 'CONFIRMED',
+              period: { start: '2026-10-12', end: '2026-10-27' },
+              _count: { transactions: 3 },
+            },
           ],
-          total: 2,
+          total: 3,
           page: 1,
           pageSize: 100,
         },
@@ -88,7 +96,16 @@ describe('Financial invoices tab', () => {
       'POST /finance/invoices/fetch': { body: { inserted: 2, duplicates: 0 } },
     });
     renderApp('/finance?tab=invoices');
-    await screen.findByRole('option', { name: 'outubro.csv' });
+    expect(
+      await screen.findByRole('option', {
+        name: '02/01/2026 a 12/10/2026 · outubro.csv',
+      }),
+    ).toHaveValue('bank-1');
+    expect(
+      screen.getByRole('option', {
+        name: '12/10/2026 a 27/10/2026 · outubro.csv',
+      }),
+    ).toHaveValue('bank-3');
     expect(
       screen.queryByRole('option', { name: 'pendente.csv' }),
     ).not.toBeInTheDocument();
@@ -119,5 +136,8 @@ describe('Financial invoices tab', () => {
     );
     await waitFor(() => expect(calls).toBeGreaterThan(1));
     expect(screen.getByLabelText(/^Senha das Finanças/)).toHaveValue('');
+    expect(
+      requests.filter((r) => r.path.startsWith('/finance/banking/imports/')),
+    ).toHaveLength(0);
   });
 });
