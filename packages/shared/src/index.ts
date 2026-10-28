@@ -1,3 +1,39 @@
+/** JSON values on the wire; dates in response contracts are ISO strings. */
+export type JsonValue =
+  null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
+export interface FrontendErrorDevice {
+  appVersion?: string;
+  [key: string]: JsonValue | undefined;
+}
+export interface FrontendErrorSummary {
+  id: string;
+  occurredAt: string;
+  createdAt: string;
+  eventType: string;
+  message: string;
+  route: string;
+  userId: string | null;
+  apiStatus: number | null;
+  device: FrontendErrorDevice | null;
+}
+export interface FrontendErrorDetail extends FrontendErrorSummary {
+  requestId: string;
+  clientRequestId: string | null;
+  stack: string | null;
+  apiPath: string | null;
+  apiMethod: string | null;
+  userAgent: string | null;
+  logs: JsonValue;
+}
+export interface FrontendErrorStat {
+  kind: string;
+  label: string;
+  count: number;
+}
+export interface FrontendErrorStats {
+  rows: FrontendErrorStat[];
+}
+
 export const PERMISSIONS = [
   'COMMUNITY_READ',
   'FINANCE_SUMMARY_READ',

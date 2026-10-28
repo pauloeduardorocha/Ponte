@@ -46,11 +46,11 @@ global. Os fluxos de cat√°logo, empr√©stimo, reserva, multa e hist√≥rico continu
 cobertos por `library.test.tsx`; autoriza√ß√£o, transa√ß√µes e concorr√™ncia das
 opera√ß√µes s√£o exercitadas pelas su√≠tes existentes com PostgreSQL descart√°vel.
 
-## ValidaÁ„o em 27/10/2026
+## Valida√ß√£o em 27/10/2026
 
-TypeScript da API/web e lint dos mÛdulos alterados passaram. As suÌtes existentes
-aprovaram 94 testes unit·rios de operaÁıes, 23 do frontend da biblioteca, 158 de
-integraÁ„o com PostgreSQL 17 descart·vel e 14 do login restrito. Os dois testes
+TypeScript da API/web e lint dos m√≥dulos alterados passaram. As su√≠tes existentes
+aprovaram 94 testes unit√°rios de opera√ß√µes, 23 do frontend da biblioteca, 158 de
+integra√ß√£o com PostgreSQL 17 descart√°vel e 14 do login restrito. Os dois testes
 exclusivos de restauro ficaram ignorados na rodada normal. O glob do Jest foi
-ajustado apenas durante a execuÁ„o no worktree Windows, como registrado no guia
-de notificaÁıes, e restaurado em seguida. N„o houve chamadas a provedores reais.
+ajustado apenas durante a execu√ß√£o no worktree Windows, como registrado no guia
+de notifica√ß√µes, e restaurado em seguida. N√£o houve chamadas a provedores reais.

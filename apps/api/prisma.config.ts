@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { defineConfig, env } from 'prisma/config';
 
 const localEnvPath = resolve(process.cwd(), '../../.env');
-if (existsSync(localEnvPath)) {
+if (process.env.PONTE_OPENAPI_GENERATION !== '1' && existsSync(localEnvPath)) {
   process.loadEnvFile(localEnvPath);
 }
 

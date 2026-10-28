@@ -45,11 +45,15 @@ export class NotificationOutboxService {
     @Optional() private readonly push?: PushService,
   ) {}
 
-  enqueue(tx: Prisma.TransactionClient, ids: string[], held: boolean) {
+  async enqueue(tx: Prisma.TransactionClient, ids: string[], held: boolean) {
+    // Prisma can materialize @default(now()) using the application's clock.
+    // Availability must use the same database clock as claims and backoff.
+    const availableAt = await this.clock(tx);
     return tx.notificationDelivery.createMany({
       data: ids.map((notificationId) => ({
         notificationId,
         state: held ? 'HELD' : 'READY',
+        availableAt,
       })),
     });
   }

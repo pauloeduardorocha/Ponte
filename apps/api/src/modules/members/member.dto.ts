@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
   IsIBAN,
@@ -17,19 +17,31 @@ import {
 } from 'class-validator';
 
 export class PageQuery {
+  @ApiPropertyOptional({
+    type: 'integer',
+    default: 1,
+    minimum: 1,
+    maximum: 100000,
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100000)
   @IsOptional()
-  page = 1;
+  page: number = 1;
 
+  @ApiPropertyOptional({
+    type: 'integer',
+    default: 20,
+    minimum: 1,
+    maximum: 100,
+  })
   @Type(() => Number)
   @IsInt()
   @Min(1)
   @Max(100)
   @IsOptional()
-  pageSize = 20;
+  pageSize: number = 20;
 
   @IsString()
   @MaxLength(120)
@@ -42,10 +54,16 @@ export class MemberQuery extends PageQuery {
   @IsOptional()
   status?: 'ACTIVE' | 'INACTIVE';
 
+  @ApiPropertyOptional({
+    type: String,
+    enum: ['name', 'email', 'phone', 'status', 'createdAt'],
+    default: 'name',
+  })
   @IsIn(['name', 'email', 'phone', 'status', 'createdAt'])
   @IsOptional()
   sortBy: 'name' | 'email' | 'phone' | 'status' | 'createdAt' = 'name';
 
+  @ApiPropertyOptional({ type: String, enum: ['asc', 'desc'], default: 'asc' })
   @IsIn(['asc', 'desc'])
   @IsOptional()
   sortOrder: 'asc' | 'desc' = 'asc';

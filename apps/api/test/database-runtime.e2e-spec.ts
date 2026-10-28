@@ -182,7 +182,7 @@ securityIntegration('Restricted database login (isolated PostgreSQL)', () => {
           content: 'Restricted outbox fixture',
         },
       });
-      await tx.notificationDelivery.create({ data: { notificationId: n.id } });
+      await worker.enqueue(tx, [n.id], false);
       return n;
     });
     try {

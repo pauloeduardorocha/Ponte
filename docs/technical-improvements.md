@@ -69,7 +69,7 @@ Referência: [notificações](notifications.md).
 
 ## 4. Evolução do armazenamento de anexos — média prioridade
 
-**Estado:** fora do escopo por decis�o do utilizador; manter o armazenamento atual.
+**Estado:** fora do escopo por decisão do utilizador; manter o armazenamento atual.
 
 O armazenamento atual suporta binários no PostgreSQL; anexos de escalas também usam
 `Bytes`. Medir volume e crescimento antes de escolher uma migração.
@@ -82,31 +82,34 @@ Aceite: acessos continuam protegidos e a migração/restauração preserva todos
 
 ## 5. Divisão dos maiores módulos — média prioridade
 
-**Estado:** implementado localmente; servi�os por dom�nio e pain�is da biblioteca separados.
-Regress�o aprovada: 158 testes de integra��o + 14 de privil�gios, 94 unit�rios
-das opera��es, 23 da biblioteca, TypeScript e lint. Sem push/deploy nesta etapa.
-Refer�ncia: [organiza��o dos m�dulos](module-structure.md).
+**Estado:** implementado localmente; serviços por domínio e painéis da biblioteca separados.
+Regressão aprovada: 158 testes de integração + 14 de privilégios, 94 unitários
+das operações, 23 da biblioteca, TypeScript e lint. Sem push/deploy nesta etapa.
+Referência: [organização dos módulos](module-structure.md).
 
-`OperationsService` concentra visitantes, acompanhamento, grupos, ministérios,
-escalas, notificações e dashboard; `LibraryPage` reúne muitas telas e ações.
+Problema original: `OperationsService` concentrava visitantes, acompanhamento,
+grupos, ministérios, escalas, notificações e dashboard; `LibraryPage` reunia muitas
+telas e ações.
 
-- Extrair serviços e componentes por responsabilidade em mudanças pequenas.
-- Preservar os endpoints, transações, permissões e comportamento da interface.
-- Concentrar regras de domínio e testes no módulo que as possui.
+- [x] Extrair serviços e componentes por responsabilidade em mudanças pequenas.
+- [x] Preservar os endpoints, transações, permissões e comportamento da interface.
+- [x] Concentrar regras de domínio e testes no módulo que as possui.
 
 Aceite: módulos menores com regressão dos fluxos preservada; sem introduzir microserviços.
 
 ## 6. Contratos e documentação sincronizados — média prioridade
 
-**Estado:** pendente.
+**Estado:** implementado e validado localmente em 28/10/2026; sem push/deploy.
+Geração e verificação reproduzíveis, comparação no CI e respostas de erros
+compartilhadas. Referência: [contratos da API](api-contracts.md).
 
-O README descreve rate limit em memória e reset de senha sem envio de e-mail,
-enquanto o código usa PostgreSQL e Bird. O OpenAPI versionado não contém algumas
+Problema original: o README descrevia rate limit em memória e reset sem e-mail,
+enquanto o código usa PostgreSQL e Bird. O OpenAPI versionado não continha algumas
 rotas atuais de consulta de erros do frontend.
 
-- Corrigir divergências e adicionar geração reproduzível do OpenAPI.
-- Verificar diferenças de contrato no CI e reduzir tipos de resposta duplicados.
-- Reutilizar as coleções existentes quando agregarem verificações de comportamento.
+- [x] Corrigir divergências e adicionar geração reproduzível do OpenAPI.
+- [x] Verificar diferenças de contrato no CI e reduzir tipos de resposta duplicados.
+- [x] Preservar a coleção de smoke checks e documentar seu uso local sem duplicá-la.
 
 Aceite: contratos gerados correspondem às rotas e mudanças incompatíveis são identificadas.
 

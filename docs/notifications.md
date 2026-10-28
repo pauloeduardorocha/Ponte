@@ -225,3 +225,13 @@ Um aviso no cabeçalho de todas as páginas autenticadas também permite ativar 
 `apps/api/test/notifications.e2e-spec.ts` verifica a migration e os fluxos HTTP com PostgreSQL real. Por segurança exige `TEST_DATABASE_URL` de um banco descartável chamado `ponte_push_test_<hex>`; o responsável pela execução deve remover esse banco depois. Os serviços push externos são simulados nos testes: validar a entrega real requer configurar VAPID, publicar em HTTPS e ativar em um navegador/dispositivo real.
 
 Os testes de `push.spec.ts`, `push-worker.spec.ts`, `push.test.ts`, `PushControls.test.tsx` e `Notifications.test.tsx` cobrem inscrições, permissões, expiração, isolamento, leitura e abertura segura da caixa de entrada. O build gera `sw.js` com importação de `push-worker.js`.
+
+### Consistência do relógio — 28/10/2026
+
+A disponibilidade inicial da intenção é definida explicitamente com o relógio do
+PostgreSQL na mesma transação de criação. Assim, um default calculado pelo ORM
+com o relógio de uma instância adiantada não adia nem rejeita o envio imediato.
+Reserva, backoff e janela de retentativa já usam esse relógio. Um teste com
+PostgreSQL real simula o default de um host adiantado e confirma o envio imediato;
+as fixtures de expiração e do login restrito seguem o mesmo caminho de criação.
+A janela segura de duas horas e os limites de tentativas não foram alterados.

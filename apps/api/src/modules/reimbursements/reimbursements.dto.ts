@@ -20,7 +20,10 @@ export class ReimbursementDto {
   iban!: string;
   @IsUUID() categoryId!: string;
   @IsOptional() @IsString() @MaxLength(2000) purpose?: string;
-  @Matches(/^(?=.*[1-9])(?:0|[1-9]\d{0,9})(?:\.\d{1,2})?$/) amount!: string;
+  // Positive decimal, up to ten integer digits and two decimal places.
+  // Equivalent without lookahead, also understood by OpenAPI tooling using RE2.
+  @Matches(/^(?:[1-9]\d{0,9}(?:\.\d{1,2})?|0\.(?:[1-9]\d?|\d[1-9]))$/)
+  amount!: string;
 }
 export class ReimbursementQuery extends PageQuery {
   @IsOptional()

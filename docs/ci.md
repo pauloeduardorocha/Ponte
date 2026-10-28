@@ -132,3 +132,16 @@ POST, permitindo a consulta independente de atualização da aplicação.
 Não houve execução observada no GitHub Actions, push, deploy ou teste de provedores
 reais de e-mail/pagamento/portal e-Fatura. O build ainda emite o aviso existente de
 chunks maiores que 500 kB; isso não impediu a compilação.
+
+## Contratos reproduzíveis
+
+O mesmo job de qualidade verifica `npm run openapi:check -- --skip-build` após o
+build, valida o schema com oasdiff e, em PRs, compara com o SHA da base. A geração
+normal usa `npm run openapi:generate`; não precisa de `.env`, banco ou provedores.
+A migração inicial do snapshot legado é explícita e limitada a hashes conhecidos;
+as bases geradas bloqueiam incompatibilidades ERR. Ver [contratos da API](api-contracts.md).
+
+`npm run test:unit` inclui também os testes do comando de preparação da base.
+Os globs do Jest ficam limitados aos roots da API e não interpolam o caminho
+absoluto com `<rootDir>` no `testMatch`, evitando a falha de descoberta em
+worktrees Windows dentro de `.codex`. O setup e as exclusões continuam iguais.

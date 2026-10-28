@@ -1,4 +1,16 @@
-import { ApiTags, ApiBearerAuth, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiBearerAuth,
+  ApiPropertyOptional,
+  ApiOkResponse,
+  ApiNotFoundResponse,
+} from '@nestjs/swagger';
+import type { FrontendErrorStat, FrontendErrorStats } from '@church/shared';
+import {
+  FrontendErrorPageDto,
+  FrontendErrorDetailDto,
+  FrontendErrorStatsDto,
+} from './frontend-error-responses.dto';
 import {
   Controller,
   NotFoundException,
@@ -93,6 +105,7 @@ export class AuditController {
     };
   }
   @Get('frontend-errors')
+  @ApiOkResponse({ type: FrontendErrorPageDto })
   async frontendErrors(@Query() q: PageQuery) {
     const [items, total] = await Promise.all([
       this.db.frontendErrorReport.findMany({
@@ -117,14 +130,17 @@ export class AuditController {
   }
 
   @Get('frontend-errors/stats')
-  async frontendErrorStats() {
-    const rows = await this.db.$queryRaw<
-      Array<{ kind: string; label: string; count: number }>
-    >(frontendErrorStatsSql);
+  @ApiOkResponse({ type: FrontendErrorStatsDto })
+  async frontendErrorStats(): Promise<FrontendErrorStats> {
+    const rows = await this.db.$queryRaw<FrontendErrorStat[]>(
+      frontendErrorStatsSql,
+    );
     return { rows };
   }
 
   @Get('frontend-errors/:id')
+  @ApiOkResponse({ type: FrontendErrorDetailDto })
+  @ApiNotFoundResponse({ description: 'Relatório inexistente.' })
   async frontendError(@Param('id', ParseUUIDPipe) id: string) {
     const record = await this.db.frontendErrorReport.findUnique({
       where: { id },

@@ -277,6 +277,43 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
     return clock.now;
   }
 
+  it('uses the database clock for initial availability even if ORM defaults come from an ahead host', async () => {
+    const hostNow = new Date((await databaseNow()).getTime() + 3_600_000);
+    let intercepted = 0;
+    const aheadHost = db.$extends({
+      query: {
+        notificationDelivery: {
+          createMany({ args, query }) {
+            intercepted++;
+            const rows = Array.isArray(args.data) ? args.data : [args.data];
+            args.data = rows.map((row) => ({
+              ...row,
+              availableAt: row.availableAt ?? hostNow,
+            }));
+            return query(args);
+          },
+        },
+      },
+    });
+    const clockWorker = new NotificationOutboxService(
+      aheadHost as unknown as PrismaService,
+      [provider],
+    );
+    const clockOperations = new OperationsService(
+      aheadHost as unknown as PrismaService,
+      [provider],
+      undefined,
+      clockWorker,
+    );
+    const result = await clockOperations.sendNotification(
+      { channel: 'EMAIL', content: 'Immediate', recipientMemberId: memberId },
+      user,
+    );
+    expect(result.status).toBe('SENT');
+    expect(intercepted).toBe(1);
+    expect(provider.send).toHaveBeenCalledTimes(1);
+  });
+
   it('does not send early or let future schedules fill the bounded worker batch', async () => {
     const now = await databaseNow();
     const future = new Date(now.getTime() + 60 * 60_000);
@@ -391,7 +428,7 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
       data: {
         state: 'PROCESSING',
         attempts: 1,
-        firstAttemptAt: new Date(),
+        firstAttemptAt: await databaseNow(),
         lockedUntil: new Date(0),
         claimToken: randomUUID(),
         payload: requestPayload,
@@ -412,7 +449,7 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
       data: {
         state: 'PROCESSING',
         attempts: 1,
-        firstAttemptAt: new Date(),
+        firstAttemptAt: await databaseNow(),
         lockedUntil: new Date(0),
         claimToken: randomUUID(),
       },
@@ -442,7 +479,7 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
     await db.notificationDelivery.update({
       where: { notificationId: n.id },
       data: {
-        firstAttemptAt: new Date(Date.now() - 2 * 60 * 60_000),
+        firstAttemptAt: new Date((await databaseNow()).getTime() - 2 * 60 * 60_000),
         attempts: 1,
         uncertain: true,
         payload: requestPayload,
