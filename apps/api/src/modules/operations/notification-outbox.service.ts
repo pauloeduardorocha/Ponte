@@ -45,11 +45,15 @@ export class NotificationOutboxService {
     @Optional() private readonly push?: PushService,
   ) {}
 
-  enqueue(tx: Prisma.TransactionClient, ids: string[], held: boolean) {
+  async enqueue(tx: Prisma.TransactionClient, ids: string[], held: boolean) {
+    // Prisma can materialize @default(now()) using the application's clock.
+    // Availability must use the same database clock as claims and backoff.
+    const availableAt = await this.clock(tx);
     return tx.notificationDelivery.createMany({
       data: ids.map((notificationId) => ({
         notificationId,
         state: held ? 'HELD' : 'READY',
+        availableAt,
       })),
     });
   }
@@ -124,8 +128,10 @@ export class NotificationOutboxService {
       }
       if (n.scheduledAt && n.scheduledAt > now)
         throw new ConflictException('Aguarde a data agendada.');
-      if (!user && d.state === 'HELD')
-        throw new ConflictException('Envio agendado exige ação manual.');
+      // Legacy unscheduled intents remain manual; dated intents are released
+      // by the worker only after checking the database clock above.
+      if (!user && d.state === 'HELD' && !n.scheduledAt)
+        throw new ConflictException('Pendência antiga exige ação manual.');
       if (d.state === 'READY' && d.availableAt > now)
         throw new ConflictException('Aguarde a próxima tentativa.');
       const provider = this.providers.find((p) => p.channel === n.channel);
@@ -278,8 +284,10 @@ export class NotificationOutboxService {
         notification: {
           status: 'PENDING',
           channel: { in: this.providers.map((p) => p.channel) },
+          OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
         },
         OR: [
+          { state: 'HELD', notification: { scheduledAt: { lte: now } } },
           { state: 'READY', availableAt: { lte: now } },
           { state: 'PROCESSING', lockedUntil: { lte: now } },
         ],

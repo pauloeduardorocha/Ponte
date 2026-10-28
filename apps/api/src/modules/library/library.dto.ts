@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/swagger';
+import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -22,7 +22,13 @@ import {
 import { PageQuery } from '../members/member.dto';
 
 export class LibraryPageQuery extends PageQuery {
-  override pageSize = 10;
+  @ApiPropertyOptional({
+    type: 'integer',
+    default: 10,
+    minimum: 1,
+    maximum: 100,
+  })
+  override pageSize: number = 10;
 }
 
 export const COPY_STATUSES = [

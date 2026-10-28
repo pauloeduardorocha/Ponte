@@ -1,3 +1,4 @@
+import type { FrontendErrorStat, FrontendErrorStats } from '@church/shared';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -9,11 +10,6 @@ import {
 } from '@mui/material';
 import { apiRequest } from '../lib/api';
 
-interface Stat {
-  kind: string;
-  label: string;
-  count: number;
-}
 const colors = [
   '#1976d2',
   '#d84315',
@@ -32,7 +28,13 @@ const typeLabels: Record<string, string> = {
 };
 const number = (value: number) => value.toLocaleString('pt-PT');
 
-function Ranking({ title, rows }: { title: string; rows: Stat[] }) {
+function Ranking({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: FrontendErrorStat[];
+}) {
   const max = Math.max(1, ...rows.map((row) => row.count));
   return (
     <Card variant="outlined" sx={{ p: 2, minWidth: 0 }}>
@@ -81,7 +83,8 @@ function Ranking({ title, rows }: { title: string; rows: Stat[] }) {
 export function FrontendErrorCharts() {
   const stats = useQuery({
     queryKey: ['frontend-error-stats'],
-    queryFn: () => apiRequest<{ rows: Stat[] }>('/audit/frontend-errors/stats'),
+    queryFn: () =>
+      apiRequest<FrontendErrorStats>('/audit/frontend-errors/stats'),
   });
   if (stats.isPending)
     return <LinearProgress aria-label="Carregando estatísticas dos erros" />;

@@ -1,4 +1,4 @@
-"""Pesquisa capas no Google Imagens sem chave. Python 3.10+ e Playwright."""
+"""Pesquisa capas no Bing Imagens sem chave. Python 3.10+ e Playwright."""
 
 import argparse
 import csv
@@ -6,7 +6,7 @@ import json
 from pathlib import Path
 import sys
 import time
-from urllib.parse import parse_qs, urlencode, urljoin, urlsplit
+from urllib.parse import urlencode, urlsplit
 
 FIELDS = ["registrationNumber", "title", "author", "cover_url", "status",
           "result_caption", "source_url", "search_url", "candidate_urls"]
@@ -17,32 +17,38 @@ class ImageSearchError(Exception):
 
 
 def image_url(value):
-    """Preserve real source URLs; exclude inline images and Google thumbnails."""
+    """Preserve real source URLs; exclude inline images and search thumbnails."""
     parts = urlsplit(value or "")
     host = (parts.hostname or "").lower()
     if parts.scheme not in ("http", "https") or not host:
         return ""
     if host == "gstatic.com" or host.endswith(".gstatic.com"):
         return ""
+    if host == "mm.bing.net" or host.endswith(".mm.bing.net"):
+        return ""
     if parts.path.startswith(("/images/branding/", "/logos/")):
         return ""
     return value
 
 
-def results_from_links(links):
+def results_from_metadata(records):
     results, seen = [], set()
-    for link in links:
-        href = urljoin("https://www.google.com", link.get("href", ""))
-        params = parse_qs(urlsplit(href).query)
-        cover = image_url(params.get("imgurl", [""])[0])
+    for raw in records:
+        try:
+            item = json.loads(raw)
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(item, dict):
+            continue
+        cover = image_url(item.get("murl", ""))
         if cover and cover not in seen:
             seen.add(cover)
-            results.append({"url": cover, "caption": link.get("caption", ""),
-                            "source": params.get("imgrefurl", [""])[0]})
+            results.append({"url": cover, "caption": item.get("t", ""),
+                            "source": item.get("purl", "")})
     return results
 
 
-class GoogleImages:
+class BingImages:
     def __init__(self, browser="chromium", headed=False, candidates=3):
         self.browser_name, self.headed, self.limit = browser, headed, candidates
         self.runtime = self.browser = None
@@ -74,57 +80,37 @@ class GoogleImages:
                 self.runtime.stop()
 
     def check_access(self):
-        host, path = urlsplit(self.page.url).hostname or "", urlsplit(self.page.url).path
-        if path.startswith("/sorry") or self.page.locator('iframe[src*="recaptcha"], #captcha-form').count():
-            raise ImageSearchError("Google apresentou CAPTCHA/bloqueio. Lote interrompido; tente mais tarde no seu navegador. Não há contorno automático.")
-        if host.startswith("consent.google."):
-            raise ImageSearchError("Google exige consentimento. Abra a pesquisa manualmente; não foi possível obter resultados nesta sessão.")
-
-    def links(self):
-        return self.page.locator('a[href*="imgurl="]').evaluate_all(
-            '(links) => links.map(a => ({href:a.href,caption:a.innerText || a.querySelector("img")?.alt || ""}))')
+        path = urlsplit(self.page.url).path.lower()
+        challenge = self.page.locator('iframe[src*="captcha"], iframe[src*="challenge"], #b_captcha, #captcha')
+        text = self.page.locator("body").inner_text(timeout=5000).casefold()
+        if "captcha" in path or "/turing/" in path or challenge.count() or any(
+            phrase in text for phrase in ("verify you are human", "verifique se é humano",
+                                         "solve the challenge", "unusual traffic", "tráfego incomum")
+        ):
+            raise ImageSearchError("Bing apresentou CAPTCHA/bloqueio. Lote interrompido; não há contorno automático.")
 
     def search(self, title, author):
         query = " ".join(part for part in (title.strip(), author.strip(), "capa livro") if part)
-        search_url = "https://www.google.com/search?" + urlencode({"q": query, "udm": "2", "hl": "pt-PT"})
+        search_url = "https://www.bing.com/images/search?" + urlencode({"q": query})
         try:
+            from playwright.sync_api import TimeoutError as BrowserTimeout
             response = self.page.goto(search_url, wait_until="domcontentloaded", timeout=40000)
+            if response and response.status >= 400:
+                raise ImageSearchError(f"Bing respondeu HTTP {response.status}; lote interrompido.")
             self.check_access()
-            if response and response.status in (403, 429):
-                raise ImageSearchError(f"Google bloqueou a pesquisa: HTTP {response.status}.")
-            self.page.wait_for_timeout(1200)
+            try:
+                self.page.locator('a.iusc[m]').first.wait_for(state="attached", timeout=10000)
+            except BrowserTimeout:
+                self.check_access()
+                return search_url, []
             self.check_access()
-            results = results_from_links(self.links())
-            # Some layouts expose originals only after opening an image preview.
-            if not results:
-                thumbnails = self.page.locator("img").all()
-                seen = set()
-                for thumb in thumbnails[:30]:
-                    box = thumb.bounding_box()
-                    if not box or box["width"] < 60 or box["height"] < 80:
-                        continue
-                    thumb.click(timeout=5000)
-                    self.page.wait_for_timeout(600)
-                    self.check_access()
-                    results.extend(results_from_links(self.links()))
-                    preview = self.page.locator("img").evaluate_all('''(imgs) => imgs.map(i => ({
-                        url:i.currentSrc || i.src, caption:i.alt,
-                        width:i.getBoundingClientRect().width, height:i.getBoundingClientRect().height,
-                        source:i.closest("a")?.href || ""
-                    })).filter(i => i.width >= 180 && i.height >= 220 && i.height > i.width)''')
-                    for item in preview:
-                        url = image_url(item["url"])
-                        if url and url not in seen:
-                            seen.add(url)
-                            results.append({"url":url,"caption":item["caption"],"source":item["source"]})
-                    if results:
-                        break
-            unique = {item["url"]: item for item in reversed(results)}
-            return search_url, list(reversed(list(unique.values())))[:self.limit]
+            records = self.page.locator('a.iusc[m]').evaluate_all(
+                '(links) => links.slice(0,50).map(a => a.getAttribute("m"))')
+            return search_url, results_from_metadata(records)[:self.limit]
         except ImageSearchError:
             raise
         except Exception:
-            raise ImageSearchError("Falha ao ler o Google Imagens. A página pode ter mudado ou a ligação falhou.") from None
+            raise ImageSearchError("Falha ao ler o Bing Imagens. A página pode ter mudado ou a ligação falhou.") from None
 
 
 def find_cover(title, author, search, registration_number=""):
@@ -180,7 +166,7 @@ def main(argv=None):
         # Fail before opening the browser if a previous review would be overwritten.
         if args.output and args.output.exists():
             raise FileExistsError(f"A saída já existe: {args.output}")
-        with GoogleImages(args.browser, args.headed, args.candidates) as search:
+        with BingImages(args.browser, args.headed, args.candidates) as search:
             if not args.output:
                 result = find_cover(*books[0][:2], search, books[0][2])
                 print(json.dumps(result, ensure_ascii=False, indent=2) if args.json else result["cover_url"])

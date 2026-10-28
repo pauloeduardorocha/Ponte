@@ -11,6 +11,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { ApiParam } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
 import { Public } from '../auth/permission.decorator';
 import { AuthRequest } from '../auth/auth.guard';
@@ -22,6 +23,7 @@ export class EventSignupController {
   @Public() @Get(':id') detail(@Param('id', ParseUUIDPipe) id: string) {
     return this.service.publicEvent(id);
   }
+  @ApiParam({ name: 'id', type: String, description: 'Identificador no caminho; o perfil devolvido é o da conta autenticada.' })
   @Get(':id/profile') profile(@Req() req: AuthRequest) {
     return this.service.profile(req.user);
   }

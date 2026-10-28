@@ -19,9 +19,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
+      OASDIFF_INTERNAL: '1'
       DATABASE_URL: postgresql://unused:unused@127.0.0.1:5432/unused
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .node-version
@@ -33,6 +36,31 @@ jobs:
       - run: npm run lint
       - run: npm run test:unit
       - run: npm run build
+      - run: npm run openapi:check -- --skip-build
+
+      - name: Validate the generated OpenAPI schema
+        uses: oasdiff/oasdiff-action/validate@2649ebe137aeb72a95707671204e829f86e091fc # v0.1.13
+        with:
+          spec: docs/openapi.json
+          fail-on: ERR
+          allow-external-refs: false
+      - name: Prepare the base contract
+        if: github.event_name == 'pull_request'
+        id: baseline
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: node scripts/openapi-base.mjs "$BASE_SHA"
+      - name: Identify breaking API changes
+        if: github.event_name == 'pull_request'
+        uses: oasdiff/oasdiff-action/breaking@2649ebe137aeb72a95707671204e829f86e091fc # v0.1.13
+        with:
+          base: tmp/openapi-base.json
+          revision: docs/openapi.json
+          fail-on: ${{ steps.baseline.outputs.fail_on }}
+          flatten-allof: true
+          allow-external-refs: false
+          review: false
+          github-token: ''
 
   integration:
     name: PostgreSQL integration and restricted login

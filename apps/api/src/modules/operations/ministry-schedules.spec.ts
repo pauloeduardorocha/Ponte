@@ -25,6 +25,7 @@ describe('Ministry schedules and attachments', () => {
       },
       volunteerSchedule: {
         findMany: jest.fn().mockResolvedValue([]),
+        findUniqueOrThrow: jest.fn(),
         count: jest.fn().mockResolvedValue(0),
         create: jest.fn().mockResolvedValue({ id: 'new-schedule' }),
         findFirst: jest
@@ -33,6 +34,7 @@ describe('Ministry schedules and attachments', () => {
         delete: jest.fn().mockResolvedValue({ id: 'schedule' }),
       },
       volunteerAssignment: {
+        findMany: jest.fn(),
         updateMany: jest.fn(),
         deleteMany: jest.fn(),
         findFirst: jest.fn().mockResolvedValue(null),
@@ -83,15 +85,22 @@ describe('Ministry schedules and attachments', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
   it('blocks conflicts without disclosing another ministry schedule', async () => {
-    const { service } = setup();
-    jest
-      .spyOn(
-        service as unknown as { assignmentConflicts: () => Promise<unknown[]> },
-        'assignmentConflicts',
-      )
-      .mockResolvedValue([
-        { schedule: { title: 'Private schedule', ministryId: 'other' } },
-      ]);
+    const { service, db } = setup();
+    const date = new Date('2026-10-27T10:00:00Z');
+    db.volunteerSchedule.findUniqueOrThrow.mockResolvedValue({
+      date,
+      event: null,
+    });
+    db.volunteerAssignment.findMany.mockResolvedValue([
+      {
+        schedule: {
+          title: 'Private schedule',
+          ministryId: 'other',
+          date,
+          event: null,
+        },
+      },
+    ]);
     try {
       await service.addAssignment(
         'schedule',

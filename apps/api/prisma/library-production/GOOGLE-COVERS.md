@@ -1,7 +1,7 @@
-# Capas pelo Google Imagens, sem chave
+# Capas pelo Bing Imagens, sem chave
 
-`fetch_covers.py` pesquisa título + autor + “capa livro” no Google Imagens com
-um navegador Playwright. Não usa Google Books nem pede chave. Python 3.10+.
+`fetch_covers.py` pesquisa título + autor + “capa livro” no Bing Imagens com
+um navegador Playwright. Não usa a API de livros do Bing nem pede chave. Python 3.10+.
 
 ## Instalação
 
@@ -38,14 +38,14 @@ sobrescrita. `--delay 2` define o intervalo entre pesquisas em segundos.
 Pode usar o navegador já instalado com `--browser chrome` ou `--browser msedge`
 e mostrar a janela com `--headed`. O modo padrão é Chromium sem janela.
 `--candidates 3` limita os candidatos exportados (entre 1 e 10); a quantidade
-real pode ser menor conforme o layout do Google e o preview disponibilizado.
+real pode ser menor conforme o layout do Bing e o preview disponibilizado.
 
-A extração lê links `imgurl`/`imgrefurl` e, se necessário, abre um preview para
-ler URLs de imagens visíveis. Não inventa URLs, não descarrega ficheiros de
-imagem e exclui miniaturas gstatic e imagens inline. Não valida disponibilidade
+A extração lê os metadados `murl` (imagem original), `purl` (página de origem)
+e `t` (legenda) dos resultados `a.iusc[m]` do Bing. Não inventa URLs, não descarrega ficheiros de
+imagem e exclui miniaturas gstatic/Bing e imagens inline. Não valida disponibilidade
 futura da imagem, permissões de uso ou correspondência à edição física.
 
-Google pode bloquear automação com CAPTCHA/HTTP 403/429 ou pedir consentimento.
+Bing pode bloquear automação com CAPTCHA/HTTP 403/429 ou pedir consentimento.
 O script interrompe nesses casos, sem resolver desafios ou contornar bloqueios;
 as linhas concluídas ficam no CSV. Para continuar depois, use uma entrada com
 os registos restantes e uma saída nova. Alterações no layout também podem
@@ -61,8 +61,8 @@ Códigos de saída: 0 execução concluída; 1 nenhuma URL no modo individual;
 python -B -m unittest discover -s . -p test_fetch_covers.py -v
 ```
 
-Os testes usam fixtures e respostas simuladas. O teste real nesta rede chegou
-à página de CAPTCHA do Google; a extração de resultados reais não foi validada
-neste ambiente. Não foi executado o lote de 384 livros.
+Os testes usam fixtures e respostas simuladas. Uma pesquisa real no Bing nesta
+rede devolveu 34 resultados sem CAPTCHA, com URLs originais extraídas. O lote
+produz um CSV de candidatos; a correspondência e a edição exigem revisão.
 
 Documentação do navegador: https://playwright.dev/python/docs/library.

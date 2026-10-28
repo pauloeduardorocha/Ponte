@@ -19,7 +19,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "npm run test:unit && npm run test:integration",
-    "test:unit": "npm run build --workspace @church/shared && npm run db:generate && npm run test:unit --workspace @church/api && npm run test --workspace @church/web",
+    "test:unit": "npm run build --workspace @church/shared && npm run db:generate && npm run test:unit --workspace @church/api && npm run test --workspace @church/web && npm run test:contracts",
     "test:integration": "npm run test:integration --workspace @church/api --",
     "test:recovery": "npm run test:integration -- --recovery-only",
     "typecheck": "tsc --noEmit -p apps/api/tsconfig.build.json && tsc --noEmit -p apps/web/tsconfig.json",
@@ -27,7 +27,10 @@
     "db:migrate": "npm run db:migrate --workspace @church/api --",
     "db:studio": "npm run db:studio --workspace @church/api",
     "db:seed": "npm run db:seed --workspace @church/api",
-    "db:bootstrap:production": "node apps/api/prisma/bootstrap-production.cjs"
+    "db:bootstrap:production": "node apps/api/prisma/bootstrap-production.cjs",
+    "openapi:generate": "node scripts/openapi.mjs generate",
+    "openapi:check": "node scripts/openapi.mjs check",
+    "test:contracts": "node --test scripts/openapi-base.test.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

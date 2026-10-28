@@ -1,3 +1,8 @@
+import type {
+  FrontendErrorSummary,
+  FrontendErrorDetail,
+  Page,
+} from '@church/shared';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -22,23 +27,6 @@ import { formatDateTime } from '../lib/format';
 import { FrontendErrorCharts } from './FrontendErrorCharts';
 import { FrontendErrorDetailMap, FrontendErrorMap } from './FrontendErrorMap';
 
-interface ErrorSummary {
-  id: string;
-  occurredAt: string;
-  eventType: string;
-  message: string;
-  route: string;
-  userId: string | null;
-  apiStatus: number | null;
-  device: {
-    appVersion?: string;
-    network?: {
-      ipAddress?: string;
-      geo?: { country?: string; region?: string; city?: string };
-    };
-  } | null;
-}
-
 export function FrontendErrorsPage() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
@@ -46,17 +34,14 @@ export function FrontendErrorsPage() {
   const errors = useQuery({
     queryKey: ['frontend-errors', page, pageSize],
     queryFn: () =>
-      apiRequest<{ items: ErrorSummary[]; total: number }>(
-        '/audit/frontend-errors',
-        {
-          query: { page: page + 1, pageSize },
-        },
-      ),
+      apiRequest<Page<FrontendErrorSummary>>('/audit/frontend-errors', {
+        query: { page: page + 1, pageSize },
+      }),
   });
   const detail = useQuery({
     queryKey: ['frontend-error', selected],
     queryFn: () =>
-      apiRequest<Record<string, unknown>>(`/audit/frontend-errors/${selected}`),
+      apiRequest<FrontendErrorDetail>(`/audit/frontend-errors/${selected}`),
     enabled: !!selected,
   });
   return (
@@ -163,7 +148,7 @@ export function FrontendErrorsPage() {
           {detail.data && (
             <FrontendErrorDetailMap
               key={String(detail.data.id)}
-              report={detail.data}
+              report={{ ...detail.data }}
             />
           )}
           {detail.data && (

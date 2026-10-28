@@ -652,7 +652,7 @@ describe('Church operations with isolated PostgreSQL', () => {
         recipientMemberId: leaderId,
         channel: 'INTERNAL',
         content: 'Internal',
-      })
+      }).expect(201)
     ).body as { id: string };
     await post('/notifications/' + internal.id + '/send', {}).expect(409);
     await db.notification.create({

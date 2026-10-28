@@ -32,6 +32,7 @@ import { FrontendErrorsModule } from './modules/frontend-errors/frontend-errors.
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['../../.env', '.env'],
+      ignoreEnvFile: process.env.PONTE_OPENAPI_GENERATION === '1',
     }),
     ThrottlerModule.forRootAsync({
       imports: [DatabaseModule],

@@ -198,24 +198,28 @@ O seed preserva livros, exemplares e settings existentes nas reexecuções.
 - DTOs rejeitam campos desconhecidos, UUIDs/filtros/ordenação inválidos e
   paginação fora dos limites (page >= 1, pageSize 1-100). Health permanece público.
 - Limite de 100 requisições/minuto/IP global e 10/minuto/IP por endpoint auth.
-  Storage de rate limit é em memória por processo; múltiplas réplicas precisam
-  de storage compartilhado antes de escalar. Não habilite trust proxy
+  Os contadores são partilhados no PostgreSQL pela tabela `rate_limit_buckets`,
+  com atualização atómica, inclusive entre instâncias da API. Os identificadores
+  são derivados por hash. A expiração é verificada em cada pedido; limpeza de
+  buckets antigos é uma melhoria operacional separada. Não habilite trust proxy
   indiscriminadamente.
 - Cookies são restritos ao caminho `/api/v1/auth` e origem é validada nas
   operações com cookies. Use os proxies same-origin existentes. Em produção,
   publique por HTTPS; Secure/SameSite não deve ser enfraquecido para acomodar
   hosts HTTP separados.
 
-### Recuperação de senha (e-mail ainda não integrado)
+### Recuperação de senha por e-mail
 
 `POST /auth/forgot-password` responde a mesma mensagem genérica para contas
 existentes e inexistentes. Cria token de 30 minutos, armazenado como hash, de
 uso único; uma nova solicitação invalida a anterior. `PasswordResetDelivery`
-é o ponto de integração futuro: substitua `PendingEmailDelivery` por um adapter
-que envie um link para `/reset-password?token=...`. O adapter atual **não envia
-e-mail** e registra aviso explícito sem e-mail/token. Nenhum endpoint devolve
-token de recuperação e não há endpoint de depuração. Os testes substituem o
-adapter para exercitar todo o fluxo.
+usa `BirdPasswordResetDelivery`, que envia pela Bird um link para
+`/reset-password?token=...`. Configure `BIRD_API_KEY`, `BIRD_EMAIL_FROM` (remetente
+verificado) e `PUBLIC_WEB_URL` (origem HTTPS de confiança; localhost HTTP é aceito
+em desenvolvimento). Sem a Bird configurada, nenhum e-mail é enviado e há um
+aviso sem endereço ou token nos logs; a resposta continua genérica. Nenhum
+endpoint devolve o token e não há endpoint de depuração. Os testes substituem o
+adapter para exercitar o fluxo sem enviar mensagens reais.
 
 ## Endpoints
 
@@ -667,6 +671,12 @@ campos obrigatórios, limites, enums e formatos validados. Operações protegida
 são identificadas com Bearer JWT. Swagger fica desativado em produção. Consulte também a
 [especificação OpenAPI gerada](docs/openapi.json).
 
+Execute `npm run openapi:generate` após alterar rotas, DTOs ou anotações de
+resposta. `npm run openapi:check` reconstrói a API e verifica a sincronização,
+sem iniciar HTTP, conectar ao banco ou enviar mensagens. Ambos usam configuração
+isolada e dispensam `.env`. O CI compara o contrato da PR com o da base e
+identifica incompatibilidades. Consulte [geração, compatibilidade e limites](docs/api-contracts.md).
+
 Novos endpoints:
 
 | Endpoint                                      | Acesso / filtros                                                                            |
@@ -789,7 +799,10 @@ dependendo de provedores externos.
 Os envios administrativos agora gravam uma **outbox** na mesma transação da
 notificação e chamam o provedor após o commit. E-mails têm até três tentativas
 na janela idempotente; entregas sem confirmação ficam sinalizadas para revisão.
-Agendamentos continuam com envio manual. A interface distingue mensagens
+Notificações agendadas são enviadas automaticamente a partir da data indicada,
+na próxima execução disponível do worker (prevista a cada cinco minutos,
+sujeita a atrasos do GitHub). Pendências antigas sem data continuam manuais.
+A interface distingue mensagens
 enviadas, falhas e pendentes (incluindo retentativas).
 
 Para ativar a recuperação de envios interrompidos:
