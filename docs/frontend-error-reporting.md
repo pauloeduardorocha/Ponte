@@ -54,6 +54,8 @@ Referência dos cabeçalhos: https://vercel.com/docs/headers/request-headers.
 
 ## Envio de reembolsos e falhas de infraestrutura (2026-10-23)
 
+Atualização de 29/10: a versão 1.3.2 passa a usar [envio em blocos com retoma e idempotência](reimbursement-resumable-uploads.md) no formulário de novos pedidos. As regras abaixo sobre ausência de repetição automática continuam aplicáveis ao endpoint multipart antigo. Os novos endpoints de sessão/blocos/finalização admitem repetição segura conforme o contrato documentado.
+
 O envio multipart e o download de reembolsos usam o mesmo transporte autenticado das chamadas JSON. Uma resposta 401 renova a sessão uma vez e repete o envio com os mesmos documentos; uma resposta 503 ou uma falha de rede não repete automaticamente a gravação. A interface distingue falha de rede, excesso de tamanho (413), indisponibilidade (502/503) e demora do servidor (504), quando a resposta não contém uma mensagem própria. Antes de repetir um envio de resultado incerto, o utilizador deve conferir os pedidos guardados.
 
 Os relatórios HTTP incluem duração, indicação de redirecionamento e total de bytes dos anexos na mensagem técnica. Na ausência de `x-request-id`, o transporte usa `x-vercel-id` para permitir correlação de falhas anteriores à API. Não são incluídos nomes, conteúdo dos documentos nem campos do formulário.

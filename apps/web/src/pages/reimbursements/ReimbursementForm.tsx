@@ -17,8 +17,11 @@ import {
   type Reimbursement,
   prepareReimbursementFiles,
   prepareReimbursementCameraPhoto,
-  reimbursementFileRequest,
 } from './api';
+import {
+  createReimbursementSubmitter,
+  type SubmissionProgress,
+} from './submission';
 
 export function ReimbursementForm({
   initial,
@@ -61,6 +64,8 @@ export function ReimbursementForm({
   const dragDepth = useRef(0);
   const [dragging, setDragging] = useState(false);
   const dropHintId = useId();
+  const [submitDocuments] = useState(createReimbursementSubmitter);
+  const [progress, setProgress] = useState<SubmissionProgress>();
   const save = useMutation({
     mutationFn: async ({
       iban,
@@ -86,14 +91,7 @@ export function ReimbursementForm({
           method: 'PATCH',
           body: values,
         });
-      const body = new FormData();
-      Object.entries(values).forEach(([key, value]) => body.append(key, value));
-      files.forEach((file) => body.append('files', file));
-      const response = await reimbursementFileRequest('', body);
-      return response.json() as Promise<{
-        id: string;
-        possibleDuplicate?: boolean;
-      }>;
+      return submitDocuments(values, files, setProgress);
     },
     onSuccess: (receipt) => {
       void queryClient.invalidateQueries({
@@ -359,6 +357,22 @@ export function ReimbursementForm({
       />
       {fileError && <Alert severity="error">{fileError}</Alert>}
       {save.error && <Alert severity="error">{save.error.message}</Alert>}
+      {!initial && save.isPending && progress && (
+        <Typography role="status">
+          {progress.retrying
+            ? 'Ligação interrompida. A tentar novamente…'
+            : progress.sent === progress.total
+              ? 'Documentos enviados. A confirmar o pedido…'
+              : `A enviar documentos: ${Math.floor((100 * progress.sent) / progress.total)}%`}
+        </Typography>
+      )}
+      {!initial && save.error && (
+        <Typography variant="body2">
+          Os documentos continuam neste formulário. Ao tentar novamente com os
+          mesmos dados, o envio retoma sem criar um pedido duplicado. Mantenha
+          esta página aberta.
+        </Typography>
+      )}
       <Button
         type="submit"
         variant="contained"

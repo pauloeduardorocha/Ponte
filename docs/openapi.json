@@ -2600,6 +2600,81 @@
         },
         "type": "object"
       },
+      "ReimbursementSubmissionDto": {
+        "properties": {
+          "amount": {
+            "pattern": "^(?:[1-9]\\d{0,9}(?:\\.\\d{1,2})?|0\\.(?:[1-9]\\d?|\\d[1-9]))$",
+            "type": "string"
+          },
+          "beneficiaryName": {
+            "maxLength": 120,
+            "type": "string"
+          },
+          "categoryId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/ReimbursementUploadFileDto"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          },
+          "iban": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "files",
+          "iban",
+          "categoryId",
+          "amount"
+        ],
+        "type": "object"
+      },
+      "ReimbursementUploadFileDto": {
+        "properties": {
+          "name": {
+            "maxLength": 255,
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "size": {
+            "maximum": 2097152,
+            "minimum": 1,
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "size",
+          "sha256"
+        ],
+        "type": "object"
+      },
       "RenameBankAttachmentDto": {
         "properties": {
           "filename": {
@@ -19851,6 +19926,13 @@
         },
         "responses": {
           "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
             "description": ""
           }
         },
@@ -20094,6 +20176,156 @@
           "Reimbursements"
         ],
         "x-ponte-cache-ttl": 3600
+      }
+    },
+    "/api/v1/reimbursements/submissions": {
+      "post": {
+        "description": "Chave UUID do cliente, vinculada ao utilizador e aos dados imutáveis. Até três ficheiros, 2 MiB por ficheiro e 4 MiB no total. Sessão válida por 24 horas; ainda não cria o reembolso.",
+        "operationId": "ReimbursementsController_beginSubmission",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReimbursementSubmissionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "chunkSize": {
+                      "enum": [
+                        262144
+                      ],
+                      "type": "integer"
+                    },
+                    "id": {
+                      "format": "uuid",
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "chunkSize"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Iniciar ou retomar envio privado de reembolso",
+        "tags": [
+          "Reimbursements"
+        ]
+      }
+    },
+    "/api/v1/reimbursements/submissions/{id}/complete": {
+      "post": {
+        "description": "Verifica tamanho, SHA-256 e assinatura de todos os documentos. Cria o pedido e vincula a sessão na mesma transação. Repetições devolvem o mesmo pedido sem repetir auditoria nem notificação. Documentos incompletos retornam 400.",
+        "operationId": "ReimbursementsController_finishSubmission",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Validar documentos e criar reembolso uma única vez",
+        "tags": [
+          "Reimbursements"
+        ]
+      }
+    },
+    "/api/v1/reimbursements/submissions/{id}/files/{fileIndex}/chunks/{offset}": {
+      "post": {
+        "description": "Índice do ficheiro começa em zero. Offset em bytes, múltiplo de 262144. Repetir os mesmos bytes é seguro; bytes diferentes no mesmo offset retornam 409. Apenas o dono da sessão tem acesso.",
+        "operationId": "ReimbursementsController_uploadSubmissionChunk",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fileIndex",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "in": "path",
+            "name": "offset",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "Até 256 KiB; último bloco contém exatamente os bytes restantes.",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Enviar bloco idempotente de documento",
+        "tags": [
+          "Reimbursements"
+        ]
       }
     },
     "/api/v1/reimbursements/{id}": {

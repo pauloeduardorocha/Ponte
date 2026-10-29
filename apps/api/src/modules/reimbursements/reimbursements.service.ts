@@ -14,7 +14,11 @@ import { createHash } from 'node:crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { PrivateUpload, StorageService } from '../finance/storage.service';
 import { auditRequestFields, bindAudit } from '../audit/audit-context';
-import { ReimbursementDto, ReimbursementQuery } from './reimbursements.dto';
+import {
+  ReimbursementDto,
+  ReimbursementQuery,
+  ReimbursementSubmissionDto,
+} from './reimbursements.dto';
 import { PushService } from '../operations/push.service';
 
 const include = {
@@ -30,6 +34,7 @@ const include = {
 type RecordWithFiles = Prisma.ReimbursementGetPayload<{
   include: typeof include;
 }>;
+export const REIMBURSEMENT_CHUNK_SIZE = 256 * 1024;
 export function reimbursementStatus(row: {
   bankTransactionId: string | null;
   paidAt: Date | null;
@@ -230,6 +235,7 @@ export class ReimbursementsService {
     dto: ReimbursementDto,
     files: PrivateUpload[],
     user?: CurrentUser,
+    submissionId?: string,
   ) {
     const member = await this.requireMember(user);
     this.checkBeneficiary(dto, member.name);
@@ -238,6 +244,7 @@ export class ReimbursementsService {
       throw new BadRequestException('Anexe pelo menos um documento da despesa');
     files.forEach((file) => this.validate(file));
     const keys: string[] = [];
+    let reused = false;
     try {
       for (const file of files) keys.push(await this.storage.put(file));
       const hashes = files.map((file) =>
@@ -250,6 +257,21 @@ export class ReimbursementsService {
             })) > 0
           : false;
       const row = await this.db.$transaction(async (tx) => {
+        if (submissionId) {
+          await this.lockSubmission(tx, submissionId);
+          const submission = await this.ownedSubmission(
+            tx,
+            submissionId,
+            user!,
+          );
+          if (submission.reimbursementId) {
+            reused = true;
+            return tx.reimbursement.findUniqueOrThrow({
+              where: { id: submission.reimbursementId },
+              include,
+            });
+          }
+        }
         await bindAudit(tx);
         await this.validateCategory(tx, dto.categoryId);
         const saved = await tx.reimbursement.create({
@@ -271,8 +293,21 @@ export class ReimbursementsService {
         });
         await this.saveMemberIban(tx, saved, user);
         await this.audit(tx, 'CREATE', saved.id, user);
+        if (submissionId) {
+          await tx.reimbursementSubmission.update({
+            where: { id: submissionId },
+            data: { reimbursementId: saved.id },
+          });
+          await tx.reimbursementUploadChunk.deleteMany({
+            where: { submissionId },
+          });
+        }
         return saved;
       });
+      if (reused) {
+        await Promise.allSettled(keys.map((key) => this.storage.remove(key)));
+        return this.view(row);
+      }
       // Delivery failures must never undo a committed request or remove its files.
       try {
         const recipients = await this.db.user.findMany({
@@ -308,6 +343,186 @@ export class ReimbursementsService {
       await Promise.allSettled(keys.map((key) => this.storage.remove(key)));
       throw error;
     }
+  }
+  private async lockSubmission(tx: Prisma.TransactionClient, id: string) {
+    await tx.$queryRaw`SELECT 1 AS locked FROM pg_advisory_xact_lock(hashtext(${`reimbursement-upload:${id}`}))`;
+  }
+  private async ownedSubmission(
+    tx: Prisma.TransactionClient,
+    id: string,
+    user: CurrentUser,
+  ) {
+    const session = await tx.reimbursementSubmission.findUnique({
+      where: { id },
+    });
+    if (!session || session.userId !== user.id) throw new NotFoundException();
+    if (session.expiresAt <= new Date())
+      throw new BadRequestException(
+        'O envio expirou. Recarregue a página e selecione os documentos novamente.',
+      );
+    return session;
+  }
+  async beginSubmission(dto: ReimbursementSubmissionDto, user: CurrentUser) {
+    const member = await this.requireMember(user);
+    this.checkBeneficiary(dto, member.name);
+    const fields = this.fields(dto);
+    if (dto.files.reduce((sum, file) => sum + file.size, 0) > 4 * 1024 * 1024)
+      throw new BadRequestException(
+        'Os documentos podem ter até 4 MB no total.',
+      );
+    const payload = {
+      ...fields,
+      files: dto.files.map(({ name, type, size, sha256 }) => ({
+        name,
+        type,
+        size,
+        sha256,
+      })),
+    };
+    // Bounded opportunistic cleanup, including abandoned buffers from other users.
+    const expired = await this.db.reimbursementSubmission.findMany({
+      where: { expiresAt: { lt: new Date() } },
+      select: { id: true },
+      take: 100,
+    });
+    if (expired.length)
+      await this.db.reimbursementSubmission.deleteMany({
+        where: {
+          id: { in: expired.map((entry) => entry.id) },
+          expiresAt: { lt: new Date() },
+        },
+      });
+    return this.db.$transaction(async (tx) => {
+      await this.lockSubmission(tx, `user:${user.id}`);
+      await this.lockSubmission(tx, dto.id);
+      const existing = await tx.reimbursementSubmission.findUnique({
+        where: { id: dto.id },
+      });
+      if (existing) {
+        await this.ownedSubmission(tx, dto.id, user);
+        // JSONB does not preserve object key order.
+        if (!this.samePayload(existing.payload, payload))
+          throw new ConflictException(
+            'Este envio já foi iniciado com outros dados.',
+          );
+      } else {
+        const pending = await tx.reimbursementSubmission.count({
+          where: {
+            userId: user.id,
+            reimbursementId: null,
+            expiresAt: { gt: new Date() },
+          },
+        });
+        if (pending >= 3)
+          throw new BadRequestException(
+            'Já existem três envios em curso. Retome um envio ou aguarde a sua expiração.',
+          );
+        await this.validateCategory(tx, dto.categoryId);
+        await tx.reimbursementSubmission.create({
+          data: {
+            id: dto.id,
+            userId: user.id,
+            payload: payload as Prisma.InputJsonValue,
+            expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+          },
+        });
+      }
+      return { id: dto.id, chunkSize: REIMBURSEMENT_CHUNK_SIZE };
+    });
+  }
+  private samePayload(a: unknown, b: unknown): boolean {
+    const canonical = (value: unknown): string =>
+      JSON.stringify(value, (_key, item: unknown) => {
+        if (item && typeof item === 'object' && !Array.isArray(item))
+          return Object.fromEntries(
+            Object.entries(item).sort(([x], [y]) => x.localeCompare(y)),
+          );
+        return item;
+      });
+    return canonical(a) === canonical(b);
+  }
+  async uploadSubmissionChunk(
+    id: string,
+    fileIndex: number,
+    offset: number,
+    file: PrivateUpload,
+    user: CurrentUser,
+  ) {
+    await this.requireMember(user);
+    return this.db.$transaction(async (tx) => {
+      await this.lockSubmission(tx, id);
+      const session = await this.ownedSubmission(tx, id, user);
+      if (session.reimbursementId) return { received: true };
+      const manifest = session.payload as unknown as ReimbursementSubmissionDto;
+      const expected = manifest.files[fileIndex];
+      if (
+        !expected ||
+        fileIndex < 0 ||
+        offset < 0 ||
+        offset >= expected.size ||
+        offset % REIMBURSEMENT_CHUNK_SIZE !== 0 ||
+        !file?.buffer ||
+        file.buffer.length !==
+          Math.min(REIMBURSEMENT_CHUNK_SIZE, expected.size - offset)
+      )
+        throw new BadRequestException('Bloco de documento inválido.');
+      const where = {
+        submissionId_fileIndex_offset: { submissionId: id, fileIndex, offset },
+      };
+      const existing = await tx.reimbursementUploadChunk.findUnique({ where });
+      if (existing && !Buffer.from(existing.content).equals(file.buffer))
+        throw new ConflictException(
+          'O bloco já foi recebido com outros dados.',
+        );
+      if (!existing)
+        await tx.reimbursementUploadChunk.create({
+          data: {
+            submissionId: id,
+            fileIndex,
+            offset,
+            content: new Uint8Array(file.buffer),
+          },
+        });
+      return { received: true };
+    });
+  }
+  async finishSubmission(id: string, user: CurrentUser) {
+    await this.requireMember(user);
+    const { session, chunks } = await this.db.$transaction(async (tx) => {
+      await this.lockSubmission(tx, id);
+      const session = await this.ownedSubmission(tx, id, user);
+      const chunks = session.reimbursementId
+        ? []
+        : await tx.reimbursementUploadChunk.findMany({
+            where: { submissionId: id },
+            orderBy: [{ fileIndex: 'asc' }, { offset: 'asc' }],
+          });
+      return { session, chunks };
+    });
+    if (session.reimbursementId)
+      return this.detail(session.reimbursementId, user);
+    const payload = session.payload as unknown as ReimbursementSubmissionDto;
+    const files = payload.files.map((entry, fileIndex) => {
+      const parts = chunks.filter((chunk) => chunk.fileIndex === fileIndex);
+      const buffer = Buffer.concat(
+        parts.map((part) => Buffer.from(part.content)),
+      );
+      if (
+        parts.some(
+          (part, index) => part.offset !== index * REIMBURSEMENT_CHUNK_SIZE,
+        ) ||
+        buffer.length !== entry.size ||
+        createHash('sha256').update(buffer).digest('hex') !== entry.sha256
+      )
+        throw new BadRequestException('Documento incompleto. Retome o envio.');
+      return {
+        originalname: entry.name,
+        mimetype: entry.type,
+        size: entry.size,
+        buffer,
+      };
+    });
+    return this.create(payload, files, user, id);
   }
   private checkBeneficiary(dto: ReimbursementDto, name: string) {
     if (

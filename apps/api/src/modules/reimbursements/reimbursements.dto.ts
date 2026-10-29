@@ -1,4 +1,4 @@
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsIBAN,
   IsDateString,
@@ -8,6 +8,13 @@ import {
   IsUUID,
   Matches,
   MaxLength,
+  IsInt,
+  Min,
+  Max,
+  IsArray,
+  ArrayMinSize,
+  ArrayMaxSize,
+  ValidateNested,
 } from 'class-validator';
 import { PageQuery } from '../members/member.dto';
 
@@ -29,6 +36,23 @@ export class ReimbursementQuery extends PageQuery {
   @IsOptional()
   @IsIn(['INCOMPLETE', 'READY', 'PAID', 'LINKED'])
   status?: string;
+}
+
+export class ReimbursementUploadFileDto {
+  @IsString() @MaxLength(255) name!: string;
+  @IsIn(['application/pdf', 'image/jpeg', 'image/png']) type!: string;
+  @IsInt() @Min(1) @Max(2 * 1024 * 1024) size!: number;
+  @Matches(/^[a-f0-9]{64}$/) sha256!: string;
+}
+
+export class ReimbursementSubmissionDto extends ReimbursementDto {
+  @IsUUID() id!: string;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(3)
+  @ValidateNested({ each: true })
+  @Type(() => ReimbursementUploadFileDto)
+  files!: ReimbursementUploadFileDto[];
 }
 export class PaymentDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/)

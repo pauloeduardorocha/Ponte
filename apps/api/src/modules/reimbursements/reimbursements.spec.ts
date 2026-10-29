@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { createHash } from 'node:crypto';
 import type { CurrentUser } from '@church/shared';
 import {
   ReimbursementsService,
@@ -34,6 +35,20 @@ const file = {
 };
 function setup() {
   const tx = {
+    reimbursementSubmission: {
+      findUnique: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      count: jest.fn().mockResolvedValue(0),
+      create: jest.fn(),
+      update: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    reimbursementUploadChunk: {
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      findMany: jest.fn().mockResolvedValue([]),
+      deleteMany: jest.fn(),
+    },
     user: {
       findMany: jest.fn().mockResolvedValue([{ id: 'finance-handler' }]),
     },
@@ -558,6 +573,146 @@ describe('Reimbursement lifecycle and access', () => {
     });
     await expect(service.undoPayment('request', manager)).rejects.toThrow(
       'Desfaça',
+    );
+  });
+});
+
+describe('Private reimbursement upload sessions', () => {
+  const payload = {
+    id: 'session',
+    iban: row.iban,
+    categoryId: row.categoryId,
+    purpose: 'Material',
+    amount: '25.10',
+    files: [
+      {
+        name: file.originalname,
+        type: file.mimetype,
+        size: file.size,
+        sha256: createHash('sha256').update(file.buffer).digest('hex'),
+      },
+    ],
+  };
+  const session = {
+    id: payload.id,
+    userId: user.id,
+    payload,
+    reimbursementId: null as string | null,
+    expiresAt: new Date(Date.now() + 86400000),
+  };
+  it('starts private staging without creating a financial request', async () => {
+    const { service, tx, storage } = setup();
+    await expect(service.beginSubmission(payload, user)).resolves.toEqual({
+      id: 'session',
+      chunkSize: 262144,
+    });
+    expect(tx.reimbursement.create).not.toHaveBeenCalled();
+    expect(storage.put).not.toHaveBeenCalled();
+    expect(tx.reimbursementSubmission.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userId: user.id }),
+      }),
+    );
+  });
+  it('rejects access by another account, including finance managers', async () => {
+    const { service, tx } = setup();
+    tx.reimbursementSubmission.findUnique.mockResolvedValue(session);
+    await expect(
+      service.uploadSubmissionChunk('session', 0, 0, file, {
+        ...manager,
+        id: 'other',
+      }),
+    ).rejects.toThrow();
+    await expect(
+      service.finishSubmission('session', { ...manager, id: 'other' }),
+    ).rejects.toThrow();
+    expect(tx.reimbursementUploadChunk.create).not.toHaveBeenCalled();
+  });
+  it('deduplicates repeated chunks and rejects different bytes at the same offset', async () => {
+    const { service, tx } = setup();
+    tx.reimbursementSubmission.findUnique.mockResolvedValue(session);
+    tx.reimbursementUploadChunk.findUnique.mockResolvedValue({
+      content: file.buffer,
+    });
+    await expect(
+      service.uploadSubmissionChunk('session', 0, 0, file, user),
+    ).resolves.toEqual({ received: true });
+    expect(tx.reimbursementUploadChunk.create).not.toHaveBeenCalled();
+    await expect(
+      service.uploadSubmissionChunk(
+        'session',
+        0,
+        0,
+        { ...file, buffer: Buffer.from('%PDF-evil') },
+        user,
+      ),
+    ).rejects.toThrow('outros dados');
+    await expect(
+      service.uploadSubmissionChunk('session', 0, 1, file, user),
+    ).rejects.toThrow('inválido');
+  });
+  it.each([
+    { chunks: [] },
+    {
+      chunks: [{ fileIndex: 0, offset: 0, content: Buffer.from('%PDF-evil') }],
+    },
+  ])(
+    'rejects incomplete or corrupted bytes before persistence: %p',
+    async ({ chunks }) => {
+      const { service, tx, storage } = setup();
+      tx.reimbursementSubmission.findUnique.mockResolvedValue(session);
+      tx.reimbursementUploadChunk.findMany.mockResolvedValue(chunks);
+      await expect(service.finishSubmission('session', user)).rejects.toThrow(
+        'incompleto',
+      );
+      expect(storage.put).not.toHaveBeenCalled();
+      expect(tx.reimbursement.create).not.toHaveBeenCalled();
+    },
+  );
+  it('atomically links the receipt and removes staging chunks after validated creation', async () => {
+    const { service, tx, storage } = setup();
+    tx.reimbursementSubmission.findUnique.mockResolvedValue(session);
+    tx.reimbursementUploadChunk.findMany.mockResolvedValue([
+      { fileIndex: 0, offset: 0, content: file.buffer },
+    ]);
+    await expect(
+      service.finishSubmission('session', user),
+    ).resolves.toMatchObject({ id: 'request' });
+    expect(storage.put).toHaveBeenCalledWith(file);
+    expect(tx.reimbursementSubmission.update).toHaveBeenCalledWith({
+      where: { id: 'session' },
+      data: { reimbursementId: 'request' },
+    });
+    expect(tx.reimbursementUploadChunk.deleteMany).toHaveBeenCalledWith({
+      where: { submissionId: 'session' },
+    });
+  });
+  it('handles competing finalizations without another receipt or notification', async () => {
+    const { service, tx, storage, push } = setup();
+    tx.reimbursementSubmission.findUnique.mockResolvedValue({
+      ...session,
+      reimbursementId: 'request',
+    });
+    await expect(
+      service.create(payload, [file], user, 'session'),
+    ).resolves.toMatchObject({ id: 'request' });
+    expect(tx.reimbursement.create).not.toHaveBeenCalled();
+    expect(storage.remove).toHaveBeenCalledWith('key');
+    expect(push.notifyUsers).not.toHaveBeenCalled();
+  });
+  it('rejects expired sessions and bounds abandoned uploads per account', async () => {
+    const { service, tx } = setup();
+    tx.reimbursementSubmission.findUnique.mockResolvedValue({
+      ...session,
+      expiresAt: new Date(0),
+    });
+    await expect(service.finishSubmission('session', user)).rejects.toThrow(
+      'expirou',
+    );
+    tx.reimbursementSubmission.findUnique.mockResolvedValue(null);
+    tx.reimbursementSubmission.count.mockResolvedValue(3);
+    await expect(service.beginSubmission(payload, user)).rejects.toThrow(
+      'três envios',
     );
   });
 });

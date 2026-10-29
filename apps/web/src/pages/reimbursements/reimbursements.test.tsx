@@ -1,4 +1,5 @@
 import * as reimbursementApi from './api';
+import { webcrypto } from 'node:crypto';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { PERMISSIONS } from '@church/shared';
@@ -33,8 +34,26 @@ const row = {
 const page = { items: [row], total: 1, page: 1, pageSize: 20 };
 vi.mock('../../components/PdfPreview', () => ({ PdfPreview: () => null }));
 describe('Reimbursements', () => {
-  beforeEach(resetTestState);
+  const submissionId = '50bf9d83-02cc-4591-bc66-dee164d08e4d';
+  const submissionPath = `/reimbursements/submissions/${submissionId}`;
+  beforeEach(() => {
+    resetTestState();
+    vi.stubGlobal('crypto', {
+      subtle: webcrypto.subtle,
+      randomUUID: () => submissionId,
+    });
+  });
   const memberFormRoutes = {
+    'POST /reimbursements/submissions': {
+      body: { id: submissionId, chunkSize: 256 * 1024 },
+    },
+    [`POST ${submissionPath}/files/0/chunks/0`]: { body: { received: true } },
+    [`POST ${submissionPath}/files/0/chunks/262144`]: {
+      body: { received: true },
+    },
+    [`POST ${submissionPath}/files/0/chunks/524288`]: {
+      body: { received: true },
+    },
     'GET /reimbursements/profile': {
       body: { name: 'Ana Souza', iban: row.iban },
     },
@@ -131,7 +150,7 @@ describe('Reimbursements', () => {
       mockApi({
         ...sessionRoutes(makeUser()),
         ...memberFormRoutes,
-        'POST /reimbursements': {
+        [`POST ${submissionPath}/complete`]: {
           status: 400,
           body: { message: 'test response' },
         },
@@ -174,10 +193,10 @@ describe('Reimbursements', () => {
           .mocked(fetch)
           .mock.calls.find(
             ([url, init]) =>
-              String(url).endsWith('/reimbursements') &&
+              String(url).endsWith('/reimbursements/submissions') &&
               init?.method === 'POST',
           );
-        const file = (call?.[1]?.body as FormData).get('files') as File;
+        const file = JSON.parse(call?.[1]?.body as string).files[0];
         expect(file.size).toBeLessThanOrEqual(768 * 1024);
         expect(file.type).toBe('image/jpeg');
       } finally {
@@ -225,7 +244,7 @@ describe('Reimbursements', () => {
     mockApi({
       ...sessionRoutes(makeUser()),
       ...memberFormRoutes,
-      'POST /reimbursements': {
+      [`POST ${submissionPath}/complete`]: {
         status: 400,
         body: { message: 'Formato inválido' },
       },
@@ -308,7 +327,7 @@ describe('Reimbursements', () => {
       'GET /reimbursements/profile': {
         body: { name: 'Ana Souza', iban: row.iban },
       },
-      'POST /reimbursements': { body: { id: 'iban-receipt' } },
+      [`POST ${submissionPath}/complete`]: { body: { id: 'iban-receipt' } },
     });
     renderApp('/pedir-reembolso');
     await waitFor(() =>
@@ -336,19 +355,20 @@ describe('Reimbursements', () => {
     await screen.findByText(/Referência: iban-receipt/);
     const submission = vi
       .mocked(fetch)
-      .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
-    expect((submission[1]?.body as FormData).get('iban')).toBe(row.iban);
-    expect((submission[1]?.body as FormData).get('amount')).toBe('25.10');
-    expect((submission[1]?.body as FormData).get('categoryId')).toBe(
-      'category',
-    );
-    expect((submission[1]?.body as FormData).has('contact')).toBe(false);
+      .mock.calls.find(([path]) =>
+        String(path).endsWith('/reimbursements/submissions'),
+      )!;
+    const payload = JSON.parse(submission[1]?.body as string);
+    expect(payload.iban).toBe(row.iban);
+    expect(payload.amount).toBe('25.10');
+    expect(payload.categoryId).toBe('category');
+    expect(payload).not.toHaveProperty('contact');
   });
   it('locks the beneficiary to the authenticated member and excludes it from the submitted payload', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),
       ...memberFormRoutes,
-      'POST /reimbursements': { body: { id: 'receipt-2' } },
+      [`POST ${submissionPath}/complete`]: { body: { id: 'receipt-2' } },
     });
     const view = renderApp('/pedir-reembolso');
     expect(
@@ -378,9 +398,11 @@ describe('Reimbursements', () => {
     await screen.findByText(/Referência: receipt-2/);
     const submission = vi
       .mocked(fetch)
-      .mock.calls.find(([path]) => String(path).endsWith('/reimbursements'))!;
-    expect((submission[1]?.body as FormData).has('beneficiaryName')).toBe(
-      false,
+      .mock.calls.find(([path]) =>
+        String(path).endsWith('/reimbursements/submissions'),
+      )!;
+    expect(JSON.parse(submission[1]?.body as string)).not.toHaveProperty(
+      'beneficiaryName',
     );
     expect(submission[1]?.headers).toHaveProperty(
       'Authorization',

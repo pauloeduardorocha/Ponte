@@ -11,6 +11,32 @@ model PrivateFile {
   @@map("private_files")
 }
 
+// Temporary, private upload buffers. A completed session retains only its receipt
+// reference so a lost final response can be retried without creating a duplicate.
+model ReimbursementSubmission {
+  id              String   @id @db.Uuid
+  userId          String   @db.Uuid
+  payload         Json
+  reimbursementId String?  @db.Uuid
+  expiresAt       DateTime @db.Timestamptz(6)
+  chunks          ReimbursementUploadChunk[]
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@map("reimbursement_submissions")
+}
+
+model ReimbursementUploadChunk {
+  submissionId String @db.Uuid
+  fileIndex    Int
+  offset       Int
+  content      Bytes
+  submission   ReimbursementSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@id([submissionId, fileIndex, offset])
+  @@map("reimbursement_upload_chunks")
+}
+
 model Visitor {
   createdByUserId   String?             @db.Uuid
   creator           User?               @relation("VisitorCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)

@@ -5,6 +5,7 @@ import {
   Module,
   Param,
   ParseUUIDPipe,
+  ParseIntPipe,
   Patch,
   Post,
   Delete,
@@ -17,6 +18,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import {
+  ApiBody,
+  ApiConsumes,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
 import type { Response } from 'express';
 import { Permission } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
@@ -29,12 +36,89 @@ import {
   ReimbursementDto,
   ReimbursementFileDto,
   ReimbursementQuery,
+  ReimbursementSubmissionDto,
 } from './reimbursements.dto';
 
 const limits = { fileSize: 2 * 1024 * 1024, files: 3, fields: 5 };
 @Controller('reimbursements')
 export class ReimbursementsController {
   constructor(private readonly service: ReimbursementsService) {}
+  @Post('submissions')
+  @ApiOperation({
+    summary: 'Iniciar ou retomar envio privado de reembolso',
+    description:
+      'Chave UUID do cliente, vinculada ao utilizador e aos dados imutáveis. Até três ficheiros, 2 MiB por ficheiro e 4 MiB no total. Sessão válida por 24 horas; ainda não cria o reembolso.',
+  })
+  @ApiResponse({
+    status: 201,
+    schema: {
+      type: 'object',
+      required: ['id', 'chunkSize'],
+      properties: {
+        id: { type: 'string', format: 'uuid' },
+        chunkSize: { type: 'integer', enum: [262144] },
+      },
+    },
+  })
+  beginSubmission(
+    @Body() dto: ReimbursementSubmissionDto,
+    @Req() req: AuthRequest,
+  ) {
+    return this.service.beginSubmission(dto, req.user);
+  }
+  @Post('submissions/:id/files/:fileIndex/chunks/:offset')
+  @ApiOperation({
+    summary: 'Enviar bloco idempotente de documento',
+    description:
+      'Índice do ficheiro começa em zero. Offset em bytes, múltiplo de 262144. Repetir os mesmos bytes é seguro; bytes diferentes no mesmo offset retornam 409. Apenas o dono da sessão tem acesso.',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      required: ['file'],
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description:
+            'Até 256 KiB; último bloco contém exatamente os bytes restantes.',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 256 * 1024, files: 1, fields: 0 },
+    }),
+  )
+  uploadSubmissionChunk(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('fileIndex', ParseIntPipe) fileIndex: number,
+    @Param('offset', ParseIntPipe) offset: number,
+    @UploadedFile() file: PrivateUpload,
+    @Req() req: AuthRequest,
+  ) {
+    return this.service.uploadSubmissionChunk(
+      id,
+      fileIndex,
+      offset,
+      file,
+      req.user,
+    );
+  }
+  @Post('submissions/:id/complete')
+  @ApiOperation({
+    summary: 'Validar documentos e criar reembolso uma única vez',
+    description:
+      'Verifica tamanho, SHA-256 e assinatura de todos os documentos. Cria o pedido e vincula a sessão na mesma transação. Repetições devolvem o mesmo pedido sem repetir auditoria nem notificação. Documentos incompletos retornam 400.',
+  })
+  finishSubmission(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Req() req: AuthRequest,
+  ) {
+    return this.service.finishSubmission(id, req.user);
+  }
   @Post()
   @UseInterceptors(FilesInterceptor('files', 3, { limits }))
   create(

@@ -3,7 +3,8 @@ import { Test } from '@nestjs/testing';
 import { ThrottlerStorage } from '@nestjs/throttler';
 import { PrismaClient } from '@prisma/client';
 import { PERMISSIONS } from '@church/shared';
-import { randomUUID, randomBytes } from 'node:crypto';
+import { randomUUID, randomBytes, createHash } from 'node:crypto';
+import { StorageService } from '../src/modules/finance/storage.service';
 import { execFileSync } from 'node:child_process';
 import request from 'supertest';
 import {
@@ -683,4 +684,104 @@ describe('Church operations with isolated PostgreSQL', () => {
     expect(failing.error).not.toContain('Sensitive provider credential');
     await get('/notifications', normalToken).expect(403);
   });
+
+  it('resumes private reimbursement chunks and finalizes concurrent retries exactly once', async () => {
+    const category = await db.financialCategory.create({
+      data: { name: randomUUID(), kind: 'EXPENSE' },
+    });
+    const id = randomUUID();
+    const path = `/api/v1/reimbursements/submissions/${id}`;
+    const files = [600000, 300000].map((size) =>
+      Buffer.concat([Buffer.from('%PDF-'), Buffer.alloc(size - 5, 42)]),
+    );
+    const dto = {
+      id,
+      iban: 'PT50000201231234567890154',
+      categoryId: category.id,
+      amount: '12.34',
+      purpose: randomUUID(),
+      files: files.map((buffer, index) => ({
+        name: `receipt-${index}.pdf`,
+        type: 'application/pdf',
+        size: buffer.length,
+        sha256: createHash('sha256').update(buffer).digest('hex'),
+      })),
+    };
+    const begin = () =>
+      request(app.getHttpServer())
+        .post('/api/v1/reimbursements/submissions')
+        .set('Authorization', `Bearer ${normalToken}`)
+        .send(dto);
+    await request(app.getHttpServer())
+      .post('/api/v1/reimbursements/submissions')
+      .send(dto)
+      .expect(401);
+    await begin().expect(201);
+    await begin().expect(201);
+    await request(app.getHttpServer())
+      .post('/api/v1/reimbursements/submissions')
+      .set('Authorization', `Bearer ${normalToken}`)
+      .send({ ...dto, amount: '99' })
+      .expect(409);
+    const chunk = (
+      fileIndex: number,
+      offset: number,
+      buffer: Buffer,
+      auth = normalToken,
+    ) =>
+      request(app.getHttpServer())
+        .post(`${path}/files/${fileIndex}/chunks/${offset}`)
+        .set('Authorization', `Bearer ${auth}`)
+        .attach('file', buffer, 'chunk');
+    const complete = () =>
+      request(app.getHttpServer())
+        .post(`${path}/complete`)
+        .set('Authorization', `Bearer ${normalToken}`);
+    await chunk(0, 0, files[0]!.subarray(0, 262144), leaderToken).expect(404);
+    await chunk(0, 0, Buffer.alloc(262145)).expect(413);
+    await chunk(0, 1, Buffer.alloc(262144)).expect(400);
+    await chunk(0, 0, files[0]!.subarray(0, 262144)).expect(201);
+    await chunk(0, 0, files[0]!.subarray(0, 262144)).expect(201);
+    await chunk(0, 0, Buffer.alloc(262144)).expect(409);
+    await complete().expect(400);
+    expect(
+      await db.reimbursement.count({ where: { purpose: dto.purpose } }),
+    ).toBe(0);
+    for (let fileIndex = 0; fileIndex < files.length; fileIndex++)
+      for (let offset = 0; offset < files[fileIndex]!.length; offset += 262144)
+        await chunk(
+          fileIndex,
+          offset,
+          files[fileIndex]!.subarray(offset, offset + 262144),
+        ).expect(201);
+    const [first, second] = await Promise.all([
+      complete().expect(201),
+      complete().expect(201),
+    ]);
+    expect(first.body.id).toBe(second.body.id);
+    expect(
+      await db.reimbursement.count({ where: { purpose: dto.purpose } }),
+    ).toBe(1);
+    expect(
+      await db.auditLog.count({
+        where: {
+          entityId: first.body.id as string,
+          action: 'REIMBURSEMENT_CREATE',
+        },
+      }),
+    ).toBe(1);
+    expect(
+      await db.reimbursementUploadChunk.count({ where: { submissionId: id } }),
+    ).toBe(0);
+    const attachments = await db.reimbursementAttachment.findMany({
+      where: { reimbursementId: first.body.id as string },
+      orderBy: { filename: 'asc' },
+    });
+    expect(attachments).toHaveLength(2);
+    for (let index = 0; index < attachments.length; index++)
+      expect(
+        await app.get(StorageService).get(attachments[index]!.storageKey),
+      ).toEqual(files[index]);
+    expect((await complete().expect(201)).body.id).toBe(first.body.id);
+  }, 30000);
 });

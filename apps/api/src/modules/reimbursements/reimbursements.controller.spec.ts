@@ -11,6 +11,11 @@ describe('Reimbursement submission HTTP contract', () => {
   let app: INestApplication;
   const user = { id: 'member', permissions: [] };
   const create = jest.fn().mockResolvedValue({ id: 'receipt' });
+  const beginSubmission = jest
+    .fn()
+    .mockResolvedValue({ id: 'receipt', chunkSize: 262144 });
+  const uploadSubmissionChunk = jest.fn().mockResolvedValue({ received: true });
+  const finishSubmission = jest.fn().mockResolvedValue({ id: 'receipt' });
   const payload = {
     iban: 'PT50000201231234567890154',
     categoryId: '63b80123-eefa-4f48-a877-6cfdcdd4b724',
@@ -21,7 +26,15 @@ describe('Reimbursement submission HTTP contract', () => {
     const module = await Test.createTestingModule({
       controllers: [ReimbursementsController],
       providers: [
-        { provide: ReimbursementsService, useValue: { create } },
+        {
+          provide: ReimbursementsService,
+          useValue: {
+            create,
+            beginSubmission,
+            uploadSubmissionChunk,
+            finishSubmission,
+          },
+        },
         {
           provide: AuthService,
           useValue: {
@@ -42,7 +55,7 @@ describe('Reimbursement submission HTTP contract', () => {
     await app.init();
   });
   afterAll(() => app.close());
-  beforeEach(() => create.mockClear());
+  beforeEach(() => jest.clearAllMocks());
 
   it('requires authentication before accepting an upload', async () => {
     await request(app.getHttpServer()).post('/reimbursements').expect(401);
@@ -94,5 +107,74 @@ describe('Reimbursement submission HTTP contract', () => {
       ]),
       user,
     );
+  });
+  const submissionId = '0ed04fa5-c589-4de3-8568-1fa04602f65a';
+  const manifest = [
+    {
+      name: 'receipt.pdf',
+      type: 'application/pdf',
+      size: 9,
+      sha256: 'a'.repeat(64),
+    },
+  ];
+  it('validates the nested manifest before starting a session', async () => {
+    await request(app.getHttpServer())
+      .post('/reimbursements/submissions')
+      .send({ ...payload, id: submissionId, files: manifest })
+      .expect(401);
+    await request(app.getHttpServer())
+      .post('/reimbursements/submissions')
+      .set('Authorization', 'Bearer member')
+      .send({ ...payload, id: submissionId, files: manifest })
+      .expect(201);
+    expect(beginSubmission).toHaveBeenCalledWith(
+      expect.objectContaining({ ...payload, files: manifest }),
+      user,
+    );
+    beginSubmission.mockClear();
+    for (const files of [
+      [],
+      Array(4).fill(manifest[0]),
+      [{ ...manifest[0], size: 2097153 }],
+      [{ ...manifest[0], sha256: 'invalid' }],
+      [{ ...manifest[0], userId: 'forged' }],
+    ]) {
+      await request(app.getHttpServer())
+        .post('/reimbursements/submissions')
+        .set('Authorization', 'Bearer member')
+        .send({ ...payload, id: submissionId, files })
+        .expect(400);
+    }
+    expect(beginSubmission).not.toHaveBeenCalled();
+  });
+  it('bounds multipart blocks and parses their coordinates', async () => {
+    const path = `/reimbursements/submissions/${submissionId}/files/0/chunks/0`;
+    await request(app.getHttpServer())
+      .post(path)
+      .attach('file', Buffer.alloc(9), 'chunk')
+      .expect(401);
+    await request(app.getHttpServer())
+      .post(path)
+      .set('Authorization', 'Bearer member')
+      .attach('file', Buffer.alloc(262145), 'chunk')
+      .expect(413);
+    await request(app.getHttpServer())
+      .post(path)
+      .set('Authorization', 'Bearer member')
+      .attach('file', Buffer.alloc(9), 'chunk')
+      .expect(201);
+    expect(uploadSubmissionChunk).toHaveBeenCalledTimes(1);
+    expect(uploadSubmissionChunk).toHaveBeenCalledWith(
+      submissionId,
+      0,
+      0,
+      expect.objectContaining({ size: 9 }),
+      user,
+    );
+    await request(app.getHttpServer())
+      .post(`/reimbursements/submissions/${submissionId}/complete`)
+      .set('Authorization', 'Bearer member')
+      .expect(201);
+    expect(finishSubmission).toHaveBeenCalledWith(submissionId, user);
   });
 });
