@@ -9,12 +9,19 @@ describe('Exception privacy', () => {
   it('returns the safe import timeout message with a reference', () => {
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const json = jest.fn();
-    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const response = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json }),
+    };
     const host = {
       switchToHttp: () => ({ getResponse: () => response }),
     } as unknown as ArgumentsHost;
     try {
       new SafeExceptionFilter().catch(new BankImportTimeoutException(), host);
+      expect(response.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-store',
+      );
       expect(response.status).toHaveBeenCalledWith(503);
       expect(json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -31,7 +38,10 @@ describe('Exception privacy', () => {
   it('exposes only the fixed e-Fatura failure message with a reference', () => {
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const json = jest.fn();
-    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const response = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json }),
+    };
     const host = {
       switchToHttp: () => ({ getResponse: () => response }),
     } as unknown as ArgumentsHost;
@@ -39,6 +49,10 @@ describe('Exception privacy', () => {
       new SafeExceptionFilter().catch(
         new EfaturaUnavailableException('browser'),
         host,
+      );
+      expect(response.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-store',
       );
       expect(response.status).toHaveBeenCalledWith(503);
       expect(json).toHaveBeenCalledWith(
@@ -80,6 +94,7 @@ describe('Exception privacy', () => {
           host,
         );
       });
+      expect(headers['Cache-Control']).toBe('no-store');
       const logged = JSON.parse(log.mock.calls[0]![0] as string);
       expect(logged).toMatchObject({
         requestId: headers['X-Request-Id'],
@@ -98,7 +113,10 @@ describe('Exception privacy', () => {
   it('keeps database parameters and personal data out of responses and operational logs', () => {
     const log = jest.spyOn(Logger.prototype, 'error').mockImplementation();
     const json = jest.fn();
-    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const response = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json }),
+    };
     const host = {
       switchToHttp: () => ({ getResponse: () => response }),
     } as unknown as ArgumentsHost;
@@ -106,6 +124,10 @@ describe('Exception privacy', () => {
       new SafeExceptionFilter().catch(
         new Error('password=secret; member=private; amount=100.00'),
         host,
+      );
+      expect(response.setHeader).toHaveBeenCalledWith(
+        'Cache-Control',
+        'no-store',
       );
       expect(response.status).toHaveBeenCalledWith(500);
       expect(json).toHaveBeenCalledWith(
@@ -120,13 +142,20 @@ describe('Exception privacy', () => {
   });
   it('preserves safe validation responses', () => {
     const json = jest.fn();
-    const response = { status: jest.fn().mockReturnValue({ json }) };
+    const response = {
+      setHeader: jest.fn(),
+      status: jest.fn().mockReturnValue({ json }),
+    };
     const host = {
       switchToHttp: () => ({ getResponse: () => response }),
     } as unknown as ArgumentsHost;
     new SafeExceptionFilter().catch(
       new BadRequestException('Invalid MIME'),
       host,
+    );
+    expect(response.setHeader).toHaveBeenCalledWith(
+      'Cache-Control',
+      'no-store',
     );
     expect(response.status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith(
