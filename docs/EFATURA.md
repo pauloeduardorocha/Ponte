@@ -129,4 +129,10 @@ npm run build
 npm run test:efatura --workspace @church/api
 ```
 
+Os ficheiros de testes e-Fatura executam sequencialmente (`--test-concurrency=1`).
+Em Linux, os testes de navegador usam o mesmo executável temporário extraído por
+`@sparticuz/chromium`; processos de teste simultâneos podem tentar executar esse
+ficheiro enquanto outro ainda o escreve e falhar com `spawn ETXTBSY`. A execução
+sequencial mantém todos os testes reais de navegador ativos e evita essa disputa.
+
 Os testes locais cobrem normalização, filtros, segurança de links/uploads, IPC e descarte de credenciais, duplicidades, RBAC, cadastro automático, categorização posterior e rastreabilidade. A autenticação e os seletores atuais do portal precisam ser verificados numa sessão real do titular; os testes não acessam a Autoridade Tributária.
