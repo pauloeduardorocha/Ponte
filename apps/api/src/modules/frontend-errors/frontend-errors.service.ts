@@ -48,6 +48,10 @@ export class FrontendErrorsService {
     userId?: string,
     network?: FrontendErrorNetwork,
   ) {
+    // Authentication and authorization outcomes are not frontend errors. Keep
+    // accepting old clients' reports without storing them or retrying ingestion.
+    if (dto.apiStatus === 401 || dto.apiStatus === 403)
+      return { accepted: true };
     const now = Date.now();
     if (now - this.lastCleanup > 6 * 60 * 60 * 1000) {
       this.lastCleanup = now;

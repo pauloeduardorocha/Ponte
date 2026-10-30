@@ -10,6 +10,8 @@ A versão é a do código carregado pelo navegador/PWA, não a versão mais rece
 
 O frontend envia falhas não tratadas, rejeições não tratadas, erros de console e respostas HTTP malsucedidas para `POST /api/v1/client-errors`. A captura é inicializada no arranque da aplicação e inclui as falhas da API de reembolsos.
 
+Desde a versão 1.3.3, respostas HTTP 401 e 403 não são consideradas erros de frontend: o cliente não as coloca na fila de relatórios. A API também ignora relatórios com `apiStatus` 401 ou 403 enviados por clientes antigos, devolvendo `{ accepted: true }` sem persistência. Os demais estados mantêm o comportamento existente. Esta exclusão não altera as respostas HTTP, a renovação da sessão nem os controlos de permissão.
+
 O payload contém hora do dispositivo, rota sem query string, tipo e mensagem, stack quando disponível, identificador de pedido da API, método e status HTTP, user agent, sistema operativo e browser estimados, idioma, fuso horário, tamanho da janela, estado de rede, modo PWA e até 20 mensagens recentes de `console.warn`/`console.error`. Os logs só aceitam texto e objetos `Error`; objetos arbitrários são omitidos.
 
 A API guarda os relatórios na tabela `frontend_error_reports`, usa a hora do servidor para `created_at` e remove relatórios com mais de 30 dias durante a ingestão. O endpoint é público para que falhas de sessão também possam ser recebidas, mas associa o utilizador apenas se o Bearer token for válido. O ID de utilizador enviado pelo cliente não é aceite. Há limite de 10 envios por minuto.

@@ -83,6 +83,7 @@ async function flush() {
 }
 
 export function reportFrontendError(eventType: EventType, message: unknown, extra: Partial<Report> = {}) {
+  if (extra.apiStatus === 401 || extra.apiStatus === 403) return;
   if (!initialized) return;
   if (pending.length >= 20) pending.shift();
   pending.push(baseReport(eventType, message, extra));

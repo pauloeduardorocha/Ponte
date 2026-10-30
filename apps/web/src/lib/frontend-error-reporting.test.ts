@@ -10,6 +10,18 @@ describe('frontend error reporting', () => {
     vi.stubGlobal('fetch', fetchMock);
     const reporter = await import('./frontend-error-reporting');
     reporter.initFrontendErrorReporting(() => null);
+    for (const status of [401, 403]) {
+      reporter.reportApiFailure({
+        path: '/private',
+        method: 'GET',
+        status,
+        message: `HTTP ${status}`,
+      });
+      reporter.reportFrontendError('api', `HTTP ${status}`, {
+        apiStatus: status,
+      });
+    }
+    expect(fetchMock).not.toHaveBeenCalled();
     reporter.reportApiFailure({
       path: '/api/v1/reimbursements?iban=secret',
       method: 'POST',

@@ -61,7 +61,21 @@ describe('Frontend error persistence with emails suspended', () => {
       }),
     );
   });
-  it.each([0, 400, 401, 403, 404, 429, 500, 503, undefined])(
+  it.each([401, 403])(
+    'accepts but does not persist HTTP %s from any client',
+    async (apiStatus) => {
+      const { service, create, send } = await setup();
+      await expect(
+        service.create({ ...dto, apiStatus }, 'authenticated-user'),
+      ).resolves.toEqual({ accepted: true });
+      await expect(
+        service.create({ ...dto, apiStatus, device: { appVersion: '0.1.1' } }),
+      ).resolves.toEqual({ accepted: true });
+      expect(create).not.toHaveBeenCalled();
+      expect(send).not.toHaveBeenCalled();
+    },
+  );
+  it.each([0, 400, 404, 429, 500, 503, undefined])(
     'persists HTTP %s without email even with a configured provider',
     async (apiStatus) => {
       const { service, create, send } = await setup();
