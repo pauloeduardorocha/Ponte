@@ -22,10 +22,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <NetworkStatusBanner />
-        <FrontendErrorBoundary>
-          <App />
-        </FrontendErrorBoundary>
-        <PwaControls />
+        <PwaControls>
+          <FrontendErrorBoundary>
+            <App />
+          </FrontendErrorBoundary>
+        </PwaControls>
         <Analytics />
         <SpeedInsights />
       </BrowserRouter>

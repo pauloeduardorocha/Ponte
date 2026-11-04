@@ -1,3 +1,5 @@
+import { useContext } from 'react';
+import { PwaInstallContext } from '../components/pwa-install-context';
 import { Suspense, useState, type ReactNode } from 'react';
 import {
   AppBar,
@@ -207,6 +209,7 @@ function isNavigationActive(to: string, location: { pathname: string }) {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
+  const installButton = useContext(PwaInstallContext);
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
     navigationGroups.filter(
@@ -343,6 +346,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
       <Box className="sidebar-footer">
         <Divider sx={{ mb: 2 }} />
+        {installButton}
         <Typography variant="caption" color="text.secondary">
           Plataforma em configuração
         </Typography>

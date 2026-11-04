@@ -8,6 +8,19 @@ import {
 } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PwaControls } from './PwaControls';
+import { PwaInstallContext } from './pwa-install-context';
+
+function TestPwaControls() {
+  return (
+    <PwaControls>
+      <footer>
+        <PwaInstallContext.Consumer>
+          {(button) => button}
+        </PwaInstallContext.Consumer>
+      </footer>
+    </PwaControls>
+  );
+}
 import { applyPwaUpdate } from '../lib/pwa-update';
 
 const sw = vi.hoisted(() => ({
@@ -47,7 +60,7 @@ afterEach(() => {
 describe('PWA installation and updates', () => {
   it('offers a version discovered after an error even without a waiting worker', () => {
     sw.version = '99.0.0';
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     expect(
       screen.getByText(/Há uma atualização disponível/),
     ).toBeInTheDocument();
@@ -57,7 +70,7 @@ describe('PWA installation and updates', () => {
   });
   it('remembers dismissal of the iOS installation instructions', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
-    const view = render(<PwaControls />);
+    const view = render(<TestPwaControls />);
     fireEvent.click(screen.getByRole('button', { name: 'Instalar aplicação' }));
     fireEvent.click(
       screen.getByRole('button', {
@@ -65,7 +78,7 @@ describe('PWA installation and updates', () => {
       }),
     );
     view.unmount();
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     expect(
       screen.queryByRole('button', { name: 'Instalar aplicação' }),
     ).not.toBeInTheDocument();
@@ -73,20 +86,18 @@ describe('PWA installation and updates', () => {
 
   it('hides installation when the browser detects this installed PWA', async () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
-    const getInstalledRelatedApps = vi
-      .fn()
-      .mockResolvedValue([
-        {
-          platform: 'webapp',
-          url: new URL('/manifest.webmanifest', window.location.origin).href,
-        },
-      ]);
+    const getInstalledRelatedApps = vi.fn().mockResolvedValue([
+      {
+        platform: 'webapp',
+        url: new URL('/manifest.webmanifest', window.location.origin).href,
+      },
+    ]);
     Object.defineProperty(navigator, 'getInstalledRelatedApps', {
       configurable: true,
       value: getInstalledRelatedApps,
     });
     try {
-      render(<PwaControls />);
+      render(<TestPwaControls />);
       await waitFor(() =>
         expect(
           screen.queryByRole('button', { name: 'Instalar aplicação' }),
@@ -107,7 +118,7 @@ describe('PWA installation and updates', () => {
       value: getInstalledRelatedApps,
     });
     try {
-      render(<PwaControls />);
+      render(<TestPwaControls />);
       await act(async () => {
         await Promise.resolve();
       });
@@ -120,7 +131,7 @@ describe('PWA installation and updates', () => {
   });
 
   it('opens the Android install prompt and hides the button after acceptance', async () => {
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     const prompt = vi.fn().mockResolvedValue(undefined);
     const event = Object.assign(
       new Event('beforeinstallprompt', { cancelable: true }),
@@ -144,7 +155,7 @@ describe('PWA installation and updates', () => {
 
   it('explains installation on iOS and hides installation in standalone mode', () => {
     vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('iPhone');
-    const view = render(<PwaControls />);
+    const view = render(<TestPwaControls />);
     fireEvent.click(screen.getByRole('button', { name: 'Instalar aplicação' }));
     expect(screen.getByText(/Abra esta página no Safari/)).toBeInTheDocument();
     view.unmount();
@@ -152,7 +163,7 @@ describe('PWA installation and updates', () => {
       'matchMedia',
       vi.fn(() => ({ matches: true })),
     );
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     expect(
       screen.queryByRole('button', { name: 'Instalar aplicação' }),
     ).not.toBeInTheDocument();
@@ -160,7 +171,7 @@ describe('PWA installation and updates', () => {
 
   it('waits for user confirmation before applying an update', () => {
     sw.refresh = true;
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     expect(applyPwaUpdate).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
     expect(applyPwaUpdate).toHaveBeenCalledOnce();
@@ -175,7 +186,7 @@ describe('PWA installation and updates', () => {
           finish = resolve;
         }),
     );
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
     expect(screen.getByRole('button', { name: 'A atualizar…' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'A atualizar…' }));
@@ -188,7 +199,7 @@ describe('PWA installation and updates', () => {
     vi.mocked(applyPwaUpdate).mockRejectedValueOnce(
       new Error('A atualização foi interrompida. Tente novamente.'),
     );
-    render(<PwaControls />);
+    render(<TestPwaControls />);
     fireEvent.click(screen.getByRole('button', { name: 'Atualizar' }));
     expect(
       await screen.findByText(

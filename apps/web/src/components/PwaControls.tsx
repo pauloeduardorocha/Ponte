@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Alert,
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -10,6 +9,8 @@ import {
   Snackbar,
 } from '@mui/material';
 import { useRegisterSW } from 'virtual:pwa-register/react';
+import type { ReactNode } from 'react';
+import { PwaInstallContext } from './pwa-install-context';
 import { applyPwaUpdate } from '../lib/pwa-update';
 import {
   getAvailableVersion,
@@ -30,7 +31,7 @@ interface RelatedApp {
   id?: string;
 }
 
-export function PwaControls() {
+export function PwaControls({ children }: { children?: ReactNode }) {
   const availableVersion = useSyncExternalStore(
     subscribeToAppUpdate,
     getAvailableVersion,
@@ -148,30 +149,26 @@ export function PwaControls() {
     setInstallPrompt(null);
   }
 
+  const installButton =
+    !installed && !installDismissed && (installPrompt || ios) ? (
+      <Button
+        fullWidth
+        variant="contained"
+        onClick={() => void install()}
+        sx={{
+          mb: 2,
+          bgcolor: '#d91017',
+          color: '#ffffff',
+          '&:hover': { bgcolor: '#ad0d13' },
+        }}
+      >
+        Instalar aplicação
+      </Button>
+    ) : null;
+
   return (
-    <>
-      {!installed && !installDismissed && (installPrompt || ios) && (
-        <Box
-          sx={{
-            position: 'fixed',
-            bottom: 'max(16px, env(safe-area-inset-bottom))',
-            right: 16,
-            zIndex: 1200,
-          }}
-        >
-          <Button
-            variant="contained"
-            onClick={() => void install()}
-            sx={{
-              bgcolor: '#d91017',
-              color: '#ffffff',
-              '&:hover': { bgcolor: '#ad0d13' },
-            }}
-          >
-            Instalar aplicação
-          </Button>
-        </Box>
-      )}
+    <PwaInstallContext.Provider value={installButton}>
+      {children}
       <Dialog open={instructions} onClose={() => setInstructions(false)}>
         <DialogTitle>Instalar no iPhone ou iPad</DialogTitle>
         <DialogContent>
@@ -225,6 +222,6 @@ export function PwaControls() {
                 : 'Nova versão disponível. Guarde as alterações antes de atualizar.')}
         </Alert>
       </Snackbar>
-    </>
+    </PwaInstallContext.Provider>
   );
 }
