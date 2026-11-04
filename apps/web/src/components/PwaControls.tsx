@@ -159,7 +159,15 @@ export function PwaControls() {
             zIndex: 1200,
           }}
         >
-          <Button variant="contained" onClick={() => void install()}>
+          <Button
+            variant="contained"
+            onClick={() => void install()}
+            sx={{
+              bgcolor: '#d91017',
+              color: '#ffffff',
+              '&:hover': { bgcolor: '#ad0d13' },
+            }}
+          >
             Instalar aplicação
           </Button>
         </Box>
