@@ -13,6 +13,7 @@ type AccessRule = {
 // Keep navigation visibility and direct URL access on the same policy.
 const routeAccess: readonly AccessRule[] = [
   { path: '/' },
+  { path: '/conversations/:id' },
   { path: '/account' },
   { path: '/calendar' },
   { path: '/inbox' },

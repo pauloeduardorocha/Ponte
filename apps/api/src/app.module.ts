@@ -1,4 +1,5 @@
 import { ReimbursementsModule } from './modules/reimbursements/reimbursements.controller';
+import { ConversationsModule } from './modules/conversations/conversations.controller';
 import { VideosModule } from './modules/videos/videos.module';
 import { MemberPortalModule } from './modules/community/member-portal.controller';
 import { PrivacyModule } from './modules/privacy/privacy.module';
@@ -44,6 +45,7 @@ import { FrontendErrorsModule } from './modules/frontend-errors/frontend-errors.
       }),
     }),
     DatabaseModule,
+    ConversationsModule,
     AuditModule,
     PrivacyModule,
     CommunityModule,

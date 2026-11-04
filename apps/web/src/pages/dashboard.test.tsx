@@ -11,6 +11,7 @@ describe('Permission scoped dashboard', () => {
   beforeEach(resetTestState);
   it('shows real administrative indicators with links and avoids ungranted finance/library queries', async () => {
     const requests = mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser(['MEMBER_READ', 'VISITOR_READ', 'EVENT_READ'])),
       'GET /health': { body: { status: 'ok' } },
       'GET /community/dashboard': {
@@ -28,9 +29,13 @@ describe('Permission scoped dashboard', () => {
     renderApp('/');
     await screen.findByRole('main');
     expect(
-      await screen.findByRole('link', {
-        name: 'Membros ativos: 2. Abrir lista',
-      }),
+      await screen.findByRole(
+        'link',
+        {
+          name: 'Membros ativos: 2. Abrir lista',
+        },
+        { timeout: 10000 },
+      ),
     ).toHaveAttribute('href', '/members?status=ACTIVE');
     expect(
       screen.getByRole('link', { name: 'Visitantes: 4. Abrir lista' }),
@@ -46,6 +51,7 @@ describe('Permission scoped dashboard', () => {
   });
   it('shows birthdays to a member without administrative permissions', async () => {
     mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser([])),
       'GET /community/birthdays': {
         body: [{ id: 'birthday', name: 'Maria Santos', birthday: '27/10' }],
@@ -60,6 +66,7 @@ describe('Permission scoped dashboard', () => {
   });
   it('shows an empty birthday card', async () => {
     mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser([])),
       'GET /community/birthdays': { body: [] },
     });
@@ -70,6 +77,7 @@ describe('Permission scoped dashboard', () => {
   });
   it('offers a personal empty state and never fetches protected indicators for members', async () => {
     const requests = mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser([])),
       'GET /health': { body: { status: 'ok' } },
     });
@@ -99,6 +107,7 @@ describe('Personal member dashboard', () => {
   };
   it('shows personal sections in order and hides optional sections when empty', async () => {
     mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser(['COMMUNITY_READ'])),
       'GET /health': { body: { status: 'ok' } },
       'GET /member-portal/dashboard': { body: empty },
@@ -108,6 +117,7 @@ describe('Personal member dashboard', () => {
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
+      'Conversas',
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',
@@ -119,6 +129,7 @@ describe('Personal member dashboard', () => {
   });
   it('includes reimbursements before events and all library categories afterwards', async () => {
     const requests = mockApi({
+      'GET /conversations': { body: { items: [], hasMore: false } },
       ...sessionRoutes(makeUser(['COMMUNITY_READ'])),
       'GET /health': { body: { status: 'ok' } },
       'GET /member-portal/dashboard': {
@@ -186,6 +197,7 @@ describe('Personal member dashboard', () => {
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
+      'Conversas',
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',

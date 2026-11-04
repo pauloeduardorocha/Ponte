@@ -1,4 +1,5 @@
 import { formatDate, formatDateTime } from '../lib/format';
+import { ConversationsCarousel } from '../components/Conversations';
 import { retryQuery } from '../lib/query-retry';
 import { MemberDashboard } from './MemberDashboard';
 import { BirthdaysCard } from '../components/BirthdaysCard';
@@ -86,6 +87,7 @@ function ApprovedDashboard() {
           painel.
         </Typography>
       </Box>
+      <ConversationsCarousel />
       <YouTubeCarousel />
       <Box
         sx={{

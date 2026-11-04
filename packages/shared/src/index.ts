@@ -341,3 +341,9 @@ export type PlaylistVideoFeed = PlaylistVideoPage & {
 };
 
 export { HTTP_CACHE_ROUTES, responseCacheTtl } from './http-cache-policy';
+export type {
+  ConversationPerson,
+  ConversationPostView,
+  ConversationPageView,
+  ConversationDetailView,
+} from './conversations';

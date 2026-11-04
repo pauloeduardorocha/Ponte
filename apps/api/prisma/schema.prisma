@@ -128,6 +128,7 @@ enum UserStatus {
 }
 
 model User {
+  conversationPosts ConversationPost[]
   pushReimbursementRequested Boolean @default(true) @map("push_reimbursement_requested")
   colorMode                    String                @default("system") @map("color_mode") @db.VarChar(6)
   pushEventRefundRequested     Boolean               @default(true) @map("push_event_refund_requested")
@@ -173,6 +174,27 @@ model User {
   @@index([status])
   @@index([deletedAt])
   @@map("users")
+}
+
+model ConversationPost {
+  id        String             @id @default(uuid()) @db.Uuid
+  authorId  String             @db.Uuid
+  author    User               @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  topicId   String?            @db.Uuid
+  topic     ConversationPost?  @relation("ConversationReplies", fields: [topicId], references: [id], onDelete: Restrict)
+  replies   ConversationPost[] @relation("ConversationReplies")
+  title     String?            @db.VarChar(160)
+  body      String             @db.VarChar(10000)
+  image     String?
+  hasImage  Boolean            @default(false)
+  mentions  String[]           @db.Uuid
+  createdAt DateTime           @default(now()) @db.Timestamptz(6)
+  deletedAt DateTime?          @db.Timestamptz(6)
+  deletedBy String?            @db.Uuid
+
+  @@index([topicId, createdAt, id])
+  @@index([authorId])
+  @@map("conversation_posts")
 }
 
 model Passkey {
