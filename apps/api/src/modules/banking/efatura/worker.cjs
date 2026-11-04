@@ -1,4 +1,5 @@
 const { launchBrowser } = require('./browser.cjs');
+const { URL: PortalUrl } = require('node:url');
 const {
   validatePeriod,
   applyDateFilters,
@@ -57,13 +58,17 @@ const { normalizeInvoices, safePortalLink } = require('./normalize.cjs');
     );
     await page.waitForNetworkIdle();
 
-    // 4. Garantir que estamos na página correta da tabela de faturas
-    await page.goto(
-      'https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action',
-      {
-        waitUntil: 'networkidle2',
-      },
-    );
+    // Login normally redirects here and already starts the initial AJAX search.
+    // Navigate only when it lands elsewhere, avoiding a second automatic search.
+    const consultationUrl =
+      'https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action';
+    const landingUrl = new PortalUrl(page.url());
+    if (
+      landingUrl.origin !== new PortalUrl(consultationUrl).origin ||
+      landingUrl.pathname !== new PortalUrl(consultationUrl).pathname
+    ) {
+      await page.goto(consultationUrl, { waitUntil: 'networkidle2' });
+    }
 
     stage = 'filters';
     operation = 'apply_filters';

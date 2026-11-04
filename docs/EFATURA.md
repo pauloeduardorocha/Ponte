@@ -35,6 +35,11 @@ O período vem das datas mínima e máxima do extrato. O scraper preenche
 `#dataInicioFilter` e `#dataFimFilter`, aplica a pesquisa e valida as datas
 em todas as páginas. Configure `EFATURA_FILTER_SUBMIT` se o portal exigir
 um seletor específico. A ausência de botão de pesquisa interrompe a consulta.
+Após o login, reutiliza a página quando o redirecionamento já chegou a
+`consultarDocumentosAdquirente.action`, incluindo URLs com query ou fragmento,
+sem recarregá-la e disparar outra pesquisa automática. Se o login terminar
+noutra página do portal, navega para a consulta como fallback. Essa redução
+de pedidos não garante eliminar os limites HTTP 429 do portal.
 A página inicia uma pesquisa AJAX automaticamente. O scraper aguarda a conclusão
 dessa primeira pesquisa antes de preencher outro período e, depois do clique,
 aguarda o portal voltar a mostrar `.searchResults` ou `.noSearchResults`, que

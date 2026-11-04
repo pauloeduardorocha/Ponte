@@ -11,10 +11,15 @@ async function runWorker({
   readError,
   empty = false,
   filterError,
+  landingUrl = 'https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action',
 } = {}) {
   const messages = [];
+  const navigations = [];
   const page = {
-    goto: async () => {},
+    goto: async (url) => {
+      navigations.push(url);
+    },
+    url: () => landingUrl,
     waitForSelector: async () => {},
     click: async () => {},
     type: async () => {},
@@ -72,8 +77,32 @@ async function runWorker({
             : require(name),
     },
   );
-  return { messages, exitCode: processMock.exitCode };
+  return { messages, exitCode: processMock.exitCode, navigations };
 }
+
+test('worker reuses the consultation reached after login, including query parameters', async () => {
+  for (const suffix of ['', '?periodo=2026#documentos']) {
+    const { navigations, messages } = await runWorker({
+      landingUrl: `https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action${suffix}`,
+    });
+    assert.equal(navigations.length, 1);
+    assert.ok(navigations[0].startsWith('https://www.acesso.gov.pt/'));
+    assert.ok(messages.some((message) => message.result));
+  }
+});
+
+test('worker navigates to the consultation when login lands on another portal page', async () => {
+  const { navigations, messages } = await runWorker({
+    landingUrl:
+      'https://faturas.portaldasfinancas.gov.pt/painelAdquirente.action',
+  });
+  assert.equal(navigations.length, 2);
+  assert.equal(
+    navigations[1],
+    'https://faturas.portaldasfinancas.gov.pt/consultarDocumentosAdquirente.action',
+  );
+  assert.ok(messages.some((message) => message.result));
+});
 
 test('worker distinguishes invalid mapping, out-of-period data and repeated pages', async () => {
   for (const [options, failureCode, operation] of [
