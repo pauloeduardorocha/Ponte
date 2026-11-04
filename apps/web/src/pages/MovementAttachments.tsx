@@ -48,11 +48,13 @@ export function MovementAttachments({
   canWrite = true,
   canRead = true,
   onReimbursementLinked,
+  showReimbursement = true,
 }: {
   transactionId?: string;
   expenseId?: string;
   canWrite?: boolean;
   canRead?: boolean;
+  showReimbursement?: boolean;
   onReimbursementLinked?: (categoryId: string) => void;
 }) {
   const client = useQueryClient();
@@ -153,7 +155,7 @@ export function MovementAttachments({
     (attachments.data?.length ?? 0) >= maxFiles;
   return (
     <Stack spacing={1}>
-      {transactionId && canRead && (
+      {transactionId && canRead && showReimbursement && (
         <MovementReimbursement
           transactionId={transactionId}
           onLinked={onReimbursementLinked}

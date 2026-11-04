@@ -202,9 +202,15 @@ describe('Bank statement review', () => {
     });
     renderApp('/finance?tab=banking');
     await uploadStatement();
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Associar reembolso' }),
-    );
+    const associate = await screen.findByRole('button', {
+      name: 'Associar reembolso',
+    });
+    const category = screen.getByRole('combobox', { name: 'Categoria' });
+    expect(
+      associate.compareDocumentPosition(category) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    fireEvent.click(associate);
     await waitFor(() =>
       expect(
         screen.getByRole('combobox', { name: 'Categoria' }),

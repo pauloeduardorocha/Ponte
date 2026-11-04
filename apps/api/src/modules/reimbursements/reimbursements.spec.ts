@@ -67,6 +67,7 @@ function setup() {
         .mockResolvedValue({ id: 'category', kind: 'EXPENSE' }),
       findMany: jest.fn(),
     },
+    expense: { updateMany: jest.fn() },
     bankTransaction: {
       update: jest.fn(),
       findUnique: jest.fn().mockResolvedValue({
@@ -526,9 +527,9 @@ describe('Reimbursement lifecycle and access', () => {
       'já está associado',
     );
   });
-  it.each([true, false])(
-    'preserves reconciled accounting and rejects category mismatch: %s',
-    async (matches) => {
+  it.each([null, 'other', row.categoryId])(
+    'applies reimbursement category to reconciled accounting: %s',
+    async (categoryId) => {
       const { service, tx } = setup();
       tx.reimbursement.findUnique.mockResolvedValue({
         ...row,
@@ -538,12 +539,31 @@ describe('Reimbursement lifecycle and access', () => {
       tx.bankTransaction.findUnique.mockResolvedValue({
         ...movement,
         status: 'RECONCILED',
-        categoryId: matches ? row.categoryId : 'other',
+        categoryId,
       });
       const result = service.link(row.id, 'bank', manager);
-      if (matches) await expect(result).resolves.toBeDefined();
-      else await expect(result).rejects.toThrow('categoria');
-      expect(tx.bankTransaction.update).not.toHaveBeenCalled();
+      await expect(result).resolves.toBeDefined();
+      expect(tx.bankTransaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            categoryId: row.categoryId,
+            status: 'RECONCILED',
+          }),
+        }),
+      );
+      expect(tx.expense.updateMany).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { bankTransactionId: 'bank' },
+            {
+              reconciliations: {
+                some: { bankTransactionId: 'bank', active: true },
+              },
+            },
+          ],
+        },
+        data: { categoryId: row.categoryId },
+      });
     },
   );
   it('blocks changes to paid requests and payment evidence uploaded by a member', async () => {

@@ -31,6 +31,7 @@ import { useAuth } from '../auth/auth-context';
 import { apiRequest, getAccessToken } from '../lib/api';
 import { useDebouncedValue } from '../lib/use-debounced-value';
 import { MovementAttachments } from './MovementAttachments';
+import { MovementReimbursement } from './reimbursements/ReimbursementDocuments';
 import { EfaturaFetch } from './EfaturaFetch';
 import { LinkBankMovement } from './LinkBankMovement';
 type Lookup = { id: string; name: string; kind?: string; currency?: string };
@@ -433,6 +434,16 @@ export function BankingPage({
         slotProps={{ htmlInput: { maxLength: 2000 } }}
         helperText="Descrição usada na receita ou despesa. A descrição original do extrato é preservada."
       />
+      {currentMovement && (
+        <MovementReimbursement
+          key={currentMovement.id}
+          transactionId={currentMovement.id}
+          onLinked={(categoryId) => {
+            setCategoryId(categoryId);
+            setClassification('EXPENSE');
+          }}
+        />
+      )}
       {classification !== 'IGNORE' && (
         <TextField
           select
@@ -669,10 +680,7 @@ export function BankingPage({
                 <MovementAttachments
                   key={currentMovement.id}
                   transactionId={currentMovement.id}
-                  onReimbursementLinked={(categoryId) => {
-                    setCategoryId(categoryId);
-                    setClassification('EXPENSE');
-                  }}
+                  showReimbursement={false}
                 />
                 {[
                   'PENDING_REVIEW',

@@ -708,24 +708,31 @@ export class ReimbursementsService {
         );
       if (row.categoryId) {
         await this.validateCategory(tx, row.categoryId);
-        if (
-          movement.status === 'RECONCILED' &&
-          movement.categoryId !== row.categoryId
-        )
-          throw new ConflictException(
-            'A categoria do movimento conciliado difere da categoria do reembolso',
-          );
-        if (movement.status !== 'RECONCILED')
-          await tx.bankTransaction.update({
-            where: { id: transactionId },
-            data: {
-              categoryId: row.categoryId,
-              classification: 'EXPENSE',
-              status: 'CLASSIFIED',
-              classifiedBy: user.id,
-              memberId: null,
-              contributionType: null,
+        await tx.bankTransaction.update({
+          where: { id: transactionId },
+          data: {
+            categoryId: row.categoryId,
+            classification: 'EXPENSE',
+            status:
+              movement.status === 'RECONCILED' ? 'RECONCILED' : 'CLASSIFIED',
+            classifiedBy: user.id,
+            memberId: null,
+            contributionType: null,
+          },
+        });
+        if (movement.status === 'RECONCILED')
+          await tx.expense.updateMany({
+            where: {
+              OR: [
+                { bankTransactionId: transactionId },
+                {
+                  reconciliations: {
+                    some: { bankTransactionId: transactionId, active: true },
+                  },
+                },
+              ],
             },
+            data: { categoryId: row.categoryId },
           });
       }
       const saved = await tx.reimbursement.update({
