@@ -374,7 +374,7 @@ function ProfileMenu() {
           onClick={(event) => setAnchor(event.currentTarget)}
           size="small"
         >
-          <Avatar className="profile-avatar">{initials(user?.name)}</Avatar>
+          <Avatar src={user?.avatar ?? undefined} className="profile-avatar">{initials(user?.name)}</Avatar>
         </IconButton>
       </Tooltip>
       <Menu

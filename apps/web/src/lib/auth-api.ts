@@ -44,6 +44,7 @@ export type PushPreferenceKey =
   | 'pushBirthdays';
 
 export function updatePreferences(preferences: {
+  avatar?: string | null;
   pushReimbursementRequested?: boolean;
   colorMode?: 'system' | 'light' | 'dark';
   pushEventRefundRequested?: boolean;
@@ -52,6 +53,7 @@ export function updatePreferences(preferences: {
   pushBirthdays?: boolean;
 }) {
   return apiRequest<{
+    avatar: string | null;
     pushReimbursementRequested: boolean;
     colorMode: 'system' | 'light' | 'dark';
     pushEventRefundRequested: boolean;

@@ -266,6 +266,7 @@ export const ROLE_PERMISSIONS: Record<InitialRole, readonly Permission[]> = {
 };
 
 export interface CurrentUser {
+  avatar?: string | null;
   pushReimbursementRequested?: boolean;
   colorMode?: 'system' | 'light' | 'dark';
   pushEventRefundRequested?: boolean;

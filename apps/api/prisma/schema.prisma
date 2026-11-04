@@ -128,6 +128,7 @@ enum UserStatus {
 }
 
 model User {
+  avatar                      String?                  @db.Text
   conversationPosts ConversationPost[]
   pushReimbursementRequested Boolean @default(true) @map("push_reimbursement_requested")
   colorMode                    String                @default("system") @map("color_mode") @db.VarChar(6)

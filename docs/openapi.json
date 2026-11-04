@@ -3486,6 +3486,11 @@
       },
       "UpdatePreferencesDto": {
         "properties": {
+          "avatar": {
+            "description": "JPEG data URL, até 500.000 bytes; null remove.",
+            "nullable": true,
+            "type": "string"
+          },
           "colorMode": {
             "default": "system",
             "enum": [

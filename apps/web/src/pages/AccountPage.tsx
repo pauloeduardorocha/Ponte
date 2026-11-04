@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   Alert,
+  Avatar,
   Box,
   Button,
   Card,
@@ -21,6 +22,7 @@ import {
 } from '@mui/material';
 import { useAuth } from '../auth/auth-context';
 import { PageHeader } from '../components/PageParts';
+import { compressAvatar } from '../lib/avatar';
 import { changePassword } from '../lib/auth-api';
 import { errorMessage } from '../lib/errors';
 import { passwordSchema } from '../lib/validation';
@@ -41,8 +43,29 @@ const passwordFormSchema = z
 type PasswordFields = z.infer<typeof passwordFormSchema>;
 
 export function AccountPage() {
-  const { user, clearSession, updateColorMode, updatePushPreference } =
-    useAuth();
+  const {
+    user,
+    clearSession,
+    updateColorMode,
+    updatePushPreference,
+    updateAvatar,
+  } = useAuth();
+  const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [avatarSaved, setAvatarSaved] = useState(false);
+  async function saveAvatar(file: File | null) {
+    setSavingAvatar(true);
+    setAvatarError(null);
+    setAvatarSaved(false);
+    try {
+      await updateAvatar(file ? await compressAvatar(file) : null);
+      setAvatarSaved(true);
+    } catch (err) {
+      setAvatarError(errorMessage(err));
+    } finally {
+      setSavingAvatar(false);
+    }
+  }
   const [savingAppearance, setSavingAppearance] = useState(false);
   const [appearanceError, setAppearanceError] = useState<string | null>(null);
   const [appearanceSaved, setAppearanceSaved] = useState(false);
@@ -121,6 +144,54 @@ export function AccountPage() {
               <Typography variant="h6" fontWeight={700}>
                 Dados da conta
               </Typography>
+              <Stack
+                direction="row"
+                spacing={2}
+                alignItems="center"
+                flexWrap="wrap"
+              >
+                <Avatar
+                  src={user?.avatar ?? undefined}
+                  alt={user?.name}
+                  sx={{ width: 72, height: 72 }}
+                >
+                  {user?.name?.charAt(0)}
+                </Avatar>
+                <Button component="label" disabled={savingAvatar}>
+                  Alterar foto
+                  <input
+                    hidden
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    aria-label="Selecionar foto"
+                    disabled={savingAvatar}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.target.value = '';
+                      if (file) void saveAvatar(file);
+                    }}
+                  />
+                </Button>
+                {user?.avatar && (
+                  <Button
+                    disabled={savingAvatar}
+                    onClick={() => void saveAvatar(null)}
+                  >
+                    Remover foto
+                  </Button>
+                )}
+              </Stack>
+              <Typography variant="body2" color="text.secondary">
+                JPEG, PNG ou WebP. A foto é comprimida para até 0,5 MB antes do
+                envio.
+              </Typography>
+              {savingAvatar && (
+                <Typography role="status">Salvando foto…</Typography>
+              )}
+              {avatarError && <Alert severity="error">{avatarError}</Alert>}
+              {avatarSaved && (
+                <Alert severity="success">Foto atualizada.</Alert>
+              )}
               <Box>
                 <Typography variant="caption" color="text.secondary">
                   Nome

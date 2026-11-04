@@ -1,6 +1,8 @@
+import { isAvatar } from './avatar';
 import { Transform } from 'class-transformer';
 import {
   IsBoolean,
+  ValidateBy,
   IsDateString,
   Matches,
   IsEmail,
@@ -13,6 +15,24 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UpdatePreferencesDto {
+  @ApiProperty({
+    required: false,
+    nullable: true,
+    description: 'JPEG data URL, até 500.000 bytes; null remove.',
+  })
+  @ValidateIf((_object, value) => value !== undefined && value !== null)
+  @IsString()
+  @MaxLength(666691)
+  @Matches(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/)
+  @ValidateBy({
+    name: 'isAvatar',
+    validator: {
+      validate: isAvatar,
+      defaultMessage: () => 'Foto JPEG inválida ou maior que 0,5 MB.',
+    },
+  })
+  avatar?: string | null;
+
   @ApiProperty({ required: false, default: true })
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()

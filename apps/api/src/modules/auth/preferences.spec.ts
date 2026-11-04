@@ -1,4 +1,5 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
@@ -56,7 +57,8 @@ describe('Account preferences HTTP contract', () => {
         { provide: APP_GUARD, useClass: AuthGuard },
       ],
     }).compile();
-    app = module.createNestApplication();
+    app = module.createNestApplication<NestExpressApplication>();
+    (app as NestExpressApplication).useBodyParser('json', { limit: '2mb' });
     app.setGlobalPrefix('api/v1');
     app.useGlobalPipes(
       new ValidationPipe({
@@ -98,6 +100,7 @@ describe('Account preferences HTTP contract', () => {
         where: { id: user.id },
         data: { colorMode },
         select: {
+          avatar: true,
           colorMode: true,
           pushReimbursementRequested: true,
           pushEventRefundRequested: true,
@@ -124,6 +127,7 @@ describe('Account preferences HTTP contract', () => {
       where: { id: user.id },
       data: { pushLibraryOverdue: false },
       select: {
+        avatar: true,
         colorMode: true,
         pushReimbursementRequested: true,
         pushEventRefundRequested: true,
@@ -161,6 +165,33 @@ describe('Account preferences HTTP contract', () => {
       pushLibraryOverdue: true,
     });
   });
+
+  it.each([
+    'data:image/svg+xml;base64,PHN2Zz4=',
+    'data:image/jpeg;base64,YWJj',
+    123,
+    'data:image/jpeg;base64,' + 'A'.repeat(666668),
+  ])('rejects invalid photos', async (avatar) => {
+    await request(app.getHttpServer())
+      .patch('/api/v1/auth/preferences')
+      .set('Authorization', 'Bearer access')
+      .send({ avatar })
+      .expect(400);
+    expect(update).not.toHaveBeenCalled();
+  });
+  it.each([null, 'data:image/jpeg;base64,/9j/2Q=='])(
+    'saves or removes a photo for the authenticated account',
+    async (avatar) => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/auth/preferences')
+        .set('Authorization', 'Bearer access')
+        .send({ avatar })
+        .expect(200);
+      expect(update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: user.id }, data: { avatar } }),
+      );
+    },
+  );
 
   it('requires authentication', async () => {
     await request(app.getHttpServer())

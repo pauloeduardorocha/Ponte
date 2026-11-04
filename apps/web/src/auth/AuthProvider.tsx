@@ -203,6 +203,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [state.user],
   );
 
+  const updateAvatar = useCallback(
+    async (avatar: string | null) => {
+      const userId = state.user?.id;
+      if (!userId) return;
+      const updated = await authApi.updatePreferences({ avatar });
+      setState((current) =>
+        current.user?.id === userId
+          ? { ...current, user: { ...current.user, avatar: updated.avatar } }
+          : current,
+      );
+    },
+    [state.user?.id],
+  );
+
   const updateColorMode = useCallback(
     async (mode: 'system' | 'light' | 'dark') => {
       const userId = state.user?.id;
@@ -242,6 +256,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       clearSession,
       hasPermission,
+      updateAvatar,
       updateColorMode,
       updatePushPreference,
     }),
@@ -252,6 +267,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       clearSession,
       hasPermission,
+      updateAvatar,
       updateColorMode,
       updatePushPreference,
     ],

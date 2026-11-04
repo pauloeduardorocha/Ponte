@@ -38,6 +38,7 @@ const userInclude = {
 } satisfies Prisma.UserInclude;
 type Identity = Prisma.UserGetPayload<{ include: typeof userInclude }>;
 export const safeUser = (user: Identity): CurrentUser => ({
+  avatar: user.avatar,
   pushReimbursementRequested: user.pushReimbursementRequested,
   colorMode:
     user.colorMode === 'light' || user.colorMode === 'dark'
@@ -110,6 +111,7 @@ export class AuthService {
     userId: string,
     preferences: {
       pushReimbursementRequested?: boolean;
+      avatar?: string | null;
       colorMode?: 'system' | 'light' | 'dark';
       pushEventRefundRequested?: boolean;
       pushLibraryOverdue?: boolean;
@@ -123,6 +125,7 @@ export class AuthService {
         where: { id: userId },
         data: preferences,
         select: {
+          avatar: true,
           colorMode: true,
           pushReimbursementRequested: true,
           pushEventRefundRequested: true,
