@@ -1233,6 +1233,61 @@
         },
         "type": "object"
       },
+      "FamilyDto": {
+        "properties": {
+          "birthDate": {
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "createAccount": {
+            "type": "boolean"
+          },
+          "email": {
+            "format": "email",
+            "maxLength": 320,
+            "type": "string"
+          },
+          "memberId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "parentRole": {
+            "enum": [
+              "FATHER",
+              "MOTHER"
+            ],
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 128,
+            "minLength": 12,
+            "type": "string"
+          },
+          "phone": {
+            "maxLength": 32,
+            "pattern": "^\\+?[\\d ()-]+$",
+            "type": "string"
+          },
+          "relation": {
+            "enum": [
+              "FATHER",
+              "MOTHER",
+              "CHILD",
+              "SPOUSE"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "relation"
+        ],
+        "type": "object"
+      },
       "FetchInvoicesDto": {
         "properties": {
           "bankImportId": {
@@ -13831,6 +13886,185 @@
         ],
         "x-permissions-all": [
           "LIBRARY_SETTINGS_UPDATE"
+        ]
+      }
+    },
+    "/api/v1/member-family/{id}": {
+      "get": {
+        "operationId": "FamilyController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Família"
+        ],
+        "x-ponte-cache-ttl": 0
+      },
+      "post": {
+        "operationId": "FamilyController_save",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FamilyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Família"
+        ]
+      }
+    },
+    "/api/v1/member-family/{id}/search": {
+      "get": {
+        "operationId": "FamilyController_search",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "maximum": 100000,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "pageSize",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Família"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
+    "/api/v1/member-family/{id}/{linkId}": {
+      "delete": {
+        "operationId": "FamilyController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "linkId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Família"
         ]
       }
     },

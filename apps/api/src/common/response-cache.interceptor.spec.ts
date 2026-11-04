@@ -64,6 +64,8 @@ describe('HTTP cache policy', () => {
     ['/library/books/availability', 0],
     ['/library/reservations', 0],
     ['/member-portal/dashboard', 0],
+    ['/member-family/id', 0],
+    ['/member-family/id/search?search=Maria', 0],
     ['/auth/me', 0],
     ['/privacy/me/export', 0],
     ['/unknown', 0],

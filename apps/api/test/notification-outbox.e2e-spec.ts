@@ -7,6 +7,7 @@ import { PrismaService } from '../src/database/prisma.service';
 import { BirdDeliveryError } from '../src/modules/email/bird-email.service';
 import { NotificationOutboxService } from '../src/modules/operations/notification-outbox.service';
 import { NotificationWorkerController } from '../src/modules/operations/notification-worker.controller';
+import type { BirthdayPushService } from '../src/modules/community/birthday-push.service';
 import { OperationsService } from '../src/modules/operations/operations.service';
 
 describe('Notification outbox with real PostgreSQL and simulated transport', () => {
@@ -522,16 +523,23 @@ describe('Notification outbox with real PostgreSQL and simulated transport', () 
 
   it('requires a distinct configured worker secret before touching the outbox', async () => {
     const token = 'worker-secret-'.repeat(4);
+    const birthdays = {
+      deliver: jest.fn().mockResolvedValue({ status: 'skipped' }),
+    };
     const controller = new NotificationWorkerController(
       worker,
       new ConfigService({ NOTIFICATION_OUTBOX_SECRET: token }),
+      birthdays as unknown as BirthdayPushService,
     );
     const process = jest.spyOn(worker, 'process');
-    expect(() => controller.process()).toThrow();
-    expect(() => controller.process('Bearer invalid')).toThrow();
+    await expect(controller.process()).rejects.toThrow();
+    await expect(controller.process('Bearer invalid')).rejects.toThrow();
     expect(process).not.toHaveBeenCalled();
+    expect(birthdays.deliver).not.toHaveBeenCalled();
     await expect(controller.process(`Bearer ${token}`)).resolves.toMatchObject({
       processed: 0,
+      birthdays: { status: 'skipped' },
     });
+    expect(birthdays.deliver).toHaveBeenCalledTimes(1);
   });
 });

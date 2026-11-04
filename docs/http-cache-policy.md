@@ -1,6 +1,6 @@
 # Cache HTTP e persistência no cliente
 
-Todas as 131 rotas GET do contrato estão classificadas explicitamente em packages/shared/src/http-cache-policy.ts. São 74 rotas elegíveis: 1 de aniversários (24 h), 30 financeiras/reembolsos (1 h) e 43 de cadastros/conteúdo (6 h). As outras 57 exigem dados atuais ou não admitem persistência. Rotas novas e métodos de escrita recebem no-store por padrão.
+Todas as 133 rotas GET do contrato estão classificadas explicitamente em packages/shared/src/http-cache-policy.ts. São 74 rotas elegíveis: 1 de aniversários (24 h), 30 financeiras/reembolsos (1 h) e 43 de cadastros/conteúdo (6 h). As outras 59 exigem dados atuais ou não admitem persistência. Rotas novas e métodos de escrita recebem no-store por padrão.
 
 Respostas GET JSON bem-sucedidas elegíveis usam Cache-Control: private, max-age=<segundos>, Vary: Authorization, Cookie. CDN-Cache-Control e Vercel-CDN-Cache-Control são no-store: dados privados não podem ser compartilhados na CDN. Falhas, autenticação, exportações e estado operacional crítico não são persistidos. O catálogo filtrado por available também exige rede.
 
@@ -91,6 +91,8 @@ Qualquer escrita de negócio invalida conservadoramente todas as respostas persi
 | `/member-portal/ministries` | private, max-age=21600 (6 h) |
 | `/member-portal/small-groups` | private, max-age=21600 (6 h) |
 | `/member-portal/small-groups/{id}` | private, max-age=21600 (6 h) |
+| `/member-family/{id}` | no-store |
+| `/member-family/{id}/search` | no-store |
 | `/members` | private, max-age=21600 (6 h) |
 | `/members/{id}` | private, max-age=21600 (6 h) |
 | `/operations/assignees` | private, max-age=21600 (6 h) |

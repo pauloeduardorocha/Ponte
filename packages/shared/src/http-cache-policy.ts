@@ -81,6 +81,8 @@ export const HTTP_CACHE_ROUTES: Readonly<Record<string, number>> = {
   '/member-portal/ministries': 21600,
   '/member-portal/small-groups': 21600,
   '/member-portal/small-groups/{id}': 21600,
+  '/member-family/{id}': 0,
+  '/member-family/{id}/search': 0,
   '/members': 21600,
   '/members/{id}': 21600,
   '/operations/assignees': 21600,
