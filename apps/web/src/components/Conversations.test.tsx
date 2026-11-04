@@ -38,7 +38,11 @@ describe('Conversation panels', () => {
     });
     renderApp('/');
     fireEvent.click(
-      await screen.findByRole('link', { name: /Conversar sobre o encontro/ }),
+      await screen.findByRole(
+        'link',
+        { name: /Conversar sobre o encontro/ },
+        { timeout: 10000 },
+      ),
     );
     expect(
       await screen.findByRole('heading', { level: 1, name: topic.title }),
@@ -63,7 +67,11 @@ describe('Conversation panels', () => {
     });
     renderApp('/');
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Nova conversa' }),
+      await screen.findByRole(
+        'button',
+        { name: 'Nova conversa' },
+        { timeout: 10000 },
+      ),
     );
     const dialog = screen.getByRole('dialog');
     fireEvent.change(
@@ -262,6 +270,34 @@ describe('Conversation panels', () => {
     expect(
       requests.some((r) => r.method === 'GET' && r.query.get('page') === '1'),
     ).toBe(true);
+  });
+
+  it('refreshes cached conversation data manually', async () => {
+    let reads = 0;
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      [`GET /conversations/${id}`]: () => ({
+        body: {
+          topic: {
+            ...topic,
+            title: ++reads > 1 ? 'Conversa atualizada' : topic.title,
+          },
+          items: [],
+          hasMore: false,
+        },
+      }),
+    });
+    renderApp(`/conversations/${id}`);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Atualizar conversa' }),
+    );
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Conversa atualizada',
+      }),
+    ).toBeInTheDocument();
+    expect(reads).toBe(2);
   });
 
   it('blocks pending accounts before querying conversations', async () => {

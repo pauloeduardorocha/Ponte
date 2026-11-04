@@ -17,6 +17,18 @@ class FixtureController {
   @Get('library/books') books() {
     return [];
   }
+  @Get('conversations') conversations() {
+    return [];
+  }
+  @Get('conversations/members') conversationMembers() {
+    return [];
+  }
+  @Get('conversations/:id') conversation() {
+    return {};
+  }
+  @Get('conversations/:id/image') conversationImage() {
+    return {};
+  }
   @Get('library/books/availability') availability() {
     return [];
   }
@@ -43,6 +55,10 @@ describe('HTTP cache policy', () => {
     ['/finance/accounts', 3600],
     ['/reimbursements/mine', 3600],
     ['/videos/playlists/example', 21600],
+    ['/conversations?page=2', 21600],
+    ['/api/v1/conversations/example?page=1', 21600],
+    ['/conversations/example/image', 21600],
+    ['/conversations/members?q=Maria', 0],
     ['/library/books/id', 21600],
     ['/library/books?available=false', 0],
     ['/library/books/availability', 0],
@@ -66,6 +82,10 @@ describe('HTTP cache policy', () => {
         ['finance/accounts', 'private, max-age=3600'],
         ['community/birthdays', 'private, max-age=86400'],
         ['library/books', 'private, max-age=21600'],
+        ['conversations', 'private, max-age=21600'],
+        ['conversations/example', 'private, max-age=21600'],
+        ['conversations/example/image', 'private, max-age=21600'],
+        ['conversations/members?q=Maria', 'no-store'],
         ['library/books?available=true', 'no-store'],
         ['library/books/availability', 'no-store'],
       ] as const) {

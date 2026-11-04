@@ -156,6 +156,34 @@ describe('persistent private response cache', () => {
       client.clear();
     }
   });
+  it('preserves the original timestamp of persisted pages in the conversations carousel', async () => {
+    const now = Date.now();
+    const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+    await writeResponseCache(
+      '/api/v1/conversations',
+      '/conversations',
+      response(1, 'private, max-age=21600'),
+      responseCacheTicket(),
+    );
+    clock.mockReturnValue(now + 5 * 3600000);
+    setAccessToken('test-token');
+    const client = createQueryClient();
+    try {
+      const queryKey = ['conversations', 'list'];
+      await client.fetchInfiniteQuery({
+        queryKey,
+        queryFn: () => apiRequest('/conversations'),
+        initialPageParam: 0,
+      });
+      expect(client.getQueryState(queryKey)?.dataUpdatedAt).toBe(now);
+      clock.mockReturnValue(now + 6 * 3600000);
+      expect(
+        client.getQueryCache().find({ queryKey })?.isStaleByTime(21600000),
+      ).toBe(true);
+    } finally {
+      client.clear();
+    }
+  });
   it('discards old data after account/permission changes and logout', async () => {
     await save();
     await activateResponseCache({ ...alice, permissions: [] });
@@ -238,4 +266,54 @@ describe('persistent private response cache', () => {
     await save();
     expect(await read()).toBeUndefined();
   });
+  it.each([
+    '/conversations?page=0',
+    '/conversations/topic?page=1',
+    '/conversations/post/image',
+  ])(
+    'persists %s for six hours and expires at the original response time',
+    async (candidate) => {
+      const now = Date.now();
+      const clock = vi.spyOn(Date, 'now').mockReturnValue(now);
+      await writeResponseCache(
+        candidate,
+        candidate,
+        response(1, 'private, max-age=21600'),
+        responseCacheTicket(),
+      );
+      await activateResponseCache(alice);
+      clock.mockReturnValue(now + 21600000 - 1);
+      expect(
+        await readResponseCache(candidate, candidate, responseCacheTicket()),
+      ).toBeDefined();
+      clock.mockReturnValue(now + 21600000);
+      expect(
+        await readResponseCache(candidate, candidate, responseCacheTicket()),
+      ).toBeUndefined();
+    },
+  );
+  it.each(['POST', 'DELETE'] as const)(
+    'invalidates cached conversation reads after %s',
+    async (method) => {
+      const fetch = vi
+        .fn()
+        .mockImplementation(async () => response(1, 'private, max-age=21600'));
+      vi.stubGlobal('fetch', fetch);
+      setAccessToken('test-token');
+      await apiRequest('/conversations');
+      await apiRequest('/conversations');
+      expect(fetch).toHaveBeenCalledTimes(1);
+      await apiRequest(
+        method === 'POST'
+          ? '/conversations/topic/replies'
+          : '/conversations/post',
+        {
+          method,
+          ...(method === 'POST' ? { body: { body: 'Resposta' } } : {}),
+        },
+      );
+      await apiRequest('/conversations');
+      expect(fetch).toHaveBeenCalledTimes(3);
+    },
+  );
 });

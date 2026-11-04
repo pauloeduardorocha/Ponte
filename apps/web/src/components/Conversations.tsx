@@ -25,6 +25,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
 import { formatDateTime } from '../lib/format';
 import { useAuth } from '../auth/auth-context';
+import { CachedQueryStatus } from './CachedQueryStatus';
 
 import type {
   ConversationPerson as Person,
@@ -460,7 +461,6 @@ export function ConversationsCarousel() {
       apiRequest<Page>('/conversations', { query: { page: pageParam } }),
     getNextPageParam: (last, pages) =>
       last.hasMore ? pages.length : undefined,
-    refetchInterval: 30000,
   });
   const posts = [
     ...new Map(
@@ -479,6 +479,12 @@ export function ConversationsCarousel() {
           Nova conversa
         </Button>
       </Stack>
+      <CachedQueryStatus
+        updatedAt={list.dataUpdatedAt}
+        refreshing={list.isFetching}
+        onRefresh={() => void list.refetch()}
+        label="conversas"
+      />
       {list.isPending && <CircularProgress aria-label="Carregando conversas" />}
       {list.isError && (
         <Alert
@@ -619,7 +625,6 @@ export function ConversationPage() {
     queryFn: () =>
       apiRequest<Detail>(`/conversations/${id}`, { query: { page } }),
     enabled: !!id,
-    refetchInterval: 15000,
   });
   function refresh() {
     void client.invalidateQueries({ queryKey: ['conversations'] });
@@ -629,6 +634,12 @@ export function ConversationPage() {
       <Button component={Link} to="/" sx={{ alignSelf: 'flex-start' }}>
         Voltar para o início
       </Button>
+      <CachedQueryStatus
+        updatedAt={detail.dataUpdatedAt}
+        refreshing={detail.isFetching}
+        onRefresh={refresh}
+        label="conversa"
+      />
       {detail.isPending && (
         <CircularProgress aria-label="Carregando conversa" />
       )}

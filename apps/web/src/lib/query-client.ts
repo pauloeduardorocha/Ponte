@@ -7,7 +7,19 @@ export function createQueryClient() {
   const client = new QueryClient({
     queryCache: new QueryCache({
       onSuccess(data, query) {
-        const time = responseDataTime(data);
+        const pages =
+          data &&
+          typeof data === 'object' &&
+          'pages' in data &&
+          Array.isArray(data.pages)
+            ? data.pages
+            : [];
+        const pageTimes = pages
+          .map(responseDataTime)
+          .filter((time): time is number => time !== undefined);
+        const time =
+          responseDataTime(data) ??
+          (pageTimes.length ? Math.min(...pageTimes) : undefined);
         if (time) query.setState({ dataUpdatedAt: time });
       },
     }),
@@ -32,6 +44,15 @@ export function createQueryClient() {
     gcTime: 65 * 60_000,
     refetchOnWindowFocus: true,
     refetchOnReconnect: 'always',
+  });
+  client.setQueryDefaults(['conversations'], {
+    staleTime: 6 * 60 * 60_000,
+    gcTime: 7 * 60 * 60_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: 'always',
+  });
+  client.setQueryDefaults(['conversations', 'members'], {
+    staleTime: 0,
   });
   client.setQueryDefaults(['library'], {
     staleTime: 6 * 60 * 60_000,

@@ -4872,7 +4872,7 @@
               "Cache-Control": {
                 "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
                 "schema": {
-                  "example": "no-store",
+                  "example": "private, max-age=21600",
                   "type": "string"
                 }
               }
@@ -4887,7 +4887,7 @@
         "tags": [
           "Conversations"
         ],
-        "x-ponte-cache-ttl": 0
+        "x-ponte-cache-ttl": 21600
       },
       "post": {
         "operationId": "ConversationsController_create",
@@ -5007,7 +5007,7 @@
               "Cache-Control": {
                 "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
                 "schema": {
-                  "example": "no-store",
+                  "example": "private, max-age=21600",
                   "type": "string"
                 }
               }
@@ -5022,7 +5022,7 @@
         "tags": [
           "Conversations"
         ],
-        "x-ponte-cache-ttl": 0
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/conversations/{id}/image": {
@@ -5045,7 +5045,7 @@
               "Cache-Control": {
                 "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
                 "schema": {
-                  "example": "no-store",
+                  "example": "private, max-age=21600",
                   "type": "string"
                 }
               }
@@ -5060,7 +5060,7 @@
         "tags": [
           "Conversations"
         ],
-        "x-ponte-cache-ttl": 0
+        "x-ponte-cache-ttl": 21600
       }
     },
     "/api/v1/conversations/{id}/replies": {

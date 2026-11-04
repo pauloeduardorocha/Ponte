@@ -19,6 +19,9 @@ describe('Session query cache', () => {
     [['library', 'books', 1], 6 * 60 * 60_000],
     [['member-portal', 'books', 1], 6 * 60 * 60_000],
     [['community', 'dashboard'], 6 * 60 * 60_000],
+    [['conversations', 'list'], 6 * 60 * 60_000],
+    [['conversations', 'detail', 'topic', 0], 6 * 60 * 60_000],
+    [['conversations', 'image', 'post'], 6 * 60 * 60_000],
   ])(
     'reuses %j until freshness expires and then fetches again',
     async (queryKey, staleTime) => {
