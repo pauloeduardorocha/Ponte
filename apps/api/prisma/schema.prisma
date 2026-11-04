@@ -284,6 +284,9 @@ enum MemberStatus {
 }
 
 model Member {
+  withoutAccount      Boolean               @default(false) @map("without_account")
+  familyAsFirst       MemberRelationship[]  @relation("FamilyFirst")
+  familyAsSecond      MemberRelationship[]  @relation("FamilySecond")
   invitedVisitors     Visitor[]             @relation("VisitorInviter")
   convertedVisitor    Visitor?              @relation("ConvertedVisitor")
   followUps           FollowUp[]
@@ -319,6 +322,28 @@ model Member {
 
   @@index([status, name])
   @@map("members")
+}
+
+enum FamilyRelation {
+  FATHER
+  MOTHER
+  CHILD
+  SPOUSE
+}
+
+model MemberRelationship {
+  id         String         @id @default(uuid()) @db.Uuid
+  firstId    String         @map("first_id") @db.Uuid
+  secondId   String         @map("second_id") @db.Uuid
+  firstRole  FamilyRelation @map("first_role")
+  secondRole FamilyRelation @map("second_role")
+  first      Member         @relation("FamilyFirst", fields: [firstId], references: [id], onDelete: Cascade)
+  second     Member         @relation("FamilySecond", fields: [secondId], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([firstId, secondId])
+  @@index([secondId])
+  @@map("member_relationships")
 }
 
 enum CopyStatus {

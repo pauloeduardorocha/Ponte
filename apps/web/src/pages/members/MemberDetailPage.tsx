@@ -38,6 +38,7 @@ import { formatDate, formatDateOnly } from '../../lib/format';
 import { deleteMember, getMember } from '../../lib/members-api';
 import { MemberStatusChip } from './MemberStatusChip';
 import { MemberLibraryHistory } from '../library/LibraryHistory';
+import { MemberFamily } from '../../components/MemberFamily';
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
@@ -210,6 +211,12 @@ export function MemberDetailPage() {
         </CardContent>
       </Card>
 
+      <MemberFamily
+        memberId={data.id}
+        canEdit={
+          hasPermission('MEMBER_UPDATE') || currentUser?.memberId === data.id
+        }
+      />
       {data.user && (
         <Card variant="outlined">
           <CardContent>

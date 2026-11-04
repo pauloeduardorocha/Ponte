@@ -1,3 +1,29 @@
+export type FamilyRelation = 'FATHER' | 'MOTHER' | 'CHILD' | 'SPOUSE';
+export interface FamilyLink {
+  id: string;
+  relation: FamilyRelation;
+  parentRole: FamilyRelation;
+  member: {
+    id: string;
+    name: string;
+    birthDate: string | null;
+    user: {
+      status: 'ACTIVE' | 'PENDING_APPROVAL' | 'INVITED' | 'DISABLED';
+    } | null;
+  };
+}
+export interface FamilyInput {
+  relation: FamilyRelation;
+  parentRole?: 'FATHER' | 'MOTHER';
+  memberId?: string;
+  name?: string;
+  birthDate?: string;
+  createAccount?: boolean;
+  email?: string;
+  phone?: string;
+  password?: string;
+}
+
 /** JSON values on the wire; dates in response contracts are ISO strings. */
 export type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };

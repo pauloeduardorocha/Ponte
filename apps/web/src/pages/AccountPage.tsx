@@ -25,6 +25,7 @@ import { changePassword } from '../lib/auth-api';
 import { errorMessage } from '../lib/errors';
 import { passwordSchema } from '../lib/validation';
 import { PasskeySettings } from '../components/PasskeySettings';
+import { MemberFamily } from '../components/MemberFamily';
 
 const passwordFormSchema = z
   .object({
@@ -253,6 +254,7 @@ export function AccountPage() {
         </CardContent>
       </Card>
       <PasskeySettings />
+      {user?.status === 'ACTIVE' && user.memberId && <MemberFamily />}
       {user?.status !== 'PENDING_APPROVAL' && (
         <Card variant="outlined">
           <CardContent>

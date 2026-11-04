@@ -370,6 +370,8 @@ export class PrivacyService {
           where: { id: memberId },
           data: {
             name: `Membro anonimizado ${memberId.slice(0, 8)}`,
+            familyAsFirst: { deleteMany: {} },
+            familyAsSecond: { deleteMany: {} },
             email: null,
             phone: null,
             iban: null,
