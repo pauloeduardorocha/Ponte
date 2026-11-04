@@ -141,3 +141,6 @@ ficheiro enquanto outro ainda o escreve e falhar com `spawn ETXTBSY`. A execuç�
 sequencial mantém todos os testes reais de navegador ativos e evita essa disputa.
 
 Os testes locais cobrem normalização, filtros, segurança de links/uploads, IPC e descarte de credenciais, duplicidades, RBAC, cadastro automático, categorização posterior e rastreabilidade. A autenticação e os seletores atuais do portal precisam ser verificados numa sessão real do titular; os testes não acessam a Autoridade Tributária.
+
+O aviso financeiro conta faturas importadas sem movimento associado. **Associar faturas** percorre essas faturas e permite pesquisar e paginar despesas para escolher o movimento correspondente. A associação é manual e atualiza a contagem do aviso. É possível pular uma fatura ou continuar depois. Os anexos continuam disponíveis na ação **Documentos** de cada despesa.
+Na lista de faturas, **Ver movimento** abre a despesa associada pelo seu identificador. A ação exige permissão de leitura de movimentos e só aparece em faturas associadas.

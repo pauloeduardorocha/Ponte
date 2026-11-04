@@ -180,7 +180,7 @@ describe('Finance permissions and dashboard', () => {
       screen.getByRole('button', { name: 'Excluir expense.pdf' }),
     ).toBeVisible();
   });
-  it('reviews undocumented expenses and associates a suggested invoice', async () => {
+  it('reviews imported unassociated invoices and associates an expense', async () => {
     const expense = {
       id: 'expense-1',
       description: 'Compra de material',
@@ -214,7 +214,7 @@ describe('Finance permissions and dashboard', () => {
       },
       'GET /finance/expenses/expense-1/attachments': { body: [] },
       'GET /finance/invoices': {
-        body: { items: [], total: 0, page: 1, pageSize: 100 },
+        body: { items: [invoice], total: 1, page: 1, pageSize: 100 },
       },
       'GET /finance/invoices/expense-suggestions/expense-1': {
         body: [invoice],
@@ -224,15 +224,20 @@ describe('Finance permissions and dashboard', () => {
       },
     });
     renderApp('/finance?tab=expenses');
-    await screen.findByText('1 despesa sem anexo nem fatura associada');
-    fireEvent.click(screen.getByRole('button', { name: 'Anexar documento' }));
+    await screen.findByText('1 fatura sem movimento associado');
+    fireEvent.click(screen.getByRole('button', { name: 'Associar faturas' }));
     await screen.findByRole('dialog');
-    expect(
-      await screen.findByLabelText('Selecionar anexos'),
-    ).toBeInTheDocument();
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Associar FT-1' }),
+      await screen.findByRole('button', {
+        name: 'Associar a Compra de material',
+      }),
     );
+    expect(
+      requests
+        .filter((r) => r.path === '/finance/invoices')
+        .every((r) => r.query.get('unassociated') === 'true'),
+    ).toBe(true);
+    expect(requests.some((r) => r.query.has('missingDocument'))).toBe(false);
     await waitFor(() =>
       expect(
         requests.some(

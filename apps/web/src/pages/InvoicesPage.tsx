@@ -1,6 +1,7 @@
 import { formatDateOnly } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -188,6 +189,15 @@ export function InvoicesPage() {
                     color={invoice.expenseId ? 'success' : 'default'}
                     label={invoice.expenseId ? 'Associada' : 'Não associada'}
                   />
+                  {invoice.expenseId &&
+                    hasPermission('FINANCE_TRANSACTION_READ') && (
+                      <Button
+                        component={Link}
+                        to={`/finance?tab=expenses&record=${encodeURIComponent(invoice.expenseId)}`}
+                      >
+                        Ver movimento
+                      </Button>
+                    )}
                 </TableCell>
                 <TableCell>
                   <InvoiceLink invoice={invoice} />

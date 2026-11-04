@@ -10,6 +10,68 @@ import {
 
 describe('Financial invoices tab', () => {
   beforeEach(resetTestState);
+  it('opens the associated expense from an invoice', async () => {
+    const requests = mockApi({
+      ...sessionRoutes(
+        makeUser(['FINANCE_INVOICE_READ', 'FINANCE_TRANSACTION_READ']),
+      ),
+      'GET /finance/invoices': {
+        body: {
+          items: [
+            {
+              id: 'invoice-1',
+              importId: 'source-1',
+              issuerName: 'Loja',
+              issuerTaxId: '123456789',
+              number: 'FT 42',
+              date: '2026-10-01',
+              amount: '25.00',
+              currency: 'EUR',
+              documentUrl: null,
+              expenseId: 'expense-42',
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 20,
+        },
+      },
+      'GET /finance/expenses': {
+        body: {
+          items: [
+            {
+              id: 'expense-42',
+              description: 'Compra associada',
+              amount: '25.00',
+              date: '2026-10-01',
+              account: { currency: 'EUR' },
+            },
+          ],
+          total: 1,
+          page: 1,
+          pageSize: 20,
+        },
+      },
+    });
+    renderApp('/finance?tab=invoices');
+    const link = await screen.findByRole(
+      'link',
+      { name: 'Ver movimento' },
+      { timeout: 12000 },
+    );
+    expect(link).toHaveAttribute(
+      'href',
+      '/finance?tab=expenses&record=expense-42',
+    );
+    fireEvent.click(link);
+    expect(await screen.findByText('Compra associada')).toBeInTheDocument();
+    expect(
+      requests.some(
+        (r) =>
+          r.path === '/finance/expenses' && r.query.get('id') === 'expense-42',
+      ),
+    ).toBe(true);
+  });
   it('lists invoices for readers without querying banking or offering imports', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser(['FINANCE_INVOICE_READ'])),
