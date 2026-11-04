@@ -18,14 +18,40 @@ import { apiRequest } from '../lib/api';
 import { MovementAttachments } from './MovementAttachments';
 import { ExpenseInvoices, InvoiceLink, type Invoice } from './BankInvoices';
 import { useDebouncedValue } from '../lib/use-debounced-value';
+import { suggestInvoiceExpenses } from './invoice-expense-suggestions';
 
 function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
   const client = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const debounced = useDebouncedValue(search);
+  const [showAll, setShowAll] = useState(false);
+  const suggestions = useQuery({
+    queryKey: ['finance', 'expenses', 'invoice-suggestions', invoice.id],
+    queryFn: async () => {
+      const date = new Date(invoice.date);
+      const start = new Date(date.getTime() - 7 * 86400000)
+        .toISOString()
+        .slice(0, 10);
+      const end = new Date(date.getTime() + 90 * 86400000)
+        .toISOString()
+        .slice(0, 10);
+      const items: Expense[] = [];
+      for (let next = 1; ; next++) {
+        const batch = await apiRequest<Page<Expense>>('/finance/expenses', {
+          query: { start, end, page: next, pageSize: 100 },
+        });
+        items.push(...batch.items);
+        if (!batch.items.length || items.length >= batch.total) break;
+      }
+      return suggestInvoiceExpenses(invoice, items);
+    },
+  });
+  const listingAll =
+    showAll || Boolean(debounced) || suggestions.data?.length === 0;
   const expenses = useQuery({
     queryKey: ['finance', 'expenses', 'invoice-picker', debounced, page],
+    enabled: listingAll,
     queryFn: () =>
       apiRequest<Page<Expense>>('/finance/expenses', {
         query: { search: debounced, page, pageSize: 20 },
@@ -67,53 +93,92 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
               setPage(1);
             }}
           />
-          {expenses.isFetching && <Typography>Carregando despesas…</Typography>}
-          {expenses.error && (
+          {suggestions.isPending && !listingAll && (
+            <Typography>Procurando movimentos semelhantes…</Typography>
+          )}
+          {suggestions.error && (
+            <Alert severity="error">{suggestions.error.message}</Alert>
+          )}
+          {suggestions.data?.length === 0 && (
+            <Alert severity="info">
+              Não encontramos movimentos parecidos. Todas as despesas estão
+              listadas abaixo para seleção manual.
+            </Alert>
+          )}
+          {!listingAll && Boolean(suggestions.data?.length) && (
+            <Typography fontWeight={600}>
+              Movimentos sugeridos · confirme a associação manualmente
+            </Typography>
+          )}
+          <Button
+            onClick={() => {
+              setShowAll(!showAll);
+              setSearch('');
+              setPage(1);
+            }}
+          >
+            {showAll ? 'Ver sugestões' : 'Ver todas as despesas'}
+          </Button>
+          {listingAll && expenses.isFetching && (
+            <Typography>Carregando despesas…</Typography>
+          )}
+          {listingAll && expenses.error && (
             <Alert severity="error">{expenses.error.message}</Alert>
           )}
-          {expenses.data?.total === 0 && (
+          {listingAll && expenses.data?.total === 0 && (
             <Typography>Nenhuma despesa encontrada.</Typography>
           )}
-          {expenses.data?.items.map((expense) => (
-            <Stack key={expense.id} spacing={1}>
-              <Typography>
-                {expense.description} · {formatDateOnly(expense.date ?? null)} ·{' '}
-                {expense.amount} {expense.account?.currency}
-              </Typography>
-              {Number(expense.amount) !== Number(invoice.amount) && (
-                <Typography color="warning.main">
-                  Valor diferente da fatura; confira se é um pagamento agrupado.
+          {(listingAll ? expenses.data?.items : suggestions.data)?.map(
+            (expense) => (
+              <Stack key={expense.id} spacing={1}>
+                <Typography>
+                  {expense.description} · {formatDateOnly(expense.date ?? null)}{' '}
+                  · {expense.amount} {expense.account?.currency}
                 </Typography>
-              )}
+                {'reasons' in expense && Array.isArray(expense.reasons) && (
+                  <Typography variant="caption">
+                    {expense.reasons.join(' · ')}
+                  </Typography>
+                )}
+                {Number(expense.amount) !== Number(invoice.amount) && (
+                  <Typography color="warning.main">
+                    Valor diferente da fatura; confira se é um pagamento
+                    agrupado.
+                  </Typography>
+                )}
+                <Button
+                  disabled={
+                    association.isPending ||
+                    expense.account?.currency !== invoice.currency ||
+                    Number(invoice.amount) <= 0
+                  }
+                  onClick={() => association.mutate(expense.id)}
+                >
+                  Associar a {expense.description}
+                </Button>
+              </Stack>
+            ),
+          )}
+          {listingAll && (
+            <Stack direction="row" spacing={1}>
+              <Button
+                disabled={page === 1 || expenses.isFetching}
+                onClick={() => setPage(page - 1)}
+              >
+                Anterior
+              </Button>
+              <Typography>Página {page}</Typography>
               <Button
                 disabled={
-                  association.isPending ||
-                  expense.account?.currency !== invoice.currency ||
-                  Number(invoice.amount) <= 0
+                  page * 20 >= (expenses.data?.total ?? 0) ||
+                  expenses.isFetching
                 }
-                onClick={() => association.mutate(expense.id)}
+                onClick={() => setPage(page + 1)}
               >
-                Associar a {expense.description}
+                Seguinte
               </Button>
             </Stack>
-          ))}
-          <Stack direction="row" spacing={1}>
-            <Button
-              disabled={page === 1 || expenses.isFetching}
-              onClick={() => setPage(page - 1)}
-            >
-              Anterior
-            </Button>
-            <Typography>Página {page}</Typography>
-            <Button
-              disabled={
-                page * 20 >= (expenses.data?.total ?? 0) || expenses.isFetching
-              }
-              onClick={() => setPage(page + 1)}
-            >
-              Seguinte
-            </Button>
-          </Stack>
+          )}
         </>
       )}
       {association.error && (

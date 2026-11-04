@@ -180,85 +180,97 @@ describe('Finance permissions and dashboard', () => {
       screen.getByRole('button', { name: 'Excluir expense.pdf' }),
     ).toBeVisible();
   });
-  it('reviews imported unassociated invoices and associates an expense', async () => {
-    const expense = {
-      id: 'expense-1',
-      description: 'Compra de material',
-      amount: '20.00',
-      date: '2026-10-14',
-      account: { currency: 'EUR' },
-    };
-    const invoice = {
-      id: 'invoice-1',
-      importId: 'import-1',
-      issuerName: 'Loja',
-      issuerTaxId: '123456789',
-      number: 'FT-1',
-      date: '2026-10-14',
-      amount: '20.00',
-      currency: 'EUR',
-      documentUrl: null,
-    };
-    const requests = mockApi({
-      ...sessionRoutes(
-        makeUser([
-          'FINANCE_TRANSACTION_READ',
-          'FINANCE_ATTACHMENT_READ',
-          'FINANCE_ATTACHMENT_WRITE',
-          'FINANCE_INVOICE_READ',
-          'FINANCE_INVOICE_ASSOCIATE',
-        ]),
-      ),
-      'GET /finance/expenses': {
-        body: { items: [expense], total: 1, page: 1, pageSize: 20 },
-      },
-      'GET /finance/expenses/expense-1/attachments': { body: [] },
-      'GET /finance/invoices': {
-        body: { items: [invoice], total: 1, page: 1, pageSize: 100 },
-      },
-      'GET /finance/invoices/expense-suggestions/expense-1': {
-        body: [invoice],
-      },
-      'POST /finance/invoices/invoice-1/expense-association': {
-        body: { ...invoice, expenseId: expense.id },
-      },
-    });
-    renderApp('/finance?tab=expenses');
-    await screen.findByText('1 fatura sem movimento associado');
-    fireEvent.click(screen.getByRole('button', { name: 'Associar faturas' }));
-    await screen.findByRole('dialog');
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: 'Associar a Compra de material',
-      }),
-    );
-    expect(
-      requests
-        .filter((r) => r.path === '/finance/invoices')
-        .every((r) => r.query.get('unassociated') === 'true'),
-    ).toBe(true);
-    expect(requests.some((r) => r.query.has('missingDocument'))).toBe(false);
-    await waitFor(() =>
+  it.each([true, false])(
+    'reviews invoices with similar movements: %s',
+    async (similar) => {
+      const expense = {
+        id: 'expense-1',
+        description: 'Compra de material',
+        amount: '20.00',
+        date: '2026-10-14',
+        account: { currency: 'EUR' },
+      };
+      const invoice = {
+        id: 'invoice-1',
+        importId: 'import-1',
+        issuerName: 'Loja',
+        issuerTaxId: '123456789',
+        number: 'FT-1',
+        date: '2026-10-14',
+        amount: '20.00',
+        currency: 'EUR',
+        documentUrl: null,
+      };
+      const requests = mockApi({
+        ...sessionRoutes(
+          makeUser([
+            'FINANCE_TRANSACTION_READ',
+            'FINANCE_ATTACHMENT_READ',
+            'FINANCE_ATTACHMENT_WRITE',
+            'FINANCE_INVOICE_READ',
+            'FINANCE_INVOICE_ASSOCIATE',
+          ]),
+        ),
+        'GET /finance/expenses': ({ query }) => ({
+          body: {
+            items: !similar && query.has('start') ? [] : [expense],
+            total: !similar && query.has('start') ? 0 : 1,
+            page: 1,
+            pageSize: 20,
+          },
+        }),
+        'GET /finance/expenses/expense-1/attachments': { body: [] },
+        'GET /finance/invoices': {
+          body: { items: [invoice], total: 1, page: 1, pageSize: 100 },
+        },
+        'GET /finance/invoices/expense-suggestions/expense-1': {
+          body: [invoice],
+        },
+        'POST /finance/invoices/invoice-1/expense-association': {
+          body: { ...invoice, expenseId: expense.id },
+        },
+      });
+      renderApp('/finance?tab=expenses');
+      await screen.findByText('1 fatura sem movimento associado');
+      fireEvent.click(screen.getByRole('button', { name: 'Associar faturas' }));
+      await screen.findByRole('dialog');
+      if (!similar)
+        expect(
+          await screen.findByText(/Não encontramos movimentos parecidos/),
+        ).toBeInTheDocument();
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: 'Associar a Compra de material',
+        }),
+      );
       expect(
-        requests.some(
+        requests
+          .filter((r) => r.path === '/finance/invoices')
+          .every((r) => r.query.get('unassociated') === 'true'),
+      ).toBe(true);
+      expect(requests.some((r) => r.query.has('missingDocument'))).toBe(false);
+      await waitFor(() =>
+        expect(
+          requests.some(
+            (r) =>
+              r.method === 'POST' &&
+              r.path === '/finance/invoices/invoice-1/expense-association',
+          ),
+        ).toBe(true),
+      );
+      expect(
+        requests.find(
           (r) =>
             r.method === 'POST' &&
             r.path === '/finance/invoices/invoice-1/expense-association',
-        ),
-      ).toBe(true),
-    );
-    expect(
-      requests.find(
-        (r) =>
-          r.method === 'POST' &&
-          r.path === '/finance/invoices/invoice-1/expense-association',
-      )?.body,
-    ).toEqual({ expenseId: expense.id });
-    fireEvent.click(screen.getByRole('button', { name: 'Concluir revisão' }));
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
-    );
-  });
+        )?.body,
+      ).toEqual({ expenseId: expense.id });
+      fireEvent.click(screen.getByRole('button', { name: 'Concluir revisão' }));
+      await waitFor(() =>
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument(),
+      );
+    },
+  );
   it('opens a bank attachment deep link even after classification is complete', async () => {
     mockApi({
       ...sessionRoutes(
