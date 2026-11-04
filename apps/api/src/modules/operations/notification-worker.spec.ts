@@ -6,6 +6,7 @@ import { AuthGuard } from '../auth/auth.guard';
 import { AuthService } from '../auth/auth.service';
 import { PermissionGuard } from '../auth/permission.guard';
 import { NotificationOutboxService } from './notification-outbox.service';
+import { BirthdayPushService } from '../community/birthday-push.service';
 import { NotificationWorkerController } from './notification-worker.controller';
 
 describe('Notification worker machine authentication', () => {
@@ -20,6 +21,7 @@ describe('Notification worker machine authentication', () => {
         pending: 0,
         skipped: 0,
       });
+    const deliver = jest.fn().mockResolvedValue({ status: 'skipped' });
     const authenticate = jest.fn();
     const module = await Test.createTestingModule({
       controllers: [NotificationWorkerController],
@@ -31,6 +33,7 @@ describe('Notification worker machine authentication', () => {
           }),
         },
         { provide: NotificationOutboxService, useValue: { process } },
+        { provide: BirthdayPushService, useValue: { deliver } },
         { provide: AuthService, useValue: { authenticate } },
         { provide: APP_GUARD, useClass: AuthGuard },
         { provide: APP_GUARD, useClass: PermissionGuard },
@@ -38,10 +41,10 @@ describe('Notification worker machine authentication', () => {
     }).compile();
     const app = module.createNestApplication();
     await app.init();
-    return { app, process, authenticate };
+    return { app, process, authenticate, deliver };
   }
   it('accepts only the dedicated bearer secret and bypasses session authentication', async () => {
-    const { app, process, authenticate } = await application();
+    const { app, process, authenticate, deliver } = await application();
     try {
       for (const value of [
         '',
@@ -55,12 +58,33 @@ describe('Notification worker machine authentication', () => {
           .expect(401);
       }
       expect(process).not.toHaveBeenCalled();
+      expect(deliver).not.toHaveBeenCalled();
       await request(app.getHttpServer())
         .post('/internal/notification-outbox/process')
         .auth(secret, { type: 'bearer' })
-        .expect(201);
+        .expect(201)
+        .expect(({ body }) => {
+          expect(body.birthdays).toEqual({ status: 'skipped' });
+          expect(body.processed).toBe(0);
+        });
       expect(process).toHaveBeenCalledTimes(1);
+      expect(deliver).toHaveBeenCalledTimes(1);
       expect(authenticate).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  });
+  it('reports birthday processing errors to the scheduled caller', async () => {
+    const { app, process, deliver } = await application();
+    deliver.mockRejectedValueOnce(new Error('Birthday processing failed'));
+    app.useLogger(false);
+    try {
+      await request(app.getHttpServer())
+        .post('/internal/notification-outbox/process')
+        .auth(secret, { type: 'bearer' })
+        .expect(500);
+      expect(process).toHaveBeenCalledTimes(1);
+      expect(deliver).toHaveBeenCalledTimes(1);
     } finally {
       await app.close();
     }

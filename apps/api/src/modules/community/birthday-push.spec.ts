@@ -34,7 +34,8 @@ describe('Daily birthday push', () => {
   }
   it('sends personal greetings to celebrants and names to other eligible users', async () => {
     const { service, db, push } = setup();
-    await service.deliver();
+    const result = await service.deliver();
+    expect(result).toEqual({ status: 'processed', celebrants: 1 });
     expect(db.user.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { status: 'ACTIVE', deletedAt: null, pushBirthdays: true },
@@ -57,19 +58,22 @@ describe('Daily birthday push', () => {
   });
   it('does not send before 9h or after the day was claimed', async () => {
     const { service, db, push } = setup(null);
-    await service.deliver();
+    const result = await service.deliver();
+    expect(result).toEqual({ status: 'skipped' });
     expect(db.user.findMany).not.toHaveBeenCalled();
     expect(push.notifyUsers).not.toHaveBeenCalled();
   });
   it('does not send when there are no birthdays', async () => {
     const { service, push } = setup([]);
-    await service.deliver();
+    const result = await service.deliver();
+    expect(result).toEqual({ status: 'processed', celebrants: 0 });
     expect(push.notifyUsers).not.toHaveBeenCalled();
   });
   it('does not claim the day when push is unconfigured', async () => {
     const { service, db, push } = setup();
     push.settings.mockReturnValue({ enabled: false });
-    await service.deliver();
+    const result = await service.deliver();
+    expect(result).toEqual({ status: 'disabled' });
     expect(db.$transaction).not.toHaveBeenCalled();
   });
 });

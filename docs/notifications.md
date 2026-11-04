@@ -1,6 +1,6 @@
 # Notificações internas e Web Push
 
-O sino de notificações, a caixa pessoal e o cartão de aniversariantes consultam a API a cada hora enquanto ativos. O cartão mantém os dados frescos por uma hora. O recebimento de Web Push continua a invalidar imediatamente as consultas de notificações. A manutenção periódica da biblioteca e a verificação do push diário de aniversariantes também ocorrem a cada hora por instância da API; o envio de aniversariantes é tentado na primeira verificação após as 09:00 de Lisboa. Instâncias serverless suspensas não garantem a execução desses temporizadores. As operações da biblioteca continuam a sincronizar empréstimos e reservas na própria transação.
+O sino de notificações, a caixa pessoal e o cartão de aniversariantes consultam a API a cada hora enquanto ativos. O cartão mantém os dados frescos por uma hora. O recebimento de Web Push continua a invalidar imediatamente as consultas de notificações. A manutenção periódica da biblioteca ocorre a cada hora por instância da API; instâncias serverless suspensas não garantem esse temporizador. O push diário de aniversariantes é processado pelo mesmo endpoint autenticado da fila, chamado pelo workflow de notificações a cada cinco minutos, com envio na primeira execução após as 09:00 de Lisboa. Ver [aniversariantes](birthdays.md). As operações da biblioteca continuam a sincronizar empréstimos e reservas na própria transação.
 
 Os endpoints da caixa pessoal e de Web Push abaixo exigem Bearer auth e usam o usuário da sessão; não aceitam um usuário destinatário fornecido pelo cliente.
 

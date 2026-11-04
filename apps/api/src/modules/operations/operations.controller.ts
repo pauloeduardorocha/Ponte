@@ -40,6 +40,7 @@ import {
 } from './notification.provider';
 import * as D from './operations.dto';
 import { PushService } from './push.service';
+import { BirthdayPushService } from '../community/birthday-push.service';
 import { PushController } from './push.controller';
 import { NotificationCountDto } from './push.dto';
 import { EmailModule } from '../email/email.module';
@@ -586,6 +587,7 @@ export class OperationsController {
   providers: [
     OperationsService,
     NotificationOutboxService,
+    BirthdayPushService,
     InternalNotificationProvider,
     PushService,
     PushNotificationProvider,

@@ -1,36 +1,18 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service';
 import { PushService } from '../operations/push.service';
 
 @Injectable()
-export class BirthdayPushService implements OnModuleInit, OnModuleDestroy {
-  private timer?: NodeJS.Timeout;
+export class BirthdayPushService {
   private running = false;
-  private readonly logger = new Logger(BirthdayPushService.name);
   constructor(
     private readonly db: PrismaService,
     private readonly push: PushService,
   ) {}
 
-  onModuleInit() {
-    this.timer = setInterval(() => {
-      void this.deliver().catch(() =>
-        this.logger.error('Falha no envio dos aniversariantes.'),
-      );
-    }, 60 * 60_000);
-    this.timer.unref();
-  }
-  onModuleDestroy() {
-    if (this.timer) clearInterval(this.timer);
-  }
-
   async deliver() {
-    if (this.running || !this.push.settings().enabled) return;
+    if (this.running) return { status: 'running' as const };
+    if (!this.push.settings().enabled) return { status: 'disabled' as const };
     this.running = true;
     try {
       // A database claim prevents repeats across restarts and multiple API replicas.
@@ -50,7 +32,8 @@ export class BirthdayPushService implements OnModuleInit, OnModuleDestroy {
           ORDER BY name, id
         `;
       });
-      if (!birthdays?.length) return;
+      if (!birthdays) return { status: 'skipped' as const };
+      if (!birthdays.length) return { status: 'processed' as const, celebrants: 0 };
       const users = await this.db.user.findMany({
         where: { status: 'ACTIVE', deletedAt: null, pushBirthdays: true },
         select: { id: true, memberId: true },
@@ -86,6 +69,7 @@ export class BirthdayPushService implements OnModuleInit, OnModuleDestroy {
         `Hoje celebramos: ${summary}.`,
         '/',
       );
+      return { status: 'processed' as const, celebrants: birthdays.length };
     } finally {
       this.running = false;
     }

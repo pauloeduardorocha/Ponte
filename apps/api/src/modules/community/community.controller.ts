@@ -17,7 +17,6 @@ import { PrismaService } from '../../database/prisma.service';
 import { Permission, AllowPending } from '../auth/permission.decorator';
 import type { AuthRequest } from '../auth/auth.guard';
 import { OperationsModule } from '../operations/operations.controller';
-import { BirthdayPushService } from './birthday-push.service';
 import { OperationsService } from '../operations/operations.service';
 import {
   CommunityQuery,
@@ -213,6 +212,5 @@ export class CommunityController {
 @Module({
   imports: [OperationsModule],
   controllers: [CommunityController],
-  providers: [BirthdayPushService],
 })
 export class CommunityModule {}

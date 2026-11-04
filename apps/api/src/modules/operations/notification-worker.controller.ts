@@ -9,6 +9,7 @@ import { ConfigService } from '@nestjs/config';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { timingSafeEqual } from 'node:crypto';
 import { Public } from '../auth/permission.decorator';
+import { BirthdayPushService } from '../community/birthday-push.service';
 import { NotificationOutboxService } from './notification-outbox.service';
 
 @ApiExcludeController()
@@ -17,11 +18,12 @@ export class NotificationWorkerController {
   constructor(
     private readonly outbox: NotificationOutboxService,
     private readonly config: ConfigService,
+    private readonly birthdays: BirthdayPushService,
   ) {}
 
   @Public()
   @Post('process')
-  process(@Headers('authorization') authorization?: string) {
+  async process(@Headers('authorization') authorization?: string) {
     const secret = this.config.get<string>('NOTIFICATION_OUTBOX_SECRET', '');
     if (secret.length < 32)
       throw new ServiceUnavailableException('Worker não configurado.');
@@ -32,6 +34,10 @@ export class NotificationWorkerController {
       !timingSafeEqual(received, expected)
     )
       throw new UnauthorizedException();
-    return this.outbox.process();
+    const [result, birthdays] = await Promise.all([
+      this.outbox.process(),
+      this.birthdays.deliver(),
+    ]);
+    return { ...result, birthdays };
   }
 }
