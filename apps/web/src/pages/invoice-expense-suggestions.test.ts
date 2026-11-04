@@ -23,7 +23,7 @@ describe('Invoice movement suggestions', () => {
       { ...expense, id: 'reference', description: 'Pagamento 123456789' },
     ]);
     expect(rows.map((row) => row.id)).toEqual(['reference', 'expense']);
-    expect(rows[0].reasons).toContain('Referência/NIF na despesa');
+    expect(rows[0]?.reasons).toContain('Referência/NIF na despesa');
   });
   it('allows grouped payments when the issuer matches', () => {
     expect(
