@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import { beforeEach, expect, it, vi } from 'vitest';
 import {
   makeUser,
@@ -30,7 +30,9 @@ it('uploads the compressed photo, restores it and removes it', async () => {
   });
   await screen.findByText('Foto atualizada.');
   expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({ avatar });
-  expect(screen.getByAltText(user.name)).toHaveAttribute('src', avatar);
+  expect(
+    within(screen.getByRole('main')).getByAltText(user.name),
+  ).toHaveAttribute('src', avatar);
   view.unmount();
   renderApp('/account');
   fireEvent.click(await screen.findByRole('button', { name: 'Remover foto' }));
@@ -49,5 +51,7 @@ it('keeps the photo when saving fails', async () => {
   renderApp('/account');
   fireEvent.click(await screen.findByRole('button', { name: 'Remover foto' }));
   await screen.findByText('Falha ao salvar foto.');
-  expect(screen.getByAltText(user.name)).toHaveAttribute('src', user.avatar);
+  expect(
+    within(screen.getByRole('main')).getByAltText(user.name),
+  ).toHaveAttribute('src', user.avatar);
 });
