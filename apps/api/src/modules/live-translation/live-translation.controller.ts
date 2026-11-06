@@ -46,6 +46,12 @@ export class LiveTranslationController {
   @Get('status') @Throttle({ default: { limit: 600, ttl: 60000 } }) status() {
     return this.service.status();
   }
+  @Public()
+  @Get('public-status')
+  @Throttle({ default: { limit: 600, ttl: 60000 } })
+  publicStatus() {
+    return this.service.status();
+  }
   @Post('credential')
   @UseGuards(TranslationAdminGuard)
   credential() {

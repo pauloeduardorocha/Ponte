@@ -5,17 +5,21 @@ import {
   Card,
   CardContent,
   Chip,
+  Container,
   Stack,
   Typography,
 } from '@mui/material';
 import TranslateRounded from '@mui/icons-material/TranslateRounded';
 import { useEffect, useRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { PageHeader } from '../components/PageParts';
 import { useLiveTranslation } from '../lib/live-translation';
 import { useLocalTranslation } from '../lib/use-local-translation';
 
-export function LiveTranslationPage() {
-  const session = useLiveTranslation();
+export function LiveTranslationPage({
+  publicAccess = false,
+}: { publicAccess?: boolean } = {}) {
+  const session = useLiveTranslation({ publicAccess });
   const url = session.active ? (session.data?.audienceUrl ?? null) : null;
   const player = useLocalTranslation(url);
   const transcript = useRef<HTMLDivElement>(null);
@@ -93,5 +97,41 @@ export function LiveTranslationPage() {
         </>
       )}
     </Stack>
+  );
+}
+
+export function PublicTranslationPage() {
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: 'background.default',
+        py: { xs: 3, md: 5 },
+      }}
+    >
+      <Container maxWidth="md">
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 4 }}
+        >
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Box
+              component="img"
+              src="/logo.png"
+              alt="A Ponte"
+              width={44}
+              height={44}
+            />
+            <Typography fontWeight={700}>A Ponte</Typography>
+          </Stack>
+          <Button component={RouterLink} to="/login">
+            Voltar ao login
+          </Button>
+        </Stack>
+        <LiveTranslationPage publicAccess />
+      </Container>
+    </Box>
   );
 }

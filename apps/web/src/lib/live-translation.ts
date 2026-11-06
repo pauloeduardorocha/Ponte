@@ -8,13 +8,26 @@ export interface TranslationStatus {
   audienceUrl: string | null;
   expiresAt: string | null;
 }
-export function useLiveTranslation() {
+export function useLiveTranslation({
+  publicAccess = false,
+}: { publicAccess?: boolean } = {}) {
   const { user } = useAuth();
   const [now, setNow] = useState(Date.now);
   const query = useQuery({
-    queryKey: ['live-translation', 'status', user?.id],
-    queryFn: () => apiRequest<TranslationStatus>('/live-translation/status'),
-    enabled: Boolean(user && user.status !== 'PENDING_APPROVAL'),
+    queryKey: [
+      'live-translation',
+      'status',
+      publicAccess ? 'public' : user?.id,
+    ],
+    queryFn: () =>
+      apiRequest<TranslationStatus>(
+        publicAccess
+          ? '/live-translation/public-status'
+          : '/live-translation/status',
+        { skipAuthRefresh: publicAccess },
+      ),
+    enabled:
+      publicAccess || Boolean(user && user.status !== 'PENDING_APPROVAL'),
     staleTime: 15000,
     refetchInterval: 60000,
     refetchIntervalInBackground: false,

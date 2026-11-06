@@ -14070,6 +14070,38 @@
         "x-ponte-cache-ttl": 0
       }
     },
+    "/api/v1/live-translation/public-status": {
+      "get": {
+        "operationId": "LiveTranslationController_publicStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [],
+        "tags": [
+          "LiveTranslation"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
     "/api/v1/live-translation/publish": {
       "post": {
         "operationId": "LiveTranslationController_publish",

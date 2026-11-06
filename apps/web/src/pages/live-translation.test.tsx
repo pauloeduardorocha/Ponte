@@ -11,6 +11,7 @@ import { TranslationAdminPage } from './TranslationAdminPage';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   makeUser,
+  anonymousRoutes,
   mockApi,
   renderApp,
   resetTestState,
@@ -20,6 +21,76 @@ import {
 const inactive = { active: false, audienceUrl: null, expiresAt: null };
 describe('Live translation in the Ponte PWA', () => {
   beforeEach(resetTestState);
+  it('offers visitors a login-page button and Wi-Fi warning only during an active translation', async () => {
+    const audienceUrl = 'http://192.168.1.20:3210/listen/' + 'a'.repeat(24);
+    const requests = mockApi({
+      ...anonymousRoutes,
+      'GET /live-translation/public-status': {
+        body: {
+          active: true,
+          audienceUrl,
+          expiresAt: new Date(Date.now() + 120000).toISOString(),
+        },
+      },
+    });
+    renderApp('/login');
+    const button = await screen.findByRole('link', {
+      name: 'Ouvir tradução ao vivo — sem entrar',
+    });
+    expect(
+      screen.getByText(/É preciso estar conectado ao Wi-Fi da igreja/),
+    ).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(
+      await screen.findByRole('button', { name: 'Conectar à tradução' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir página local' }),
+    ).toHaveAttribute('href', audienceUrl);
+    expect(
+      requests.some((request) => request.path === '/live-translation/status'),
+    ).toBe(false);
+  });
+  it('does not advertise inactive or expired broadcasts on the login page', async () => {
+    const requests = mockApi({
+      ...anonymousRoutes,
+      'GET /live-translation/public-status': {
+        body: {
+          active: true,
+          audienceUrl: 'http://192.168.1.2:3210/listen/' + 'a'.repeat(24),
+          expiresAt: new Date(Date.now() - 1000).toISOString(),
+        },
+      },
+    });
+    renderApp('/login');
+    await screen.findByRole('heading', { name: 'Acesse sua conta' });
+    await waitFor(() =>
+      expect(
+        requests.some(
+          (request) => request.path === '/live-translation/public-status',
+        ),
+      ).toBe(true),
+    );
+    expect(
+      screen.queryByRole('link', {
+        name: 'Ouvir tradução ao vivo — sem entrar',
+      }),
+    ).not.toBeInTheDocument();
+  });
+  it('opens the public listening page directly without requiring an account', async () => {
+    mockApi({
+      ...anonymousRoutes,
+      'GET /live-translation/public-status': { body: inactive },
+    });
+    renderApp('/listen-translation');
+    expect(
+      await screen.findByText(/Não há tradução publicada/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Voltar ao login' }),
+    ).toHaveAttribute('href', '/login');
+    expect(screen.queryByLabelText('Senha')).not.toBeInTheDocument();
+  });
   it('hides the menu when no session is published', async () => {
     mockApi({
       ...sessionRoutes(makeUser()),

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Box, Button, Link, Stack, TextField } from '@mui/material';
+import { Alert, Box, Button, Link, Stack, TextField } from '@mui/material';
+import TranslateRounded from '@mui/icons-material/TranslateRounded';
+import { useLiveTranslation } from '../lib/live-translation';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { AuthCard } from '../components/AuthCard';
@@ -28,6 +30,7 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
+  const translation = useLiveTranslation({ publicAccess: true });
   const { login, loginWithPasskey, signOutNotice, sessionError } = useAuth();
   const [passkeyBusy, setPasskeyBusy] = useState(false);
   const [automaticPasskey] = useState(shouldStartPasskeyLogin);
@@ -98,6 +101,24 @@ export function LoginPage() {
         </>
       }
     >
+      {translation.active && (
+        <Stack spacing={1.5} sx={{ mb: 3 }}>
+          <Alert severity="info">
+            Tradução ao vivo disponível, sem precisar de conta. É preciso estar
+            conectado ao Wi-Fi da igreja para ouvir e acompanhar o texto.
+          </Alert>
+          <Button
+            component={RouterLink}
+            to="/listen-translation"
+            variant="outlined"
+            size="large"
+            startIcon={<TranslateRounded />}
+            fullWidth
+          >
+            Ouvir tradução ao vivo — sem entrar
+          </Button>
+        </Stack>
+      )}
       <Box component="form" onSubmit={onSubmit} noValidate>
         <Stack spacing={2}>
           <TextField

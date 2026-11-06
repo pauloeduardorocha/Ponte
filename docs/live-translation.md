@@ -6,6 +6,8 @@ O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiên
 
 ## Configuração e uso
 
+Visitantes sem conta também podem acompanhar a tradução. O login consulta `GET /api/v1/live-translation/public-status` e, somente durante uma publicação válida, mostra **Ouvir tradução ao vivo — sem entrar**, com o aviso de que é necessário usar o Wi-Fi da igreja. O botão abre `/listen-translation`, uma página pública com o mesmo player e alternativa de acesso local. A rota pública divulga somente disponibilidade, endereço da audiência e expiração; as rotas administrativas e o status autenticado permanecem protegidos. O áudio continua na rede local e não é retransmitido pela Vercel. Fora do Wi-Fi, a página pode abrir, mas não alcança o computador da igreja.
+
 1. Um usuário ADMIN ou SUPER_ADMIN abre **Comunicação → Aplicativo de tradução** (`/translation-app`).
 2. Baixa o pacote Windows, extrai a pasta inteira e executa `Ponte-Traducao.exe`. Não precisa instalar Node.js.
 3. Gera uma ligação e copia para o aplicativo local. Essa credencial é exibida uma vez na PWA e fica somente na memória no aplicativo; a API guarda apenas SHA-256. Gerar outra revoga a anterior e retira qualquer publicação ativa.
@@ -40,6 +42,7 @@ Todos os caminhos usam `/api/v1/live-translation`:
 | Método / caminho | Autorização | Comportamento |
 | --- | --- | --- |
 | GET `/status` | Conta aprovada autenticada | `{ active, audienceUrl, expiresAt }`; sem credenciais ou conteúdo |
+| GET `/public-status` | Público, sem login | Os mesmos metadados de disponibilidade para o botão do login e a página pública; sem credenciais, áudio ou texto |
 | POST `/credential` | ADMIN / SUPER_ADMIN | Gera `{ token }` uma vez, revoga a anterior e limpa a publicação |
 | POST `/publish` | Bearer da credencial do PC | `{ sessionId: UUIDv4, audienceUrl }`; publica/renova lease de 120s |
 | POST `/unpublish` | Bearer da credencial do PC | `{ sessionId }`; retira somente essa sessão |

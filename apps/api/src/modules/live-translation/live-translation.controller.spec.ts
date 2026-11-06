@@ -1,4 +1,13 @@
-import { ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  ForbiddenException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { Test } from '@nestjs/testing';
+import { Reflector } from '@nestjs/core';
+import request from 'supertest';
+import { AuthGuard } from '../auth/auth.guard';
+import { AuthService } from '../auth/auth.service';
 import { ConfigService } from '@nestjs/config';
 import {
   LiveTranslationController,
@@ -7,6 +16,49 @@ import {
 import { LiveTranslationService } from './live-translation.service';
 
 describe('Translation administration', () => {
+  it('allows anonymous discovery without exposing authenticated or administrator routes', async () => {
+    const status = { active: false, audienceUrl: null, expiresAt: null };
+    const module = await Test.createTestingModule({
+      controllers: [LiveTranslationController],
+      providers: [
+        TranslationAdminGuard,
+        {
+          provide: LiveTranslationService,
+          useValue: { status: jest.fn().mockResolvedValue(status) },
+        },
+        {
+          provide: ConfigService,
+          useValue: new ConfigService({ NODE_ENV: 'production' }),
+        },
+      ],
+    }).compile();
+    const app = module.createNestApplication();
+    app.useGlobalGuards(
+      new AuthGuard(new Reflector(), {
+        authenticate: async () => {
+          throw new UnauthorizedException();
+        },
+      } as unknown as AuthService),
+    );
+    await app.init();
+    try {
+      await request(app.getHttpServer())
+        .get('/live-translation/public-status')
+        .expect(200)
+        .expect(status);
+      await request(app.getHttpServer())
+        .get('/live-translation/status')
+        .expect(401);
+      await request(app.getHttpServer())
+        .get('/live-translation/download')
+        .expect(401);
+      await request(app.getHttpServer())
+        .post('/live-translation/credential')
+        .expect(401);
+    } finally {
+      await app.close();
+    }
+  });
   it('limits administration to admin and super admin roles', () => {
     const guard = new TranslationAdminGuard();
     const context = (roles?: string[]) =>

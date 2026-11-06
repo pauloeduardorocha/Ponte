@@ -138,6 +138,11 @@ const TranslationAdminPage = lazy(() =>
     default: m.TranslationAdminPage,
   })),
 );
+const PublicTranslationPage = lazy(() =>
+  import('./pages/LiveTranslationPage').then((m) => ({
+    default: m.PublicTranslationPage,
+  })),
+);
 
 export function App({ children }: { children?: ReactNode }) {
   return (
@@ -154,6 +159,10 @@ export function App({ children }: { children?: ReactNode }) {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           </Route>
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+          <Route
+            path="/listen-translation"
+            element={<PublicTranslationPage />}
+          />
 
           <Route element={<RequireAuth />}>
             <Route
@@ -165,7 +174,10 @@ export function App({ children }: { children?: ReactNode }) {
                 <Route index element={<DashboardPage />} />
                 <Route path="mural" element={<ConversationsPage />} />
                 <Route path="mural/:id" element={<ConversationPage />} />
-                <Route path="conversations" element={<Navigate to="/mural" replace />} />
+                <Route
+                  path="conversations"
+                  element={<Navigate to="/mural" replace />}
+                />
                 <Route
                   path="conversations/:id"
                   element={<ConversationPage />}
