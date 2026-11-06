@@ -52,7 +52,9 @@
         "Peça às pessoas que se conectem ao Wi-Fi da igreja. O link local não funciona para quem está em casa ou usando somente os dados móveis.",
         "No Ponte, cada pessoa abre Tradução ao vivo e toca em Conectar à tradução. Se o navegador pedir acesso à rede local, a pessoa precisa permitir para se conectar ao computador.",
         "O texto em inglês aparece na tela e o áudio é reproduzido com fones de ouvido. Silenciar áudio mantém o texto disponível.",
-        "Se a conexão dentro do Ponte for bloqueada pelo navegador, toque em Abrir página local. Nessa outra página, toque em Enable audio para ouvir."
+        "Se a conexão dentro do Ponte for bloqueada pelo navegador, toque em Abrir página local. Nessa outra página, toque em Enable audio para ouvir.",
+        "Para ouvir com o ecrã bloqueado ou com outro aplicativo aberto, toque em Ouvir com o ecrã bloqueado no Ponte e, na página local que abrir, toque em Ouvir ao vivo. É necessário o aplicativo do computador na versão 0.3.0 ou superior. Não feche a aba nem encerre o navegador; continue no Wi-Fi da igreja.",
+        "Se o Brave ou o Android ainda pausarem o som, confira as opções de reprodução em segundo plano e de uso da bateria do navegador. O sistema pode interromper áudio durante chamadas ou ao encerrar o navegador. Faça esse teste no celular antes do culto."
       ]
     },
     {

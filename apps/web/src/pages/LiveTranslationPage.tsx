@@ -22,6 +22,7 @@ export function LiveTranslationPage({
   const session = useLiveTranslation({ publicAccess });
   const url = session.active ? (session.data?.audienceUrl ?? null) : null;
   const player = useLocalTranslation(url);
+  const backgroundUrl = url ? `${url}?mode=background` : null;
   const transcript = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (transcript.current)
@@ -68,7 +69,22 @@ export function LiveTranslationPage({
                   <Button href={url!} target="_blank" rel="noopener noreferrer">
                     Abrir página local
                   </Button>
+                  <Button
+                    variant="outlined"
+                    href={backgroundUrl!}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={player.stop}
+                  >
+                    Ouvir com o ecrã bloqueado
+                  </Button>
                 </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  Para minimizar ou bloquear o ecrã, use o leitor de áudio acima
+                  e toque em Ouvir ao vivo na página que abrir. Esse modo exige
+                  o aplicativo do computador atualizado para a versão 0.3.0 ou
+                  superior. Continue no Wi-Fi da igreja.
+                </Typography>
                 {player.error && (
                   <Alert severity="warning">{player.error}</Alert>
                 )}

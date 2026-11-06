@@ -170,5 +170,10 @@ export function useLocalTranslation(audienceUrl: string | null) {
     setMuted(runtime.current.muted);
     if (runtime.current.muted) clearAudio();
   }, [clearAudio]);
-  return { text, status, error, connected, muted, connect, toggleMute };
+  const stop = useCallback(() => {
+    disconnect();
+    setConnected(false);
+    setStatus('Desconectado');
+  }, [disconnect]);
+  return { text, status, error, connected, muted, connect, toggleMute, stop };
 }

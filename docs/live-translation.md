@@ -6,6 +6,12 @@ O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiên
 
 ## Configuração e uso
 
+### Escuta com o ecrã bloqueado (Windows 0.3.0+)
+
+Na página de tradução, **Ouvir com o ecrã bloqueado** abre uma página local com um elemento HTML `audio`, transmissão HTTP contínua de MP3 mono a 48 kbit/s e integração Media Session quando suportada. Toque em **Ouvir ao vivo** antes de minimizar. A codificação acontece uma vez no PC e é compartilhada por todos os ouvintes desse modo; silêncio local mantém o fluxo entre as falas sem enviar áudio adicional ao Gemini. Esse leitor não depende dos timers, do WebSocket ou da decodificação JavaScript da PWA para produzir som em segundo plano. O acompanhamento de texto/áudio ADPCM continua disponível no modo normal.
+
+O link abre a origem local para evitar carregar áudio HTTP dentro da PWA HTTPS. É preciso atualizar o aplicativo Windows para 0.3.0 ou superior, manter a aba/navegador abertos e continuar no Wi-Fi. O modo pode ter um atraso maior que o player de texto. Brave, Android, chamadas e políticas de bateria ainda podem interromper mídia; é necessário testar no aparelho real. O projeto não desativa proteções nem promete execução quando o sistema encerra o navegador. Pausar e retomar pelo leitor reconecta à transmissão atual, sem reproduzir o áudio acumulado durante a pausa.
+
 Visitantes sem conta também podem acompanhar a tradução. O login consulta `GET /api/v1/live-translation/public-status` e, somente durante uma publicação válida, mostra **Ouvir tradução ao vivo — sem entrar**, com o aviso de que é necessário usar o Wi-Fi da igreja. O botão abre `/listen-translation`, uma página pública com o mesmo player e alternativa de acesso local. A rota pública divulga somente disponibilidade, endereço da audiência e expiração; as rotas administrativas e o status autenticado permanecem protegidos. O áudio continua na rede local e não é retransmitido pela Vercel. Fora do Wi-Fi, a página pode abrir, mas não alcança o computador da igreja.
 
 1. Um usuário ADMIN ou SUPER_ADMIN abre **Comunicação → Aplicativo de tradução** (`/translation-app`).

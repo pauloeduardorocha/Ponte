@@ -48,6 +48,9 @@ describe('Live translation in the Ponte PWA', () => {
       screen.getByRole('link', { name: 'Abrir página local' }),
     ).toHaveAttribute('href', audienceUrl);
     expect(
+      screen.getByRole('link', { name: 'Ouvir com o ecrã bloqueado' }),
+    ).toHaveAttribute('href', audienceUrl + '?mode=background');
+    expect(
       requests.some((request) => request.path === '/live-translation/status'),
     ).toBe(false);
   });
