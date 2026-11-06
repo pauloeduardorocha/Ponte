@@ -184,6 +184,9 @@ model ConversationPost {
   topicId   String?            @db.Uuid
   topic     ConversationPost?  @relation("ConversationReplies", fields: [topicId], references: [id], onDelete: Restrict)
   replies   ConversationPost[] @relation("ConversationReplies")
+  parentId  String?            @db.Uuid
+  parent    ConversationPost?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Restrict)
+  children  ConversationPost[] @relation("CommentReplies")
   title     String?            @db.VarChar(160)
   body      String             @db.VarChar(10000)
   image     String?
@@ -194,6 +197,7 @@ model ConversationPost {
   deletedBy String?            @db.Uuid
 
   @@index([topicId, createdAt, id])
+  @@index([parentId, createdAt, id])
   @@index([authorId])
   @@map("conversation_posts")
 }

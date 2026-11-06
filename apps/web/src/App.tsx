@@ -1,7 +1,12 @@
 import { lazy, Suspense, type ReactNode } from 'react';
 const ConversationPage = lazy(() =>
-  import('./components/Conversations').then((m) => ({
+  import('./components/ConversationDetail').then((m) => ({
     default: m.ConversationPage,
+  })),
+);
+const ConversationsPage = lazy(() =>
+  import('./components/Conversations').then((m) => ({
+    default: m.ConversationsPage,
   })),
 );
 const ReimbursementsPage = lazy(() =>
@@ -147,6 +152,7 @@ export function App({ children }: { children?: ReactNode }) {
             <Route element={<AppShell />}>
               <Route element={<RequireRouteAccess />}>
                 <Route index element={<DashboardPage />} />
+                <Route path="conversations" element={<ConversationsPage />} />
                 <Route
                   path="conversations/:id"
                   element={<ConversationPage />}

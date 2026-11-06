@@ -14,6 +14,7 @@ type AccessRule = {
 const routeAccess: readonly AccessRule[] = [
   { path: '/' },
   { path: '/conversations/:id' },
+  { path: '/conversations' },
   { path: '/account' },
   { path: '/calendar' },
   { path: '/inbox' },

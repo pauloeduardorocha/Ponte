@@ -13,7 +13,13 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { PrismaService } from '../../database/prisma.service';
 import { AuthRequest } from '../auth/auth.guard';
@@ -39,6 +45,16 @@ export class ConversationTopicDto extends ConversationMessageDto {
   @MinLength(1)
   @MaxLength(160)
   title!: string;
+}
+
+export class ConversationReplyDto extends ConversationMessageDto {
+  @ApiPropertyOptional({
+    format: 'uuid',
+    description: 'Comentário ao qual esta resposta está vinculada.',
+  })
+  @IsOptional()
+  @IsUUID()
+  parentId?: string;
 }
 
 export function validateConversationImage(image?: string): string | undefined {
@@ -68,6 +84,7 @@ export function validateConversationImage(image?: string): string | undefined {
 
 const author = {
   select: {
+    avatar: true,
     id: true,
     name: true,
     deletedAt: true,
@@ -77,6 +94,7 @@ const author = {
 const fields = {
   id: true,
   topicId: true,
+  parentId: true,
   title: true,
   body: true,
   authorId: true,
@@ -85,6 +103,7 @@ const fields = {
   createdAt: true,
   deletedAt: true,
   hasImage: true,
+  _count: { select: { replies: true, children: true } },
 } as const;
 type VisiblePost = {
   deletedAt: Date | null;
@@ -93,6 +112,7 @@ type VisiblePost = {
   hasImage: boolean;
   mentions: string[];
   author: {
+    avatar?: string | null;
     id: string;
     name: string;
     deletedAt: Date | null;
@@ -114,6 +134,12 @@ export class ConversationsController {
     if (typeof value !== 'string' || !/^\d{1,6}$/.test(value))
       throw new BadRequestException('Página inválida.');
     return Number(value);
+  }
+
+  private order(value?: string): 'asc' | 'desc' {
+    if (value !== undefined && value !== 'asc' && value !== 'desc')
+      throw new BadRequestException('Ordem inválida.');
+    return value === 'desc' ? 'desc' : 'asc';
   }
 
   private async visible<T extends VisiblePost>(posts: T[]) {
@@ -141,6 +167,10 @@ export class ConversationsController {
         ? []
         : members.filter((m) => p.mentions.includes(m.id)),
       author: {
+        avatar:
+          p.author.deletedAt || p.author.member?.anonymizedAt
+            ? null
+            : (p.author.avatar ?? null),
         id: p.author.id,
         name:
           p.author.deletedAt || p.author.member?.anonymizedAt
@@ -219,6 +249,7 @@ export class ConversationsController {
     @Req() r: AuthRequest,
     @Param('id', ParseUUIDPipe) id: string,
     @Query('page') page?: string,
+    @Query('order') order?: string,
   ) {
     this.approved(r);
     const topic = await this.db.conversationPost.findFirst({
@@ -227,9 +258,9 @@ export class ConversationsController {
     });
     if (!topic) throw new NotFoundException('Conversa não encontrada.');
     const replies = await this.db.conversationPost.findMany({
-      where: { topicId: id },
+      where: { topicId: id, parentId: null },
       select: fields,
-      orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      orderBy: [{ createdAt: this.order(order) }, { id: this.order(order) }],
       skip: this.page(page) * 10,
       take: 11,
     });
@@ -237,6 +268,34 @@ export class ConversationsController {
       topic: (await this.visible([topic]))[0],
       items: await this.visible(replies.slice(0, 10)),
       hasMore: replies.length > 10,
+    };
+  }
+
+  @Get(':id/replies') async replies(
+    @Req() r: AuthRequest,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('parentId', ParseUUIDPipe) parentId: string,
+    @Query('page') page?: string,
+    @Query('order') order?: string,
+  ) {
+    this.approved(r);
+    if (
+      !(await this.db.conversationPost.findFirst({
+        where: { id: parentId, topicId: id },
+        select: { id: true },
+      }))
+    )
+      throw new NotFoundException('Comentário não encontrado nesta conversa.');
+    const posts = await this.db.conversationPost.findMany({
+      where: { topicId: id, parentId },
+      select: fields,
+      orderBy: [{ createdAt: this.order(order) }, { id: this.order(order) }],
+      skip: this.page(page) * 10,
+      take: 11,
+    });
+    return {
+      items: await this.visible(posts.slice(0, 10)),
+      hasMore: posts.length > 10,
     };
   }
 
@@ -272,7 +331,7 @@ export class ConversationsController {
   @Post(':id/replies') async reply(
     @Req() r: AuthRequest,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: ConversationMessageDto,
+    @Body() dto: ConversationReplyDto,
   ) {
     this.approved(r);
     const content = await this.content(dto);
@@ -286,11 +345,30 @@ export class ConversationsController {
         }))
       )
         throw new NotFoundException('Conversa indisponível para respostas.');
+      if (dto.parentId) {
+        await tx.$queryRaw`SELECT id FROM conversation_posts WHERE id = ${dto.parentId}::uuid FOR UPDATE`;
+        if (
+          !(await tx.conversationPost.findFirst({
+            where: { id: dto.parentId, topicId: id, deletedAt: null },
+            select: { id: true },
+          }))
+        )
+          throw new NotFoundException(
+            'Comentário indisponível para respostas.',
+          );
+      }
       const reply = await tx.conversationPost.create({
-        data: { ...content, topicId: id, authorId: r.user.id },
+        data: {
+          ...content,
+          topicId: id,
+          parentId: dto.parentId,
+          authorId: r.user.id,
+        },
         select: { id: true },
       });
-      const count = await tx.conversationPost.count({ where: { topicId: id } });
+      const count = await tx.conversationPost.count({
+        where: { topicId: id, parentId: dto.parentId ?? null },
+      });
       return { ...reply, page: Math.floor((count - 1) / 10) };
     });
   }

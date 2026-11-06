@@ -29,6 +29,9 @@ class FixtureController {
   @Get('conversations/:id/image') conversationImage() {
     return {};
   }
+  @Get('conversations/:id/replies') commentReplies() {
+    return {};
+  }
   @Get('library/books/availability') availability() {
     return [];
   }
@@ -58,6 +61,7 @@ describe('HTTP cache policy', () => {
     ['/conversations?page=2', 21600],
     ['/api/v1/conversations/example?page=1', 21600],
     ['/conversations/example/image', 21600],
+    ['/conversations/example/replies?parentId=comment&page=1', 21600],
     ['/conversations/members?q=Maria', 0],
     ['/library/books/id', 21600],
     ['/library/books?available=false', 0],
@@ -87,6 +91,10 @@ describe('HTTP cache policy', () => {
         ['conversations', 'private, max-age=21600'],
         ['conversations/example', 'private, max-age=21600'],
         ['conversations/example/image', 'private, max-age=21600'],
+        [
+          'conversations/example/replies?parentId=comment',
+          'private, max-age=21600',
+        ],
         ['conversations/members?q=Maria', 'no-store'],
         ['library/books?available=true', 'no-store'],
         ['library/books/availability', 'no-store'],

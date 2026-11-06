@@ -10,6 +10,7 @@ import { AuthRequest } from '../auth/auth.guard';
 import {
   ConversationsController,
   ConversationTopicDto,
+  ConversationReplyDto,
   validateConversationImage,
 } from './conversations.controller';
 
@@ -75,6 +76,7 @@ describe('Conversations', () => {
         () => controller.list(r),
         () => controller.members(r, 'Ana'),
         () => controller.detail(r, topicId),
+        () => controller.replies(r, topicId, memberId),
         () => controller.image(r, topicId),
         () => controller.create(r, { title: 'Tema', body: 'Texto' }),
         () => controller.reply(r, topicId, { body: 'Texto' }),
@@ -253,6 +255,92 @@ describe('Conversations', () => {
         body: 'Décima primeira resposta',
       }),
     ).toEqual({ id: topicId, page: 1 });
+  });
+
+  it('links a reply only to an active comment in the same conversation', async () => {
+    db.conversationPost.findFirst
+      .mockResolvedValueOnce({ id: topicId })
+      .mockResolvedValueOnce({ id: memberId });
+    await controller.reply(actor(), topicId, {
+      body: 'Resposta ao comentário',
+      parentId: memberId,
+    });
+    expect(db.conversationPost.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ topicId, parentId: memberId }),
+      }),
+    );
+    expect(db.conversationPost.count).toHaveBeenCalledWith({
+      where: { topicId, parentId: memberId },
+    });
+    db.conversationPost.findFirst
+      .mockResolvedValueOnce({ id: topicId })
+      .mockResolvedValueOnce(null);
+    await expect(
+      controller.reply(actor(), topicId, {
+        body: 'Resposta',
+        parentId: memberId,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
+    expect(db.conversationPost.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('loads ten child comments without mixing conversations or parent threads', async () => {
+    db.conversationPost.findFirst.mockResolvedValue({ id: memberId });
+    db.conversationPost.findMany.mockResolvedValue(
+      Array.from({ length: 11 }, () => post({ parentId: memberId, topicId })),
+    );
+    const result = await controller.replies(
+      actor(),
+      topicId,
+      memberId,
+      '1',
+      'desc',
+    );
+    expect(result.items).toHaveLength(10);
+    expect(result.hasMore).toBe(true);
+    expect(db.conversationPost.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { topicId, parentId: memberId },
+        skip: 10,
+        take: 11,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+    );
+    db.conversationPost.findFirst.mockResolvedValue(null);
+    await expect(
+      controller.replies(actor(), topicId, memberId),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it('lists top-level comments separately and preserves the default order for old clients', async () => {
+    db.conversationPost.findFirst.mockResolvedValue(post());
+    await controller.detail(actor(), topicId);
+    expect(db.conversationPost.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        where: { topicId, parentId: null },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+    );
+    await controller.detail(actor(), topicId, '0', 'desc');
+    expect(db.conversationPost.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      }),
+    );
+    await expect(
+      controller.detail(actor(), topicId, '0', 'invalid'),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(
+      (
+        await validate(
+          plainToInstance(ConversationReplyDto, {
+            body: 'Resposta',
+            parentId: 'invalid',
+          }),
+        )
+      ).map((error) => error.property),
+    ).toEqual(['parentId']);
   });
 
   it('validates DTO lengths and refuses whitespace-only content', async () => {

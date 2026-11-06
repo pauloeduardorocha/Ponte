@@ -632,7 +632,7 @@
         },
         "type": "object"
       },
-      "ConversationMessageDto": {
+      "ConversationReplyDto": {
         "properties": {
           "body": {
             "maxLength": 10000,
@@ -642,6 +642,11 @@
           "image": {
             "description": "Data URI PNG/JPEG/WebP; até 1 MB de bytes decodificados.",
             "maxLength": 1400000,
+            "type": "string"
+          },
+          "parentId": {
+            "description": "Comentário ao qual esta resposta está vinculada.",
+            "format": "uuid",
             "type": "string"
           }
         },
@@ -3543,7 +3548,9 @@
         "properties": {
           "avatar": {
             "description": "JPEG data URL, até 500.000 bytes; null remove.",
+            "maxLength": 666691,
             "nullable": true,
+            "pattern": "^data:image\\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$",
             "type": "string"
           },
           "colorMode": {
@@ -5058,6 +5065,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5124,6 +5139,66 @@
       }
     },
     "/api/v1/conversations/{id}/replies": {
+      "get": {
+        "operationId": "ConversationsController_replies",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "parentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "private, max-age=21600",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Conversations"
+        ],
+        "x-ponte-cache-ttl": 21600
+      },
       "post": {
         "operationId": "ConversationsController_reply",
         "parameters": [
@@ -5140,7 +5215,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ConversationMessageDto"
+                "$ref": "#/components/schemas/ConversationReplyDto"
               }
             }
           },

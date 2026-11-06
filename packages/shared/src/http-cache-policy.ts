@@ -16,6 +16,7 @@ export const HTTP_CACHE_ROUTES: Readonly<Record<string, number>> = {
   '/conversations/members': 0,
   '/conversations/{id}': 21600,
   '/conversations/{id}/image': 21600,
+  '/conversations/{id}/replies': 21600,
   '/events': 21600,
   '/events/{id}': 21600,
   '/events/{id}/attendees': 0,

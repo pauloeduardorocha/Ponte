@@ -47,7 +47,7 @@ describe('Conversation panels', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: topic.title }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/Ana Souza ·/)).toBeInTheDocument();
+    expect(screen.getByText('Ana Souza')).toBeInTheDocument();
     expect(screen.getByText('@Maria')).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'https://example.org' }),
@@ -100,10 +100,13 @@ describe('Conversation panels', () => {
       requests.find((r) => r.method === 'POST' && r.path === '/conversations')
         ?.body,
     ).toEqual({ title: 'Novo tópico', body: `Olá @[Maria](${memberId}) ` });
-    fireEvent.change(screen.getByRole('textbox', { name: /Sua resposta/ }), {
-      target: { value: 'Uma resposta' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Responder' }));
+    fireEvent.change(
+      screen.getByRole('textbox', { name: /Escreva um comentário/ }),
+      {
+        target: { value: 'Uma resposta' },
+      },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Comentar' }));
     await waitFor(() =>
       expect(
         requests.find((r) => r.method === 'POST' && r.path.endsWith('/replies'))
@@ -150,7 +153,9 @@ describe('Conversation panels', () => {
       await screen.findByRole('heading', { name: 'conversa excluída' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('@Maria')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Sua resposta')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: /Escreva um comentário/ }),
+    ).not.toBeInTheDocument();
   });
 
   it('shows deleted replies and hides deletion controls from other members', async () => {
@@ -231,44 +236,41 @@ describe('Conversation panels', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('opens the page containing a newly submitted reply', async () => {
+  it('appends ten comments at a time without replacing the ones already visible', async () => {
+    const comment = (n: number) => ({
+      ...topic,
+      id: '00000000-0000-4000-8000-' + String(n + 10).padStart(12, '0'),
+      topicId: id,
+      title: null,
+      body: 'Comentário ' + n,
+      _count: { replies: 0, children: 0 },
+    });
     const requests = mockApi({
       ...sessionRoutes(makeUser()),
-      [`GET /conversations/${id}`]: (request) => ({
+      ['GET /conversations/' + id]: (request) => ({
         body: {
           topic,
           items:
             request.query.get('page') === '1'
-              ? [
-                  {
-                    ...topic,
-                    id: memberId,
-                    topicId: id,
-                    title: null,
-                    body: 'Resposta na segunda página',
-                  },
-                ]
-              : [],
+              ? [comment(1)]
+              : Array.from({ length: 10 }, (_, n) => comment(11 - n)),
           hasMore: request.query.get('page') !== '1',
         },
       }),
-      [`POST /conversations/${id}/replies`]: {
-        body: { id: memberId, page: 1 },
-      },
     });
-    renderApp(`/conversations/${id}`);
-    fireEvent.change(
-      await screen.findByRole('textbox', { name: /Sua resposta/ }),
-      { target: { value: 'Resposta na segunda página' } },
+    renderApp('/conversations/' + id);
+    expect(await screen.findByText('Comentário 11')).toBeInTheDocument();
+    expect(screen.queryByText('Comentário 1')).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Mostrar mais comentários' }),
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Responder' }));
-    await screen.findByText('Página 2');
+    expect(await screen.findByText('Comentário 1')).toBeInTheDocument();
+    expect(screen.getByText('Comentário 11')).toBeInTheDocument();
+    expect(screen.queryByText(/Página [0-9]/)).not.toBeInTheDocument();
     expect(
-      await screen.findByText('Resposta na segunda página'),
-    ).toBeInTheDocument();
-    expect(screen.getByText('Página 2')).toBeInTheDocument();
-    expect(
-      requests.some((r) => r.method === 'GET' && r.query.get('page') === '1'),
+      requests.some(
+        (r) => r.query.get('page') === '1' && r.query.get('order') === 'desc',
+      ),
     ).toBe(true);
   });
 
@@ -298,6 +300,127 @@ describe('Conversation panels', () => {
       }),
     ).toBeInTheDocument();
     expect(reads).toBe(2);
+  });
+
+  it('replies to a comment and displays the response inside its thread', async () => {
+    const comment = {
+      ...topic,
+      id: memberId,
+      topicId: id,
+      title: null,
+      body: 'Comentário original',
+      author: { id: 'other', name: 'Maria Santos' },
+      authorId: 'other',
+      _count: { replies: 0, children: 0 },
+    };
+    let saved = false;
+    const requests = mockApi({
+      ...sessionRoutes(makeUser()),
+      [`GET /conversations/${id}`]: {
+        body: { topic, items: [comment], hasMore: false },
+      },
+      [`GET /conversations/${id}/replies`]: {
+        body: {
+          items: [
+            {
+              ...comment,
+              id: 'reply',
+              parentId: memberId,
+              body: 'Resposta vinculada',
+            },
+          ],
+          hasMore: false,
+        },
+      },
+      [`POST /conversations/${id}/replies`]: () => {
+        saved = true;
+        return { body: { id: 'reply', page: 0 } };
+      },
+    });
+    renderApp(`/conversations/${id}`);
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Responder a Maria Santos' }),
+    );
+    fireEvent.change(
+      screen.getByRole('textbox', { name: /Sua resposta ao comentário/ }),
+      { target: { value: 'Resposta vinculada' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Responder' }));
+    await waitFor(() => expect(saved).toBe(true));
+    await waitFor(() =>
+      expect(
+        screen.queryByRole('textbox', { name: /Sua resposta ao comentário/ }),
+      ).not.toBeInTheDocument(),
+    );
+    expect(await screen.findByText('Resposta vinculada')).toBeInTheDocument();
+    expect(
+      requests.find((r) => r.method === 'POST' && r.path.endsWith('/replies'))
+        ?.body,
+    ).toEqual({ body: 'Resposta vinculada', parentId: memberId });
+    expect(
+      requests
+        .find((r) => r.method === 'GET' && r.path.endsWith('/replies'))
+        ?.query.get('parentId'),
+    ).toBe(memberId);
+  });
+
+  it('uses horizontal cards on home with a link to all conversations and no previous/next buttons', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      'GET /conversations': { body: { items: [topic], hasMore: false } },
+    });
+    renderApp('/');
+    expect(
+      await screen.findByRole(
+        'link',
+        { name: 'Ver todas as conversas' },
+        { timeout: 10000 },
+      ),
+    ).toHaveAttribute('href', '/conversations');
+    expect(
+      screen.queryByRole('button', { name: 'Conversas anteriores' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Próximas conversas' }),
+    ).not.toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('link', { name: 'Ver todas as conversas' }),
+    );
+    expect(
+      await screen.findByRole('heading', {
+        level: 1,
+        name: 'Todas as conversas',
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Conversar sobre o encontro/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('loads more cards on the all-conversations page', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser()),
+      'GET /conversations': (request) => ({
+        body: {
+          items: [
+            request.query.get('page') === '1'
+              ? { ...topic, id: memberId, title: 'Conversa mais antiga' }
+              : topic,
+          ],
+          hasMore: request.query.get('page') !== '1',
+        },
+      }),
+    });
+    renderApp('/conversations');
+    fireEvent.click(
+      await screen.findByRole('button', { name: 'Carregar mais conversas' }),
+    );
+    expect(
+      await screen.findByRole('link', { name: /Conversa mais antiga/ }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: /Conversar sobre o encontro/ }),
+    ).toBeInTheDocument();
   });
 
   it('blocks pending accounts before querying conversations', async () => {
