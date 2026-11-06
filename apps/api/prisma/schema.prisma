@@ -2,6 +2,18 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// Only discovery metadata lives here; audio and transcripts stay on the church LAN.
+model LiveTranslation {
+  id              String    @id @db.VarChar(20)
+  deviceTokenHash String    @db.VarChar(64)
+  sessionId       String?   @db.Uuid
+  audienceUrl     String?   @db.VarChar(512)
+  expiresAt       DateTime? @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt
+
+  @@map("live_translation")
+}
+
 // Optional persistent private attachments for serverless hosting.
 model PrivateFile {
   id        String   @id @db.Uuid

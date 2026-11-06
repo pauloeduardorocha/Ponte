@@ -128,6 +128,17 @@ const PendingApprovalsPage = lazy(() =>
   })),
 );
 
+const LiveTranslationPage = lazy(() =>
+  import('./pages/LiveTranslationPage').then((m) => ({
+    default: m.LiveTranslationPage,
+  })),
+);
+const TranslationAdminPage = lazy(() =>
+  import('./pages/TranslationAdminPage').then((m) => ({
+    default: m.TranslationAdminPage,
+  })),
+);
+
 export function App({ children }: { children?: ReactNode }) {
   return (
     <AuthProvider>
@@ -170,6 +181,14 @@ export function App({ children }: { children?: ReactNode }) {
                 <Route path="inbox" element={<InboxPage />} />
                 <Route path="my-events" element={<EventWorkspace />} />
                 <Route path="account" element={<AccountPage />} />
+                <Route
+                  path="live-translation"
+                  element={<LiveTranslationPage />}
+                />
+                <Route
+                  path="translation-app"
+                  element={<TranslationAdminPage />}
+                />
                 <Route path="calendar" element={<CalendarPage />} />
                 <Route path="reimbursements" element={<ReimbursementsPage />} />
                 <Route path="library" element={<LibraryPage />} />

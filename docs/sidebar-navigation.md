@@ -1,5 +1,7 @@
 # Menu lateral
 
+Tradução ao vivo (`/live-translation`) aparece no grupo Início somente enquanto há uma transmissão publicada pelo computador da igreja. A página Aplicativo de tradução (`/translation-app`), no grupo Comunicação, é restrita a ADMIN e SUPER_ADMIN e concentra download e ligação do PC. Consulte `live-translation.md` para configuração, expiração e acesso pela rede local.
+
 O grupo Auditoria contém duas páginas independentes: Registros de auditoria
 (`/audit`) e Erros de frontend (`/audit/errors`). O grupo abre ao acessar qualquer
 uma delas e apenas o item da página atual fica selecionado. Ambas preservam as

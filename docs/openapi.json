@@ -2509,6 +2509,23 @@
         ],
         "type": "object"
       },
+      "PublishTranslationDto": {
+        "properties": {
+          "audienceUrl": {
+            "maxLength": 512,
+            "type": "string"
+          },
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId",
+          "audienceUrl"
+        ],
+        "type": "object"
+      },
       "PushConfigDto": {
         "properties": {
           "enabled": {
@@ -3311,6 +3328,18 @@
           "capacity",
           "startsAt",
           "endsAt"
+        ],
+        "type": "object"
+      },
+      "TranslationSessionDto": {
+        "properties": {
+          "sessionId": {
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sessionId"
         ],
         "type": "object"
       },
@@ -13961,6 +13990,187 @@
         ],
         "x-permissions-all": [
           "LIBRARY_SETTINGS_UPDATE"
+        ]
+      }
+    },
+    "/api/v1/live-translation/credential": {
+      "post": {
+        "operationId": "LiveTranslationController_credential",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "LiveTranslation"
+        ]
+      }
+    },
+    "/api/v1/live-translation/download": {
+      "get": {
+        "operationId": "LiveTranslationController_download",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "LiveTranslation"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
+    "/api/v1/live-translation/download/archive": {
+      "get": {
+        "operationId": "LiveTranslationController_archive",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "LiveTranslation"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
+    "/api/v1/live-translation/publish": {
+      "post": {
+        "operationId": "LiveTranslationController_publish",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublishTranslationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [],
+        "tags": [
+          "LiveTranslation"
+        ]
+      }
+    },
+    "/api/v1/live-translation/status": {
+      "get": {
+        "operationId": "LiveTranslationController_status",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "LiveTranslation"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
+    "/api/v1/live-translation/unpublish": {
+      "post": {
+        "operationId": "LiveTranslationController_unpublish",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslationSessionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [],
+        "tags": [
+          "LiveTranslation"
         ]
       }
     },

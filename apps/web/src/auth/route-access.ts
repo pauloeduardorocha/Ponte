@@ -18,6 +18,7 @@ const routeAccess: readonly AccessRule[] = [
   { path: '/mural' },
   { path: '/mural/:id' },
   { path: '/account' },
+  { path: '/live-translation' },
   { path: '/calendar' },
   { path: '/inbox' },
   { path: '/videos' },
@@ -67,6 +68,10 @@ export function canAccessRoute(
       matchPath(path, pathname),
     );
   if (pathname === '/pending-approvals') return canApproveRegistrations(user);
+  if (pathname === '/translation-app')
+    return Boolean(
+      user?.roles?.some((role) => role === 'ADMIN' || role === 'SUPER_ADMIN'),
+    );
   const rule = routeAccess.find(({ path }) => matchPath(path, pathname));
   if (!rule) return false;
   const prefix = rule.prefix;

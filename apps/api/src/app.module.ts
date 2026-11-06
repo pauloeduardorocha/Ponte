@@ -1,6 +1,7 @@
 import { ReimbursementsModule } from './modules/reimbursements/reimbursements.controller';
 import { ConversationsModule } from './modules/conversations/conversations.controller';
 import { VideosModule } from './modules/videos/videos.module';
+import { LiveTranslationModule } from './modules/live-translation/live-translation.controller';
 import { MemberPortalModule } from './modules/community/member-portal.controller';
 import { PrivacyModule } from './modules/privacy/privacy.module';
 import { AuditModule } from './modules/audit/audit.module';
@@ -50,6 +51,7 @@ import { FrontendErrorsModule } from './modules/frontend-errors/frontend-errors.
     PrivacyModule,
     CommunityModule,
     VideosModule,
+    LiveTranslationModule,
     MemberPortalModule,
     OperationsModule,
     EventsModule,

@@ -41,6 +41,9 @@ import { PushPermissionBanner } from '../components/PushPermissionBanner';
 import PeopleAltRounded from '@mui/icons-material/PeopleAltRounded';
 import MenuBookRounded from '@mui/icons-material/MenuBookRounded';
 import VideoLibraryRounded from '@mui/icons-material/VideoLibraryRounded';
+import TranslateRounded from '@mui/icons-material/TranslateRounded';
+import DownloadRounded from '@mui/icons-material/DownloadRounded';
+import { useLiveTranslation } from '../lib/live-translation';
 import { videoPlaylists } from '../lib/video-playlists';
 import {
   Link,
@@ -82,6 +85,18 @@ interface NavigationItem {
 }
 
 const navigation: NavigationItem[] = [
+  {
+    label: 'Tradução ao vivo',
+    group: 'Início',
+    to: '/live-translation',
+    icon: TranslateRounded,
+  },
+  {
+    label: 'Aplicativo de tradução',
+    group: 'Comunicação',
+    to: '/translation-app',
+    icon: DownloadRounded,
+  },
   {
     label: 'Calendário',
     group: 'Datas',
@@ -211,6 +226,7 @@ function isNavigationActive(to: string, location: { pathname: string }) {
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useAuth();
+  const translation = useLiveTranslation();
   const installButton = useContext(PwaInstallContext);
   const location = useLocation();
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
@@ -235,7 +251,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       (a, b) =>
         navigationGroups.indexOf(a.group) - navigationGroups.indexOf(b.group),
     )
-    .filter(({ to }) => canAccessRoute(to, user?.permissions ?? [], user));
+    .filter(({ to }) => canAccessRoute(to, user?.permissions ?? [], user))
+    .filter(({ to }) => to !== '/live-translation' || translation.active);
 
   return (
     <Box className="sidebar">
@@ -376,7 +393,13 @@ function ProfileMenu() {
           onClick={(event) => setAnchor(event.currentTarget)}
           size="small"
         >
-          <Avatar src={user?.avatar ?? undefined} alt={user?.name} className="profile-avatar">{initials(user?.name)}</Avatar>
+          <Avatar
+            src={user?.avatar ?? undefined}
+            alt={user?.name}
+            className="profile-avatar"
+          >
+            {initials(user?.name)}
+          </Avatar>
         </IconButton>
       </Tooltip>
       <Menu
