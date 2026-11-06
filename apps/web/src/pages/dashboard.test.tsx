@@ -115,9 +115,11 @@ describe('Personal member dashboard', () => {
     renderApp('/');
     await screen.findByRole('heading', { name: 'Meu grupo familiar' });
     expect(
+      screen.queryByRole('heading', { name: 'Conversas' }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
-      'Conversas',
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',
@@ -195,9 +197,11 @@ describe('Personal member dashboard', () => {
     renderApp('/');
     await screen.findByText('Grupo da Ana');
     expect(
+      screen.queryByRole('heading', { name: 'Conversas' }),
+    ).not.toBeInTheDocument();
+    expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent),
     ).toEqual([
-      'Conversas',
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',
