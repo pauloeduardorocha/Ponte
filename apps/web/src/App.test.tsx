@@ -375,7 +375,11 @@ describe('Permissions', () => {
       'Vídeos',
       'Comunicação',
     ]);
-    expect(within(nav).getAllByRole('link')).toHaveLength(2);
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Visão geral', 'Mural', 'Biblioteca']);
     for (const button of within(nav).getAllByRole('button')) {
       expect(button).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(button);
@@ -386,8 +390,9 @@ describe('Permissions', () => {
       links.length,
     );
     expect(links[0]).toHaveTextContent('Visão geral');
-    expect(links.slice(0, 5).map((link) => link.textContent)).toEqual([
+    expect(links.slice(0, 6).map((link) => link.textContent)).toEqual([
       'Visão geral',
+      'Mural',
       'Biblioteca',
       'Calendário',
       'Gestão de eventos',
@@ -398,7 +403,11 @@ describe('Permissions', () => {
       expect(button).toHaveAttribute('aria-expanded', 'false');
     }
     await waitFor(() =>
-      expect(within(nav).getAllByRole('link')).toHaveLength(2),
+      expect(
+        within(nav)
+          .getAllByRole('link')
+          .map((link) => link.textContent),
+      ).toEqual(['Visão geral', 'Mural', 'Biblioteca']),
     );
   });
 
