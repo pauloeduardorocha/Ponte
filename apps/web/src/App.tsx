@@ -152,7 +152,9 @@ export function App({ children }: { children?: ReactNode }) {
             <Route element={<AppShell />}>
               <Route element={<RequireRouteAccess />}>
                 <Route index element={<DashboardPage />} />
-                <Route path="conversations" element={<ConversationsPage />} />
+                <Route path="mural" element={<ConversationsPage />} />
+                <Route path="mural/:id" element={<ConversationPage />} />
+                <Route path="conversations" element={<Navigate to="/mural" replace />} />
                 <Route
                   path="conversations/:id"
                   element={<ConversationPage />}

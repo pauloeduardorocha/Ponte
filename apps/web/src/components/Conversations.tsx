@@ -20,7 +20,10 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
 import { formatDateTime } from '../lib/format';
-import { CachedQueryStatus } from './CachedQueryStatus';
+import {
+  CachedQueryRefreshButton,
+  CachedQueryStatus,
+} from './CachedQueryStatus';
 import { ConversationComposer } from './ConversationContent';
 import type { ConversationPageView as Page } from '@church/shared';
 function ConversationBoard({ all = false }: { all?: boolean }) {
@@ -60,9 +63,16 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           <Typography variant="h4" component="h1">
             Mural
           </Typography>
-          <Button variant="contained" onClick={() => setCreate(true)}>
-            Nova conversa
-          </Button>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <CachedQueryRefreshButton
+              refreshing={list.isFetching}
+              onRefresh={() => void list.refetch()}
+              label="conversas"
+            />
+            <Button variant="contained" onClick={() => setCreate(true)}>
+              Nova conversa
+            </Button>
+          </Stack>
         </Stack>
       )}
       {all && (
@@ -71,6 +81,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           refreshing={list.isFetching}
           onRefresh={() => void list.refetch()}
           label="conversas"
+          refreshButton="hidden"
         />
       )}
       {list.isPending && <CircularProgress aria-label="Carregando conversas" />}
@@ -119,7 +130,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
             <CardActionArea
               component={Link}
               role="link"
-              to={`/conversations/${post.id}`}
+              to={`/mural/${post.id}`}
               sx={{ height: '100%' }}
             >
               <CardContent>
@@ -172,7 +183,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
       {!all && (
         <Typography
           component={Link}
-          to="/conversations"
+          to="/mural"
           variant="body2"
           color="primary"
           sx={{ alignSelf: 'flex-start' }}
@@ -204,7 +215,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
                   queryKey: ['conversations', 'list'],
                 });
                 setCreate(false);
-                navigate(`/conversations/${id}`);
+                navigate(`/mural/${id}`);
               }}
             />
           </Box>

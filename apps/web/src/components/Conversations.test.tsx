@@ -376,7 +376,7 @@ describe('Conversation panels', () => {
         { name: 'Ver mural' },
         { timeout: 10000 },
       ),
-    ).toHaveAttribute('href', '/conversations');
+    ).toHaveAttribute('href', '/mural');
     const panel = within(
       screen.getByRole('region', { name: 'Painéis de conversas' }),
     );
@@ -429,7 +429,7 @@ describe('Conversation panels', () => {
         },
       }),
     });
-    renderApp('/conversations');
+    renderApp('/mural');
     fireEvent.click(
       await screen.findByRole('button', { name: 'Carregar mais conversas' }),
     );
@@ -439,6 +439,16 @@ describe('Conversation panels', () => {
     expect(
       screen.getByRole('link', { name: /Conversar sobre o encontro/ }),
     ).toBeInTheDocument();
+    const refresh = screen.getByRole('button', { name: 'Atualizar conversas' });
+    expect(refresh).toHaveTextContent('');
+    expect(refresh.querySelector('svg')).toBeInTheDocument();
+    expect(refresh.parentElement?.parentElement).toContainElement(
+      screen.getByRole('button', { name: 'Nova conversa' }),
+    );
+    expect(screen.getByRole('link', { name: 'Mural' })).toHaveAttribute(
+      'href',
+      '/mural',
+    );
   });
 
   it('blocks pending accounts before querying conversations', async () => {

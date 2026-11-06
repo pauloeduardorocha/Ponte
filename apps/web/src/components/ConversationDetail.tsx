@@ -56,7 +56,7 @@ export function ConversationPage() {
     >
       <Button
         component={Link}
-        to="/conversations"
+        to="/mural"
         sx={{ alignSelf: 'flex-start' }}
       >
         Voltar para o mural
@@ -66,6 +66,7 @@ export function ConversationPage() {
         refreshing={detail.isFetching}
         onRefresh={refresh}
         label="conversa"
+        refreshButton="icon"
       />
       {detail.isPending && (
         <CircularProgress aria-label="Carregando conversa" />

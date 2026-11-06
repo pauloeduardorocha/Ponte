@@ -131,7 +131,7 @@ const navigation: NavigationItem[] = [
     icon: BugReportRounded,
   },
   { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
-  { label: 'Mural', group: 'Início', to: '/conversations', icon: ForumRounded },
+  { label: 'Mural', group: 'Início', to: '/mural', icon: ForumRounded },
   {
     label: 'Membros',
     group: 'Pessoas',
