@@ -19,6 +19,8 @@ O firewall do Windows deve permitir a porta TCP 3210 na rede privada e a rede Wi
 
 ## Download e publicação de uma versão Windows
 
+O pacote inclui `GUIA-COMECE-AQUI.html` (guia visual que abre no navegador sem internet) e `LEIA-ME-PRIMEIRO.txt` (Bloco de Notas), ao lado de `Ponte-Traducao.exe`. A página administrativa mostra o mesmo conteúdo em seções expansíveis. A fonte é `apps/web/src/content/translation-windows-guide.json`; o empacotamento lê esse arquivo ao receber o caminho do Ponte e mantém uma cópia local para builds independentes. O guia cobre extração do ZIP, ligação ao Ponte, chave Gemini, microfone, publicação, uso pelos ouvintes, encerramento e problemas comuns.
+
 No repositório **Live translation**, execute no Windows:
 
 ```powershell

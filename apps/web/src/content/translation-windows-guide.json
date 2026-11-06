@@ -1,0 +1,102 @@
+{
+  "title": "Guia para usar no Windows",
+  "introduction": "Você não precisa saber programar nem instalar outras ferramentas. Siga os passos no computador que ficará na igreja durante o culto.",
+  "sections": [
+    {
+      "title": "Antes de começar",
+      "steps": [
+        "Separe um computador com Windows 10 ou 11, microfone e acesso à internet. Conecte-o à rede da igreja e à tomada.",
+        "Tenha a ajuda de um administrador do Ponte para gerar a ligação do aplicativo e fornecer uma chave Gemini válida. Essas são duas informações diferentes; não as compartilhe com os ouvintes.",
+        "Faça um teste antes do culto com um celular no Wi-Fi da igreja e fones de ouvido. A internet é necessária no computador para fazer a tradução."
+      ]
+    },
+    {
+      "title": "1. Baixar e extrair a pasta",
+      "steps": [
+        "Na página Aplicativo de tradução do Ponte, clique em Baixar aplicativo para Windows e aguarde terminar.",
+        "Abra o Explorador de Arquivos do Windows e entre em Downloads. Procure Ponte-Traducao-Windows.zip. A palavra ZIP indica que os arquivos estão dentro de uma pasta compactada.",
+        "Clique com o botão direito no ZIP e escolha Extrair Tudo. Escolha uma pasta fácil de encontrar, como Documentos, e clique em Extrair.",
+        "Abra a pasta que foi extraída. Nela, você encontrará Ponte-Traducao.exe, este guia e outras pastas. Não execute o aplicativo de dentro do ZIP e não separe o arquivo EXE das outras pastas."
+      ]
+    },
+    {
+      "title": "2. Abrir e conectar ao Ponte",
+      "steps": [
+        "Dentro da pasta extraída, dê dois cliques em Ponte-Traducao.exe. Se o Windows esconder as terminações dos arquivos, o nome pode aparecer apenas como Ponte-Traducao.",
+        "No Ponte, entre com uma conta de administrador e abra Comunicação → Aplicativo de tradução. Clique em Gerar ligação para o computador e depois em Copiar ligação. Gerar uma nova ligação cancela a anterior e retira uma transmissão que já esteja publicada.",
+        "Volte à janela do aplicativo. Clique no campo Ligação gerada pelo administrador, pressione Ctrl+V para colar e clique em Conectar ao Ponte. Aguarde a mensagem Conectado ao Ponte.",
+        "Se o Windows impedir a abertura, peça ao responsável da igreja para conferir a origem e a versão do pacote. Não é necessário desativar o antivírus para seguir este guia."
+      ]
+    },
+    {
+      "title": "3. Escolher o microfone e testar",
+      "steps": [
+        "Cole a chave fornecida pelo responsável no campo Chave Gemini API. Essa chave permite que o serviço faça a tradução; ela não é a ligação do Ponte.",
+        "Clique em Atualizar microfones. Se aparecer um pedido para usar o microfone, permita o acesso. No campo Microfone, escolha o que será usado no culto.",
+        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto em inglês aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
+        "Se quiser ouvir o teste neste computador, use fones e marque Ouvir tradução neste computador. Evite reproduzir a tradução nas caixas de som perto do microfone, pois isso pode causar eco."
+      ]
+    },
+    {
+      "title": "4. Publicar para as pessoas da igreja",
+      "steps": [
+        "Com a tradução funcionando, vá à seção Publicar no Ponte. Em Endereço do computador na rede da igreja, escolha o endereço da conexão usada pela igreja. Se houver mais de uma opção, peça ao responsável da rede para confirmar qual funciona nos celulares.",
+        "Clique em Publicar tradução. Aguarde a confirmação. Apenas abrir o aplicativo ou iniciar o microfone não publica a tradução no Ponte.",
+        "O menu Tradução ao vivo aparecerá no Ponte em até 1 minuto para usuários com conta aprovada. Mantenha o computador ligado, conectado à rede e com o aplicativo aberto.",
+        "Não suspenda o computador nem feche a tampa do notebook durante o culto. A tradução depende dele enquanto estiver sendo usada."
+      ]
+    },
+    {
+      "title": "5. Orientar quem vai ouvir",
+      "steps": [
+        "Peça às pessoas que se conectem ao Wi-Fi da igreja. O link local não funciona para quem está em casa ou usando somente os dados móveis.",
+        "No Ponte, cada pessoa abre Tradução ao vivo e toca em Conectar à tradução. Se o navegador pedir acesso à rede local, a pessoa precisa permitir para se conectar ao computador.",
+        "O texto em inglês aparece na tela e o áudio é reproduzido com fones de ouvido. Silenciar áudio mantém o texto disponível.",
+        "Se a conexão dentro do Ponte for bloqueada pelo navegador, toque em Abrir página local. Nessa outra página, toque em Enable audio para ouvir."
+      ]
+    },
+    {
+      "title": "6. Encerrar e usar no próximo culto",
+      "steps": [
+        "Ao terminar, clique em Parar e depois feche o aplicativo. Parar interrompe a tradução e retira a publicação do Ponte; o menu pode levar até 1 minuto para atualizar.",
+        "Retirar publicação esconde a transmissão do menu, mas não substitui Parar. Para encerrar o trabalho, use Parar.",
+        "Se o computador desligar ou perder a conexão sem avisar, a publicação expira em até 2 minutos após a última confirmação.",
+        "No próximo culto, abra Ponte-Traducao.exe na mesma pasta extraída e repita a conexão e o teste. A chave Gemini e a ligação do Ponte ficam apenas na memória e precisam ser coladas novamente ao reabrir."
+      ]
+    }
+  ],
+  "troubleshooting": [
+    {
+      "problem": "Não encontro o aplicativo depois de baixar",
+      "solution": "Abra Downloads, encontre o ZIP e use Extrair Tudo. Depois abra a pasta extraída e procure Ponte-Traducao.exe. Não procure o aplicativo na loja do Windows."
+    },
+    {
+      "problem": "O microfone não aparece ou não capta a voz",
+      "solution": "Confira se o cabo está conectado e se o microfone está ligado. Clique em Atualizar microfones e selecione-o novamente. Nas Configurações do Windows, pesquise Microfone e confira a permissão de acesso para aplicativos de área de trabalho."
+    },
+    {
+      "problem": "Aparece erro de chave, conexão ou limite do Gemini",
+      "solution": "Confira se o computador tem internet e se a chave foi colada no campo correto, sem espaços extras. Peça ao responsável para verificar a validade da chave e o limite de uso da conta. Depois tente Iniciar tradução novamente."
+    },
+    {
+      "problem": "O botão Publicar tradução está apagado",
+      "solution": "Primeiro conecte o aplicativo ao Ponte e inicie a tradução. Aguarde a indicação de que ele está ouvindo. Só então o botão Publicar tradução fica disponível."
+    },
+    {
+      "problem": "O menu não aparece no celular",
+      "solution": "Confira a confirmação Publicada no Ponte no computador e aguarde até 1 minuto. Abra o Ponte novamente. A conta precisa estar aprovada; se a ligação foi cancelada, peça ao administrador uma nova e publique outra vez."
+    },
+    {
+      "problem": "O menu aparece, mas o celular não conecta",
+      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Tente Abrir página local. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
+    },
+    {
+      "problem": "O texto aparece, mas não ouço o áudio",
+      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Na página local, toque em Enable audio. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
+    },
+    {
+      "problem": "Aparece que a porta já está em uso",
+      "solution": "Procure outra janela do aplicativo já aberta. Use apenas uma instância por computador. Feche a janela duplicada; se não souber qual está em uso, peça ajuda ao responsável antes de encerrar uma tradução em andamento."
+    }
+  ]
+}

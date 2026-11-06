@@ -2,6 +2,10 @@ import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Alert,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Box,
   Button,
   Card,
   CardContent,
@@ -10,6 +14,8 @@ import {
   Typography,
 } from '@mui/material';
 import DownloadRounded from '@mui/icons-material/DownloadRounded';
+import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
+import windowsGuide from '../content/translation-windows-guide.json';
 import { PageHeader } from '../components/PageParts';
 import { apiRequest, apiResponse } from '../lib/api';
 import { translationApiUrl, useLiveTranslation } from '../lib/live-translation';
@@ -81,6 +87,14 @@ export function TranslationAdminPage() {
               tudo para executar, sem instalar Node.js. Mantenha o computador
               ligado e conectado ao Wi-Fi da igreja.
             </Typography>
+            <Typography variant="body2" color="text.secondary">
+              O ZIP inclui GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt ao lado
+              do aplicativo. Abra o guia com dois cliques para consultar sem
+              internet.
+            </Typography>
+            <Button href="#guia-windows" sx={{ alignSelf: 'flex-start' }}>
+              Ver guia passo a passo para Windows
+            </Button>
             {download.data?.url ? (
               <Button
                 variant="contained"
@@ -101,15 +115,84 @@ export function TranslationAdminPage() {
               </Button>
             ) : (
               <Alert severity="info">
-                O download ainda não está disponível neste ambiente. Configure
-                TRANSLATION_APP_DOWNLOAD_URL com o endereço HTTPS do pacote
-                Windows para disponibilizar a versão publicada.
+                O pacote Windows ainda não foi disponibilizado neste ambiente.
+                Peça ao responsável pelo Ponte para publicar a versão de
+                download.
               </Alert>
             )}
             {download.error && (
               <Alert severity="error">{errorMessage(download.error)}</Alert>
             )}
             {notice && <Alert severity="info">{notice}</Alert>}
+          </Stack>
+        </CardContent>
+      </Card>
+      <Card id="guia-windows" sx={{ scrollMarginTop: 90 }}>
+        <CardContent>
+          <Stack spacing={2}>
+            <Typography component="h2" variant="h6">
+              {windowsGuide.title}
+            </Typography>
+            <Typography color="text.secondary">
+              {windowsGuide.introduction}
+            </Typography>
+            <Box>
+              {windowsGuide.sections.map((section, index) => (
+                <Accordion
+                  key={section.title}
+                  defaultExpanded={index === 0}
+                  disableGutters
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreRounded />}
+                    aria-controls={`windows-guide-${index}`}
+                    id={`windows-guide-heading-${index}`}
+                  >
+                    <Typography component="h3" fontWeight={650}>
+                      {section.title}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails id={`windows-guide-${index}`}>
+                    <Box component="ol" sx={{ pl: 3, m: 0 }}>
+                      {section.steps.map((step) => (
+                        <Typography
+                          component="li"
+                          key={step}
+                          sx={{ mb: 1.5, lineHeight: 1.7 }}
+                        >
+                          {step}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+              <Accordion disableGutters>
+                <AccordionSummary
+                  expandIcon={<ExpandMoreRounded />}
+                  aria-controls="windows-troubleshooting"
+                  id="windows-troubleshooting-heading"
+                >
+                  <Typography component="h3" fontWeight={650}>
+                    Se algo não funcionar
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails id="windows-troubleshooting">
+                  <Stack spacing={2}>
+                    {windowsGuide.troubleshooting.map((item) => (
+                      <Box key={item.problem}>
+                        <Typography component="h4" fontWeight={650}>
+                          {item.problem}
+                        </Typography>
+                        <Typography color="text.secondary">
+                          {item.solution}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Stack>
+                </AccordionDetails>
+              </Accordion>
+            </Box>
           </Stack>
         </CardContent>
       </Card>
