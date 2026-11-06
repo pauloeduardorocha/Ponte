@@ -18,9 +18,9 @@ export function BirthdaysCard() {
   const query = useQuery({
     queryKey: ['community', 'birthdays', 'week', user?.id],
     queryFn: () =>
-      apiRequest<{ id: string; name: string; birthday: string }[]>(
-        '/community/birthdays?period=week',
-      ),
+      apiRequest<
+        { id: string; name: string; birthday: string; avatar?: string | null }[]
+      >('/community/birthdays?period=week'),
     refetchInterval: 24 * 60 * 60_000,
   });
   return (
@@ -68,7 +68,8 @@ export function BirthdaysCard() {
                       alignItems="center"
                     >
                       <Avatar
-                        aria-hidden="true"
+                        src={member.avatar ?? undefined}
+                        alt={member.name}
                         sx={{ bgcolor: 'primary.main' }}
                       >
                         {member.name.charAt(0).toLocaleUpperCase('pt-PT')}

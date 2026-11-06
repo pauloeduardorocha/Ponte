@@ -44,10 +44,11 @@ export class CommunityController {
   async birthdays(@Query('period') period?: string) {
     if (period === 'week') {
       return this.db.$queryRaw<
-        { id: string; name: string; birthday: string }[]
+        { id: string; name: string; birthday: string; avatar: string | null }[]
       >`
-        SELECT m.id, m.name, to_char(d.day, 'DD/MM') AS birthday
+        SELECT m.id, m.name, to_char(d.day, 'DD/MM') AS birthday, u.avatar
         FROM members m
+        LEFT JOIN users u ON u.member_id = m.id AND u.deleted_at IS NULL
         CROSS JOIN generate_series(
           date_trunc('week', CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon'),
           date_trunc('week', CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon') + interval '6 days',
@@ -60,12 +61,13 @@ export class CommunityController {
       `;
     }
     // Dates of birth have no timezone; only today's date follows Lisbon time.
-    return this.db.$queryRaw<{ id: string; name: string }[]>`
-      SELECT id, name FROM members
-      WHERE status = 'ACTIVE' AND anonymized_at IS NULL
-        AND EXTRACT(MONTH FROM birth_date) = EXTRACT(MONTH FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
-        AND EXTRACT(DAY FROM birth_date) = EXTRACT(DAY FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
-      ORDER BY name ASC, id ASC
+    return this.db.$queryRaw<{ id: string; name: string; avatar: string | null }[]>`
+      SELECT m.id, m.name, u.avatar FROM members m
+      LEFT JOIN users u ON u.member_id = m.id AND u.deleted_at IS NULL
+      WHERE m.status = 'ACTIVE' AND m.anonymized_at IS NULL
+        AND EXTRACT(MONTH FROM m.birth_date) = EXTRACT(MONTH FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
+        AND EXTRACT(DAY FROM m.birth_date) = EXTRACT(DAY FROM CURRENT_TIMESTAMP AT TIME ZONE 'Europe/Lisbon')
+      ORDER BY m.name ASC, m.id ASC
     `;
   }
   @Get('dashboard') async dashboard(@Req() r: AuthRequest) {
