@@ -2,7 +2,7 @@
 
 Contas com status `ACTIVE` podem consultar, criar e responder a conversas na página inicial, independentemente de permissões administrativas. Contas pendentes, desativadas e visitantes não têm acesso à API nem à página de detalhes.
 
-A página inicial apresenta até 20 conversas recentes em cards com rolagem horizontal, sem botões de anterior/próxima. As mais recentes aparecem primeiro, por data de criação. O link “Ver todas as conversas” abre `/conversations`, que apresenta cards em uma grade responsiva e carrega mais 20 por clique.
+A página inicial apresenta até 20 conversas recentes em cards com rolagem horizontal, sem título nem botões no topo. As mais recentes aparecem primeiro, por data de criação. Abaixo dos cards, o link “Ver mural” abre `/conversations`. A página Mural também está no menu, entre Visão geral e Biblioteca, e apresenta todas as conversas em uma grade responsiva, carregando mais 20 por clique. Criar uma conversa e atualizar manualmente a listagem ficam disponíveis no Mural.
 
 A página `/conversations/:id` tem formato de post social: cabeçalho com autor e data, título, texto/imagem e comentários em balões. Comentários aparecem dos mais recentes para os mais antigos. “Mostrar mais comentários” acrescenta dez por vez sem substituir os já exibidos. Cada comentário tem a ação “Responder”; suas respostas ficam na mesma conversa e aparecem recuadas, também carregadas de dez em dez. Não há paginação numerada. Para manter a leitura em telas pequenas, o recuo visual deixa de aumentar após três níveis, preservando o vínculo entre as mensagens.
 

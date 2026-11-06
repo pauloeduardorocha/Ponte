@@ -59,7 +59,7 @@ export function ConversationPage() {
         to="/conversations"
         sx={{ alignSelf: 'flex-start' }}
       >
-        Voltar para as conversas
+        Voltar para o mural
       </Button>
       <CachedQueryStatus
         updatedAt={detail.dataUpdatedAt}

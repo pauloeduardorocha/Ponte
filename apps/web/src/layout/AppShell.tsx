@@ -29,6 +29,7 @@ import AdminPanelSettingsRounded from '@mui/icons-material/AdminPanelSettingsRou
 import BugReportRounded from '@mui/icons-material/BugReportRounded';
 import CalendarMonthRounded from '@mui/icons-material/CalendarMonthRounded';
 import DashboardRounded from '@mui/icons-material/DashboardRounded';
+import ForumRounded from '@mui/icons-material/ForumRounded';
 import ExpandMoreRounded from '@mui/icons-material/ExpandMoreRounded';
 import ExpandLessRounded from '@mui/icons-material/ExpandLessRounded';
 import LogoutRounded from '@mui/icons-material/LogoutRounded';
@@ -130,6 +131,7 @@ const navigation: NavigationItem[] = [
     icon: BugReportRounded,
   },
   { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
+  { label: 'Mural', group: 'Início', to: '/conversations', icon: ForumRounded },
   {
     label: 'Membros',
     group: 'Pessoas',

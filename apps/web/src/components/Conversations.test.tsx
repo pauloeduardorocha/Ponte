@@ -65,7 +65,7 @@ describe('Conversation panels', () => {
       },
       [`POST /conversations/${id}/replies`]: { body: { id: memberId } },
     });
-    renderApp('/');
+    renderApp('/conversations');
     fireEvent.click(
       await screen.findByRole(
         'button',
@@ -366,30 +366,48 @@ describe('Conversation panels', () => {
 
   it('uses horizontal cards on home with a link to all conversations and no previous/next buttons', async () => {
     mockApi({
-      ...sessionRoutes(makeUser()),
+      ...sessionRoutes(makeUser(['LIBRARY_BOOK_READ'])),
       'GET /conversations': { body: { items: [topic], hasMore: false } },
     });
     renderApp('/');
     expect(
       await screen.findByRole(
         'link',
-        { name: 'Ver todas as conversas' },
+        { name: 'Ver mural' },
         { timeout: 10000 },
       ),
     ).toHaveAttribute('href', '/conversations');
+    const panel = within(
+      screen.getByRole('region', { name: 'Painéis de conversas' }),
+    );
+    expect(
+      panel.queryByRole('heading', { name: 'Conversas' }),
+    ).not.toBeInTheDocument();
+    expect(
+      panel.queryByRole('button', { name: 'Nova conversa' }),
+    ).not.toBeInTheDocument();
+    expect(
+      panel.queryByRole('button', { name: /Atualizar/ }),
+    ).not.toBeInTheDocument();
+    const navigation = screen.getByRole('navigation', {
+      name: 'Navegação principal',
+    });
+    const labels = within(navigation)
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(labels.indexOf('Mural')).toBe(labels.indexOf('Visão geral') + 1);
+    expect(labels.indexOf('Biblioteca')).toBe(labels.indexOf('Mural') + 1);
     expect(
       screen.queryByRole('button', { name: 'Conversas anteriores' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Próximas conversas' }),
     ).not.toBeInTheDocument();
-    fireEvent.click(
-      screen.getByRole('link', { name: 'Ver todas as conversas' }),
-    );
+    fireEvent.click(screen.getByRole('link', { name: 'Ver mural' }));
     expect(
       await screen.findByRole('heading', {
         level: 1,
-        name: 'Todas as conversas',
+        name: 'Mural',
       }),
     ).toBeInTheDocument();
     expect(

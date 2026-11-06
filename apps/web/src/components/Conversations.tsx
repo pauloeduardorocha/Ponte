@@ -49,35 +49,30 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
       aria-label="Painéis de conversas"
       sx={{ minWidth: 0 }}
     >
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        flexWrap="wrap"
-        gap={1}
-      >
-        <Typography variant={all ? 'h4' : 'h5'} component={all ? 'h1' : 'h2'}>
-          {all ? 'Todas as conversas' : 'Conversas'}
-        </Typography>
-        <Button variant="contained" onClick={() => setCreate(true)}>
-          Nova conversa
-        </Button>
-      </Stack>
-      {!all && (
-        <Button
-          component={Link}
-          to="/conversations"
-          sx={{ alignSelf: 'flex-start' }}
+      {all && (
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          flexWrap="wrap"
+          gap={1}
         >
-          Ver todas as conversas
-        </Button>
+          <Typography variant="h4" component="h1">
+            Mural
+          </Typography>
+          <Button variant="contained" onClick={() => setCreate(true)}>
+            Nova conversa
+          </Button>
+        </Stack>
       )}
-      <CachedQueryStatus
-        updatedAt={list.dataUpdatedAt}
-        refreshing={list.isFetching}
-        onRefresh={() => void list.refetch()}
-        label="conversas"
-      />
+      {all && (
+        <CachedQueryStatus
+          updatedAt={list.dataUpdatedAt}
+          refreshing={list.isFetching}
+          onRefresh={() => void list.refetch()}
+          label="conversas"
+        />
+      )}
       {list.isPending && <CircularProgress aria-label="Carregando conversas" />}
       {list.isError && (
         <Alert
@@ -174,6 +169,17 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           </Card>
         ))}
       </Box>
+      {!all && (
+        <Typography
+          component={Link}
+          to="/conversations"
+          variant="body2"
+          color="primary"
+          sx={{ alignSelf: 'flex-start' }}
+        >
+          Ver mural
+        </Typography>
+      )}
       {all && list.hasNextPage && (
         <Button
           disabled={list.isFetchingNextPage}
