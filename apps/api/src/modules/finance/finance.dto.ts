@@ -32,6 +32,12 @@ export class FinanceQuery extends PageQuery {
   @IsOptional() @IsIn(['PENDING', 'COMPLETED', 'CANCELLED']) status?:
     'PENDING' | 'COMPLETED' | 'CANCELLED';
 }
+export class FinanceChartsQuery {
+  @Matches(/^\d{4}-\d{2}-\d{2}$/)
+  @IsDateString({ strict: true })
+  start!: string;
+  @Matches(/^\d{4}-\d{2}-\d{2}$/) @IsDateString({ strict: true }) end!: string;
+}
 export class DashboardQuery {
   @IsOptional() @Matches(/^\d{4}-(0[1-9]|1[0-2])$/) month?: string;
   @IsOptional() @IsUUID() accountId?: string;

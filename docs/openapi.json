@@ -9856,6 +9856,57 @@
         ]
       }
     },
+    "/api/v1/finance/charts": {
+      "get": {
+        "operationId": "FinanceController_charts",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "end",
+            "required": true,
+            "schema": {
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Financeiro"
+        ],
+        "x-permissions-all": [
+          "FINANCE_DASHBOARD_READ"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
     "/api/v1/finance/contributions": {
       "get": {
         "operationId": "FinanceController_contributions",

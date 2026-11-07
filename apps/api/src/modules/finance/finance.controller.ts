@@ -31,6 +31,7 @@ import { MAX_ATTACHMENT_SIZE, PrivateUpload } from './storage.service';
 import {
   AccountDto,
   DashboardQuery,
+  FinanceChartsQuery,
   AccountPatch,
   CostCenterDto,
   CostCenterPatch,
@@ -205,6 +206,12 @@ export class FinanceController {
     @Req() req: AuthRequest,
   ) {
     return this.finance.saveContribution(dto, req.user, id);
+  }
+
+  @Get('charts')
+  @Permission('FINANCE_DASHBOARD_READ')
+  charts(@Query() query: FinanceChartsQuery) {
+    return this.finance.charts(query);
   }
 
   @Get('dashboard')

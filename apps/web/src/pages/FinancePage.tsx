@@ -3,6 +3,7 @@ import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useDebouncedValue } from '../lib/use-debounced-value';
+import { FinanceChartsPage } from './FinanceChartsPage';
 import { FinancialDashboardPanel } from './FinancialDashboardPanel';
 import { StatusChip } from '../components/DataPresentation';
 import { ReportsPage } from './ReportsPage';
@@ -60,7 +61,8 @@ const modules = [
     label: 'Importação bancária',
     read: 'FINANCE_BANK_IMPORT',
   },
-  { route: 'dashboard', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
+  { route: 'summary', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
+  { route: 'dashboard', label: 'Dashboard', read: 'FINANCE_DASHBOARD_READ' },
   { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
   {
     route: 'reimbursements',
@@ -204,7 +206,7 @@ const labels: Record<string, string> = {
   OTHER: 'Outro',
 };
 export function FinancePage() {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   if (!user?.permissions.some((p) => p.startsWith('FINANCE_')))
     return <Alert severity="warning">Sem permissão financeira.</Alert>;
   const managesFinance = user?.permissions.some(
@@ -213,7 +215,7 @@ export function FinancePage() {
       p !== 'FINANCE_SUMMARY_READ' &&
       p !== 'FINANCE_DASHBOARD_READ',
   );
-  return managesFinance ? (
+  return managesFinance || hasPermission('FINANCE_DASHBOARD_READ') ? (
     <FinanceManagementPage />
   ) : (
     <FinancialDashboardPanel />
@@ -287,6 +289,7 @@ function FinanceManagementPage() {
     enabled:
       Boolean(current) &&
       ![
+        'summary',
         'dashboard',
         'banking',
         'reports',
@@ -411,13 +414,15 @@ function FinanceManagementPage() {
         </Alert>
       )}
       {data.isFetching && <Typography>Carregando…</Typography>}
-      {route === 'dashboard' && <FinancialDashboardPanel />}
+      {route === 'summary' && <FinancialDashboardPanel />}
+      {route === 'dashboard' && <FinanceChartsPage />}
       {canWrite && (
         <Button variant="contained" onClick={() => open(null)}>
           Cadastrar {current.label.toLowerCase()}
         </Button>
       )}
       {![
+        'summary',
         'dashboard',
         'banking',
         'reports',

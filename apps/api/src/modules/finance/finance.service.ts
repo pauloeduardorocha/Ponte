@@ -1,4 +1,5 @@
-import { DashboardQuery } from './finance.dto';
+import { financialCharts } from './financial-charts';
+import { DashboardQuery, FinanceChartsQuery } from './finance.dto';
 import { bindAudit, auditRequestFields } from '../audit/audit-context';
 import {
   BadRequestException,
@@ -744,6 +745,9 @@ export class FinanceService {
       },
     });
     return { buffer, filename: a.filename, mime: a.mime };
+  }
+  charts(query: FinanceChartsQuery) {
+    return financialCharts(this.db, query);
   }
   async dashboard(user: CurrentUser, q: DashboardQuery = {}) {
     const now = new Date();

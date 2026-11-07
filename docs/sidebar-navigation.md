@@ -14,6 +14,11 @@ Todos os itens sem menu pai aparecem antes dos grupos recolhíveis, conforme as 
 
 O grupo Financeiro contém Tesouraria (`/finance`) e Meus reembolsos (`/reimbursements`). Tesouraria mantém as permissões da antiga opção Financeiro; Meus reembolsos mantém o acesso pessoal existente. As funcionalidades internas da tesouraria continuam na própria página.
 
+Tesouraria inclui a aba Dashboard (`/finance?tab=dashboard`), restrita a
+`FINANCE_DASHBOARD_READ`, com gráficos por categoria e centro de custos e
+evolução/projeção do saldo. A aba Resumo permanece disponível. Consulte
+[Dashboard da tesouraria](treasury-dashboard.md) para filtros e cálculo da projeção.
+
 O grupo Datas contém Calendário (`/calendar`), Gestão de eventos e Agenda de eventos. O grupo abre ao acessar uma dessas rotas. O calendário está disponível para contas aprovadas autenticadas; os itens de eventos preservam suas permissões.
 
 A tela Calendário incorpora o Google Calendar da igreja e oferece o link compartilhado para adicionar à conta Google, além de assinatura `webcal` para aplicativos compatíveis. A incorporação e o feed de assinatura dependem do compartilhamento público configurado pelo proprietário no Google Calendar. Os eventos continuam mantidos no Google, sem cópia no banco do Ponte.
