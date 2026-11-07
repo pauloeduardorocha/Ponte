@@ -173,7 +173,7 @@ describe('bank import batching', () => {
     );
     expect(tx.expense.createMany.mock.calls[0]![0].data).toHaveLength(1);
   });
-  it('reviews an overlapping statement using the original description, including legacy hashes', async () => {
+  it('rejects an overlapping occurrence using the original description, including legacy hashes', async () => {
     const { service, tx, rows } = setup();
     const row = { ...rows[0]!, description: 'Transferencia Joao' };
     rows.splice(0, rows.length, row);
@@ -188,8 +188,8 @@ describe('bank import batching', () => {
     expect(
       tx.bankTransaction.createMany.mock.calls[0]![0].data[0],
     ).toMatchObject({
-      status: 'POSSIBLE_DUPLICATE',
-      duplicateReason: expect.stringContaining('previous'),
+      status: 'REJECTED',
+      duplicateReason: 'Duplicado ignorado com movimento previous',
     });
     expect(tx.expense.createMany).not.toHaveBeenCalled();
     expect(tx.bankReconciliation.createMany).not.toHaveBeenCalled();
@@ -219,8 +219,8 @@ describe('bank import batching', () => {
         ),
       ).toEqual(
         occurrences === 1
-          ? ['POSSIBLE_DUPLICATE', 'RECONCILED']
-          : ['POSSIBLE_DUPLICATE', 'POSSIBLE_DUPLICATE'],
+          ? ['REJECTED', 'RECONCILED']
+          : ['REJECTED', 'REJECTED'],
       );
       if (occurrences === 1)
         expect(tx.expense.createMany.mock.calls[0]![0].data).toHaveLength(1);

@@ -487,9 +487,7 @@ export class BankingService {
               }
             }
           }
-          const confirmedDuplicate = Boolean(
-            repeatedFile || (dup && sameBankId(dup)),
-          );
+          const confirmedDuplicate = Boolean(repeatedFile || dup);
           const manualMatch = (
             row.direction === 'CREDIT' ? manualIncomes : manualExpenses
           ).find(

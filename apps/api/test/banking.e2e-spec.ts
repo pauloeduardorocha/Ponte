@@ -500,7 +500,7 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       }),
     ).toBe(1);
   });
-  it('ignores identified duplicates and repeated files, while ambiguous matches require review', async () => {
+  it('ignores identified duplicates, repeated files and overlapping occurrences even when explicitly accepted', async () => {
     const f = await fixture();
     const data =
       'date,description,amount,reference,bankIdentifier\n2026-10-07,Uma descrição,20.00,R1,B1\n2026-10-07,Outra descrição,20.00,R1,B1';
@@ -534,7 +534,7 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       ).expect(201)
     ).body;
     const duplicate = (await rows(ambiguous.id))[0]!;
-    expect(duplicate.status).toBe('POSSIBLE_DUPLICATE');
+    expect(duplicate.status).toBe('REJECTED');
     await post('/banking/classify', {
       ids: [duplicate.id],
       classification: 'INCOME',
@@ -543,9 +543,33 @@ describe('Banking HTTP with isolated PostgreSQL', () => {
       ids: [duplicate.id],
       classification: 'INCOME',
       acceptDuplicate: true,
-    }).expect(201);
+    }).expect(409);
     expect(await db.income.count({ where: { accountId: f.accountId } })).toBe(
-      2,
+      1,
+    );
+  });
+  it('serializes concurrent overlapping files without creating two ledger entries', async () => {
+    const f = await fixture();
+    const results = await Promise.all([
+      upload(
+        f.accountId,
+        Buffer.from('date,description,amount\n2026-10-07,Pagamento,20.00'),
+      ),
+      upload(
+        f.accountId,
+        Buffer.from('date,description,amount\n2026-10-07,PAGAMENTO!,20.00'),
+      ),
+    ]);
+    expect(results.map((r) => r.status)).toEqual([201, 201]);
+    const movements = (
+      await Promise.all(results.map((r) => rows(r.body.id)))
+    ).flat();
+    expect(movements.map((r) => r.status).sort()).toEqual([
+      'RECONCILED',
+      'REJECTED',
+    ]);
+    expect(await db.income.count({ where: { accountId: f.accountId } })).toBe(
+      1,
     );
   });
   it('detects existing manual records and links them without creating another ledger entry', async () => {
