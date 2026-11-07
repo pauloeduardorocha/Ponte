@@ -8,6 +8,9 @@ import { ResponseCacheInterceptor } from './response-cache.interceptor';
 
 @Controller('api/v1')
 class FixtureController {
+  @Get('finance/charts') charts() {
+    return { currencies: [] };
+  }
   @Get('finance/accounts') accounts() {
     return [];
   }
@@ -56,6 +59,7 @@ describe('HTTP cache policy', () => {
   it.each([
     ['/community/birthdays?period=week', 86400],
     ['/finance/accounts', 3600],
+    ['/finance/charts?start=2026-11-01&end=2026-12-01', 0],
     ['/reimbursements/mine', 3600],
     ['/videos/playlists/example', 21600],
     ['/conversations?page=2', 21600],
@@ -86,6 +90,7 @@ describe('HTTP cache policy', () => {
     try {
       for (const [path, policy] of [
         ['finance/accounts', 'private, max-age=3600'],
+        ['finance/charts?start=2026-11-01&end=2026-12-01', 'no-store'],
         ['community/birthdays', 'private, max-age=86400'],
         ['library/books', 'private, max-age=21600'],
         ['conversations', 'private, max-age=21600'],
