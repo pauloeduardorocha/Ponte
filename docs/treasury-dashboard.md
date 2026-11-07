@@ -1,7 +1,7 @@
 # Dashboard da tesouraria
 
 Em Tesouraria → Dashboard (`/finance?tab=dashboard`), o acesso exige
-`FINANCE_DASHBOARD_READ`. Leitores apenas de resumo continuam a ver o resumo
+`FINANCE_TRANSACTION_READ`. Leitores apenas de resumo continuam a ver o resumo
 existente. A API `GET /api/v1/finance/charts?start=YYYY-MM-DD&end=YYYY-MM-DD`
 exige a mesma permissão e retorna somente agregados, sem dados pessoais.
 

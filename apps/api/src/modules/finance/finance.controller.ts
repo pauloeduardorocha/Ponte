@@ -209,7 +209,7 @@ export class FinanceController {
   }
 
   @Get('charts')
-  @Permission('FINANCE_DASHBOARD_READ')
+  @Permission('FINANCE_TRANSACTION_READ')
   charts(@Query() query: FinanceChartsQuery) {
     return this.finance.charts(query);
   }

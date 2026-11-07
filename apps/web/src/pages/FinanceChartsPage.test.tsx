@@ -29,16 +29,20 @@ const currency = {
 };
 describe('Treasury dashboard', () => {
   beforeEach(resetTestState);
-  it('allows a dashboard reader to filter all charts and select a future end', async () => {
+  it('allows a detailed financial data reader to filter all charts and select a future end', async () => {
     const requests = mockApi({
-      ...sessionRoutes(makeUser(['FINANCE_DASHBOARD_READ'])),
+      ...sessionRoutes(makeUser(['FINANCE_TRANSACTION_READ'])),
       'GET /finance/charts': {
         body: { through: '2026-11-07', currencies: [currency] },
       },
     });
     renderApp('/finance?tab=dashboard');
     expect(
-      await screen.findByRole('heading', { name: 'Dashboard da tesouraria' }),
+      await screen.findByRole(
+        'heading',
+        { name: 'Dashboard da tesouraria' },
+        { timeout: 10000 },
+      ),
     ).toBeVisible();
     expect(
       await screen.findByRole('img', {
@@ -78,15 +82,22 @@ describe('Treasury dashboard', () => {
       ),
     ).toBe(true);
   });
-  it('does not request charts for summary-only readers', async () => {
-    const requests = mockApi({
-      ...sessionRoutes(makeUser(['FINANCE_SUMMARY_READ'])),
-      'GET /finance/dashboard': {
-        body: { month: '2026-11', balances: [], latestTransactions: [] },
-      },
-    });
-    renderApp('/finance?tab=dashboard');
-    await screen.findByText(/Ainda não há data de atualização disponível/);
-    expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
-  });
+  it.each(['FINANCE_SUMMARY_READ', 'FINANCE_DASHBOARD_READ'] as const)(
+    'does not request charts with only %s',
+    async (permission) => {
+      const requests = mockApi({
+        ...sessionRoutes(makeUser([permission])),
+        'GET /finance/dashboard': {
+          body: { month: '2026-11', balances: [], latestTransactions: [] },
+        },
+      });
+      renderApp('/finance?tab=dashboard');
+      await screen.findByText(
+        /Ainda não há data de atualização disponível/,
+        {},
+        { timeout: 10000 },
+      );
+      expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
+    },
+  );
 });

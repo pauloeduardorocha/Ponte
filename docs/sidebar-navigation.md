@@ -15,7 +15,7 @@ Todos os itens sem menu pai aparecem antes dos grupos recolhíveis, conforme as 
 O grupo Financeiro contém Tesouraria (`/finance`) e Meus reembolsos (`/reimbursements`). Tesouraria mantém as permissões da antiga opção Financeiro; Meus reembolsos mantém o acesso pessoal existente. As funcionalidades internas da tesouraria continuam na própria página.
 
 Tesouraria inclui a aba Dashboard (`/finance?tab=dashboard`), restrita a
-`FINANCE_DASHBOARD_READ`, com gráficos por categoria e centro de custos e
+`FINANCE_TRANSACTION_READ`, com gráficos por categoria e centro de custos e
 evolução/projeção do saldo. A aba Resumo permanece disponível. Consulte
 [Dashboard da tesouraria](treasury-dashboard.md) para filtros e cálculo da projeção.
 

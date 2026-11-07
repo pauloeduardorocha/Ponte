@@ -8,10 +8,10 @@ import { plainToInstance } from 'class-transformer';
 import { validate } from 'class-validator';
 
 describe('Treasury charts', () => {
-  it('requires dashboard permission on the HTTP endpoint', () => {
+  it('requires detailed financial data permission on the HTTP endpoint', () => {
     expect(
       Reflect.getMetadata(PERMISSION_KEY, FinanceController.prototype.charts),
-    ).toEqual(['FINANCE_DASHBOARD_READ']);
+    ).toEqual(['FINANCE_TRANSACTION_READ']);
   });
 
   it.each([

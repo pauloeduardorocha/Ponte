@@ -62,7 +62,7 @@ const modules = [
     read: 'FINANCE_BANK_IMPORT',
   },
   { route: 'summary', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
-  { route: 'dashboard', label: 'Dashboard', read: 'FINANCE_DASHBOARD_READ' },
+  { route: 'dashboard', label: 'Dashboard', read: 'FINANCE_TRANSACTION_READ' },
   { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
   {
     route: 'reimbursements',

@@ -9902,7 +9902,7 @@
           "Financeiro"
         ],
         "x-permissions-all": [
-          "FINANCE_DASHBOARD_READ"
+          "FINANCE_TRANSACTION_READ"
         ],
         "x-ponte-cache-ttl": 0
       }
