@@ -56,6 +56,7 @@ Qualquer escrita de negócio invalida conservadoramente todas as respostas persi
 | `/finance/categories` | private, max-age=3600 (1 h) |
 | `/finance/contributions` | private, max-age=3600 (1 h) |
 | `/finance/cost-centers` | private, max-age=3600 (1 h) |
+| `/finance/charts` | no-store |
 | `/finance/dashboard` | private, max-age=3600 (1 h) |
 | `/finance/expenses` | private, max-age=3600 (1 h) |
 | `/finance/expenses/{id}/attachments` | private, max-age=3600 (1 h) |
