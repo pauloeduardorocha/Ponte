@@ -235,6 +235,7 @@ function FinanceManagementPage() {
   const [selected, setSelected] = useState('');
   const current =
     allowed.find((m) => m.route === (params.get('tab') ?? selected)) ??
+    allowed.find((m) => m.route !== 'dashboard') ??
     allowed[0];
   const route = current?.route ?? '';
   const [page, setPage] = useState(1);
