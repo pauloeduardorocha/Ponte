@@ -19,7 +19,7 @@ As alterações Windows foram aplicadas na pasta irmã **Live translation**, for
 Visitantes sem conta também podem acompanhar a tradução. O login consulta `GET /api/v1/live-translation/public-status` e, somente durante uma publicação válida, mostra **Ouvir tradução ao vivo — sem entrar**, com o aviso de que é necessário usar o Wi-Fi da igreja. O botão abre `/listen-translation`, uma página pública com a mesma entrada para o leitor local. A rota pública divulga somente disponibilidade, endereço da audiência e expiração; as rotas administrativas e o status autenticado permanecem protegidos. O áudio continua na rede local e não é retransmitido pela Vercel. Fora do Wi-Fi, a página pode abrir, mas não alcança o computador da igreja.
 
 1. Um usuário ADMIN ou SUPER_ADMIN abre **Comunicação → Aplicativo de tradução** (`/translation-app`).
-2. Baixa o pacote Windows, extrai a pasta inteira e executa `Ponte-Traducao.exe`. Não precisa instalar Node.js.
+2. Baixa o pacote Windows, extrai a pasta inteira e executa `Instalar.cmd`. Depois abre o atalho **Ponte - Tradução**. Não precisa instalar Node.js nem ter privilégios de administrador.
 3. Gera uma ligação e copia para o aplicativo local. Essa credencial é exibida uma vez na PWA e fica somente na memória no aplicativo; a API guarda apenas SHA-256. Gerar outra revoga a anterior e retira qualquer publicação ativa.
 4. No aplicativo, configura a chave Gemini, escolhe o microfone e inicia a tradução. Escolhe o IP da rede da igreja (não VPN) e clica em **Publicar tradução**.
 5. O menu **Tradução ao vivo** aparece para contas aprovadas na PWA em até 1 minuto. A página `/live-translation` oferece **Abrir tradução ao vivo**, que navega para o leitor no computador da igreja; o usuário precisa estar no mesmo Wi-Fi.
@@ -28,6 +28,18 @@ Visitantes sem conta também podem acompanhar a tradução. O login consulta `GE
 O PC confirma presença a cada 30 segundos apenas enquanto publicado. São pedidos HTTP curtos de metadados, sem áudio, texto ou chave Gemini. Uma única publicação simultânea é permitida; outra sessão precisa esperar a expiração ou a revogação da ligação. Membros sem acesso administrativo não podem criar credenciais ou baixar o pacote pelo backend.
 
 O firewall do Windows deve permitir a porta TCP 3210 na rede privada e a rede Wi-Fi deve permitir comunicação com esse computador. O pacote não altera firewall ou roteador automaticamente. O PC precisa continuar ligado. Trocar o IP exige selecionar o novo endereço e republicar.
+
+## Atualizações do aplicativo Windows (0.3.2+)
+
+Ao iniciar, o aplicativo consulta as releases públicas do GitHub de pauloeduardorocha/Ponte, com timeout total de 8 segundos e sem enviar credenciais, chave Gemini, áudio ou configuração da igreja. Seleciona a maior versão estável com tag ponte-traducao-vMAJOR.MINOR.PATCH e ZIP completo publicado. Tags da PWA, rascunhos, pré-lançamentos e versões iguais ou anteriores são ignorados. A comparação é numérica (0.10.0 é maior que 0.9.0).
+
+Se houver novidade, **Baixar atualização** abre o ZIP daquela release no navegador padrão; **Agora não** mantém o uso normal. A consulta não bloqueia o carregamento. Falha de rede no startup fica silenciosa e **Ajuda → Verificar atualizações** permite tentar novamente e ver o resultado. Só são abertos links HTTPS de download da release esperada no repositório oficial. O aplicativo avisa sobre atualizações; não baixa nem executa código automaticamente.
+
+Extraia o ZIP e execute **Instalar.cmd**. O instalador usa sempre **%LOCALAPPDATA%\Ponte-Traducao**, substitui o runtime completo e reutiliza os atalhos **Ponte - Tradução** na Área de Trabalho e no menu Iniciar. Exige fechar o aplicativo antes, sem encerrar uma tradução à força. Prepara os arquivos numa pasta temporária e só depois troca a instalação, restaurando a anterior se a troca falhar. Dados do usuário fora da pasta do runtime são preservados; chaves e ligação continuam apenas na memória e precisam ser informadas ao abrir. Impede downgrade e substituição de uma pasta não reconhecida como Ponte.
+
+Na migração de um ZIP portátil anterior, instale uma vez e passe a abrir pelo atalho. A pasta portátil antiga não é apagada. Versões anteriores a 0.3.2 ainda não verificam atualizações: esta primeira instalação precisa ser feita manualmente. O novo pacote e sua release precisam ser publicados para a igreja recebê-los.
+
+As mudanças sobre o aplicativo Windows 0.3.1 estão no patch **docs/windows-updater-0.3.2.patch**, incluindo testes e instalador. Aplique na pasta Live translation com git apply --no-index após aplicar o patch do leitor 0.3.1, se necessário. Verificações: node --test update-checker.test.cjs installer.test.cjs, além da suíte existente; o teste do instalador usa uma pasta temporária sem alterar a instalação real nem os atalhos do usuário.
 
 ## Download e publicação de uma versão Windows
 
@@ -39,7 +51,7 @@ No repositório **Live translation**, execute no Windows:
 node build-windows.cjs "C:\caminho\para\Ponte"
 ```
 
-O script inclui o runtime Electron, a aplicação e `ws`, sem credenciais, histórico ou arquivos de ambiente. Produz `dist/Ponte-Traducao-Windows.zip` e SHA-256. A cópia opcional para `Ponte/private-storage/translation/` habilita o download autenticado em desenvolvimento (API iniciada pelo workspace ou pela raiz). O ZIP é portátil e ainda não tem assinatura de código própria.
+O script inclui o runtime Electron, a aplicação e `ws`, sem credenciais, histórico ou arquivos de ambiente. Produz `dist/Ponte-Traducao-Windows.zip` e SHA-256. A cópia opcional para `Ponte/private-storage/translation/` habilita o download autenticado em desenvolvimento (API iniciada pelo workspace ou pela raiz). O ZIP inclui `Instalar.cmd` e `install-windows.ps1`, que instalam por usuário, sem privilégios de administrador. O pacote ainda não tem assinatura de código própria.
 
 Em produção, hospede esse ZIP em um serviço de arquivos/release separado e configure `TRANSLATION_APP_DOWNLOAD_URL` com a URL HTTPS. O Ponte fornece o link; não transmite o binário pelas Functions nem inclui o Electron no deploy. Sem URL configurada, a administração mostra a indisponibilidade explicitamente, sem link fictício. `TRANSLATION_APP_ARCHIVE` permite definir um ZIP local fora do caminho padrão, apenas em desenvolvimento.
 

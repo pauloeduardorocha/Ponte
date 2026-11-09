@@ -63,9 +63,7 @@ export function TranslationAdminPage() {
       anchor.download = 'Ponte-Traducao-Windows.zip';
       anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-      setNotice(
-        'Download iniciado. Extraia o ZIP antes de abrir o aplicativo.',
-      );
+      setNotice('Download iniciado. Extraia o ZIP e execute Instalar.cmd.');
     } catch (error) {
       setNotice(errorMessage(error));
     }
@@ -80,12 +78,13 @@ export function TranslationAdminPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography component="h2" variant="h6">
-              1. Baixe e abra no Windows
+              1. Baixe e instale no Windows
             </Typography>
             <Typography>
-              Extraia a pasta do ZIP e abra Ponte-Traducao.exe. O pacote inclui
-              tudo para executar, sem instalar Node.js. Mantenha o computador
-              ligado e conectado ao Wi-Fi da igreja.
+              Extraia a pasta do ZIP e execute Instalar.cmd. Depois, use o
+              atalho Ponte - Tradução. Para atualizar, feche o aplicativo e
+              execute o instalador da nova versão: ele substitui a anterior no
+              mesmo local, mantendo os atalhos.
             </Typography>
             <Typography variant="body2" color="text.secondary">
               O ZIP inclui GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt ao lado

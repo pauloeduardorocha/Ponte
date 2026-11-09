@@ -1,0 +1,504 @@
+diff --git a/main.cjs b/main.cjs
+--- a/main.cjs
++++ b/main.cjs
+@@ -1,16 +1,28 @@
+-const { app, BrowserWindow, session, dialog } = require('electron');
++const { app, BrowserWindow, session, dialog, shell, Menu } = require('electron');
+ const { createTranslationServer } = require('./server.cjs');
+ const path = require('node:path');
++const { createUpdateChecker } = require('./update-checker.cjs');
++const version = require('./package.json').version;
+ let win, instance;
++const checkUpdates = createUpdateChecker({ version, getWindow: () => win, dialog, shell });
+ app.whenReady().then(async () => {
+   instance = createTranslationServer();
+   try {
+     const info = await instance.listen();
+     session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => callback(contents === win?.webContents && permission === 'media'));
+-    win = new BrowserWindow({ title: 'Ponte · Tradução ao vivo', icon: path.join(__dirname, 'logo.png'), width: 1000, height: 900, minWidth: 650, minHeight: 600, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
++    win = new BrowserWindow({ title: 'Ponte · Tradução ao vivo — ' + version, icon: path.join(__dirname, 'logo.png'), width: 1000, height: 900, minWidth: 650, minHeight: 600, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
+     win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+     win.webContents.on('will-navigate', event => event.preventDefault());
++    Menu.setApplicationMenu(Menu.buildFromTemplate([
++      { label: 'Aplicativo', submenu: [{ role: 'quit', label: 'Sair' }] },
++      { label: 'Editar', submenu: [{ role: 'undo', label: 'Desfazer' }, { role: 'redo', label: 'Refazer' }, { type: 'separator' }, { role: 'cut', label: 'Recortar' }, { role: 'copy', label: 'Copiar' }, { role: 'paste', label: 'Colar' }, { role: 'selectAll', label: 'Selecionar tudo' }] },
++      { label: 'Ajuda', submenu: [
++        { label: 'Verificar atualizações…', click: () => void checkUpdates({ manual: true }) },
++        { label: 'Versão ' + version, enabled: false },
++      ] },
++    ]));
+     await win.loadURL(info.presenterUrl);
++    void checkUpdates();
+     win.on('close', event => { event.preventDefault(); win.hide(); instance.close().finally(() => { win.destroy(); app.quit(); }); });
+   } catch (error) { dialog.showErrorBox('Não foi possível iniciar', error.code === 'EADDRINUSE' ? 'A porta 3210 já está em uso. Feche a outra instância do aplicativo.' : error.message); await instance.close(); app.quit(); }
+ });
+diff --git a/update-checker.cjs b/update-checker.cjs
+new file mode 100644
+--- /dev/null
++++ b/update-checker.cjs
+@@ -0,0 +1,72 @@
++const RELEASES_URL = 'https://api.github.com/repos/pauloeduardorocha/Ponte/releases?per_page=100';
++const REPOSITORY_URL = 'https://github.com/pauloeduardorocha/Ponte';
++const ASSET_NAME = 'Ponte-Traducao-Windows.zip';
++function parseVersion(version) {
++  if (typeof version !== 'string' || !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(version)) return null;
++  const parts = version.split('.').map(Number);
++  return parts.every(Number.isSafeInteger) ? parts : null;
++}
++function compareVersions(left, right) {
++  const a = parseVersion(left), b = parseVersion(right);
++  if (!a || !b) throw new Error('Versão inválida.');
++  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a[i] > b[i] ? 1 : -1;
++  return 0;
++}
++function findUpdate(releases, installedVersion) {
++  if (!Array.isArray(releases)) throw new Error('Resposta de versões inválida.');
++  if (!parseVersion(installedVersion)) throw new Error('Versão instalada inválida.');
++  let latest = null;
++  for (const release of releases) {
++    if (!release || release.draft || release.prerelease || typeof release.tag_name !== 'string') continue;
++    const version = release.tag_name.replace(/^ponte-traducao-v/, '');
++    if (release.tag_name !== `ponte-traducao-v${version}` || !parseVersion(version)) continue;
++    if (compareVersions(version, installedVersion) <= 0 || (latest && compareVersions(version, latest.version) <= 0)) continue;
++    const downloadUrl = `${REPOSITORY_URL}/releases/download/${release.tag_name}/${ASSET_NAME}`;
++    const asset = Array.isArray(release.assets) && release.assets.find(item => item && item.name === ASSET_NAME && item.state === 'uploaded' && item.size > 0 && item.browser_download_url === downloadUrl);
++    if (asset) latest = { version, downloadUrl };
++  }
++  return latest;
++}
++async function fetchUpdate(installedVersion, fetchImpl = fetch) {
++  const releases = [], signal = AbortSignal.timeout(8000);
++  for (let page = 1; page <= 5; page++) {
++    const response = await fetchImpl(`${RELEASES_URL}&page=${page}`, {
++      headers: { Accept: 'application/vnd.github+json', 'User-Agent': 'Ponte-Traducao-update-check', 'X-GitHub-Api-Version': '2022-11-28' },
++      signal, redirect: 'error',
++    });
++    if (!response.ok) throw new Error(`Não foi possível consultar as versões (HTTP ${response.status}).`);
++    const batch = await response.json();
++    if (!Array.isArray(batch)) throw new Error('Resposta de versões inválida.');
++    releases.push(...batch);
++    if (batch.length < 100) return findUpdate(releases, installedVersion);
++  }
++  throw new Error('Não foi possível concluir a consulta de versões. Tente novamente mais tarde.');
++}
++function createUpdateChecker({ version, getWindow, dialog, shell, fetchImpl = fetch }) {
++  let checking = null;
++  return function check({ manual = false } = {}) {
++    if (checking) return checking;
++    checking = (async () => {
++      try {
++        const update = await fetchUpdate(version, fetchImpl), win = getWindow();
++        if (!win || win.isDestroyed()) return;
++        if (!update) {
++          if (manual) await dialog.showMessageBox(win, { type: 'info', title: 'Atualizações do Ponte', message: `Você está na versão ${version}.`, detail: 'Não há uma versão mais recente do aplicativo de tradução disponível.', buttons: ['OK'] });
++          return;
++        }
++        const result = await dialog.showMessageBox(win, {
++          type: 'info', title: 'Atualização disponível', message: `Ponte · Tradução ${update.version} disponível`,
++          detail: `Versão instalada: ${version}.\n\nBaixe o ZIP, extraia e execute Instalar.cmd. A instalação substitui a versão anterior na mesma pasta e mantém os atalhos. Feche o aplicativo antes de instalar, após terminar a tradução.`,
++          buttons: ['Baixar atualização', 'Agora não'], defaultId: 0, cancelId: 1, noLink: true,
++        });
++        if (result.response === 0 && !win.isDestroyed()) await shell.openExternal(update.downloadUrl);
++      } catch {
++        const win = getWindow();
++        if (manual && win && !win.isDestroyed()) await dialog.showMessageBox(win, { type: 'warning', title: 'Atualizações do Ponte', message: 'Não foi possível verificar as atualizações.', detail: 'Confira a conexão com a internet e tente novamente em Ajuda → Verificar atualizações. Você pode continuar usando o aplicativo.', buttons: ['OK'] });
++        // Startup checks must never prevent an offline launch or interrupt translation.
++      }
++    })().finally(() => { checking = null; });
++    return checking;
++  };
++}
++module.exports = { compareVersions, findUpdate, fetchUpdate, createUpdateChecker };
+diff --git a/update-checker.test.cjs b/update-checker.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/update-checker.test.cjs
+@@ -0,0 +1,88 @@
++const test = require('node:test'), assert = require('node:assert/strict');
++const { compareVersions, findUpdate, fetchUpdate, createUpdateChecker } = require('./update-checker.cjs');
++function release(version, overrides = {}) {
++  const tag = `ponte-traducao-v${version}`;
++  return { tag_name: tag, draft: false, prerelease: false, assets: [{ name: 'Ponte-Traducao-Windows.zip', state: 'uploaded', size: 100, browser_download_url: `https://github.com/pauloeduardorocha/Ponte/releases/download/${tag}/Ponte-Traducao-Windows.zip` }], ...overrides };
++}
++function harness(releases, options = {}) {
++  const shown = [], opened = [], calls = [];
++  const win = { isDestroyed: () => Boolean(options.destroyed) };
++  const check = createUpdateChecker({ version: '0.3.2', getWindow: () => win,
++    dialog: { showMessageBox: async (_, value) => { shown.push(value); return { response: options.response ?? 0 }; } },
++    shell: { openExternal: async url => { opened.push(url); } },
++    fetchImpl: async (url, init) => { calls.push({ url, init }); if (options.error) throw Error('offline'); return { ok: true, json: async () => releases }; },
++  });
++  return { check, shown, opened, calls };
++}
++test('versions compare numerically and reject malformed versions', () => {
++  assert.equal(compareVersions('0.10.0', '0.9.99'), 1);
++  assert.equal(compareVersions('1.0.0', '0.99.99'), 1);
++  assert.equal(compareVersions('0.3.2', '0.3.2'), 0);
++  for (const bad of ['v1.0.0', '1.2', '01.2.3', '1.2.3-beta', '9007199254740992.0.0']) assert.throws(() => compareVersions(bad, '1.0.0'));
++});
++test('only newer complete stable translation releases count, regardless of ordering', () => {
++  const candidates = [release('0.10.0'), release('1.0.0', { draft: true }), release('2.0.0', { prerelease: true }), release('9.0.0', { assets: [] }), release('0.4.0'), release('0.3.2'), release('0.3.1'), release('5.0.0', { tag_name: 'v5.0.0' })];
++  assert.equal(findUpdate(candidates, '0.3.2').version, '0.10.0');
++  assert.equal(findUpdate([release('0.3.2'), release('0.3.1')], '0.3.2'), null);
++  assert.throws(() => findUpdate({}, '0.3.2'));
++});
++test('untrusted download URLs, incomplete uploads and empty assets are ignored', () => {
++  for (const url of ['file:///C:/Windows/test.exe', 'https://evil.example/setup.zip', 'https://github.com/other/repo/releases/download/v1/file.zip', 'javascript:alert(1)']) {
++    const r = release('0.4.0'); r.assets[0].browser_download_url = url;
++    assert.equal(findUpdate([r], '0.3.2'), null);
++  }
++  for (const changes of [{ state: 'new' }, { size: 0 }]) { const r = release('0.4.0'); Object.assign(r.assets[0], changes); assert.equal(findUpdate([r], '0.3.2'), null); }
++});
++test('startup checks once and opens the exact release download only when selected', async () => {
++  const h = harness([release('0.4.0')]);
++  const one = h.check(); assert.equal(h.check(), one); await one;
++  assert.equal(h.calls.length, 1); assert.equal(h.shown.length, 1);
++  assert.match(h.shown[0].detail, /Instalar.cmd/);
++  assert.deepEqual(h.opened, ['https://github.com/pauloeduardorocha/Ponte/releases/download/ponte-traducao-v0.4.0/Ponte-Traducao-Windows.zip']);
++  assert.equal(h.calls[0].init.redirect, 'error'); assert.ok(h.calls[0].init.signal);
++  const deferred = harness([release('0.4.0')], { response: 1 }); await deferred.check(); assert.equal(deferred.opened.length, 0);
++});
++test('offline and current startup checks stay quiet; manual checks explain the result and retry', async () => {
++  for (const options of [{}, { error: true }]) {
++    const h = harness([release('0.3.2')], options); await h.check(); assert.equal(h.shown.length, 0);
++    await h.check({ manual: true }); assert.equal(h.calls.length, 2); assert.equal(h.shown.length, 1);
++    assert.match(h.shown[0].message, options.error ? /Não foi possível/ : /0.3.2/);
++  }
++  const closed = harness([release('0.4.0')], { destroyed: true }); await closed.check(); assert.equal(closed.shown.length, 0);
++});
++test('HTTP failures and malformed responses reject rather than pretending to be up to date', async () => {
++  await assert.rejects(fetchUpdate('0.3.2', async () => ({ ok: false, status: 403 })), /HTTP 403/);
++  await assert.rejects(fetchUpdate('0.3.2', async () => ({ ok: true, json: async () => ({}) })), /inválida/);
++});
++test('pagination finds releases beyond the first page', async () => {
++  const urls = [];
++  const update = await fetchUpdate('0.3.2', async url => { urls.push(url); return { ok: true, json: async () => urls.length === 1 ? Array.from({ length: 100 }, () => ({ tag_name: 'web-release' })) : [release('0.4.0')] }; });
++  assert.equal(update.version, '0.4.0'); assert.match(urls[1], /page=2$/);
++});
++const vm = require('node:vm'), fs = require('node:fs');
++test('desktop startup triggers a non-blocking check and exposes a manual menu action', async () => {
++  let ready, menu, options, loaded = false;
++  const checks = [], windows = [], pending = new Promise(() => {});
++  class Window {
++    constructor(settings) { options = settings; windows.push(this); this.webContents = { setWindowOpenHandler() {}, on() {} }; }
++    async loadURL() { loaded = true; }
++    on() {}
++  }
++  const electron = { app: { whenReady: () => ({ then: callback => { ready = callback; } }), on() {} }, BrowserWindow: Window,
++    session: { defaultSession: { setPermissionRequestHandler() {} } }, dialog: {}, shell: {},
++    Menu: { buildFromTemplate: template => template, setApplicationMenu: value => { menu = value; } },
++  };
++  vm.runInNewContext(fs.readFileSync(__dirname + '/main.cjs', 'utf8'), {
++    __dirname, require: name => {
++      if (name === 'electron') return electron;
++      if (name === './server.cjs') return { createTranslationServer: () => ({ listen: async () => ({ presenterUrl: 'http://localhost:3210/presenter#test' }) }) };
++      if (name === './update-checker.cjs') return { createUpdateChecker: config => { assert.equal(config.version, '0.3.2'); return settings => { checks.push(settings); return pending; }; } };
++      return require(name);
++    },
++  });
++  await ready();
++  assert.equal(loaded, true); assert.equal(windows.length, 1); assert.match(options.title, /0.3.2/);
++  assert.equal(checks.length, 1, 'startup checks once without waiting for the network');
++  menu.find(item => item.label === 'Ajuda').submenu[0].click();
++  assert.equal(checks[1].manual, true);
++});
+diff --git a/install-windows.ps1 b/install-windows.ps1
+new file mode 100644
+--- /dev/null
++++ b/install-windows.ps1
+@@ -0,0 +1,91 @@
++﻿param(
++    [string]$SourceDirectory = $PSScriptRoot,
++    [switch]$NoLaunch,
++    [switch]$NoShortcuts
++)
++$ErrorActionPreference = 'Stop'
++$stage = $null
++$previous = $null
++$installed = $false
++function Remove-InstallerFolder([string]$Folder) {
++    if (-not $Folder -or -not (Test-Path -LiteralPath $Folder)) { return }
++    $resolved = [System.IO.Path]::GetFullPath($Folder)
++    if ([System.IO.Path]::GetDirectoryName($resolved) -ne $installParent -or
++        [System.IO.Path]::GetFileName($resolved) -notmatch '^\.Ponte-Traducao-(install|previous)-[a-f0-9]{32}$') {
++        throw 'Pasta temporária de instalação inválida.'
++    }
++    Remove-Item -LiteralPath $resolved -Recurse -Force
++}
++try {
++    if (-not $env:LOCALAPPDATA) { throw 'Não foi possível localizar a pasta de aplicativos deste usuário.' }
++    $installParent = [System.IO.Path]::GetFullPath($env:LOCALAPPDATA).TrimEnd('\')
++    if (-not [System.IO.Path]::IsPathRooted($installParent) -or $installParent -eq [System.IO.Path]::GetPathRoot($installParent).TrimEnd('\')) {
++        throw 'A pasta de aplicativos deste usuário é inválida.'
++    }
++    $target = [System.IO.Path]::GetFullPath((Join-Path $installParent 'Ponte-Traducao'))
++    if ([System.IO.Path]::GetDirectoryName($target) -ne $installParent) { throw 'Destino de instalação inválido.' }
++    $source = (Resolve-Path -LiteralPath $SourceDirectory).Path
++    $sourcePackage = Join-Path $source 'resources\app\package.json'
++    if (-not (Test-Path -LiteralPath (Join-Path $source 'Ponte-Traducao.exe')) -or -not (Test-Path -LiteralPath $sourcePackage)) {
++        throw 'Extraia o ZIP inteiro antes de executar Instalar.cmd. Não separe os arquivos do pacote.'
++    }
++    $package = Get-Content -Raw -LiteralPath $sourcePackage | ConvertFrom-Json
++    if ($package.name -ne 'ponte-traducao' -or $package.version -notmatch '^\d+\.\d+\.\d+$') { throw 'Este pacote do Ponte não é válido.' }
++    # Never replace a running presenter: stopping it could interrupt the congregation.
++    if (Get-Process -Name 'Ponte-Traducao' -ErrorAction SilentlyContinue) {
++        throw 'Feche o aplicativo Ponte - Tradução antes de instalar. Se houver um culto em andamento, aguarde a tradução terminar e execute Instalar.cmd novamente.'
++    }
++    if (Test-Path -LiteralPath $target) {
++        $existingPackage = Join-Path $target 'resources\app\package.json'
++        if (-not (Test-Path -LiteralPath $existingPackage)) { throw 'A pasta de destino não contém uma instalação reconhecida do Ponte. Nenhum arquivo foi substituído.' }
++        $existing = Get-Content -Raw -LiteralPath $existingPackage | ConvertFrom-Json
++        if ($existing.name -ne 'ponte-traducao') { throw 'A pasta de destino pertence a outro aplicativo. Nenhum arquivo foi substituído.' }
++        if ([version]$existing.version -gt [version]$package.version) { throw 'Uma versão mais recente já está instalada. Use o pacote mais recente.' }
++    }
++    if ($source -ne $target) {
++        New-Item -ItemType Directory -Path $installParent -Force | Out-Null
++        $stage = Join-Path $installParent ('.Ponte-Traducao-install-' + [guid]::NewGuid().ToString('N'))
++        New-Item -ItemType Directory -Path $stage | Out-Null
++        foreach ($item in Get-ChildItem -LiteralPath $source -Force) {
++            Copy-Item -LiteralPath $item.FullName -Destination $stage -Recurse -Force
++        }
++        if (Test-Path -LiteralPath $target) {
++            $previous = Join-Path $installParent ('.Ponte-Traducao-previous-' + [guid]::NewGuid().ToString('N'))
++            Move-Item -LiteralPath $target -Destination $previous
++        }
++        try {
++            Move-Item -LiteralPath $stage -Destination $target
++            $stage = $null
++        } catch {
++            if ($previous -and -not (Test-Path -LiteralPath $target)) {
++                Move-Item -LiteralPath $previous -Destination $target
++                $previous = $null
++            }
++            throw
++        }
++    }
++    $installed = $true
++    # App data lives outside this directory. Reusing the same target also reuses the shortcuts.
++    if (-not $NoShortcuts) {
++        $shortcutShell = New-Object -ComObject WScript.Shell
++        foreach ($folder in @([Environment]::GetFolderPath('DesktopDirectory'), [Environment]::GetFolderPath('Programs'))) {
++            if (-not $folder) { continue }
++            New-Item -ItemType Directory -Path $folder -Force | Out-Null
++            $shortcut = $shortcutShell.CreateShortcut((Join-Path $folder 'Ponte - Tradução.lnk'))
++            $shortcut.TargetPath = Join-Path $target 'Ponte-Traducao.exe'
++            $shortcut.WorkingDirectory = $target
++            $shortcut.Description = 'Ponte - Tradução ao vivo'
++            $shortcut.Save()
++        }
++    }
++    Remove-InstallerFolder $previous
++    Write-Host ('Ponte - Tradução ' + $package.version + ' instalado em ' + $target)
++    Write-Host 'As próximas instalações substituirão esta versão no mesmo local.'
++    if (-not $NoLaunch) { Start-Process -FilePath (Join-Path $target 'Ponte-Traducao.exe') -WorkingDirectory $target -WindowStyle Normal }
++} catch {
++    Write-Host ('Não foi possível concluir a instalação: ' + $_.Exception.Message) -ForegroundColor Red
++    if ($installed) { Write-Host ('O aplicativo já foi copiado. Você pode abri-lo em ' + $target) }
++    exit 1
++} finally {
++    Remove-InstallerFolder $stage
++}
+diff --git a/Instalar.cmd b/Instalar.cmd
+new file mode 100644
+--- /dev/null
++++ b/Instalar.cmd
+@@ -0,0 +1,10 @@
++@echo off
++chcp 65001 >nul
++setlocal
++powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-windows.ps1"
++if errorlevel 1 (
++  echo.
++  echo A instalação não foi concluída. Confira a mensagem acima.
++  pause
++  exit /b 1
++)
+diff --git a/installer.test.cjs b/installer.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/installer.test.cjs
+@@ -0,0 +1,23 @@
++const test = require('node:test'), assert = require('node:assert/strict');
++const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), { spawnSync } = require('node:child_process');
++const installer = path.join(__dirname, 'install-windows.ps1');
++test('Windows installer replaces the same installation, removes stale runtime files, and refuses downgrade or unrelated folders', { skip: process.platform !== 'win32', timeout: 45000 }, t => {
++  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponte-installer-test-'));
++  t.after(() => { const resolved = path.resolve(temp); assert.ok(resolved.startsWith(path.resolve(os.tmpdir()) + path.sep) && path.basename(resolved).startsWith('ponte-installer-test-')); fs.rmSync(resolved, { recursive: true, force: true }); });
++  const source = path.join(temp, 'extracted'), local = path.join(temp, 'local-app-data'), target = path.join(local, 'Ponte-Traducao');
++  const metadata = path.join(source, 'resources', 'app', 'package.json');
++  fs.mkdirSync(path.dirname(metadata), { recursive: true });
++  const prepare = version => { fs.writeFileSync(metadata, JSON.stringify({ name: 'ponte-traducao', version })); fs.writeFileSync(path.join(source, 'Ponte-Traducao.exe'), 'synthetic-runtime-' + version); };
++  const install = () => spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', installer, '-SourceDirectory', source, '-NoLaunch', '-NoShortcuts'], { encoding: 'utf8', windowsHide: true, env: { ...process.env, LOCALAPPDATA: local }, timeout: 15000 });
++  prepare('0.3.1'); let result = install(); assert.equal(result.status, 0, result.stdout + result.stderr);
++  fs.writeFileSync(path.join(target, 'old-runtime.dll'), 'old');
++  prepare('0.3.2'); result = install(); assert.equal(result.status, 0, result.stdout + result.stderr);
++  assert.equal(fs.readFileSync(path.join(target, 'Ponte-Traducao.exe'), 'utf8'), 'synthetic-runtime-0.3.2');
++  assert.equal(fs.existsSync(path.join(target, 'old-runtime.dll')), false);
++  assert.deepEqual(fs.readdirSync(local), ['Ponte-Traducao']);
++  prepare('0.3.1'); result = install(); assert.notEqual(result.status, 0); assert.match(result.stdout, /recente/);
++  fs.writeFileSync(path.join(target, 'resources', 'app', 'package.json'), JSON.stringify({ name: 'unrelated-app', version: '0.1.0' }));
++  prepare('0.3.3'); result = install(); assert.notEqual(result.status, 0); assert.match(result.stdout, /outro aplicativo/);
++  assert.equal(fs.readFileSync(path.join(target, 'Ponte-Traducao.exe'), 'utf8'), 'synthetic-runtime-0.3.2');
++  assert.deepEqual(fs.readdirSync(local), ['Ponte-Traducao']);
++});
+diff --git a/installer-package-smoke.cjs b/installer-package-smoke.cjs
+new file mode 100644
+--- /dev/null
++++ b/installer-package-smoke.cjs
+@@ -0,0 +1,39 @@
++// Run against a built package. All installation writes stay in a temporary user folder.
++const fs = require('node:fs'), path = require('node:path'), os = require('node:os'), assert = require('node:assert/strict');
++const { spawn, spawnSync } = require('node:child_process');
++async function main() {
++  const source = path.resolve(process.argv[2] || '');
++  assert.ok(fs.existsSync(path.join(source, 'Instalar.cmd')), 'provide the built package folder');
++  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponte-package-install-'));
++  let running;
++  try {
++    const local = path.join(temp, 'LocalAppData'), target = path.join(local, 'Ponte-Traducao');
++    const install = () => spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(source, 'install-windows.ps1'), '-NoLaunch', '-NoShortcuts'], { cwd: source, env: { ...process.env, LOCALAPPDATA: local }, encoding: 'utf8', windowsHide: true, timeout: 45000 });
++    let r = install(); assert.equal(r.status, 0, r.stdout + r.stderr);
++    const packageFile = path.join(target, 'resources', 'app', 'package.json');
++    const expected = JSON.parse(fs.readFileSync(packageFile, 'utf8')).version;
++    fs.writeFileSync(packageFile, JSON.stringify({ name: 'ponte-traducao', version: '0.3.1' }));
++    fs.writeFileSync(path.join(target, 'old-runtime-file.txt'), 'old version');
++    r = install(); assert.equal(r.status, 0, r.stdout + r.stderr);
++    assert.equal(JSON.parse(fs.readFileSync(packageFile, 'utf8')).version, expected);
++    assert.equal(fs.existsSync(path.join(target, 'old-runtime-file.txt')), false);
++    assert.ok(fs.existsSync(path.join(target, 'resources', 'app', 'update-checker.cjs')));
++    running = spawn(path.join(target, 'Ponte-Traducao.exe'), ['-e', "console.log(typeof require('./resources/app/update-checker.cjs').createUpdateChecker);setInterval(()=>{},1000)"], { cwd: target, env: { ...process.env, LOCALAPPDATA: local, ELECTRON_RUN_AS_NODE: '1' }, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
++    await new Promise((resolve, reject) => {
++      const timeout = setTimeout(() => reject(Error('packaged runtime did not start')), 10000);
++      running.once('error', reject);
++      running.stdout.on('data', bytes => { if (bytes.toString().includes('function')) { clearTimeout(timeout); resolve(); } });
++      running.once('exit', code => { clearTimeout(timeout); reject(Error('runtime exited: ' + code)); });
++    });
++    r = install(); assert.notEqual(r.status, 0); assert.match(r.stdout, /Feche o aplicativo/);
++    assert.equal(JSON.parse(fs.readFileSync(packageFile, 'utf8')).version, expected);
++    assert.deepEqual(fs.readdirSync(local), ['Ponte-Traducao']);
++    console.log('PASS: real packaged runtime installs, upgrades in place, loads updater, and refuses replacement while running. No real user shortcuts or installation changed.');
++  } finally {
++    if (running && running.exitCode === null) { const exited = new Promise(resolve => running.once('exit', resolve)); running.kill(); await exited; }
++    const resolved = path.resolve(temp);
++    assert.ok(resolved.startsWith(path.resolve(os.tmpdir()) + path.sep) && path.basename(resolved).startsWith('ponte-package-install-'));
++    fs.rmSync(resolved, { recursive: true, force: true });
++  }
++}
++main().catch(error => { console.error(error.message); process.exitCode = 1; });
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.1",
++  "version": "0.3.2",
+   "private": true,
+   "description": "Tradução do microfone para inglês com Gemini",
+   "main": "main.cjs",
+@@ -8,8 +8,8 @@
+     "start": "electron .",
+     "server": "node server.cjs",
+     "package:windows": "node build-windows.cjs",
+-    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs",
+-    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js"
++    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs update-checker.test.cjs installer.test.cjs",
++    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs"
+   },
+   "devDependencies": {
+     "electron": "^42.0.0"
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.0",
++  "version": "0.3.2",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.3.0",
++      "version": "0.3.2",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/build-windows.cjs b/build-windows.cjs
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -9,7 +9,7 @@ const application = path.join(destination, 'resources', 'app');
+ fs.cpSync(path.join(root, 'node_modules', 'electron', 'dist'), destination, { recursive: true });
+ fs.renameSync(path.join(destination, 'electron.exe'), path.join(destination, 'Ponte-Traducao.exe'));
+ fs.mkdirSync(application, { recursive: true });
+-const sources = ['main.cjs','server.cjs','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.html','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
++const sources = ['main.cjs','update-checker.cjs','server.cjs','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.html','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
+ for (const file of sources) fs.copyFileSync(path.join(root, file), path.join(application, file));
+ fs.writeFileSync(path.join(application, 'package.json'), JSON.stringify({ name: 'ponte-traducao', productName: 'Ponte · Tradução ao vivo', version, main: 'main.cjs' }, null, 2));
+ fs.mkdirSync(path.join(application, 'node_modules'), { recursive: true });
+@@ -25,6 +25,7 @@ const text = [guide.title,'A Ponte · Tradução ao vivo',guide.introduction,'',
+ fs.writeFileSync(path.join(destination, 'GUIA-COMECE-AQUI.html'), html);
+ fs.writeFileSync(path.join(destination, 'LEIA-ME-PRIMEIRO.txt'), '\ufeff' + text);
+ fs.copyFileSync(path.join(root, 'logo.png'), path.join(destination, 'logo.png'));
++for (const file of ['Instalar.cmd', 'install-windows.ps1']) fs.copyFileSync(path.join(root, file), path.join(destination, file));
+ const output = path.join(root, 'dist', 'Ponte-Traducao-Windows.zip');
+ // Native Windows tar creates ZIP files; arguments are passed without shell interpolation.
+ const result = spawnSync('tar.exe', ['-a','-cf',output,'-C',path.dirname(destination),path.basename(destination)], { stdio: 'inherit', windowsHide: true });
+diff --git a/publish-release.cjs b/publish-release.cjs
+--- a/publish-release.cjs
++++ b/publish-release.cjs
+@@ -18,7 +18,7 @@ async function main() {
+   let release;
+   const existing = await fetch(`https://api.github.com/repos/${repo}/releases/tags/${tag}`, { headers, redirect: 'error' });
+   if (existing.ok) release = await existing.json();
+-  else if (existing.status === 404) release = await api(`https://api.github.com/repos/${repo}/releases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tag_name: tag, target_commitish: process.argv[2], name: 'Ponte · Tradução ao vivo para Windows ' + require('./package.json').version, draft: true, prerelease: false, body: 'Aplicativo portátil para o computador da igreja. Extraia o ZIP inteiro e abra GUIA-COMECE-AQUI.html ou LEIA-ME-PRIMEIRO.txt antes de executar Ponte-Traducao.exe. O pacote inclui o guia para Windows e não contém credenciais. Áudio e texto são distribuídos pela rede local.' }) });
++  else if (existing.status === 404) release = await api(`https://api.github.com/repos/${repo}/releases`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tag_name: tag, target_commitish: process.argv[2], name: 'Ponte · Tradução ao vivo para Windows ' + require('./package.json').version, draft: true, prerelease: false, body: 'Aplicativo para o computador da igreja. Extraia o ZIP inteiro e execute Instalar.cmd. A instalação substitui a versão anterior no mesmo local, sem privilégios de administrador, e mantém os atalhos. Feche o aplicativo antes de instalar. Na primeira atualização de uma versão portátil antiga, passe a abrir pelo atalho criado. O aplicativo verifica novas versões ao iniciar. Consulte GUIA-COMECE-AQUI.html ou LEIA-ME-PRIMEIRO.txt. O pacote inclui o guia para Windows e não contém credenciais. Áudio e texto são distribuídos pela rede local.' }) });
+   else throw new Error(`GitHub HTTP ${existing.status}`);
+   const names = ['Ponte-Traducao-Windows.zip','Ponte-Traducao-Windows.zip.sha256'];
+   for (const name of names) {
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -78,3 +78,12 @@ Chave inválida, ausência de acesso ao modelo, cota esgotada ou sessão expirad
+ `npm run check` verifica a sintaxe. `npm test` valida o codec com um vetor de referência, fidelidade de um sinal sintético, tamanho dos pacotes, entradas inválidas, autenticação, isolamento da audiência, distribuição binária de áudio/texto, histórico, limpeza e encerramento usando uma API simulada e conexões WebSocket reais.
+ As duas páginas também foram verificadas no Electron com áudio simulado. A validação completa da tradução precisa de chave válida, acesso ao modelo, microfone e uma pessoa conferindo o áudio e o texto.
+ Esta versão não inclui instalador, microfone virtual, hospedagem pública ou reconexão automática com o Gemini. A audiência reconecta ao servidor automaticamente.
++
++
++## Atualizações (Windows 0.3.2+)
++
++Extraia o ZIP e execute Instalar.cmd; abra pelo atalho Ponte - Tradução. Instala em %LOCALAPPDATA%\Ponte-Traducao sem privilégios de administrador. Para atualizar, feche o aplicativo e execute Instalar.cmd do novo ZIP: substitui o runtime e mantém os atalhos. Pastas portáteis antigas não são apagadas; passe a usar o atalho.
++
++O aplicativo verifica releases estáveis oficiais no startup, em segundo plano, e oferece Baixar atualização ou Agora não. Sem internet, continua abrindo normalmente. Ajuda → Verificar atualizações permite repetir a consulta. Não instala versões automaticamente nem interrompe uma tradução. A versão 0.3.2 precisa ser instalada manualmente uma vez para habilitar esta funcionalidade.
++
++Testes: node --test update-checker.test.cjs installer.test.cjs. O instalador é testado somente em pastas temporárias, com lançamento e criação de atalhos desabilitados.
+diff --git a/windows-guide.json b/windows-guide.json
+--- a/windows-guide.json
++++ b/windows-guide.json
+@@ -11,18 +11,20 @@
+       ]
+     },
+     {
+-      "title": "1. Baixar e extrair a pasta",
++      "title": "1. Baixar e instalar no Windows",
+       "steps": [
+         "Na página Aplicativo de tradução do Ponte, clique em Baixar aplicativo para Windows e aguarde terminar.",
+-        "Abra o Explorador de Arquivos do Windows e entre em Downloads. Procure Ponte-Traducao-Windows.zip. A palavra ZIP indica que os arquivos estão dentro de uma pasta compactada.",
+-        "Clique com o botão direito no ZIP e escolha Extrair Tudo. Escolha uma pasta fácil de encontrar, como Documentos, e clique em Extrair.",
+-        "Abra a pasta que foi extraída. Nela, você encontrará Ponte-Traducao.exe, este guia e outras pastas. Não execute o aplicativo de dentro do ZIP e não separe o arquivo EXE das outras pastas."
++        "Abra Downloads, clique com o botão direito em Ponte-Traducao-Windows.zip e escolha Extrair Tudo. Não execute os arquivos de dentro do ZIP.",
++        "Abra a pasta extraída e dê dois cliques em Instalar.cmd. A instalação não exige conta de administrador e cria o atalho Ponte - Tradução na Área de Trabalho e no menu Iniciar.",
++        "Abra o aplicativo pelo atalho Ponte - Tradução. O guia GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt também estão incluídos no pacote.",
++        "Para atualizar, termine a tradução e feche o aplicativo. Extraia o novo ZIP e execute Instalar.cmd novamente. A instalação substitui a versão anterior no mesmo local e mantém os atalhos. Não é preciso desinstalar.",
++        "Se você usava uma versão portátil antiga, faça esta instalação uma vez e passe a usar o atalho. A pasta portátil antiga não é apagada automaticamente."
+       ]
+     },
+     {
+       "title": "2. Abrir e conectar ao Ponte",
+       "steps": [
+-        "Dentro da pasta extraída, dê dois cliques em Ponte-Traducao.exe. Se o Windows esconder as terminações dos arquivos, o nome pode aparecer apenas como Ponte-Traducao.",
++        "Abra o atalho Ponte - Tradução. Ao iniciar, o aplicativo consulta novas versões. Se houver uma atualização, clique em Baixar atualização para abrir o download no navegador, ou Agora não para continuar. Você também pode usar Ajuda → Verificar atualizações.",
+         "No Ponte, entre com uma conta de administrador e abra Comunicação → Aplicativo de tradução. Clique em Gerar ligação para o computador e depois em Copiar ligação. Gerar uma nova ligação cancela a anterior e retira uma transmissão que já esteja publicada.",
+         "Volte à janela do aplicativo. Clique no campo Ligação gerada pelo administrador, pressione Ctrl+V para colar e clique em Conectar ao Ponte. Aguarde a mensagem Conectado ao Ponte.",
+         "Se o Windows impedir a abertura, peça ao responsável da igreja para conferir a origem e a versão do pacote. Não é necessário desativar o antivírus para seguir este guia."

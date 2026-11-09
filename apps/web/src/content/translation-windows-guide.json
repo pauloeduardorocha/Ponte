@@ -11,18 +11,20 @@
       ]
     },
     {
-      "title": "1. Baixar e extrair a pasta",
+      "title": "1. Baixar e instalar no Windows",
       "steps": [
         "Na página Aplicativo de tradução do Ponte, clique em Baixar aplicativo para Windows e aguarde terminar.",
-        "Abra o Explorador de Arquivos do Windows e entre em Downloads. Procure Ponte-Traducao-Windows.zip. A palavra ZIP indica que os arquivos estão dentro de uma pasta compactada.",
-        "Clique com o botão direito no ZIP e escolha Extrair Tudo. Escolha uma pasta fácil de encontrar, como Documentos, e clique em Extrair.",
-        "Abra a pasta que foi extraída. Nela, você encontrará Ponte-Traducao.exe, este guia e outras pastas. Não execute o aplicativo de dentro do ZIP e não separe o arquivo EXE das outras pastas."
+        "Abra Downloads, clique com o botão direito em Ponte-Traducao-Windows.zip e escolha Extrair Tudo. Não execute os arquivos de dentro do ZIP.",
+        "Abra a pasta extraída e dê dois cliques em Instalar.cmd. A instalação não exige conta de administrador e cria o atalho Ponte - Tradução na Área de Trabalho e no menu Iniciar.",
+        "Abra o aplicativo pelo atalho Ponte - Tradução. O guia GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt também estão incluídos no pacote.",
+        "Para atualizar, termine a tradução e feche o aplicativo. Extraia o novo ZIP e execute Instalar.cmd novamente. A instalação substitui a versão anterior no mesmo local e mantém os atalhos. Não é preciso desinstalar.",
+        "Se você usava uma versão portátil antiga, faça esta instalação uma vez e passe a usar o atalho. A pasta portátil antiga não é apagada automaticamente."
       ]
     },
     {
       "title": "2. Abrir e conectar ao Ponte",
       "steps": [
-        "Dentro da pasta extraída, dê dois cliques em Ponte-Traducao.exe. Se o Windows esconder as terminações dos arquivos, o nome pode aparecer apenas como Ponte-Traducao.",
+        "Abra o atalho Ponte - Tradução. Ao iniciar, o aplicativo consulta novas versões. Se houver uma atualização, clique em Baixar atualização para abrir o download no navegador, ou Agora não para continuar. Você também pode usar Ajuda → Verificar atualizações.",
         "No Ponte, entre com uma conta de administrador e abra Comunicação → Aplicativo de tradução. Clique em Gerar ligação para o computador e depois em Copiar ligação. Gerar uma nova ligação cancela a anterior e retira uma transmissão que já esteja publicada.",
         "Volte à janela do aplicativo. Clique no campo Ligação gerada pelo administrador, pressione Ctrl+V para colar e clique em Conectar ao Ponte. Aguarde a mensagem Conectado ao Ponte.",
         "Se o Windows impedir a abertura, peça ao responsável da igreja para conferir a origem e a versão do pacote. Não é necessário desativar o antivírus para seguir este guia."
