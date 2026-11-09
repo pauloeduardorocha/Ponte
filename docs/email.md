@@ -65,16 +65,17 @@ subscrição na Bird. O assunto vazio usa `Notificação — Igreja Ponte`; o co
 é texto simples, com HTML escapado e quebras de linha preservadas.
 
 `SENT`/Enviado significa aceitação pela Bird (`202`), não confirmação de entrega.
-Falhas ficam `FAILED` com erro genérico no histórico; um envio coletivo pode
-retornar `PARTIAL`. Não há retentativa automática. O registo é bloqueado durante
-o envio para evitar processamento simultâneo. `Idempotency-Key` usa o ID da
-notificação; a Bird protege repetições com pedido idêntico por aproximadamente
-três horas. Essa proteção não garante deduplicação após a janela do provedor.
+Um envio coletivo pode retornar `PARTIAL` ou manter mensagens pendentes. A
+[outbox](notifications.md#outbox-de-notificações-operacionais) reserva a intenção
+antes do envio e usa uma chave estável por notificação, com corpo congelado.
+A recuperação tem até três tentativas numa janela de duas horas; resultados
+incertos exigem reconciliação. Aceitação não comprova entrega na caixa de entrada.
 
-Agendamentos continuam `PENDING` até à ação explícita **Enviar**, disponível
-depois da data agendada. Não há worker de envio automático. Pendentes antigos
-não são enviados apenas por configurar a Bird. Cancelamento e proteção contra
-segundo envio de registos processados mantêm-se.
+Agendamentos permanecem `PENDING` até a data e são liberados automaticamente
+pelo worker configurado. Pendências antigas sem data continuam manuais. A
+recuperação depende do workflow e do segredo dedicado; configurar somente a
+Bird não ativa o agendamento. Cancelamentos são recusados durante envio ativo
+ou quando o resultado de uma tentativa ainda pode ter sido aceito.
 
 ## Verificação
 

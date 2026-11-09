@@ -1,6 +1,6 @@
 # Aniversariantes
 
-A página inicial consulta `GET /community/birthdays?period=week`: membros ativos, não anonimizados, da segunda-feira ao domingo atuais em Europe/Lisbon, ordenados por data e nome. Retorna `id`, `name` e `birthday` (DD/MM), sem revelar ano ou idade. Sem `period=week`, mantém o contrato anterior de aniversariantes do dia. O acesso continua disponível a contas autenticadas, incluindo as que aguardam aprovação.
+A página inicial consulta `GET /community/birthdays?period=week`: membros ativos, não anonimizados, da segunda-feira ao domingo atuais em Europe/Lisbon, ordenados por data e nome. Retorna `id`, `name`, `birthday` (DD/MM) e `avatar` da conta vinculada quando disponível, sem revelar ano ou idade. Sem `period=week`, mantém o contrato anterior de aniversariantes do dia. O acesso continua disponível a contas autenticadas, incluindo as que aguardam aprovação.
 
 `pushBirthdays` é uma preferência booleana por conta, ativa por padrão, retornada em `/auth/me` e lida/alterada em `PATCH /auth/preferences`. O toggle fica em Minha conta → Notificações push.
 

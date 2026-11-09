@@ -1,5 +1,9 @@
 # Publicação de 16 de outubro de 2026
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 - Aplicação: https://ponte-umber.vercel.app
 - Projeto Vercel: `ponte` (`prj_h3QXUzdVpx6HvA7mwlf5Wc39ohC0`).
 - Deploy: `dpl_7ZASW5RKUznJ52hJ9jhRgVm3W3HP`.

@@ -11,6 +11,6 @@ O botão de instalação fica oculto quando a Ponte está aberta como PWA, após
 
 A abertura de links na PWA instalada depende do sistema, navegador e preferências do utilizador. O site não força essa escolha nem redireciona automaticamente uma aba para a PWA. O âmbito da Ponte cobre as rotas do mesmo domínio (`scope: /`).
 
-O service worker guarda os ficheiros públicos da aplicação para permitir carregar a interface sem ligação após a primeira visita. Consultas, autenticação, documentos e gravações continuam a necessitar de internet; as respostas da API não são guardadas pelo service worker. As atualizações apresentam um aviso e só recarregam a página quando o utilizador escolher Atualizar.
+O service worker guarda os ficheiros públicos da aplicação para permitir carregar a interface sem ligação após a primeira visita. Autenticação, documentos e gravações dependem de internet; as respostas da API não são guardadas pelo service worker. O transporte da aplicação mantém um cache privado de GETs elegíveis, separado do service worker e condicionado à identidade verificada online, conforme [a política de cache](http-cache-policy.md). Não há fila de gravações offline. As atualizações apresentam um aviso e só recarregam a página quando o utilizador escolher Atualizar.
 
 Verificação num dispositivo: abrir a versão HTTPS, instalar, iniciar pelo ícone e confirmar que abre sem a barra de navegação. Depois de uma primeira visita, testar a abertura em modo de avião; as operações de dados requerem restabelecer a ligação.

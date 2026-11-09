@@ -1,5 +1,9 @@
 # Conciliação do repositório — 23 de outubro de 2026
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 ## Referência publicada
 
 A consulta à Vercel identificou o deployment de produção

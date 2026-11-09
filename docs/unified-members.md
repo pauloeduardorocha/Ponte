@@ -10,7 +10,7 @@ O resumo financeiro devolve somente totais por moeda e evolução mensal, sem ca
 
 Aplicar `20261015120000_unified_member_accounts` com o fluxo habitual de migrations antes de disponibilizar a nova interface. A migração preserva hashes de senhas e cria contas sem roles para membros sem conta. E-mails ausentes recebem `sememail+<UUID>@aponte.pt`. Contas novas recebem uma senha aleatória desconhecida: um administrador autorizado define a senha no detalhe do membro. O envio de recuperação por e-mail continua dependendo da configuração do adaptador de entrega existente.
 
-Se houver e-mails reais duplicados entre membros, a migração aborta atomicamente para permitir revisão das identidades, sem unir pessoas por suposição. Nenhum dado de produção foi alterado durante a implementação.
+Se houver e-mails reais duplicados entre membros, a migração aborta atomicamente para permitir revisão das identidades, sem unir pessoas por suposição. Esse teste de implementação não comprova o estado atual da produção.
 
 ## Verificação
 
@@ -35,4 +35,4 @@ API autenticada:
 
 `:id` aceita UUID ou `me`. O membro pode operar apenas seus próprios vínculos. Para outro membro, a API exige `MEMBER_READ` para consultar e `MEMBER_UPDATE` para buscar, adicionar, alterar ou remover. Contas pendentes continuam bloqueadas pelo guard de autenticação. Vínculos são auditados e removidos durante a anonimização.
 
-Aplicar `20261104120000_member_family` antes de disponibilizar a interface. O indicador `members.without_account`, usado para novos familiares sem acesso, permite e-mail ausente e impede a criação automática de conta pelos gatilhos. Cadastros existentes mantêm seus acessos e o comportamento anterior. Nenhuma migração foi aplicada em produção durante esta implementação.
+Aplicar `20261104120000_member_family` antes de disponibilizar a interface. O indicador `members.without_account`, usado para novos familiares sem acesso, permite e-mail ausente e impede a criação automática de conta pelos gatilhos. Cadastros existentes mantêm seus acessos e o comportamento anterior. Aplique as migrations pendentes pelo fluxo administrativo; esta documentação não confirma o estado de produção.

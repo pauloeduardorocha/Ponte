@@ -3,18 +3,19 @@
 O workflow `.github/workflows/ci.yml` roda em pull requests, pushes na `main` e
 acionamento manual. Existem dois checks independentes:
 
-- **TypeScript, lint, unit tests and build:** instala pelo lockfile, gera Prisma,
+- **TypeScript, lint, unit tests and build:** instala pelo lockfile, verifica a
+  documentação com `npm run docs:check`, gera Prisma,
   compila contratos compartilhados, verifica TypeScript/lint, executa testes sem
   banco e cria os builds de produção.
 - **PostgreSQL integration and restricted login:** executa as suítes reais com
   PostgreSQL 17 descartável e verifica também os privilégios do login de execução.
-  Inclui um segundo ensaio com PostgreSQL 18 (versão atual da produção), backup
+  Inclui um segundo ensaio com PostgreSQL 18 (versão registrada em produção na inspeção de outubro), backup
   encriptado, restauro e verificação da API e dos documentos recuperados.
 
 Node está definido em `.node-version`. O CI não usa segredos de produção, não
 publica coleções, não faz deploy e não altera regras de proteção de branches.
 Para bloquear merges com falhas, configure ambos os checks como obrigatórios
-nas regras da `main` após o primeiro workflow publicado.
+nas regras da `main`. A existência do YAML não comprova que a proteção esteja ativa.
 
 ## Executar localmente
 
@@ -101,37 +102,6 @@ nos demais ambientes aparece explicitamente como ignorado. Comparar apenas os
 majors de Puppeteer e Chromium não verifica essa compatibilidade operacional.
 O teste não confirma compatibilidade com todas as APIs do Puppeteer nem faz
 consultas ao portal e-Fatura.
-
-## Validação desta implementação — 27/10/2026
-
-| Verificação                                                   | Resultado                                                                 |
-| ------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Instalação limpa com `npm ci` em container Linux Node 24.15.0 | Passou; auditoria da instalação sem vulnerabilidades reportadas           |
-| TypeScript da API e frontend (`npm run typecheck`)            | Passou                                                                    |
-| Lint completo (`npm run lint`)                                | Passou                                                                    |
-| API sem banco (`jest.unit.config.cjs`)                        | 50 suítes, 426 testes passaram                                            |
-| HTTP/seed com PostgreSQL 17 descartável                       | 10 suítes, 138 testes passaram                                            |
-| Login restrito e privilégios (`--security-only`)              | 13 testes passaram                                                        |
-| Frontend (`npm run test --workspace @church/web`)             | 47 arquivos, 341 testes passaram                                          |
-| Worker e-Fatura no Windows                                    | 12 testes passaram; o teste com Chromium real foi ignorado por plataforma |
-| Chromium real em container Linux, rede da página bloqueada    | 1 teste passou, sem ignorados                                             |
-| Build completo e nova compilação do frontend com versão 1.1.4 | Passaram                                                                  |
-| YAML do workflow, gatilhos, jobs e permissões                 | Verificados localmente                                                    |
-| Falta de `TEST_DATABASE_URL` no setup de integração           | Falha explícita confirmada                                                |
-
-Os testes foram executados por etapas; a suíte de privilégios foi repetida com
-`--security-only` após corrigir seu acesso ao papel administrativo. Os projetos
-PostgreSQL criados pelo runner foram removidos ao finalizar.
-
-As fixtures foram atualizadas para a criação automática de identidades, vínculo
-obrigatório de ministérios nas escalas e regras atuais de autorização. Testes da
-interface aguardam o conteúdo principal antes de procurar elementos de páginas
-carregadas sob demanda. O teste de erro em uploads continua garantindo um único
-POST, permitindo a consulta independente de atualização da aplicação.
-
-Não houve execução observada no GitHub Actions, push, deploy ou teste de provedores
-reais de e-mail/pagamento/portal e-Fatura. O build ainda emite o aviso existente de
-chunks maiores que 500 kB; isso não impediu a compilação.
 
 ## Contratos reproduzíveis
 

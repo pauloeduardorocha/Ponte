@@ -1,8 +1,12 @@
 # Tradução ao vivo na rede local
 
+O aplicativo Windows tem código e ciclo de publicação próprios, fora deste
+repositório. Os patches versionados abaixo descrevem as versões 0.3.1/0.3.2;
+a existência deles não comprova a versão do ZIP atualmente distribuído.
+
 Validação do leitor: a fixture `listener-smoke.cjs` na pasta Live translation inicia o servidor local com Gemini simulado, abre a tela em Electron com largura de celular e verifica início do MP3 nativo, transcrição, pausa e retomada. Salva uma captura para revisão visual, sem contas reais ou chamadas ao Gemini. Execute `node_modules/electron/dist/electron.exe listener-smoke.cjs` com a variável `ELECTRON_RUN_AS_NODE` removida do ambiente. Os testes da PWA verificam a entrada pública/autenticada e as permissões administrativas.
 
-O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiência no Wi-Fi. Áudio comprimido ADPCM e texto seguem diretamente do computador para os ouvintes; não passam pela Vercel nem são salvos no banco do Ponte.
+O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiência no Wi-Fi. Na versão do leitor MP3 descrita abaixo, áudio MP3 e texto seguem diretamente do computador para os ouvintes; não passam pela Vercel nem são salvos no banco do Ponte.
 
 ## Configuração e uso
 
@@ -12,7 +16,7 @@ O Ponte oferece **Abrir tradução ao vivo**, na mesma aba. O endereço local ab
 
 A navegação para a origem local evita carregar áudio HTTP de um IP privado dentro da PWA HTTPS, que pode ser bloqueado pelo navegador ([MDN: mixed content](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Mixed_content)). O texto usa WebSocket e reconecta independentemente; falhas ou suspensão do texto não param o áudio nativo. O texto pode chegar antes do áudio. Ao ler trechos anteriores, a página respeita a posição de rolagem.
 
-É preciso atualizar o aplicativo Windows para **0.3.1**, manter a aba aberta e continuar no Wi-Fi. A codificação MP3 mono a 48 kbit/s ocorre uma vez no PC, compartilhada pelos ouvintes, com silêncio entre falas. Brave, Android, iOS, chamadas e políticas de bateria ainda podem interromper mídia: a validação com tela bloqueada precisa ocorrer no aparelho real. A página não promete reprodução após encerrar o navegador.
+É preciso usar aplicativo Windows **0.3.1 ou superior** para esse leitor; o atualizador descrito abaixo requer **0.3.2 ou superior**. Deve-se manter a aba aberta e continuar no Wi-Fi. A codificação MP3 mono a 48 kbit/s ocorre uma vez no PC, compartilhada pelos ouvintes, com silêncio entre falas. Brave, Android, iOS, chamadas e políticas de bateria ainda podem interromper mídia: a validação com tela bloqueada precisa ocorrer no aparelho real. A página não promete reprodução após encerrar o navegador.
 
 As alterações Windows foram aplicadas na pasta irmã **Live translation**, fora do Git deste repositório. O patch `docs/windows-listener-0.3.1.patch` permite reproduzi-las sobre o código 0.3.0: aplique com `git apply --no-index <caminho-do-patch>` na pasta do aplicativo. Execute `npm test` e `npm run check` e gere o pacote pelo comando abaixo. Atualize o pacote distribuído junto com o Ponte; a versão 0.3.0 ainda possui telas separadas.
 
@@ -55,7 +59,7 @@ O script inclui o runtime Electron, a aplicação e `ws`, sem credenciais, hist�
 
 Em produção, hospede esse ZIP em um serviço de arquivos/release separado e configure `TRANSLATION_APP_DOWNLOAD_URL` com a URL HTTPS. O Ponte fornece o link; não transmite o binário pelas Functions nem inclui o Electron no deploy. Sem URL configurada, a administração mostra a indisponibilidade explicitamente, sem link fictício. `TRANSLATION_APP_ARCHIVE` permite definir um ZIP local fora do caminho padrão, apenas em desenvolvimento.
 
-Antes de publicar o Ponte, aplique pelo fluxo normal a migration `20261106190000_live_translation`. Nenhuma alteração no banco de produção é feita ao gerar o pacote ou executar os testes unitários. O build atualiza o contrato OpenAPI com os endpoints abaixo.
+Antes de publicar o Ponte, aplique pelo fluxo normal a migration `20261106190000_live_translation`. Nenhuma alteração no banco de produção é feita ao gerar o pacote ou executar os testes unitários. Após alterações de contrato, execute `npm run openapi:generate`; o build normal não grava o snapshot OpenAPI.
 
 ## Contrato
 

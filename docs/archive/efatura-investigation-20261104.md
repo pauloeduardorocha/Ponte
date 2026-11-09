@@ -1,5 +1,9 @@
 # Recuperação e diagnóstico e-Fatura — 04/11/2026
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 ## Recuperação em produção
 
 Consulta local com login manual, Chrome com interface e os módulos existentes de

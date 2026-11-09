@@ -1,150 +1,65 @@
-# Vercel + Neon deployment
+# Publicação na Vercel
 
-## Compatibilidade do runtime NestJS
+## Configuração principal: um projeto com serviços
 
-Os pacotes `@nestjs/common`, `@nestjs/core` e `@nestjs/platform-express` devem
-usar a mesma versão major. O adaptador Express permanece na linha 11 enquanto
-o núcleo estiver na 11. Um build bem-sucedido não comprova que a função inicia:
-antes de promover um deploy, confirme `/api/v1/health` na URL da implantação.
-O override de `multer` em `2.5.0` preserva a correção de segurança do parser
-multipart sem exigir uma migração do framework para Nest 12.
-A versão 12 do adaptador isolada resultou em `Cannot find module
-'@nestjs/platform-express'` no runtime da Vercel, apesar do build aprovado.
+O `vercel.json` da raiz define `api` (NestJS, `apps/api`) e `web` (Vite, `apps/web`) no mesmo projeto. `/api/(.*)` vai para o serviço API; as demais rotas vão para o frontend, com fallback SPA. Esta é a referência para publicar a configuração principal do repositório.
 
-For current database credentials, migrations and recovery procedures, see
-[database security](database-security.md). The API must use the restricted
-`church_app` login; keep the migration owner outside its runtime environment.
+Selecione a raiz do monorepo no projeto Vercel. Confira os serviços detectados e use um Node compatível com `package.json`; desenvolvimento e CI seguem `.node-version`. Os comandos de build compilam o shared, geram Prisma para a API e constroem os respectivos workspaces. Build e inicialização não executam migrations.
 
-Deploy the React frontend and NestJS backend as two Vercel projects, and use
-Neon Free for PostgreSQL. Vercel Hobby is for personal, non-commercial use only.
-Keep all services on free plans; do not enable paid upgrades or add-ons.
+A região `fra1` declarada em `apps/api/vercel.json` pertence à configuração alternativa de projeto separado. Ela não comprova a região efetiva de um deploy com serviços da raiz; confira os metadados da implantação.
 
-## Database
+## Preparação do banco
 
-Create a Neon Free project in Frankfurt (near the API's `fra1` region).
-Use its pooled PostgreSQL connection string for the API's `DATABASE_URL`, with
-SSL enabled and `connection_limit=2&pool_timeout=20` appended to its query string.
-Use the direct connection string for migrations. Store credentials in provider
-environment settings, never in Git or chat.
+Use banco isolado para previews e testes. A API exige `DATABASE_URL` com TLS e login limitado; use conexão pooled quando apropriado à hospedagem. A conexão direta do proprietário fica em `ADMIN_DATABASE_URL`, somente no processo administrativo.
 
-Run migrations once against the new database before publishing the API:
+1. Confirmar destino, backup recuperável e compatibilidade da versão com as migrations.
+2. Injetar `ADMIN_DATABASE_URL` no ambiente privado do processo e executar `npm run db:deploy --workspace @church/api`.
+3. Em banco novo, provisionar também o login limitado conforme [segurança do banco](database-security.md).
+4. Só iniciar a API após aplicar migrations e privilégios. Não executar seed demo em produção.
 
-```powershell
-# Supply the owner's direct connection securely as ADMIN_DATABASE_URL.
-npm run db:deploy --workspace @church/api
-# Bootstrap is an administrative operation in this shell only.
-$env:DATABASE_URL = $env:ADMIN_DATABASE_URL
-$env:NODE_ENV = 'production'
-npm run build --workspace @church/shared
-npm run db:bootstrap:production
-```
+O bootstrap de roles (`npm run db:bootstrap:production`) é uma operação administrativa separada: exige `NODE_ENV=production` e `DATABASE_URL` do proprietário no processo privado, além do shared compilado. Não cria usuários nem senhas. Para conceder `SUPER_ADMIN`, `BOOTSTRAP_ADMIN_EMAIL` deve identificar uma conta já `ACTIVE` e não excluída. O cadastro público cria `PENDING_APPROVAL`; num banco sem aprovador, o operador precisa verificar e ativar explicitamente a primeira identidade pelo canal administrativo antes do bootstrap. Não há aprovação pública automática.
 
-Do not run the development demo seed against production. This creates a new,
-empty database; it does not transfer local data or local attachments.
+## Variáveis da API
 
-## API project
+| Variável                                                          | Uso                                                                       |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `NODE_ENV`                                                        | `production`                                                              |
+| `DATABASE_URL`                                                    | Conexão do login restrito, nunca proprietário                             |
+| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`                         | Segredos fortes e distintos, pelo menos 32 caracteres                     |
+| `CORS_ORIGIN`                                                     | Origens HTTPS exatas do frontend, separadas por vírgula e sem barra final |
+| `PRIVATE_STORAGE_DRIVER`                                          | `database`, obrigatório no runtime Vercel                                 |
+| `PUBLIC_WEB_URL`                                                  | Origem pública HTTPS usada em recuperação e checkout                      |
+| `BIRD_API_KEY`, `BIRD_EMAIL_FROM`                                 | [E-mail](email.md)                                                        |
+| `WEB_PUSH_PUBLIC_KEY`, `WEB_PUSH_PRIVATE_KEY`, `WEB_PUSH_SUBJECT` | [Push](notifications.md)                                                  |
+| `NOTIFICATION_OUTBOX_SECRET`                                      | Mesmo segredo dedicado no worker e GitHub Actions                         |
+| `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`                      | [Inscrições pagas](inscricoes-publicas-stripe.md)                         |
+| `YOUTUBE_API_KEY`                                                 | Consulta de vídeos e playlists no servidor                                |
+| `TRANSLATION_APP_DOWNLOAD_URL`                                    | ZIP Windows hospedado separadamente, HTTPS                                |
 
-Import the repository into Vercel, name the project `ponte-api` (or choose an
-available name), set Root Directory to `apps/api`, and enable access to files
-outside the root directory. The checked-in `vercel.json` configures NestJS,
-workspace installation, Prisma client generation, builds, and Frankfurt hosting.
-Use Node.js 22.x.
+Mantenha `SEED_DEMO` desativado. Chaves privadas não usam prefixo `VITE_`, não entram no Git e não devem ser exibidas em logs. Alterações de variáveis exigem novo deploy. O Compose não encaminha todas as integrações opcionais; confira `docker-compose.yml` ao reproduzi-las localmente.
 
-The e-Fatura scraper is part of the API. Production dependencies include
-`puppeteer-core` and a matching `@sparticuz/chromium` binary for Linux.
-`apps/api/vercel.json` includes its worker modules and Chromium assets and
-sets the function duration to 180 seconds (the consultation times out at
-120 seconds). No separate scraper installation is required. See
-[e-Fatura configuration](EFATURA.md) for local Chrome configuration and portal filters.
+O scraper e-Fatura está no build da API em `dist/efatura-runtime`. A configuração permite 180 segundos por função; a consulta tem prazo interno de 120 segundos. Ver [e-Fatura](EFATURA.md). Preserve a mesma versão major entre os pacotes NestJS de núcleo e adaptador Express.
 
-Set these environment variables for Production:
+## Domínio, cookies e previews
 
-| Variable                 | Value                                                      |
-| ------------------------ | ---------------------------------------------------------- |
-| `NODE_ENV`               | `production`                                               |
-| `DATABASE_URL`           | Neon pooled connection string for restricted `church_app`  |
-| `JWT_ACCESS_SECRET`      | Random secret, at least 32 characters                      |
-| `JWT_REFRESH_SECRET`     | Different random secret, at least 32 characters            |
-| `CORS_ORIGIN`            | Exact frontend origin, e.g. `https://ponte-web.vercel.app` |
-| `PRIVATE_STORAGE_DRIVER` | `database`                                                 |
-| `SEED_DEMO`              | `false`                                                    |
+Use a mesma origem do frontend para `/api` e HTTPS para cookies Secure. `CORS_ORIGIN` controla CORS, verificações de origem da autenticação e passkeys. Previews precisam de banco, segredos e origens próprios; não conecte previews a dados de produção. Passkeys são vinculadas ao hostname: criar no domínio final evita recadastro na mudança de domínio.
 
-For password recovery emails, also configure `BIRD_API_KEY` (private EU key),
-`BIRD_EMAIL_FROM=noreply@igrejaponte.com` and `PUBLIC_WEB_URL` with the actual
-HTTPS frontend URL. See [Bird email setup](email.md). Redeploy the API after
-changing these values.
+## Alternativa: projetos separados
 
-Generate the two secrets independently with `node -e
-"console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`
-in a private terminal. Do not place secrets in frontend environment variables.
+Os `vercel.json` de `apps/api` e `apps/web` permitem configurar dois projetos, com acesso aos arquivos externos ao workspace. Nesta alternativa, ajuste o proxy `/api/:path*` de `apps/web/vercel.json` para o hostname real da API e configure `CORS_ORIGIN` para o frontend. Não aplique esse roteiro por engano a um projeto que já usa os serviços da raiz.
 
-## Frontend project
+## Verificação de publicação
 
-Import the same repository again, name it `ponte-web`, set Root Directory to
-`apps/web`, enable access to files outside the root directory, and use Node.js
-22.x. The configuration builds shared types and the Vite frontend.
+Antes do push, siga as verificações e a sincronização Git de [AGENTS.md](../AGENTS.md). Após o deploy, confirme:
 
-Replace `https://ponte-api.vercel.app` in `apps/web/vercel.json` with the actual
-API production hostname before deploying. `/api/*` is proxied to the backend;
-other frontend routes fall back to `index.html`. This keeps HttpOnly refresh
-cookies same-origin without weakening cookie settings. No browser API URL or
-database credentials are needed.
+- Commit e estado da implantação nos metadados da Vercel; push não comprova deploy.
+- `/api/v1/health` pela origem pública e carregamento de rotas profundas do frontend.
+- Login autorizado, restauração por refresh, logout e permissões na API.
+- Versão em `/app-version.json`, rodapé e relatórios de erros, preservando a versão de clientes PWA antigos.
+- Documentos privados, jobs e integrações configuradas, pelos roteiros específicos.
 
-Set the API's `CORS_ORIGIN` to the actual frontend production origin and redeploy
-the API if the project name differs. Use separate databases and environment
-variables for previews; do not attach preview deployments to production data.
-Preview login requires explicitly adding that preview origin to `CORS_ORIGIN`.
+O armazenamento `database` inclui anexos no PostgreSQL. Arquivos locais não são migrados automaticamente. Limites do alojamento podem ser menores que os validadores locais; uploads em blocos de [reembolsos](reimbursement-resumable-uploads.md) e [escalas](ministry-schedules.md) atendem fluxos específicos, não todos os imports e relatórios. Consulte limites e planos vigentes nos provedores antes de ampliar uso.
 
-For the current `ponte` project, the production `CORS_ORIGIN` is a comma-separated
-list with no trailing slashes:
+## Compatibilidade de migrations antigas
 
-```text
-https://ponte-umber.vercel.app,https://igrejaponte.com,https://www.igrejaponte.com
-```
-
-This list controls CORS, authentication origin checks and passkey validation.
-After changing it in Vercel, redeploy the existing production deployment to
-activate the new value. Keep development and preview settings separate.
-Passkeys registered on the old hostname must be registered again on the new
-hostname; use the password to sign in first.
-
-## Verification and initial access
-
-Visit `/api/v1/health` through the frontend and directly on the API. Both should
-respond successfully. Open a frontend deep link, register an account, log in,
-reload to check refresh, and log out. Provision production roles and grant the
-first administrator through a trusted database operator; public registration
-only creates MEMBER users. After registering and verifying your own account,
-set `BOOTSTRAP_ADMIN_EMAIL` to that account's email in your private operator shell
-and rerun `npm run db:bootstrap:production` to grant SUPER_ADMIN. This command
-preserves existing role grants and users and never creates demo passwords.
-The development demo seed is intentionally blocked.
-
-Financial attachments use private PostgreSQL `BYTEA` records in this deployment,
-and remain accessible only through existing authorized API routes. They count
-toward Neon's storage allowance. Existing filesystem attachments are not copied.
-Vercel Functions have a 4.5 MB request/response limit, so uploads and generated
-downloads must remain below that limit (including multipart overhead), even
-though the app's local upload limit is 10 MB. Large imports/reports may need a
-different host or an object storage upload/download flow.
-
-Neon and Vercel can pause service when free allowances are exhausted. Check
-provider dashboards for current limits. No production migration or demo seed
-runs automatically during a build or function startup.
-
-References: https://vercel.com/docs/frameworks/backend/nestjs,
-https://vercel.com/docs/plans/hobby,
-https://vercel.com/docs/functions/limitations,
-https://neon.com/pricing.
-
-## Expense-only invoice associations
-
-Deploy the version that removes invoice-to-bank association routes before applying
-`20261015010000_invoice_expense_only`. Older API versions still query the removed
-column and must not serve traffic after this migration.
-
-The migration transfers each existing bank invoice link to the single expense
-with that bank transaction, preserves existing direct expense links, and removes
-the invoice bank-transaction column. It stops without changing data if a bank
-link has no matching expense or multiple matching expenses. Resolve those cases
-before retrying; do not discard invoice links.
+`20261015010000_invoice_expense_only` remove a associação direta entre fatura e movimento bancário, migrando-a para a despesa correspondente. Não sirva API antiga que ainda consulte a coluna removida após essa migration. Ela aborta se um vínculo bancário não tiver exatamente uma despesa correspondente; resolva a inconsistência sem descartar vínculos. O contrato atual está em [e-Fatura](EFATURA.md).

@@ -14,15 +14,9 @@ Administradores (`SUPER_ADMIN`, `ADMIN`) e pastores (`PASTOR`) ativos têm a **L
 
 Aplique a migration `20261026120000_pending_approval` antes de publicar a API. Ela acrescenta um valor ao enum; não reclassifica contas antigas. Nenhuma mudança de produção é executada pelo desenvolvimento local.
 
-## Verificações locais
+## Verificação
 
-- Prisma Client gerado com o novo enum; TypeScript da API e do frontend e ESLint dos arquivos alterados aprovados.
-- Testes HTTP e de serviço em `pending-approval.spec.ts`: autorização, aprovação repetida, conta removida, paginação, login/refresh, permissões após aprovação, persistência do payload e validação dos campos; banco simulado.
-- Testes de segurança de autenticação, passkeys e aniversariantes, além dos testes de interface de cadastro, lista de espera, rotas, painel, membros, aparência e passkeys.
-- As fixtures PostgreSQL foram atualizadas para informar telefone/nascimento e preparar explicitamente contas aprovadas quando necessário. A suíte de integração de autenticação foi ignorada por ausência de `TEST_DATABASE_URL`; a migration não foi executada num banco real nesta tarefa.
-
-A versão da aplicação passa a `1.0.0`, pois o cadastro público passa a exigir dois campos adicionais, incompatíveis com o payload antigo.
-
-O build `1.0.1` inclui o pacote CommonJS compartilhado na conversão do Vite, permitindo usar a mesma regra de aprovação no frontend e na API.
-
-Na publicação de 26/10/2026, a migration foi aplicada na branch `production` do projeto Neon APonte. Como a conexão direta encerrou a negociação TLS, o conector Neon executou o SQL e o registro em `_prisma_migrations` na mesma transação, com o checksum SHA-256 do arquivo. `runtime-privileges.sql` foi reaplicado; o login `church_app` reconhece o novo enum e continua sem UPDATE na auditoria.
+Testes de serviço/HTTP com banco simulado ficam em `pending-approval.spec.ts`.
+As suítes de autenticação com PostgreSQL descartável e os testes de cadastro,
+lista de espera, permissões e rotas verificam a integração. Use os comandos
+do [CI](ci.md); resultados da implementação de outubro são históricos.

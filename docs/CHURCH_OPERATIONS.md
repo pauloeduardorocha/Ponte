@@ -1,4 +1,4 @@
-# Etapa 9 — Operação e vida da igreja
+# Operação e vida da igreja
 
 ## Arquitetura e compatibilidade
 
@@ -112,7 +112,9 @@ está em docs/openapi.json.
   pode participar de vários ministérios. Grupos familiares respeitam capacidade.
 - Eventos: intervalo válido, capacidade positiva e inscrições concorrentes protegidas.
   Cancelamento preserva inscrições e cancela escalas abertas do evento.
-- Escalas: conflitos usam o intervalo do evento, incluindo limite exclusivo no fim.
+- Escalas: exigem ministério e podem existir sem evento; liderança, participação
+  e acesso seguem [ministérios e escalas](ministry-schedules.md). Conflitos usam
+  o intervalo aplicável, incluindo limite exclusivo no fim.
   Convocações sobrepostas são bloqueadas; alterações de evento/escala também são
   verificadas e revertidas se criarem conflito. A substituição mantém a convocação
   anterior com REPLACED e registra o vínculo de substituição. Respostas pessoais
@@ -122,13 +124,14 @@ está em docs/openapi.json.
   vínculos históricos e auditoria sujeita à política de retenção.
 
 Locks transacionais e constraints fazem a validação de concorrência no servidor,
-não apenas na interface. O lock das escalas é global nesta etapa para garantir
+não apenas na interface. O lock das escalas é global para garantir
 consistência entre eventos; pode ser particionado com cuidado se o volume exigir.
 
 ## Páginas e operação
 
-Menu: Pessoas (Membros, Visitantes, Acompanhamento), Grupos (Grupos familiares, Ministérios),
-Operação (Vida da igreja, Eventos, Escalas), Comunicação (Notificações).
+A organização atual do menu está em [navegação](sidebar-navigation.md).
+Pessoas reúne cadastros; Grupos e ministérios inclui escalas; Datas reúne eventos;
+Comunicação reúne notificações.
 O painel /operations é exclusivamente operacional.
 
 Há estados de carregamento/vazio/erro, pesquisa com debounce, filtros básicos e
@@ -156,13 +159,13 @@ destinatário. Veja [configuração e semântica de entrega](email.md). SMS e WH
 continuam sem adaptador. O envio imediato sem provedor é recusado; o sistema
 não simula envio externo.
 
-O sino no topo abre /inbox, com a caixa pessoal acessível a qualquer conta autenticada e limitada ao membro verificado da sessão. Mensagens pendentes ou de outros destinatários não são expostas.
+O sino no topo abre /inbox, com a caixa pessoal acessível a contas aprovadas e limitada ao membro verificado da sessão. Mensagens pendentes ou de outros destinatários não são expostas.
 
-Envio é explícito e respeita scheduledAt. Falhas de adaptadores configurados são
-registradas como FAILED com mensagem genérica. EMAIL usa chave de idempotência
-por notificação e respeita as supressões da Bird. Agendamentos exigem a ação
-explícita Enviar depois da data prevista. Worker/outbox, retentativas automáticas
-e processamento automático de agendamentos continuam fora deste fluxo.
+Envios imediatos persistem uma intenção na outbox e tentam entrega após o commit.
+Agendamentos são liberados automaticamente pelo worker a partir de scheduledAt;
+pendências antigas sem data continuam manuais. EMAIL tem recuperação limitada
+e reconciliação de resultados incertos. Configure o workflow e o segredo dedicado
+conforme [notificações](notifications.md#outbox-de-notificações-operacionais).
 
 ## Validação
 
@@ -175,21 +178,3 @@ e mudanças de horário, substituição/resposta pessoal,
 RBAC/IDOR/projeções, notificações, anonimização operacional e seed repetível.
 O frontend testa proteção das rotas, paginação, histórico, confirmação de saída,
 feedback de conflitos, cadastro e painel sem consultas financeiras.
-
-## Resultado da revisão
-
-- Migrations aplicadas em desenvolvimento e em schemas novos dos testes;
-  comparação Prisma entre banco e schema sem diferenças.
-- Lint e build aprovados; regressão completa com 150 testes de API e 68 de frontend.
-- Swagger atualizado: 116 caminhos e 71 schemas, incluindo caixa pessoal e aliases legados.
-- Seed de demonstração executado sem substituir senhas ou edições existentes.
-- No Windows, o cliente Prisma exigiu encerrar a API para regenerar a DLL carregada.
-  O processo Jest em execução sequencial apresentou encerramentos nativos sem
-  falha de asserção; a execução passou com dois workers e limite de memória de
-  256 MB para reciclagem. A causa nativa não foi determinada.
-- Um teste da biblioteca precisava aguardar a restauração da acessibilidade após
-  a animação de saída do diálogo; as verificações de idempotência foram mantidas.
-- O lint também reconhece o ambiente CommonJS do script de scraping paralelo,
-  cujo conteúdo e execução permanecem fora desta etapa.
-- Inspeção visual manual em desktop/mobile continua recomendada; a validação de
-  frontend desta etapa usa testes de componentes e fluxos.

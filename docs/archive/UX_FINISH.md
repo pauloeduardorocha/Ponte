@@ -1,5 +1,9 @@
 # Acabamento do Ponte
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 ## Interface e fluxos
 
 - No gráfico financeiro, as legendas mostram apenas o nome da categoria;
@@ -53,7 +57,7 @@
 - README cobre arquitetura, instalação, variáveis, migrations, seed, Docker,
   testes, build e deploy, com proteção de banco/arquivos e backups conjuntos.
 - Swagger usa DTOs compilados e esquemas de Bearer/refresh cookie.
-  [OpenAPI](openapi.json) contém 79 caminhos e 47 schemas; a UI e o JSON são
+  [OpenAPI](../openapi.json) contém 79 caminhos e 47 schemas; a UI e o JSON são
   servidos em desenvolvimento. Swagger não fica público em produção.
 - `docker compose up -d` aplica migrations, aguarda PostgreSQL/API saudáveis
   e inicia o Nginx. A demonstração executa com o perfil `demo`, explicitamente.

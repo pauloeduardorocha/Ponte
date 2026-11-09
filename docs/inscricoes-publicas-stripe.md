@@ -20,7 +20,7 @@ O formulário do gestor devolve um link de pagamento para encaminhar à pessoa. 
 
 - Evento gratuito publicado: inscrição pública cria visitante e inscrição; sem chave Stripe continua funcionando.
 - Evento pago: escolher lote, pagar com cartão de teste, verificar confirmação e contador de vagas.
-- MB WAY: usar +351911111112 para sucesso e +351911111113 para falha em sandbox.
+- MB WAY: usar os dados de sandbox vigentes da documentação Stripe vinculada abaixo e conferir sucesso/falha.
 - Última vaga: enviar compras simultâneas e verificar que só uma reserva é criada.
 - Reenviar webhook e verificar que os contadores permanecem iguais.
 - Cancelar pagamento e aguardar expiração; verificar liberação da vaga.

@@ -13,8 +13,11 @@ como repositório local. Restic acessa diretamente a API via rclone.
 Configuração externa concluída em 27/10/2026. Primeira cópia real aprovada:
 snapshot `4ccfd51f`, aproximadamente 8,3 MiB armazenados, verificação estrutural
 sem erros e retenção aplicada. [Execução no GitHub](https://github.com/pauloeduardorocha/Ponte/actions/runs/40551281770).
-O agendamento está habilitado; essa execução foi manual. O restauro dessa cópia
-real ainda precisa ser acionado e validado pelo procedimento abaixo.
+Esses são registros históricos, não uma verificação da habilitação ou da última
+execução atual. O plano de outubro registra também um ensaio externo aprovado;
+confira os resultados nos Actions e escolha uma cópia recente para novo ensaio.
+O restabelecimento completo da aplicação e o RPO/RTO não são demonstrados apenas
+pelo restauro SQL.
 
 Política inicial proposta, a confirmar com o responsável pela operação:
 
@@ -124,7 +127,8 @@ Para verificar uma cópia do Drive sem instalar ferramentas no computador:
 
 1. Abrir **Actions → Drive backup recovery drill → Run workflow**.
 2. Selecionar `main` e informar em `snapshot` o ID completo ou prefixo único de
-   pelo menos oito caracteres; para a primeira cópia, usar `4ccfd51f`.
+   pelo menos oito caracteres, obtido da listagem atual de snapshots.
+   Não presuma que a primeira cópia de outubro ainda exista após a retenção.
 3. Acionar **Run workflow** e acompanhar o job `recovery`.
 4. Confirmar sucesso e a mensagem `Recovered snapshot ... database/documents/runtime login verified`.
 
@@ -184,34 +188,14 @@ Provisiona PostgreSQL 18 com porta/URL e senhas aleatórias via Compose; aplica
 migrations; cria documento privado e anexo de escala com bytes conhecidos;
 usa Restic através do backend rclone local; testa produtor com falha e senha
 incorreta; lê todos os blocos; restaura para banco vazio e compara hashes/contagens
-de **todas as tabelas**. Reaplica permissões e executa os 13 testes existentes de
-API/login restrito, mais dois testes dos documentos recuperados via Prisma e
+de **todas as tabelas**. Reaplica permissões e executa os testes de
+API/login restrito e dos documentos recuperados via Prisma e
 StorageService com esse login. Remove o projeto Compose ao terminar.
 
 O ensaio não acessa Google nem dados de produção. Valida as ferramentas e o
 conteúdo restaurado, sem provar OAuth, quota, latência Drive, RPO/RTO reais ou
 recuperação da infraestrutura Vercel. O CI inclui esse ensaio no check existente
 de integração; as regras obrigatórias da main continuam usando os mesmos nomes.
-
-### Validação local em 27/10/2026
-
-- Backup Restic 0.18.1 através de rclone 1.74.1, leitura integral dos blocos e
-  restauro no PostgreSQL 18 aprovados; hashes/contagens de todas as tabelas iguais.
-- Documentos privados e anexos de escalas recuperados com conteúdo binário exato.
-- Produtor com falha não criou snapshot; senha incorreta e destino ocupado foram
-  recusados. Ligação pooled e armazenamento filesystem também recusados.
-- 15 testes passaram no banco recuperado: 13 de API/login/permissões e dois dos
-  documentos. Os 13 testes também passaram no PostgreSQL 17.
-- Backup/restauro e verificações em shell levaram 12 segundos na base sintética
-  (arquivo de aproximadamente 253 KiB), excluindo instalação, migrations e Jest.
-  Esse tempo não representa o RTO real de produção.
-- Confirmado `tmpfs` para os dados em ambas as versões; containers removidos.
-- Build da imagem Docker de backup com PostgreSQL client 18, Restic e rclone
-  concluído; as ferramentas não dependem de instalação no servidor da aplicação.
-- TypeScript da API e frontend, ESLint dos arquivos alterados, sintaxe Bash,
-  parsing YAML dos workflows/Compose e `git diff --check` aprovados.
-- Primeira tentativa de download da imagem falhou por interrupção da rede; a
-  nova execução concluiu o ensaio. Nenhum acesso à produção ou ao Drive foi feito.
 
 Fontes: [Neon pg_dump](https://neon.com/docs/manage/backup-pg-dump),
 [Restic backup por comando](https://restic.readthedocs.io/en/stable/040_backup.html#reading-data-from-a-command),

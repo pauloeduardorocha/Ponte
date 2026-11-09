@@ -1,100 +1,43 @@
-# Estrutura e importação da biblioteca
+# Modelo e inventário da biblioteca
 
-O acervo contém 384 números de registo e 426 exemplares com quantidade conhecida.
-O índice contém 102 categorias, incluindo os códigos `00`, `01` e `522`.
-A estrutura atual guarda apenas uma categoria livre por livro e não tem campos
-próprios para o número de registo, a coleção ou a cota.
+## Modelo implementado
 
-## Extensão do modelo existente
+A extensão de catálogo já faz parte do Prisma, contratos e interface. As migrations `20261022120000_library_catalogue` e `20261022213000_library_enrichment` registram a evolução; não se trata de uma proposta de schema pendente.
 
-| Entidade               | Campo ou relação                                             | Finalidade                                                                                                                                       |
-| ---------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Nova `LibraryCategory` | `code` como chave textual, `name`, `parentCode` opcional     | Guardar todo o índice, incluindo categorias ainda sem livros. Preservar zeros à esquerda e a hierarquia, como `52` → `522`.                      |
-| Nova `BookCategory`    | `bookId`, `categoryCode`, `isPrimary`, `reviewedAt` opcional | Associar vários temas ao mesmo livro, distinguir o principal e separar propostas de classificações revistas.                                     |
-| `Book`                 | `registrationNumber`, texto opcional e único                 | Preservar `00001` como identificador bibliográfico de origem. Não usar o UUID interno nem o código de exemplar para este efeito.                 |
-| `Book`                 | `collection`, texto opcional                                 | Preservar a coluna Coleção sem a confundir com subtítulo ou descrição.                                                                           |
-| `Book`                 | `catalogueNotes`, texto opcional                             | Preservar notas do registo, incluindo as edições diferentes de `00333` e `00334`.                                                                |
-| `BookCopy`             | `shelfmark`, texto opcional                                  | Guardar a cota biblioteconómica, por exemplo `54 COR`, separadamente da sala/estante e do código patrimonial.                                    |
-| `Book`                 | Permitir `author` nulo e usar `und` para idioma desconhecido | Há 29 autores ausentes e não existe uma coluna de idioma. Apresentar “Autor não informado” na interface, sem o guardar como identidade de autor. |
-| `CopyStatus`           | Acrescentar `PENDING_INVENTORY`                              | A quantidade registada não comprova disponibilidade, localização ou condição física. Permitir conferir os exemplares antes de os disponibilizar. |
+| Entidade/campo                      | Finalidade                                                                             |
+| ----------------------------------- | -------------------------------------------------------------------------------------- |
+| `LibraryCategory`                   | UUID interno, código textual único, nome e `parentCode`; preserva zeros à esquerda     |
+| `BookCategory`                      | Associação livro/tema, principal e data de revisão; par único e no máximo um principal |
+| `Book.registrationNumber`           | Identificador de origem opcional e único, independente do UUID                         |
+| `Book.collection`, `catalogueNotes` | Coleção e notas da ficha                                                               |
+| `Book.author`                       | Pode ser nulo; a UI apresenta ausência sem inventar identidade                         |
+| `Book.category`                     | Campo livre mantido para compatibilidade, sincronizado com o rótulo principal          |
+| `BookCopy.shelfmark`                | Cota separada da localização física e código patrimonial                               |
+| `CopyStatus.PENDING_INVENTORY`      | Exemplar por conferir, indisponível para empréstimo ou alocação de reserva             |
+| `BookEnrichment`                    | Pesquisa, seleção provisória, valores anteriores, hash e revisão por livro             |
 
-A tabela de associação tem unicidade composta `(bookId, categoryCode)` e um
-índice único parcial para permitir no máximo um tema principal por livro.
-`parentCode` deve referenciar uma categoria existente; a aplicação deve impedir
-ciclos. As categorias com livros associados não devem ser apagadas em cascata.
-O livro pode ficar temporariamente sem categoria durante a revisão.
+A fonte canônica é `apps/api/prisma/schema.prisma`, com constraints adicionais nas migrations. As categorias referenciadas têm exclusão restrita. Não há tabelas próprias de autores/editoras/coleções. O preparador usa `und` quando a fonte não informa idioma; o modelo geral conserva o default `pt`.
 
-Recomendo duas tabelas novas. Não é necessário criar já tabelas de autores,
-editoras ou coleções: os ficheiros não fornecem os identificadores ou a
-normalização necessários para isso. Também não é necessária uma tabela de
-totais; o total e a disponibilidade continuam a ser calculados pelos exemplares.
+O número de registo identifica a ficha; o código patrimonial identifica a unidade física. Por exemplo, `00006` pode ter `BP-00006-01` e `BP-00006-02`. Fichas `00333` e `00334` permanecem separadas por indicação de edições diferentes; semelhança de título não autoriza mescla.
 
-## Compatibilidade com o sistema publicado
+## Dados de origem e curadoria
 
-`Book.category` mantém as categorias livres e os filtros existentes. As novas
-associações guardam o tema principal e os restantes temas; o rótulo do principal
-é sincronizado no campo atual. O seletor reúne o índice estruturado e as categorias
-livres existentes. Propostas não revistas aparecem com indicação de revisão
-pendente. Nenhum campo atual foi removido.
+O pacote versionado contém 384 fichas, 426 exemplares com quantidade conhecida e 102 categorias. Estes são totais do **inventário de origem**, não uma leitura atual da produção. Há 379 propostas de tema principal e cinco fichas sem proposta segura (`00048`, `00158`, `00166`, `00191`, `00384`). Quantidades desconhecidas em `00169`, `00383` e `00384` não geram exemplares.
 
-Os campos novos entram primeiro como opcionais, para não quebrar a versão
-publicada. O tratamento de autores nulos, de idioma desconhecido e do novo estado de exemplar
-exige atualização conjunta de contratos, interface e regras de circulação.
-`PENDING_INVENTORY` não pode ser emprestado nem alocado a reservas.
+- [Inventário normalizado](../apps/api/prisma/library-production/inventory.json): dados de origem, linhas e hashes dos documentos.
+- [Propostas](../apps/api/prisma/library-production/category-proposals.json): classificações ainda sujeitas a revisão.
+- [Relatório gerado](library-seed-review.md): reprodução do inventário, não catálogo de produção nem estado atual do enriquecimento.
+- [Preparador](../apps/api/prisma/library-production/prepare-seed.cjs): gera seed e relatório sem conectar ao banco.
+- [Ferramentas e execução](../apps/api/prisma/library-production/README.md): comandos, proteções e testes.
 
-O número de registo identifica a ficha de origem e o código patrimonial
-identifica cada unidade física: por exemplo, registo `00006`, exemplares
-`BP-00006-01` e `BP-00006-02`. Uma reexecução deve reutilizar os identificadores.
-Os registos `00333` e `00334` permanecem separados por indicação de edições
-diferentes, mesmo tendo o mesmo título e autor. Não se devem juntar registos
-apenas pela semelhança de títulos.
+A pesquisa de ISBN, editoras e capas pode fornecer candidatos; dígito verificador correto ou URL acessível não confirma a edição física. O [registro de enriquecimento](../apps/api/prisma/library-production/ISBN-RESEARCH.md) documenta a importação provisória de outubro e sua proveniência. Arquivos de `outputs/` e caches citados nesse histórico são locais e podem não existir num clone novo.
 
-## Estado dos dados preparados
+## Operações administrativas
 
-- [Inventário extraído](../apps/api/prisma/library-production/inventory.json):
-  valores de origem, linha da folha e hashes SHA-256 dos dois ficheiros.
-- [Propostas de categorias](../apps/api/prisma/library-production/category-proposals.json):
-  379 temas principais propostos, todos pendentes de revisão.
-- [Revisão legível](library-seed-review.md): ficha a ficha, com quantidades e pendências.
-- [Preparador do seed](../apps/api/prisma/library-production/prepare-seed.cjs):
-  valida os dados e gera um seed JSON para a estrutura proposta; não liga ao banco.
+Instalação normal aplica migrations pelo [fluxo de segurança do banco](database-security.md). O executor especializado `database.cjs` existe para a carga de inventário e exige conexão, host e banco explícitos; não é um sincronizador geral de produção.
 
-Sem proposta suficientemente clara: `00048`, `00158`, `00166`, `00191` e
-`00384`. Os registos `00169`, `00383` e `00384` ficam sem exemplares até confirmar
-a quantidade. Não se atribuem ISBN, capas, edição, ano ou editora por suposição.
-As cotas não são calculadas automaticamente como definitivas: todas estão vazias
-na fonte e o nome de autor nem sempre corresponde a uma pessoa identificada.
+`seed` e `reset-seed` têm efeitos diferentes. `reset-seed` apaga livros, exemplares e históricos operacionais de circulação na mesma transação da carga, preservando auditoria global e outras áreas. Uma autorização registrada numa tarefa antiga não autoriza um novo reset. Antes de qualquer nova limpeza, definir escopo e destino, obter autorização específica e preparar recuperação testada. Reimportações normais não devem executar reset.
 
-## Aplicação em produção
+## Contrato e interface
 
-A limpeza total da biblioteca foi solicitada pelo utilizador. O utilizador confirmou a mescla da estrutura atual com os documentos e a limpeza dos dados antigos. As categorias inferidas entram como propostas, sem data de revisão.
-
-1. Confirmar o projeto e a branch de produção por identificação explícita.
-   O contexto `.neon` desta pasta aponta para desenvolvimento.
-2. Criar uma cópia de recuperação e testar a migração e a carga numa branch
-   isolada, conforme a skill Neon. Não reutilizar a branch de outro trabalho.
-3. Atualizar e publicar os contratos e a interface compatíveis com o modelo.
-4. Na mesma transação, obter o lock de circulação da biblioteca, bloquear as
-   tabelas necessárias e eliminar pagamentos de multas, ajustes, multas,
-   reservas, empréstimos, exemplares e livros, por esta ordem. Repor as
-   configurações da biblioteca nos valores iniciais se o reset as abranger.
-   A limpeza inclui o catálogo de categorias anterior quando este já existir.
-5. Carregar categorias, livros, associações e os 426 exemplares. Verificar as
-   contagens antes do commit. Qualquer falha reverte limpeza e carga juntas.
-6. Conferir catálogo, filtros, reservas e empréstimos no sistema publicado.
-
-Não eliminar membros, utilizadores, dados financeiros de outras áreas nem a
-auditoria global imutável. A operação de reset deve ficar registada na auditoria.
-Os empréstimos e restantes históricos operacionais da biblioteca são apagados;
-isso não implica apagar os registos globais de auditoria.
-
-A migração é aditiva: não remove os campos nem as funcionalidades atuais. O seed é autorizado para aplicação; isso não confirma as propostas de classificação. O executor em `apps/api/prisma/library-production/database.cjs` faz a limpeza e carga na mesma transação e guarda a operação na auditoria.
-
-## Capas
-
-O campo de capa existente foi preservado. As fichas públicas do Google Books
-permitiram obter três links candidatos, guardados em
-`apps/api/prisma/library-production/google-cover-candidates.json`, com título,
-autor, origem e resultado da verificação HTTP. A API sem chave própria devolveu
-limite diário excedido. As capas não foram associadas automaticamente porque a
-edição física não está identificada nas fontes. Nenhuma imagem foi descarregada.
+[Paginação e catálogo](library-pagination.md) descreve filtros, categorias, históricos, revisão e disponibilidade. Metadados usam cache; disponibilidade é consultada separadamente e continua validada dentro das transações de empréstimo e reserva. O catálogo não presume que quantidade de origem significa disponibilidade física.

@@ -1,6 +1,7 @@
 # Pesquisa de ISBNs antes de associar capas
 
-Piloto de 20 registos do acervo, com títulos brasileiros e de outras línguas.
+Piloto histórico de 20 registos do acervo, com títulos brasileiros e de outras línguas.
+O estado posterior de enriquecimento do conjunto está em [ISBN-RESEARCH.md](ISBN-RESEARCH.md).
 A pesquisa assistida consulta metadados de editoras, livrarias, Google Books
 (páginas públicas), Open Library e bibliografias nacionais. Não se exige chave.
 

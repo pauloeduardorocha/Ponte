@@ -45,12 +45,3 @@ dentro de outros componentes, sem duplicar requisições e sem acrescentar estad
 global. Os fluxos de catálogo, empréstimo, reserva, multa e histórico continuam
 cobertos por `library.test.tsx`; autorização, transações e concorrência das
 operações são exercitadas pelas suítes existentes com PostgreSQL descartável.
-
-## Validação em 27/10/2026
-
-TypeScript da API/web e lint dos módulos alterados passaram. As suítes existentes
-aprovaram 94 testes unitários de operações, 23 do frontend da biblioteca, 158 de
-integração com PostgreSQL 17 descartável e 14 do login restrito. Os dois testes
-exclusivos de restauro ficaram ignorados na rodada normal. O glob do Jest foi
-ajustado apenas durante a execução no worktree Windows, como registrado no guia
-de notificações, e restaurado em seguida. Não houve chamadas a provedores reais.

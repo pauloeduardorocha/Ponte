@@ -2,7 +2,7 @@
 
 ## Menu de playlists
 
-O menu **Vídeos** está disponível a todas as contas autenticadas, mesmo sem permissões. Inclui **Todas as playlists** (`/videos`) e um submenu por playlist (`/videos/:playlistId`). O catálogo partilhado em `packages/shared/src/video-playlists.ts` (reexportado pelo frontend) contém as 27 playlists públicas verificadas no canal @IGREJAPONTE em 22/10/2026, incluindo a consulta da continuação da listagem do canal.
+O menu **Vídeos** está disponível a todas as contas autenticadas, mesmo sem permissões. Inclui **Todas as playlists** (`/videos`) e um submenu por playlist (`/videos/:playlistId`). O catálogo partilhado em `packages/shared/src/video-playlists.ts` (reexportado pelo frontend) define o catálogo local de playlists. Ele não é uma leitura em tempo real de todas as playlists do canal @IGREJAPONTE.
 
 Cada página incorpora o reprodutor oficial da playlist, sem reprodução automática, com uma lista de vídeos ao lado do reprodutor (abaixo no telemóvel) e link alternativo para abrir no YouTube. O reprodutor é recriado ao mudar de playlist para interromper o vídeo anterior. IDs fora do catálogo mostram uma mensagem de playlist não encontrada.
 

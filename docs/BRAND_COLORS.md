@@ -2,6 +2,11 @@
 
 A logo fornecida é a referência de marca, preservada em `apps/web/public/logo.jpg`.
 
+A tabela abaixo descreve o modo claro. A fonte dos dois modos é
+`apps/web/src/theme/theme.ts`; no escuro, fundo, superfícies, texto e cores
+semânticas recebem valores próprios (principal #FF7379, fundo #141519 e
+superfície #1E2026). Veja [aparência](account-appearance.md).
+
 | Papel | Cor | Aplicação |
 | --- | --- | --- |
 | Principal | #D91017 | Botões principais, links, seleção e foco |

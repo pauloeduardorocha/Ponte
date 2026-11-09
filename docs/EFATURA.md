@@ -111,11 +111,11 @@ Valores portugueses como `1.234,56 €` são normalizados para strings decimais 
 
 A busca integrada importa o resultado automaticamente. O endpoint legado POST `/api/v1/finance/invoices/imports` continua aceitando `faturas.json` via multipart para integrações independentes. O arquivo original é privado, com limite de 10 MB, extensão/MIME validados e acesso autenticado. A importação preserva emitente, NIF do emitente e do titular, número, data, valor Decimal, moeda e link do documento. Reimportações idênticas não duplicam a fatura: a identidade inclui NIFs, número, data, valor e moeda; o primeiro arquivo permanece como origem do documento.
 
-Em cada movimento, **Associar fatura** mostra candidatos com valor/moeda iguais e data entre 90 dias antes e 7 dias depois do movimento. A referência/NIF e o nome do emitente aumentam a compatibilidade. Os percentuais são uma pontuação heurística, não uma probabilidade estatística. Nenhum candidato é associado automaticamente. Pesquise por emitente, NIF ou número para escolher outros documentos.
+Em cada despesa, **Associar fatura** consulta `GET /finance/invoices/expense-suggestions/:expenseId`: candidatos com valor/moeda iguais e data entre 90 dias antes e 7 dias depois da despesa. A referência/NIF e o nome do emitente aumentam a compatibilidade. Os percentuais são uma pontuação heurística, não uma probabilidade estatística. Nenhum candidato é associado automaticamente. Pesquise por emitente, NIF ou número para escolher outros documentos.
 
-Uma transação pode ter várias faturas. Cada fatura tem um movimento associado; pagamentos parciais em vários movimentos ainda não são suportados. A escolha manual aceita valores diferentes (por exemplo, pagamento agrupado), mas exige moeda e direção compatíveis. Notas de crédito podem ser associadas a movimentos de crédito. Categoria e fornecedor podem ser alterados depois; não há etapa de confirmação ou conciliação na tela.
+Uma despesa pode ter várias faturas. Cada fatura tem no máximo uma despesa associada; não existe associação direta ao movimento bancário. A escolha manual aceita valores diferentes (por exemplo, pagamento agrupado), mas exige mesma moeda e valor positivo da fatura. Notas de crédito negativas podem ser importadas, mas o endpoint de associação a despesa as recusa. Categoria e fornecedor podem ser alterados depois; não há etapa de confirmação ou conciliação na tela.
 
-Fluxo de rastreabilidade: **JSON original → InvoiceImport → FinancialInvoice → BankTransaction → BankImport/arquivo bancário e Income/Expense**. Desfazer a conciliação conserva a associação documental e o histórico. Remover uma associação gera auditoria com valores anteriores e novos.
+Fluxo de rastreabilidade: **JSON original → InvoiceImport → FinancialInvoice → Expense → BankTransaction → BankImport/arquivo bancário**, quando houver origem bancária. Desfazer a conciliação conserva a associação documental e o histórico. Remover uma associação gera auditoria com valores anteriores e novos.
 
 **Abrir fatura no portal** abre o link capturado em nova aba, podendo exigir autenticação. Esse link não equivale a um PDF arquivado: a consulta extrai dados e links, sem arquivar automaticamente o PDF. Para arquivar o PDF, utilize o upload privado de anexos da despesa.
 
@@ -123,7 +123,7 @@ Fluxo de rastreabilidade: **JSON original → InvoiceImport → FinancialInvoice
 
 - `FINANCE_INVOICE_READ`: consultar faturas e baixar o JSON original.
 - `FINANCE_INVOICE_IMPORT`: importar faturas, junto com leitura.
-- `FINANCE_INVOICE_ASSOCIATE`: associar/remover vínculos, junto com leitura e permissões de importação bancária/contribuições exigidas pela revisão bancária.
+- `FINANCE_INVOICE_ASSOCIATE`: associar/remover vínculos com `FINANCE_INVOICE_READ` e `FINANCE_TRANSACTION_READ`. A revisão bancária exige suas próprias permissões para acessar o movimento.
 
 A migration atribui essas permissões a `FINANCE` e `SUPER_ADMIN`. Após aplicar migrations, entre novamente ou renove a sessão. Não há endpoint de exclusão de faturas/importações. Uploads, associações, remoções e downloads são auditados, incluindo usuário, IP e user-agent. Em produção, reaplique `apps/api/prisma/runtime-privileges.sql` depois das migrations para disponibilizar as novas tabelas ao papel de execução restrito.
 
@@ -142,6 +142,9 @@ sequencial mantém todos os testes reais de navegador ativos e evita essa disput
 
 Os testes locais cobrem normalização, filtros, segurança de links/uploads, IPC e descarte de credenciais, duplicidades, RBAC, cadastro automático, categorização posterior e rastreabilidade. A autenticação e os seletores atuais do portal precisam ser verificados numa sessão real do titular; os testes não acessam a Autoridade Tributária.
 
-O aviso financeiro conta faturas importadas sem movimento associado. **Associar faturas** percorre essas faturas e permite pesquisar e paginar despesas para escolher o movimento correspondente. A associação é manual e atualiza a contagem do aviso. É possível pular uma fatura ou continuar depois. Os anexos continuam disponíveis na ação **Documentos** de cada despesa.
-Na lista de faturas, **Ver movimento** abre a despesa associada pelo seu identificador. A ação exige permissão de leitura de movimentos e só aparece em faturas associadas.
+O vínculo é criado por `POST /finance/invoices/:id/expense-association` com
+`{ expenseId }` e removido por `DELETE` no mesmo caminho.
+
+O aviso financeiro conta faturas importadas sem despesa associada. **Associar faturas** percorre essas faturas e permite pesquisar e paginar despesas para escolher a despesa correspondente. A associação é manual e atualiza a contagem do aviso. É possível pular uma fatura ou continuar depois. Os anexos continuam disponíveis na ação **Documentos** de cada despesa.
+Na lista de faturas, **Ver movimento** abre a despesa associada pelo seu identificador. A ação exige permissão de leitura de lançamentos e só aparece em faturas associadas.
 A revisão por fatura sugere despesas na mesma moeda entre 7 dias antes e 90 dias depois da emissão. Valor igual, proximidade da data e referência ao número, NIF ou nome do emitente determinam a ordenação. Valores diferentes entram nas sugestões quando há referência ou emitente correspondente, com aviso de possível pagamento agrupado. Sem candidatos semelhantes, a revisão informa isso e lista todas as despesas com paginação e pesquisa. **Ver todas as despesas** também está disponível quando há sugestões. Nenhuma associação é automática.

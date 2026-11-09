@@ -15,7 +15,7 @@ O catálogo cobre quatro categorias independentes: novos pedidos na fila finance
 | Empréstimo em atraso                         | Conta ativa vinculada ao membro do empréstimo                                                                          | Uma vez quando o empréstimo muda para `OVERDUE`; a manutenção periódica não repete o aviso | `pushLibraryOverdue`          |
 | Reserva disponível                           | Conta ativa vinculada ao membro da reserva                                                                             | Quando a fila atribui um exemplar e muda a reserva para `READY`                            | `pushLibraryReservationReady` |
 
-Os quatro avisos são Web Push best-effort para dispositivos inscritos. As preferências são por usuário e aplicam-se em todos os seus dispositivos; cada uma começa ativa e pode ser alterada em **Minha conta → Notificações push**. Desativar uma categoria não altera os outros avisos nem a inscrição push do dispositivo. O endpoint `PATCH /auth/preferences` aceita qualquer combinação parcial de `colorMode`, `pushReimbursementRequested`, `pushEventRefundRequested`, `pushLibraryOverdue` e `pushLibraryReservationReady`, devolvendo as preferências completas da conta. O destinatário de reserva/atraso precisa ter uma conta ligada ao membro. Reembolsos de inscrições exigem também leitura dos pagamentos e acesso ao evento.
+Os quatro avisos são Web Push best-effort para dispositivos inscritos. As preferências são por usuário e aplicam-se em todos os seus dispositivos; cada uma começa ativa e pode ser alterada em **Minha conta → Notificações push**. Desativar uma categoria não altera os outros avisos nem a inscrição push do dispositivo. O endpoint `PATCH /auth/preferences` aceita combinação parcial de `colorMode`, `avatar`, `pushBirthdays`, `pushReimbursementRequested`, `pushEventRefundRequested`, `pushLibraryOverdue` e `pushLibraryReservationReady`, devolvendo as preferências completas da conta. O destinatário de reserva/atraso precisa ter uma conta ligada ao membro. Reembolsos de inscrições exigem também leitura dos pagamentos e acesso ao evento.
 
 O clique abre `/finance?tab=reimbursements` para a fila financeira, `/my-events?event=<id>&section=refunds` para inscrições e `/` para a biblioteca pessoal. O service worker aceita apenas destinos da mesma origem em uma lista de rotas conhecidas; destinos inválidos abrem `/inbox`. Estes alertas automáticos não criam mensagens na caixa interna. Não há reenvio retroativo ao ativar uma preferência nem repetição automática de falhas; avisos são tentados após confirmar a transação. Uma falha de entrega não cancela o pedido nem remove seus anexos.
 
@@ -134,7 +134,7 @@ Referência do provedor: [idempotência Bird](https://bird.com/docs/guides/idemp
    GitHub Actions. Guardá-la no gestor de senhas e publicar a configuração da API.
    Não reutilizar JWT, senha do banco, senha Restic ou credencial Bird.
 3. Criar a variável GitHub `PONTE_NOTIFICATION_OUTBOX_ENABLED=true`.
-4. Em **Actions → Process notification outbox → Run workflow**, selecionar `main`
+4. Em **Actions → Process notifications and birthdays → Run workflow**, selecionar `main`
    e executar. Sem pendências, todas as contagens retornam zero.
 5. Confirmar o sucesso, ativar notificações de falha do Actions e acompanhar o
    histórico de notificações. O workflow está agendado para cada cinco minutos;
@@ -145,7 +145,8 @@ O endpoint `POST /api/v1/internal/notification-outbox/process` exige
 utilizador, não aceita destinatários, conteúdo nem tamanho de lote do cliente e
 não aparece no Swagger público. Sem uma chave forte configurada, responde 503;
 credencial ausente/incorreta responde 401. Processa no máximo dez mensagens e
-devolve somente `{ processed, sent, pending, failed, skipped }`. O rate limit
+devolve `{ processed, sent, pending, failed, skipped, birthdays }`.
+O campo `birthdays` informa o resultado do [processamento diário](birthdays.md). O rate limit
 global continua aplicável. O workflow usa HTTPS, recusa redirecionamentos e
 registra apenas essas contagens; falhas definitivas/incertas tornam o job vermelho.
 
@@ -153,11 +154,6 @@ Em produção, o workflow chama diretamente
 `https://www.igrejaponte.com/api/v1/internal/notification-outbox/process`.
 O domínio sem `www` redireciona com HTTP 308; não o usar para esta chamada, pois
 o worker recusa redirecionamentos e não deve encaminhar o segredo a outra origem.
-
-Publicação em 27/10/2026: API/web 1.1.6 e migration verificadas em produção,
-incluindo privilégios de `church_app`. O worker respondeu 401 sem credencial e
-201 com o segredo dedicado, com fila vazia e sem envios externos. A primeira
-execução do workflow deve confirmar também o secret/configuração do GitHub.
 
 A primeira tentativa após uma criação imediata funciona sem o agendamento.
 Recuperação após interrupção e retentativas dependem do worker ativo. Um canal
@@ -189,25 +185,6 @@ agendamentos vencidos após reiniciar o worker, backoff, cancelamento antes da
 reserva e dois workers concorrentes sem duplicação. Pendências antigas sem data
 continuam fora do processamento automático.
 
-Validação do envio automático em 27/10/2026: 38 testes de integração de
-notificações/operações e 14 do login restrito aprovados com PostgreSQL 17
-descartável via Docker Compose; 43 testes unitários dos provedores, públicos e
-worker, 26 do formulário, TypeScript de API/web e lint dos arquivos alterados
-aprovados. No worktree Windows foi usado temporariamente o glob
-`**/test/**/*.e2e-spec.ts`, pois o Jest não reconheceu o caminho expandido com
-`.codex`; a configuração original foi restaurada após a execução. Transportes
-externos foram simulados, sem enviar e-mail ou push reais.
-
-Validação local em 27/10/2026: 153 testes de integração e 14 do login restrito
-aprovados; os dois testes exclusivos de documentos do modo `--recovery-only`
-ficaram ignorados na rodada normal. A suíte unitária completa da API passou
-(51 arquivos, 430 testes), incluindo replay do corpo exato e mudança de credencial.
-Frontend: 40 testes de operações/formulários aprovados.
-TypeScript de API e web, ESLint dos arquivos alterados, build de produção,
-parsing do workflow/OpenAPI e revisão do diff aprovados. Os testes Node e-Fatura
-passaram com a exclusão de navegador Linux esperada no Windows. Não foram
-enviados e-mails/push reais nem aplicada migration em produção nesta etapa.
-
 A remoção pessoal grava `inboxDeletedAt`: mensagens removidas deixam de aparecer na caixa, na contagem de não lidas e nas operações de leitura, mas continuam no histórico administrativo. O agendamento usa o seletor nativo de data e hora, convertido do fuso do dispositivo para UTC ao salvar.
 
 ## Configuração
@@ -224,7 +201,7 @@ Um aviso no cabeçalho de todas as páginas autenticadas também permite ativar 
 
 ## Verificação
 
-`apps/api/test/notifications.e2e-spec.ts` verifica a migration e os fluxos HTTP com PostgreSQL real. Por segurança exige `TEST_DATABASE_URL` de um banco descartável chamado `ponte_push_test_<hex>`; o responsável pela execução deve remover esse banco depois. Os serviços push externos são simulados nos testes: validar a entrega real requer configurar VAPID, publicar em HTTPS e ativar em um navegador/dispositivo real.
+`apps/api/test/notifications.e2e-spec.ts` verifica a migration e os fluxos HTTP com PostgreSQL real. Por segurança exige `TEST_DATABASE_URL` de um banco descartável chamado `ponte_push_test_<hex>`. O runner de [CI](ci.md) cria e remove o banco; em execução direta, o operador deve removê-lo depois. Os serviços push externos são simulados nos testes: validar a entrega real requer configurar VAPID, publicar em HTTPS e ativar em um navegador/dispositivo real.
 
 Os testes de `push.spec.ts`, `push-worker.spec.ts`, `push.test.ts`, `PushControls.test.tsx` e `Notifications.test.tsx` cobrem inscrições, permissões, expiração, isolamento, leitura e abertura segura da caixa de entrada. O build gera `sw.js` com importação de `push-worker.js`.
 

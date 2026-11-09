@@ -6,7 +6,7 @@ O navegador aceita JPEG, PNG e WebP até 20 MB, redimensiona para no máximo 102
 
 PATCH /api/v1/auth/preferences aceita avatar como data URL JPEG (base64) ou null para remover. A API valida formato, assinatura e limite decodificado; o usuário vem da sessão autenticada, sem permissão administrativa. A resposta usa Cache-Control: no-store. A foto é armazenada em users.avatar (TEXT), junto ao usuário, e retornada nos fluxos de autenticação e /auth/me. Não é incluída na listagem administrativa de usuários.
 
-Antes de iniciar a versão nova, aplicar a migração 20261104120000_user_avatar pelo fluxo existente de db:deploy. A migração adiciona coluna opcional e limite de tamanho; contas existentes continuam com iniciais. Outras sessões recebem a foto atualizada na próxima restauração. Esta tarefa não aplica a migração em produção.
+Antes de iniciar a versão nova, aplicar a migração 20261104120000_user_avatar pelo fluxo existente de db:deploy. A migração adiciona coluna opcional e limite de tamanho; contas existentes continuam com iniciais. Outras sessões recebem a foto atualizada na próxima restauração. A existência da migration no Git não confirma sua aplicação em produção.
 
 ## Exibição na comunidade
 

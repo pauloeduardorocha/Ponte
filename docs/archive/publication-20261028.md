@@ -1,5 +1,9 @@
 # Integração das alterações locais — 28/10/2026
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 Versão consolidada: `1.2.6`.
 
 ## Escopo

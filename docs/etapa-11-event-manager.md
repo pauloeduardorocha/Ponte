@@ -1,4 +1,4 @@
-# Etapa 11 — Gestor de Eventos
+# Gestão de eventos por atribuição
 
 `EVENT_MANAGER` apresenta-se como **Gestor de Eventos**, com a descrição “Responsável pela gestão operacional dos eventos aos quais foi atribuído.” O identificador continua separado do nome de apresentação.
 
@@ -52,7 +52,7 @@ As mutações bloqueiam o evento e verificam novamente a atribuição dentro da 
 
 ## Endpoints
 
-Prefixo: `/api/v1/events`. Todos os IDs são UUID e todos os pedidos exigem autenticação.
+Prefixo de gestão: `/api/v1/events`. Todos os IDs são UUID e estes pedidos exigem autenticação. A [inscrição pública e o checkout](inscricoes-publicas-stripe.md) usam controladores próprios.
 
 | Caminho                                      | Métodos    | Operação                                               |
 | -------------------------------------------- | ---------- | ------------------------------------------------------ |
@@ -85,7 +85,7 @@ O Swagger da API inclui o grupo “Eventos — gestão por atribuição”, DTOs
 
 `EventWorkspace` em `/my-events` oferece seleção de eventos autorizados, criação, edição, publicação, inscrições, participantes, ingressos/lotes, cupões/cortesias, pagamentos, solicitações de reembolso, sessões, comunicação, credenciamento e exportações. `EventReport` apresenta os totais e `RegistrationQr` gera os QR Codes localmente.
 
-`AppShell` mostra “Meus eventos”, “Criar evento”, “Inscrições”, “Participantes”, “Ingressos”, “Pagamentos”, “Credenciamento” e “Relatórios” conforme as permissões. O gestor não recebe os menus de financeiro geral ou utilizadores. `UsersPage` apresenta o nome “Gestor de Eventos”. `OperationsPage` e `OperationDetail` também aceitam as novas permissões, mantendo a compatibilidade dos caminhos existentes.
+`AppShell` apresenta **Datas → Gestão de eventos**, que abre `/my-events`. As seções ficam dentro de `EventWorkspace`, conforme as permissões; não são atalhos separados no menu. O gestor não recebe acesso ao financeiro geral ou à gestão de usuários apenas por essa role. A gestão de roles fica na ficha do membro. `OperationsPage` e `OperationDetail` também aceitam as novas permissões, mantendo a compatibilidade dos caminhos existentes.
 
 ## Auditoria e validação
 
@@ -93,8 +93,6 @@ As novas tabelas usam o trigger `audit_change` existente. As mutações vinculam
 
 Testes específicos: `apps/api/test/event-manager.e2e-spec.ts` e `apps/web/src/pages/events/events.test.tsx`. O teste de seed executa-o duas vezes e verifica as permissões exatas da role. A suíte específica cobre eventos próprios e de terceiros, criação, autoatribuição negada, pagamentos, dízimos, extratos, reembolsos, utilizadores/roles, revogação na mesma sessão, administradores, IDs manipulados, pesquisas e exportações.
 
-Resultados de validação: 20 suítes / 188 testes da API e 14 ficheiros / 81 testes React passaram. Os testes de menus afetados foram repetidos após os últimos ajustes. Lint, build completo, validação Prisma e `git diff --check` passaram.
-
 ## Integrações disponíveis
 
-Não existe checkout nem gateway de pagamentos no projeto. Os modelos permitem consultar dados de pagamentos fornecidos por uma futura integração; esta etapa não cria cobranças, não aplica cupões num checkout e não executa transferências de reembolso. Aprovar um reembolso deixa-o em `APPROVED`, com resultado explícito de execução pendente do gateway. A comunicação desta etapa usa o canal interno existente. A exportação é JSON.
+O projeto integra **Stripe Checkout** em [inscrições públicas](inscricoes-publicas-stripe.md), com confirmação por webhook e reserva temporária de vagas. O fluxo administrativo de solicitação/aprovação de reembolso permanece separado: aprovar deixa o pedido em `APPROVED`, com execução pendente no gateway. Isso não deve ser confundido com as devoluções automáticas de pagamentos incompatíveis no checkout. A comunicação de eventos usa o canal interno existente; a exportação é JSON.

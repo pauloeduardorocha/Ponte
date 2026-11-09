@@ -52,11 +52,12 @@ Qualquer escrita de negócio invalida conservadoramente todas as respostas persi
 | `/finance/banking/transactions` | private, max-age=3600 (1 h) |
 | `/finance/banking/transactions/{id}/attachments` | private, max-age=3600 (1 h) |
 | `/finance/banking/transactions/{id}/attachments/{attachmentId}/download` | no-store |
+| `/finance/banking/transactions/{id}/classification-suggestions` | no-store |
 | `/finance/banking/transactions/{id}/suggestions` | private, max-age=3600 (1 h) |
 | `/finance/categories` | private, max-age=3600 (1 h) |
+| `/finance/charts` | no-store |
 | `/finance/contributions` | private, max-age=3600 (1 h) |
 | `/finance/cost-centers` | private, max-age=3600 (1 h) |
-| `/finance/charts` | no-store |
 | `/finance/dashboard` | private, max-age=3600 (1 h) |
 | `/finance/expenses` | private, max-age=3600 (1 h) |
 | `/finance/expenses/{id}/attachments` | private, max-age=3600 (1 h) |

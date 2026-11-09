@@ -38,7 +38,9 @@ Use outra pasta e omita `--resume` para uma pesquisa nova. A consolidação tamb
 
 Referências: [Search API](https://openlibrary.org/dev/docs/api/search), [Books API](https://openlibrary.org/dev/docs/api/books), [limites e utilização](https://openlibrary.org/developers/api).
 
-## Aplicação em produção
+## Registro histórico de aplicação — 22/10/2026
+
+Os números e a branch abaixo descrevem aquela intervenção; não comprovam o estado atual nem autorizam repetir a aplicação. Os diretórios de resultados são locais, não dependências garantidas de um clone novo.
 
 Aplicada em 22/10/2026 por instrução expressa do utilizador, sem revisão prévia das edições. Migração `20261022213000_library_enrichment`, testada numa branch de produção. Foram verificados rollback integral e repetição sem alterações.
 

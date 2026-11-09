@@ -30,6 +30,7 @@ jobs:
           node-version-file: .node-version
           cache: npm
       - run: npm ci
+      - run: npm run docs:check
       - run: npm run db:generate
       - run: npm run build --workspace @church/shared
       - run: npm run typecheck

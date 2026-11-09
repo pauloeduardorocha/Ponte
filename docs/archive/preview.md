@@ -1,5 +1,9 @@
 # Preview isolado do PR de segurança
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 Configuração de 20 de outubro de 2026, sem alteração do plano Free.
 
 - Organização Neon: `org-raspy-wind-22361211`.

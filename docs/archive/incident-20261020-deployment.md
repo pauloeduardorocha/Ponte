@@ -1,5 +1,9 @@
 # Restauração de produção — 20 de outubro de 2026
 
+> Registro histórico. Descreve a data da intervenção, não o estado atual da produção.
+> Comandos e autorizações desta intervenção não se aplicam a novas operações.
+> Consulte o [índice atual](../README.md) antes de executar procedimentos.
+
 ## Causa confirmada
 
 O deploy automático `dpl_Hv5MzmfrdNd41XVHWxq9vYYXAHzs`, proveniente do commit GitHub `a898196484a00d3cbb88209c1d45515d8d26b1af`, substituiu uma versão publicada a partir de alterações locais ainda não registadas no Git. O commit alterava a importação bancária; não continha uma remoção explícita das outras funcionalidades. Elas já estavam ausentes da árvore versionada usada pelo build automático.
