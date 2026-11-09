@@ -214,6 +214,18 @@ const navigation: NavigationItem[] = [
     icon: DashboardRounded,
   },
   {
+    label: 'Relatórios',
+    group: 'Financeiro',
+    to: '/finance/reports',
+    icon: AccountBalanceRounded,
+  },
+  {
+    label: 'Importação bancária',
+    group: 'Financeiro',
+    to: '/finance/banking',
+    icon: AccountBalanceRounded,
+  },
+  {
     label: 'Meus reembolsos',
     group: 'Financeiro',
     to: '/reimbursements',

@@ -38,6 +38,8 @@ describe('Direct route authorization', () => {
     '/library',
     '/finance',
     '/finance/dashboard',
+    '/finance/reports',
+    '/finance/banking',
     '/audit',
     '/audit/errors',
     '/unknown-module',

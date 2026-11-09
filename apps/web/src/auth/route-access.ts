@@ -55,6 +55,11 @@ const routeAccess: readonly AccessRule[] = [
   { path: '/notification-templates', all: ['NOTIFICATION_READ'] },
   { path: '/library', prefix: 'LIBRARY_' },
   { path: '/finance/dashboard', all: ['FINANCE_TRANSACTION_READ'] },
+  { path: '/finance/reports', all: ['FINANCE_TRANSACTION_READ'] },
+  {
+    path: '/finance/banking',
+    all: ['FINANCE_BANK_IMPORT', 'FINANCE_CONTRIBUTION_READ'],
+  },
   { path: '/finance', prefix: 'FINANCE_' },
 ];
 

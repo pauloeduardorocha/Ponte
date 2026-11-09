@@ -132,7 +132,7 @@ describe('Bank statement review', () => {
           },
         },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     // The first test also loads the lazy finance route and its chart dependencies.
     await screen.findByRole(
       'combobox',
@@ -203,7 +203,7 @@ describe('Bank statement review', () => {
               },
       }),
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     expect(
       await screen.findByText('Período sugerido para importar'),
     ).toBeVisible();
@@ -275,7 +275,7 @@ describe('Bank statement review', () => {
         return { body: reimbursement };
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     const associate = await screen.findByRole('button', {
       name: 'Associar reembolso',
@@ -299,7 +299,7 @@ describe('Bank statement review', () => {
         body: page([{ ...row, direction: 'DEBIT' }]),
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     const dialog = screen.getByRole('dialog', {
       name: 'Categorizar movimentação',
@@ -347,7 +347,7 @@ describe('Bank statement review', () => {
           body: page([{ id: 'center-1', name: 'A Ponte' }]),
         },
       });
-      renderApp('/finance?tab=banking');
+      renderApp('/finance/banking');
       await uploadStatement();
       // Suggestions only load once the optional lookup succeeds, including when empty.
       await waitFor(() =>
@@ -390,7 +390,7 @@ describe('Bank statement review', () => {
   );
   it('does not offer or fetch invoice suggestions when categorizing income', async () => {
     const requests = mockApi(routes());
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     const dialog = screen.getByRole('dialog', {
       name: 'Categorizar movimenta\u00e7\u00e3o',
@@ -421,7 +421,7 @@ describe('Bank statement review', () => {
         body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     expect(screen.queryByLabelText('Pesquisar membro')).not.toBeInTheDocument();
     const memberField = screen.getByRole('combobox', { name: 'Membro' });
@@ -468,7 +468,7 @@ describe('Bank statement review', () => {
   });
   it('selects suggested members in the same searchable field and clears the association', async () => {
     mockApi(routes());
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     fireEvent.click(await screen.findByRole('button', { name: 'Associar' }));
     expect(screen.getByRole('combobox', { name: 'Membro' })).toHaveValue(
@@ -495,7 +495,7 @@ describe('Bank statement review', () => {
   });
   it('keeps the upload screen free of movements and only loads history on demand', async () => {
     const requests = mockApi(routes());
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await screen.findByRole('button', { name: 'Importar extrato' });
     expect(screen.queryByText(row.description)).not.toBeInTheDocument();
     expect(
@@ -530,7 +530,7 @@ describe('Bank statement review', () => {
         body: page([{ id: 'center-1', name: 'A Ponte' }]),
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
     select('Categoria', 'Dízimos');
@@ -565,7 +565,7 @@ describe('Bank statement review', () => {
   });
   it('can stop without saving the current movement and provides ledger links', async () => {
     const requests = mockApi(routes());
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     fireEvent.click(screen.getByRole('button', { name: 'Continuar depois' }));
     await screen.findByText(
@@ -600,7 +600,7 @@ describe('Bank statement review', () => {
         body: { message: 'Não foi possível salvar' },
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: /Revisei e aceito/ }));
@@ -625,7 +625,7 @@ describe('Bank statement review', () => {
         ]),
       },
     });
-    renderApp('/finance?tab=banking');
+    renderApp('/finance/banking');
     await uploadStatement();
     expect(screen.getByText('Possível réplica')).toBeInTheDocument();
     expect(screen.getByText('Mesmo valor e referência')).toBeInTheDocument();
@@ -797,7 +797,7 @@ describe('Bank statement review', () => {
         },
       },
     });
-    renderApp('/finance?tab=banking&importId=import-1');
+    renderApp('/finance/banking?importId=import-1');
     fireEvent.click(
       await screen.findByRole('button', { name: 'Buscar faturas no e-Fatura' }),
     );

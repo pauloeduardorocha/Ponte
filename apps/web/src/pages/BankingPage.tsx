@@ -908,7 +908,9 @@ export function BankingPage({
     );
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Importação bancária</Typography>
+      <Typography variant="h5" component="h1">
+        Importação bancária
+      </Typography>
       <Typography>
         Importe o extrato para cadastrar receitas e despesas automaticamente.
         Categorize aqui ou depois nas listas de Receitas e Despesas.
@@ -1134,10 +1136,10 @@ export function BankingPage({
         </Card>
       )}
       <Stack direction="row" gap={1}>
-        <Button component={Link} to="?tab=incomes">
+        <Button component={Link} to="/finance?tab=incomes">
           Ir para Receitas
         </Button>
-        <Button component={Link} to="?tab=expenses">
+        <Button component={Link} to="/finance?tab=expenses">
           Ir para Despesas
         </Button>
       </Stack>

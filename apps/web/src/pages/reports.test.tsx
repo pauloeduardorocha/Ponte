@@ -51,7 +51,7 @@ describe('Reports page', () => {
       'GET /finance/reports/lookups': { body: [] },
       'GET /finance/reports': { body: report },
     });
-    renderApp('/finance?tab=reports');
+    renderApp('/finance/reports');
     const generate = await screen.findByRole('button', {
       name: 'Gerar relatório',
     });
@@ -83,7 +83,7 @@ describe('Reports page', () => {
       'GET /finance/reports/lookups': { body: [] },
       'GET /finance/reports': { body: { ...report, report: 'tithes' } },
     });
-    renderApp('/finance?tab=reports');
+    renderApp('/finance/reports');
     await screen.findByRole('button', { name: 'Gerar relatório' });
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Relatório' }));
     fireEvent.click(screen.getByRole('option', { name: 'Dízimos' }));

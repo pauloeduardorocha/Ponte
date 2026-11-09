@@ -221,7 +221,9 @@ export function ReportsPage() {
     !appliedSensitive || hasPermission('FINANCE_CONTRIBUTION_EXPORT');
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Relatórios financeiros</Typography>
+      <Typography variant="h5" component="h1">
+        Relatórios financeiros
+      </Typography>
       <Card>
         <CardContent>
           <Stack spacing={2}>
@@ -491,7 +493,7 @@ export function ReportsPage() {
               </Typography>
               <Button
                 component={Link}
-                to={`?tab=accounts&record=${b.accountId}`}
+                to={`/finance?tab=accounts&record=${b.accountId}`}
               >
                 Saldo cadastrado: {b.initialBalance} {b.currency}
               </Button>
@@ -499,7 +501,7 @@ export function ReportsPage() {
                 <Button
                   key={source.id}
                   component={Link}
-                  to={`?tab=${source.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${source.id}`}
+                  to={`/finance?tab=${source.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${source.id}`}
                 >
                   Origem do saldo inicial: {formatDateOnly(source.date)} ·{' '}
                   {source.amount} {b.currency}
@@ -561,7 +563,11 @@ export function ReportsPage() {
                     <TableCell>
                       <Button
                         component={Link}
-                        to={`?tab=${r.kind === 'BANK' ? 'banking' : r.kind === 'INCOME' ? 'incomes' : 'expenses'}&${r.kind === 'BANK' ? 'transactionId' : 'record'}=${r.id}`}
+                        to={
+                          r.kind === 'BANK'
+                            ? `/finance/banking?transactionId=${r.id}`
+                            : `/finance?tab=${r.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${r.id}`
+                        }
                       >
                         Abrir origem
                       </Button>
@@ -570,7 +576,7 @@ export function ReportsPage() {
                         canViewMembers && (
                           <Button
                             component={Link}
-                            to={`?tab=banking&transactionId=${r.bankTransactionId}`}
+                            to={`/finance/banking?transactionId=${r.bankTransactionId}`}
                           >
                             Transação bancária
                           </Button>
@@ -578,7 +584,7 @@ export function ReportsPage() {
                       {r.contributionId && (
                         <Button
                           component={Link}
-                          to={`?tab=contributions&record=${r.contributionId}`}
+                          to={`/finance?tab=contributions&record=${r.contributionId}`}
                         >
                           Contribuição
                         </Button>

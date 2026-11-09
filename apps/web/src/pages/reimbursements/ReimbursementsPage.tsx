@@ -520,7 +520,7 @@ function ReimbursementDetail({
         <Stack direction="row" gap={1}>
           <Button
             component={Link}
-            to={`/finance?tab=banking&transactionId=${row.bankTransactionId}`}
+            to={`/finance/banking?transactionId=${row.bankTransactionId}`}
           >
             Ver movimento bancário
           </Button>

@@ -22,3 +22,13 @@ evolução/projeção do saldo. Tesouraria (`/finance`) mantém sua aba Resumo; 
 O grupo Datas contém Calendário (`/calendar`), Gestão de eventos e Agenda de eventos. O grupo abre ao acessar uma dessas rotas. O calendário está disponível para contas aprovadas autenticadas; os itens de eventos preservam suas permissões.
 
 A tela Calendário incorpora o Google Calendar da igreja e oferece o link compartilhado para adicionar à conta Google, além de assinatura `webcal` para aplicativos compatíveis. A incorporação e o feed de assinatura dependem do compartilhamento público configurado pelo proprietário no Google Calendar. Os eventos continuam mantidos no Google, sem cópia no banco do Ponte.
+
+Relatórios financeiros (`/finance/reports`) e Importação bancária (`/finance/banking`)
+são páginas independentes no grupo Financeiro, sem abas correspondentes na
+Tesouraria. Relatórios exige `FINANCE_TRANSACTION_READ`; Importação bancária
+exige `FINANCE_BANK_IMPORT` e `FINANCE_CONTRIBUTION_READ`, como no fluxo anterior.
+Os endereços antigos `/finance?tab=reports` e `/finance?tab=banking` redirecionam
+para as páginas novas preservando os demais parâmetros (por exemplo `importId`
+e `transactionId`). Links de origem em relatórios continuam apontando para
+as listas da tesouraria ou para o movimento na nova página bancária. O aviso de
+categorização pendente na tesouraria permanece disponível.

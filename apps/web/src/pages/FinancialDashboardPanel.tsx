@@ -259,9 +259,7 @@ export function FinancialDashboardPanel() {
             label="Movimentos pendentes de revisão"
             value={data.data.unreconciled ?? 0}
             color="warning.main"
-            href={
-              banking ? '/finance?tab=banking&unreconciled=true' : undefined
-            }
+            href={banking ? '/finance/banking?unreconciled=true' : undefined}
           />
           {banking && (
             <Card variant="outlined">
@@ -285,7 +283,7 @@ export function FinancialDashboardPanel() {
                     <StatusChip status={data.data.latestImport.status} />
                     <Button
                       component={Link}
-                      to={`/finance?tab=banking&importId=${data.data.latestImport.id}`}
+                      to={`/finance/banking?importId=${data.data.latestImport.id}`}
                     >
                       Revisar {data.data.latestImport._count.transactions}{' '}
                       movimentos
@@ -294,7 +292,7 @@ export function FinancialDashboardPanel() {
                 ) : (
                   <Typography sx={{ my: 1 }}>
                     Nenhuma importação.{' '}
-                    <Button component={Link} to="/finance?tab=banking">
+                    <Button component={Link} to="/finance/banking">
                       Importar extrato
                     </Button>
                   </Typography>

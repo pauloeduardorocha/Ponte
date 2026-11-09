@@ -5,7 +5,6 @@ import { EntitySelect } from '../components/EntitySelect';
 import { useDebouncedValue } from '../lib/use-debounced-value';
 import { FinancialDashboardPanel } from './FinancialDashboardPanel';
 import { StatusChip } from '../components/DataPresentation';
-import { ReportsPage } from './ReportsPage';
 import { useState } from 'react';
 import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
@@ -55,11 +54,6 @@ type RecordData = {
   bankTransaction?: { import: { filename: string } };
 } & Record<string, unknown>;
 const modules = [
-  {
-    route: 'banking',
-    label: 'Importação bancária',
-    read: 'FINANCE_BANK_IMPORT',
-  },
   { route: 'summary', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
   { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
   {
@@ -116,7 +110,6 @@ const modules = [
     write: 'FINANCE_CONTRIBUTION_WRITE',
     update: 'FINANCE_CONTRIBUTION_WRITE',
   },
-  { route: 'reports', label: 'Relatórios', read: 'FINANCE_TRANSACTION_READ' },
 ] as const;
 type Field = {
   key: string;
@@ -206,8 +199,24 @@ const labels: Record<string, string> = {
 export function FinancePage() {
   const { user, hasPermission } = useAuth();
   const [financeParams] = useSearchParams();
-  if (financeParams.get('tab') === 'dashboard')
-    return <Navigate to="/finance/dashboard" replace />;
+  const legacyPage = new Map([
+    ['dashboard', '/finance/dashboard'],
+    ['reports', '/finance/reports'],
+    ['banking', '/finance/banking'],
+  ]).get(financeParams.get('tab') ?? '');
+  if (legacyPage) {
+    const next = new URLSearchParams(financeParams);
+    next.delete('tab');
+    return (
+      <Navigate
+        to={{
+          pathname: legacyPage,
+          search: next.size ? '?' + next.toString() : '',
+        }}
+        replace
+      />
+    );
+  }
   if (!user?.permissions.some((p) => p.startsWith('FINANCE_')))
     return <Alert severity="warning">Sem permissão financeira.</Alert>;
   const managesFinance = user?.permissions.some(
@@ -230,8 +239,7 @@ function FinanceManagementPage() {
     (m) =>
       hasPermission(m.read) &&
       (m.route !== 'reimbursements' ||
-        hasPermission('FINANCE_TRANSACTION_UPDATE')) &&
-      (m.route !== 'banking' || hasPermission('FINANCE_CONTRIBUTION_READ')),
+        hasPermission('FINANCE_TRANSACTION_UPDATE')),
   );
   const [selected, setSelected] = useState('');
   const current =
@@ -289,9 +297,7 @@ function FinanceManagementPage() {
       }),
     enabled:
       Boolean(current) &&
-      !['summary', 'banking', 'reports', 'invoices', 'reimbursements'].includes(
-        route,
-      ),
+      !['summary', 'invoices', 'reimbursements'].includes(route),
   });
   const useLookup = (name: string, permission: Permission) =>
     useQuery({
@@ -388,8 +394,6 @@ function FinanceManagementPage() {
           <Tab key={m.route} value={m.route} label={m.label} />
         ))}
       </Tabs>
-      {route === 'banking' && <BankingPage />}
-      {route === 'reports' && <ReportsPage />}
       {route === 'invoices' && <InvoicesPage />}
       {route === 'reimbursements' && <ReimbursementsPage management />}
       {notice && (
@@ -416,13 +420,7 @@ function FinanceManagementPage() {
           Cadastrar {current.label.toLowerCase()}
         </Button>
       )}
-      {![
-        'summary',
-        'banking',
-        'reports',
-        'invoices',
-        'reimbursements',
-      ].includes(route) && (
+      {!['summary', 'invoices', 'reimbursements'].includes(route) && (
         <>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
@@ -556,7 +554,7 @@ function FinanceManagementPage() {
                       hasPermission('FINANCE_CONTRIBUTION_READ') && (
                         <Button
                           component={Link}
-                          to={`?tab=banking&transactionId=${item.income.bankTransactionId}`}
+                          to={`/finance/banking?transactionId=${item.income.bankTransactionId}`}
                         >
                           Ver origem da contribuição
                         </Button>
@@ -566,7 +564,7 @@ function FinanceManagementPage() {
                       hasPermission('FINANCE_CONTRIBUTION_READ') && (
                         <Button
                           component={Link}
-                          to={`?tab=banking&transactionId=${item.bankTransactionId}`}
+                          to={`/finance/banking?transactionId=${item.bankTransactionId}`}
                         >
                           Ver origem bancária
                         </Button>
