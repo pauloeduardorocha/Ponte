@@ -9520,6 +9520,56 @@
         "x-ponte-cache-ttl": 0
       }
     },
+    "/api/v1/finance/banking/transactions/{id}/classification-suggestions": {
+      "get": {
+        "operationId": "BankingController_classificationSuggestions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": "",
+            "headers": {
+              "Cache-Control": {
+                "description": "TTL privado; erros e consultas de catálogo com filtro available usam no-store.",
+                "schema": {
+                  "example": "no-store",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "Importacoes bancarias"
+        ],
+        "x-permissions-all": [
+          "FINANCE_BANK_IMPORT",
+          "FINANCE_CONTRIBUTION_READ",
+          "FINANCE_CATEGORY_READ"
+        ],
+        "x-ponte-cache-ttl": 0
+      }
+    },
     "/api/v1/finance/banking/transactions/{id}/link": {
       "post": {
         "operationId": "BankingController_linkExisting",

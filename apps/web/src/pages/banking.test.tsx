@@ -69,6 +69,10 @@ function routes() {
     'GET /finance/banking/transactions/transaction-1/suggestions': {
       body: [{ id: 'member-1', name: 'João Silva', confidence: 95 }],
     },
+    'GET /finance/banking/transactions/transaction-1/classification-suggestions':
+      {
+        body: { classification: 'INCOME', category: null, costCenter: null },
+      },
     'POST /finance/banking/classify': { body: { count: 1 } },
     'POST /finance/banking/imports': { status: 201, body: imported },
     'POST /finance/banking/imports/import-1/confirm': {
@@ -101,6 +105,77 @@ async function uploadStatement() {
 }
 describe('Bank statement review', () => {
   beforeEach(resetTestState);
+  it('offers independent historical suggestions and saves them only after confirmation', async () => {
+    const requests = mockApi({
+      ...routes(),
+      'GET /finance/cost-centers': {
+        body: page([{ id: 'center-1', name: 'Sede' }]),
+      },
+      'GET /finance/banking/transactions/transaction-1/classification-suggestions':
+        {
+          body: {
+            classification: 'INCOME',
+            category: {
+              id: 'category-1',
+              name: 'Dízimos',
+              agreement: 100,
+              support: 5,
+              sampleSize: 5,
+            },
+            costCenter: {
+              id: 'center-1',
+              name: 'Sede',
+              agreement: 80,
+              support: 4,
+              sampleSize: 5,
+            },
+          },
+        },
+    });
+    renderApp('/finance?tab=banking');
+    // The first test also loads the lazy finance route and its chart dependencies.
+    await screen.findByRole(
+      'combobox',
+      { name: 'Conta bancária' },
+      { timeout: 30000 },
+    );
+    await uploadStatement();
+    await screen.findByRole('button', { name: 'Usar categoria' });
+    select('Tipo de registro', 'Despesa');
+    expect(
+      screen.queryByRole('button', { name: 'Usar categoria' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Usar centro de custo' }),
+    ).not.toBeInTheDocument();
+    select('Tipo de registro', 'Receita');
+    expect(screen.getByText(/80% de concordância no histórico/)).toBeVisible();
+    expect(
+      screen.getByRole('combobox', { name: 'Categoria' }),
+    ).not.toHaveTextContent('Dízimos');
+    fireEvent.click(screen.getByRole('button', { name: 'Usar categoria' }));
+    expect(
+      screen.getByRole('combobox', { name: 'Categoria' }),
+    ).toHaveTextContent('Dízimos');
+    expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Usar centro de custo' }),
+    );
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Próxima' })).toBeEnabled(),
+    );
+    expect(
+      requests.filter(
+        (r) => r.method === 'POST' && r.path === '/finance/banking/classify',
+      ),
+    ).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
+    await waitFor(() =>
+      expect(
+        requests.find((r) => r.path === '/finance/banking/classify')?.body,
+      ).toMatchObject({ categoryId: 'category-1', costCenterId: 'center-1' }),
+    );
+  }, 60000);
   it('shows import guidance to a super admin and refreshes it when changing accounts', async () => {
     const requests = mockApi({
       ...routes(),

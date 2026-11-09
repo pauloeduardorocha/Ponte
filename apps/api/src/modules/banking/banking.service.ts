@@ -9,6 +9,11 @@ import {
 } from '@nestjs/common';
 import { BankTransaction, BankReconciliation, Prisma } from '@prisma/client';
 import type { CurrentUser } from '@church/shared';
+import type { BankClassificationSuggestions } from '@church/shared';
+import {
+  classificationPattern,
+  historicalSuggestion,
+} from './classification-suggestions';
 import { createHash, randomUUID } from 'node:crypto';
 import { extname } from 'node:path';
 import { PrismaService } from '../../database/prisma.service';
@@ -1036,6 +1041,62 @@ export class BankingService {
       pageSize: q.pageSize,
     };
   }
+  async classificationSuggestions(
+    id: string,
+  ): Promise<BankClassificationSuggestions> {
+    const movement = await this.db.bankTransaction.findUniqueOrThrow({
+      where: { id },
+      select: {
+        description: true,
+        direction: true,
+        import: { select: { accountId: true } },
+      },
+    });
+    const classification =
+      movement.direction === 'CREDIT' ? 'INCOME' : 'EXPENSE';
+    const result: BankClassificationSuggestions = {
+      classification,
+      category: null,
+      costCenter: null,
+    };
+    const pattern = classificationPattern(movement.description);
+    if (pattern.length < 5) return result;
+    const history = await this.db.bankTransaction.findMany({
+      where: {
+        id: { not: id },
+        direction: movement.direction,
+        classification,
+        classifiedBy: { not: null },
+        status: { in: ['CLASSIFIED', 'RECONCILED'] },
+        import: {
+          accountId: movement.import.accountId,
+          status: { in: ['CONFIRMED', 'READY_FOR_REVIEW'] },
+        },
+      },
+      select: {
+        description: true,
+        category: { select: { id: true, name: true, kind: true } },
+        costCenterRecord: { select: { id: true, name: true } },
+      },
+      orderBy: [{ date: 'desc' }, { id: 'desc' }],
+      take: 2000,
+    });
+    const matching = history.filter(
+      (row) => classificationPattern(row.description) === pattern,
+    );
+    return {
+      ...result,
+      category: historicalSuggestion(
+        matching.map((row) =>
+          row.category?.kind === classification ? row.category : null,
+        ),
+      ),
+      costCenter: historicalSuggestion(
+        matching.map((row) => row.costCenterRecord),
+      ),
+    };
+  }
+
   async suggestions(id: string) {
     const t = await this.db.bankTransaction.findUniqueOrThrow({
       where: { id },

@@ -219,6 +219,16 @@ export class BankingController {
   @Get('members') members(@Query() q: BankQuery) {
     return this.banking.members(q);
   }
+  @Get('transactions/:id/classification-suggestions')
+  @Permission(
+    'FINANCE_BANK_IMPORT',
+    'FINANCE_CONTRIBUTION_READ',
+    'FINANCE_CATEGORY_READ',
+  )
+  classificationSuggestions(@Param('id', ParseUUIDPipe) id: string) {
+    return this.banking.classificationSuggestions(id);
+  }
+
   @Get('transactions/:id/suggestions') suggestions(
     @Param('id', ParseUUIDPipe) id: string,
   ) {

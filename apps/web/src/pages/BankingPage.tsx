@@ -26,7 +26,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import type { Page } from '@church/shared';
+import type { BankClassificationSuggestions, Page } from '@church/shared';
 import { useAuth } from '../auth/auth-context';
 import { apiRequest, getAccessToken } from '../lib/api';
 import { useDebouncedValue } from '../lib/use-debounced-value';
@@ -239,6 +239,29 @@ export function BankingPage({
       classification === 'EXPENSE' &&
       hasPermission('FINANCE_SUPPLIER_READ'),
   });
+  const classificationSuggestions = useQuery({
+    queryKey: [
+      'finance',
+      'banking',
+      'classification-suggestions',
+      currentMovement?.id,
+    ],
+    queryFn: () =>
+      apiRequest<BankClassificationSuggestions>(
+        `/finance/banking/transactions/${currentMovement!.id}/classification-suggestions`,
+      ),
+    enabled:
+      authorized &&
+      classificationOpen &&
+      Boolean(currentMovement) &&
+      classification !== 'IGNORE' &&
+      hasPermission('FINANCE_CATEGORY_READ'),
+    staleTime: 0,
+  });
+  const suggested =
+    classificationSuggestions.data?.classification === classification
+      ? classificationSuggestions.data
+      : undefined;
   const suggestions = useQuery({
     queryKey: ['finance', 'banking', 'suggestions', classificationTargets[0]],
     queryFn: () =>
@@ -445,6 +468,56 @@ export function BankingPage({
         />
       )}
       {classification !== 'IGNORE' && (
+        <Stack spacing={1}>
+          {classificationSuggestions.isPending &&
+            classificationSuggestions.fetchStatus === 'fetching' && (
+              <Typography variant="body2">
+                Consultando histórico de categorização…
+              </Typography>
+            )}
+          {classificationSuggestions.isError && (
+            <Alert severity="info">
+              Não foi possível consultar as sugestões. Você pode categorizar
+              manualmente.
+            </Alert>
+          )}
+          {suggested && !suggested.category && !suggested.costCenter && (
+            <Typography variant="body2" color="text.secondary">
+              Histórico insuficiente ou sem concordância para sugerir categoria
+              e centro de custo.
+            </Typography>
+          )}
+          {(
+            [
+              ['category', 'categoria', categoryId, setCategoryId],
+              ['costCenter', 'centro de custo', costCenterId, setCostCenterId],
+            ] as const
+          ).map(([field, label, selected, apply]) => {
+            const suggestion = suggested?.[field];
+            return suggestion ? (
+              <Alert
+                key={field}
+                severity="info"
+                action={
+                  <Button
+                    color="inherit"
+                    disabled={selected === suggestion.id}
+                    onClick={() => apply(suggestion.id)}
+                  >
+                    Usar {label}
+                  </Button>
+                }
+              >
+                Sugestão de {label}: <strong>{suggestion.name}</strong>.{' '}
+                {suggestion.agreement}% de concordância no histórico (
+                {suggestion.support} de {suggestion.sampleSize} movimentos
+                semelhantes).
+              </Alert>
+            ) : null;
+          })}
+        </Stack>
+      )}
+      {classification !== 'IGNORE' && (
         <TextField
           select
           label="Categoria"
@@ -453,6 +526,14 @@ export function BankingPage({
           onChange={(e) => setCategoryId(e.target.value)}
         >
           <MenuItem value="">Sem categoria</MenuItem>
+          {suggested?.category &&
+            !categories.data?.items.some(
+              (c) => c.id === suggested.category!.id,
+            ) && (
+              <MenuItem value={suggested.category.id}>
+                {suggested.category.name}
+              </MenuItem>
+            )}
           {categories.data?.items
             .filter(
               (c) =>

@@ -1,3 +1,4 @@
+export type { BankClassificationSuggestion, BankClassificationSuggestions } from './bank-classification';
 export type FamilyRelation = 'FATHER' | 'MOTHER' | 'CHILD' | 'SPOUSE';
 export interface FamilyLink {
   id: string;

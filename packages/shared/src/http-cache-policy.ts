@@ -42,6 +42,7 @@ export const HTTP_CACHE_ROUTES: Readonly<Record<string, number>> = {
   '/finance/banking/transactions': 3600,
   '/finance/banking/transactions/{id}/attachments': 3600,
   '/finance/banking/transactions/{id}/attachments/{attachmentId}/download': 0,
+  '/finance/banking/transactions/{id}/classification-suggestions': 0,
   '/finance/banking/transactions/{id}/suggestions': 3600,
   '/finance/categories': 3600,
   '/finance/charts': 0,
