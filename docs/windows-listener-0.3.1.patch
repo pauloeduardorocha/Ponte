@@ -1,0 +1,325 @@
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,6 +1,7 @@
+-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Live translation</title><link rel="stylesheet" href="/style.css"></head>
+-<body><main><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Live translation</span></div></header><p class="eyebrow">LIVE TRANSLATION · ENGLISH</p><h1>One message. Together.</h1><p>English translation, live from the church.</p>
+-<div class="controls"><button id="enable">Enable audio</button><span id="status" role="status">Connecting…</span><a id="background-link" class="button-link">Listen with screen locked</a></div>
+-<section class="transcript"><div class="heading"><h2>Live transcript</h2><span class="badge">EN</span></div><div id="text" role="log" aria-live="polite"></div></section>
+-<p id="audio-status">Click Enable audio to hear the translation. No microphone or API key required.</p><footer>Keep this page open. New translations appear automatically.</footer></main>
+-<script src="/audio-codec.js"></script><script src="/playback.js"></script><script src="/audience.js"></script></body></html>
++<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
++<body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Inglês</span></div></header>
++<p class="eyebrow">PORTUGUÊS → ENGLISH</p><h1>Tradução ao vivo</h1><p>Ouça a mensagem em inglês e acompanhe o texto nesta mesma tela.</p>
++<section class="settings" aria-label="Reprodução da tradução"><audio id="radio" preload="none" aria-label="Tradução em inglês ao vivo"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
++<section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
++<details><summary>Precisa de ajuda para ouvir?</summary><p>Confira o volume, os fones e o Wi-Fi da igreja. Se o áudio parar, toque em Retomar ao vivo. Ao retomar, ouvirá a transmissão atual.</p><p>Chamadas e economia de bateria podem interromper o áudio. O suporte com o ecrã bloqueado depende do aparelho e do navegador.</p></details><footer>Áudio e texto vêm diretamente do computador da igreja. Não é preciso usar o microfone nem entrar na conta.</footer>
++</main><script src="/radio.js"></script><script src="/audience.js"></script></body></html>
+diff --git a/audience.js b/audience.js
+--- a/audience.js
++++ b/audience.js
+@@ -1,40 +1,29 @@
+-const playback = new TranslationPlayback();
+-const text = document.getElementById('text'), status = document.getElementById('status'), button = document.getElementById('enable');
+-let enabled = false, connection, retry, closed = false;
+-document.getElementById('background-link').href = location.pathname + '?mode=background';
+-button.onclick = async () => {
+-  try {
+-    if (enabled) { enabled = false; playback.clear(); button.textContent = 'Enable audio'; }
+-    else { await playback.enable(); enabled = true; button.textContent = 'Mute audio'; }
+-    document.getElementById('audio-status').textContent = enabled ? 'Audio enabled · compressed local stream. You will hear the next translated words.' : 'Audio muted. The transcript stays live.';
+-  } catch { document.getElementById('audio-status').textContent = 'Could not enable audio. Please try again.'; }
+-};
++const text = document.getElementById('text'), status = document.getElementById('status');
++let connection, retry, closed = false;
+ function connect() {
++  clearTimeout(retry);
+   const room = location.pathname.split('/').pop();
+   connection = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/audience-ws/${room}`);
+-  connection.binaryType = 'arraybuffer';
+   connection.onmessage = event => {
+-    if (event.data instanceof ArrayBuffer) {
+-      if (enabled) {
+-        try { playback.playPacket(new Uint8Array(event.data)); }
+-        catch { document.getElementById('audio-status').textContent = 'An audio packet could not be played. Waiting for the next one.'; }
+-      }
+-      return;
+-    }
+-    const message = JSON.parse(event.data);
+-    if (message.state) { status.textContent = { live: '● Live', idle: 'Waiting for the presenter', connecting: 'Presenter connecting…' }[message.state]; if (message.state !== 'live') playback.clear(); }
+-    if (message.reset) { text.replaceChildren(); playback.clear(); }
++    // The native MP3 player owns audio; this socket only updates the transcript.
++    if (typeof event.data !== 'string') return;
++    let message;
++    try { message = JSON.parse(event.data); } catch { return; }
++    if (message.state) status.textContent = { live: 'Texto ao vivo', idle: 'Aguardando o apresentador', connecting: 'Apresentador conectando…' }[message.state] || 'Aguardando o apresentador';
++    if (message.reset) text.replaceChildren();
+     if (typeof message.snapshot === 'string') text.textContent = message.snapshot;
+     const content = message.content;
+     if (!content) return;
++    const follow = text.scrollHeight - text.scrollTop - text.clientHeight < 60;
+     if (content.outputTranscription?.text) text.append(document.createTextNode(content.outputTranscription.text));
+     if (content.turnComplete) text.append(document.createTextNode('\n\n'));
+     if (text.textContent.length > 50000) text.textContent = text.textContent.slice(-50000);
+-    text.scrollTop = text.scrollHeight;
+-    if (enabled) playback.play(content);
++    if (follow) text.scrollTop = text.scrollHeight;
+   };
+-  connection.onclose = () => { playback.clear(); status.textContent = 'Disconnected. Reconnecting…'; if (!closed) retry = setTimeout(connect, 2500); };
++  connection.onclose = () => { status.textContent = 'Texto desconectado. Reconectando…'; if (!closed) retry = setTimeout(connect, 2500); };
+   connection.onerror = () => connection.close();
+ }
+-window.addEventListener('beforeunload', () => { closed = true; clearTimeout(retry); connection?.close(); playback.clear(); });
++window.addEventListener('pagehide', () => { closed = true; clearTimeout(retry); connection?.close(); });
++window.addEventListener('pageshow', () => { if (closed) { closed = false; connect(); } });
++document.addEventListener('visibilitychange', () => { if (!document.hidden && !closed && connection?.readyState === WebSocket.CLOSED) connect(); });
+ connect();
+diff --git a/radio.js b/radio.js
+--- a/radio.js
++++ b/radio.js
+@@ -1,29 +1,46 @@
+-const audio = document.getElementById('radio'), radioStatus = document.getElementById('radio-status');
++const audio = document.getElementById('radio'), radioStatus = document.getElementById('radio-status'), listen = document.getElementById('listen');
+ const room = location.pathname.split('/').pop(), sourceUrl = `/audio/${room}.mp3`;
+-document.getElementById('transcript').href = location.pathname;
++let generation = 0, active = false;
+ try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* optional browser API */ }
++function mediaState(state) { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = state; }
++function stopLive() {
++  generation++; active = false;
++  audio.pause(); audio.removeAttribute('src'); audio.load();
++  listen.disabled = false; listen.textContent = 'Retomar ao vivo';
++  radioStatus.textContent = 'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.';
++  mediaState('paused');
++}
++async function startLive() {
++  const attempt = ++generation;
++  active = true; listen.disabled = false; listen.textContent = 'Cancelar conexão';
++  radioStatus.textContent = 'Conectando ao áudio da igreja…';
++  audio.src = sourceUrl; audio.load();
++  try { await audio.play(); }
++  catch {
++    if (attempt !== generation) return;
++    active = false; listen.textContent = 'Tentar ouvir novamente';
++    radioStatus.textContent = 'Não foi possível ouvir. Confira o Wi-Fi e se a tradução está ativa; depois tente novamente.';
++    mediaState('none');
++  } finally { if (attempt === generation) listen.disabled = false; }
++}
++listen.onclick = () => { if (active) stopLive(); else void startLive(); };
++audio.addEventListener('playing', () => {
++  active = true; listen.disabled = false; listen.textContent = 'Pausar áudio';
++  radioStatus.textContent = 'Reproduzindo ao vivo · áudio em inglês.';
++  mediaState('playing');
++});
++audio.addEventListener('pause', () => { if (active && !audio.ended && !audio.error) stopLive(); });
++audio.addEventListener('waiting', () => { if (active) radioStatus.textContent = 'Aguardando áudio da igreja…'; });
++function unavailable(message) {
++  generation++; active = false; listen.disabled = false; listen.textContent = 'Retomar ao vivo';
++  radioStatus.textContent = message; mediaState('none');
++}
++audio.addEventListener('ended', () => unavailable('A transmissão terminou. Aguarde o apresentador e toque em Retomar ao vivo.'));
++audio.addEventListener('error', () => unavailable('O áudio foi interrompido. Confira o Wi-Fi e toque em Retomar ao vivo.'));
+ if ('mediaSession' in navigator) {
+   if (typeof MediaMetadata !== 'undefined') navigator.mediaSession.metadata = new MediaMetadata({ title: 'Tradução ao vivo — Inglês', artist: 'A Ponte', artwork: [{ src: new URL('/logo.png', location.origin).href, type: 'image/png' }] });
+-  for (const [action, handler] of Object.entries({ play: () => void startLive(), pause: () => audio.pause(), stop: () => { audio.pause(); audio.removeAttribute('src'); audio.load(); } })) {
++  for (const [action, handler] of Object.entries({ play: () => void startLive(), pause: stopLive, stop: stopLive })) {
+     try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* optional media control */ }
+   }
+ }
+-let paused = false, restarting = false;
+-async function startLive() {
+-  restarting = true; paused = false; audio.src = sourceUrl; audio.load();
+-  try { await audio.play(); } catch { radioStatus.textContent = 'Não foi possível iniciar. Confira o Wi-Fi e se a tradução está publicada; depois toque em Ouvir ao vivo.'; }
+-  finally { restarting = false; }
+-}
+-document.getElementById('listen').onclick = () => void startLive();
+-document.getElementById('pause').onclick = () => audio.pause();
+-audio.src = sourceUrl;
+-audio.addEventListener('play', () => {
+-  if (paused) { void startLive(); return; }
+-  radioStatus.textContent = 'Reproduzindo ao vivo. Pode experimentar minimizar ou bloquear o ecrã.';
+-  if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+-});
+-audio.addEventListener('pause', () => { if (restarting) return; paused = true; radioStatus.textContent = 'Áudio pausado. Toque em Ouvir ao vivo para voltar à transmissão atual.'; if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused'; });
+-audio.addEventListener('waiting', () => { radioStatus.textContent = 'Aguardando áudio da igreja…'; });
+-audio.addEventListener('playing', () => { radioStatus.textContent = 'Reproduzindo ao vivo. Mantenha o Wi-Fi conectado.'; });
+-audio.addEventListener('ended', () => { radioStatus.textContent = 'A transmissão terminou. Aguarde o apresentador iniciar outra tradução.'; });
+-audio.addEventListener('error', () => { radioStatus.textContent = 'A transmissão não está disponível. Confira o Wi-Fi, a tradução ativa e se o aplicativo do computador foi atualizado.'; });
++window.addEventListener('pagehide', stopLive);
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@ -1,2 +1,4 @@
+ :root{font-family:Inter,system-ui,sans-serif;color:#24252b;background:#f7f8fa;color-scheme:light;--accent:#d91017}*{box-sizing:border-box}body{margin:0}main{max-width:880px;margin:auto;padding:32px}.brand{display:flex;align-items:center;gap:14px;margin-bottom:32px}.brand img{object-fit:contain;border-radius:10px}.brand strong{display:block;font-size:20px}.brand span{display:block;font-size:13px;color:#62646e;margin-top:3px}.eyebrow{color:#ad0d13;font-size:12px;font-weight:700;letter-spacing:1.8px}h1{font-size:36px;margin:12px 0}p,small,footer{color:#62646e}p{line-height:1.6}.settings,.transcript,.sharing{border:1px solid #e5e7eb;border-radius:14px;padding:24px;background:#fff;margin:24px 0}label,small{display:block;margin:12px 0}input[type=password],input[type=url],select{width:100%;padding:12px;border:1px solid #c9ccd3;border-radius:8px;background:#fff;color:#24252b;font:inherit}button{font:inherit;font-size:14px;font-weight:650;padding:11px 16px;min-height:42px;border:1px solid #d5d7de;border-radius:8px;background:#fff;color:#ad0d13;cursor:pointer}button:hover{background:#fff0f1}button:disabled{opacity:.45;cursor:default}#start,#publish,#enable{background:#d91017;color:#fff;border-color:#d91017}#start:hover,#publish:hover,#enable:hover{background:#ad0d13}.controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}#status,#publication-status{font-size:14px}.heading{display:flex;justify-content:space-between;align-items:center;gap:12px}h2{font-size:18px;margin:0}#text{min-height:180px;max-height:350px;overflow:auto;white-space:pre-wrap;font-size:22px;line-height:1.8}footer{font-size:12px;line-height:1.8}.check{display:flex;gap:8px;align-items:center}button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #d91017;outline-offset:3px}.link-row{display:flex;align-items:center;gap:10px;margin:12px 0}.link-row span{font-size:12px;min-width:110px}.link-row input{width:100%;min-width:0;padding:10px;border:1px solid #d5d7de;border-radius:7px;background:#f7f8fa;color:#24252b}.badge,#viewers{color:#ad0d13;font-size:13px}.sharing{border-top:3px solid #d91017}summary{cursor:pointer;color:#ad0d13;font-size:14px}details{margin-top:20px}#audience-address{margin-bottom:16px}@media(max-width:650px){main{padding:20px}.settings,.sharing,.transcript{padding:18px}.link-row{flex-wrap:wrap}.link-row input{flex:1}h1{font-size:29px}}
+ :root .button-link{display:inline-block;padding:10px 16px;border:1px solid #d5d7de;border-radius:8px;text-decoration:none;color:#ad0d13;font-weight:650;font-size:14px}.button-link:focus-visible{outline:2px solid #d91017;outline-offset:3px}audio{width:100%;margin-bottom:12px}
++
++.listener .brand{margin-bottom:24px}.listener .settings{margin:20px 0;padding:18px}.listener #listen{width:100%;min-height:48px;background:#d91017;color:white;border-color:#d91017;font-size:16px}.listener #listen:hover{background:#ad0d13}.listener #radio-status{font-size:14px}.listener .settings p{font-size:14px;line-height:1.6}.listener .transcript{margin-top:20px}.listener #text:empty::before{content:"Aguardando as próximas palavras traduzidas…";color:#62646e;font-size:16px}.listener #text{min-height:160px}
+diff --git a/server.cjs b/server.cjs
+--- a/server.cjs
++++ b/server.cjs
+@@ -67,7 +67,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       return;
+     }
+     let file = Object.hasOwn(files, pathname) ? files[pathname] : undefined;
+-    if (pathname === `/listen/${room}`) file = url.searchParams.get('mode') === 'background' ? 'radio.html' : 'audience.html';
++    if (pathname === `/listen/${room}`) file = 'audience.html';
+     if (!file) { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end('Página não encontrada. Peça o link ao apresentador.'); return; }
+     const type = file.endsWith('.png') ? 'image/png' : file.endsWith('.html') ? 'text/html; charset=utf-8' : file.endsWith('.css') ? 'text/css; charset=utf-8' : 'text/javascript; charset=utf-8';
+     res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
+diff --git a/radio-stream.test.cjs b/radio-stream.test.cjs
+--- a/radio-stream.test.cjs
++++ b/radio-stream.test.cjs
+@@ -35,6 +35,8 @@ test('HTTP radio runs without an audience WebSocket and stops with the presenter
+   assert.equal((await fetch(base + `/audio/${server.room}.mp3`)).status, 503);
+   const page = await (await fetch(base + `/listen/${server.room}?mode=background`)).text();
+   assert.match(page, /<audio /); assert.match(page, /Ouvir ao vivo/);
++  assert.match(page, /Texto da tradução/);
++  assert.equal(await (await fetch(base + `/listen/${server.room}`)).text(), page, 'legacy background and default links serve the same audio and transcript player');
+   const presenter = new WebSocket(base.replace('http:', 'ws:') + '/presenter-ws', { origin: base });
+   const ready = new Promise(resolve => presenter.on('message', raw => { if (JSON.parse(raw).ready) resolve(); }));
+   const auth = new Promise(resolve => presenter.on('message', raw => { if (JSON.parse(raw).authenticated) resolve(); }));
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.0",
++  "version": "0.3.1",
+   "private": true,
+   "description": "Tradução do microfone para inglês com Gemini",
+   "main": "main.cjs",
+@@ -8,7 +8,7 @@
+     "start": "electron .",
+     "server": "node server.cjs",
+     "package:windows": "node build-windows.cjs",
+-    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs",
++    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs",
+     "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js"
+   },
+   "devDependencies": {
+diff --git a/windows-guide.json b/windows-guide.json
+--- a/windows-guide.json
++++ b/windows-guide.json
+@@ -49,12 +49,12 @@
+     {
+       "title": "5. Orientar quem vai ouvir",
+       "steps": [
+-        "Peça às pessoas que se conectem ao Wi-Fi da igreja. O link local não funciona para quem está em casa ou usando somente os dados móveis.",
+-        "No Ponte, cada pessoa abre Tradução ao vivo e toca em Conectar à tradução. Se o navegador pedir acesso à rede local, a pessoa precisa permitir para se conectar ao computador.",
+-        "O texto em inglês aparece na tela e o áudio é reproduzido com fones de ouvido. Silenciar áudio mantém o texto disponível.",
+-        "Se a conexão dentro do Ponte for bloqueada pelo navegador, toque em Abrir página local. Nessa outra página, toque em Enable audio para ouvir.",
+-        "Para ouvir com o ecrã bloqueado ou com outro aplicativo aberto, toque em Ouvir com o ecrã bloqueado no Ponte e, na página local que abrir, toque em Ouvir ao vivo. É necessário o aplicativo do computador na versão 0.3.0 ou superior. Não feche a aba nem encerre o navegador; continue no Wi-Fi da igreja.",
+-        "Se o Brave ou o Android ainda pausarem o som, confira as opções de reprodução em segundo plano e de uso da bateria do navegador. O sistema pode interromper áudio durante chamadas ou ao encerrar o navegador. Faça esse teste no celular antes do culto."
++        "Peça às pessoas que se conectem ao Wi-Fi da igreja e usem fones de ouvido. O link local não funciona em casa ou somente com dados móveis.",
++        "No Ponte, abra Tradução ao vivo e toque em Abrir tradução ao vivo. A tela do ouvinte abre na mesma aba. Use o botão Voltar do navegador para retornar ao Ponte.",
++        "Na tela do ouvinte, toque em Ouvir ao vivo. O texto em inglês aparece na mesma tela; ele pode chegar antes do áudio.",
++        "Use Pausar áudio para interromper o som sem perder o texto. Retomar ao vivo reconecta à transmissão atual, sem repetir o áudio da pausa.",
++        "O mesmo leitor funciona com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir. Não é preciso escolher outro modo. Atualize o aplicativo Windows para 0.3.1 ou superior; não feche a aba nem encerre o navegador.",
++        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto."
+       ]
+     },
+     {
+@@ -90,11 +90,11 @@
+     },
+     {
+       "problem": "O menu aparece, mas o celular não conecta",
+-      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Tente Abrir página local. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
++      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Abra novamente a tradução pelo Ponte. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
+     },
+     {
+       "problem": "O texto aparece, mas não ouço o áudio",
+-      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Na página local, toque em Enable audio. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
++      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Toque em Ouvir ao vivo ou Retomar ao vivo. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
+     },
+     {
+       "problem": "Aparece que a porta já está em uso",
+diff --git a/audience.test.cjs b/audience.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/audience.test.cjs
+@@ -0,0 +1,35 @@
++const test = require('node:test'), assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs');
++function player(play = async () => {}) {
++  const handlers = {}, actions = {}, audio = { src: '', pause() { handlers.pause?.(); }, removeAttribute() { this.src = ''; }, load() { this.loads = (this.loads || 0) + 1; }, play, addEventListener(name, handler) { handlers[name] = handler; } };
++  const button = {}, status = {}, navigator = { mediaSession: { setActionHandler(name, handler) { actions[name] = handler; } } };
++  const elements = { radio: audio, listen: button, 'radio-status': status };
++  vm.runInNewContext(fs.readFileSync(__dirname + '/radio.js', 'utf8'), { document: { getElementById: id => elements[id] }, location: { pathname: '/listen/room' }, navigator, window: { addEventListener() {} } });
++  return { audio, button, status, actions, handlers, navigator };
++}
++test('one native player starts on a gesture, pauses and resumes from a fresh live connection', async () => {
++  let plays = 0; const p = player(async () => { plays++; });
++  assert.equal(p.audio.src, '', 'no audio or network request before user gesture');
++  p.button.onclick(); await Promise.resolve(); p.handlers.playing();
++  assert.equal(p.audio.src, '/audio/room.mp3'); assert.equal(p.button.textContent, 'Pausar áudio');
++  p.button.onclick(); assert.equal(p.audio.src, ''); assert.match(p.status.textContent, /texto continua/);
++  p.button.onclick(); await Promise.resolve(); p.handlers.playing();
++  assert.equal(plays, 2); assert.equal(p.audio.loads, 3); assert.equal(p.navigator.mediaSession.playbackState, 'playing');
++});
++test('screen controls use the same pause and fresh-live resume actions', async () => {
++  const p = player(); p.actions.play(); await Promise.resolve(); p.handlers.playing();
++  p.actions.pause(); assert.equal(p.audio.src, '');
++  p.actions.play(); await Promise.resolve(); assert.equal(p.audio.src, '/audio/room.mp3');
++  p.actions.stop(); assert.equal(p.navigator.mediaSession.playbackState, 'paused');
++});
++test('blocked playback and stream failures leave a usable retry button', async () => {
++  const p = player(async () => { throw Error('autoplay denied'); });
++  p.button.onclick(); await new Promise(resolve => setImmediate(resolve));
++  assert.equal(p.button.disabled, false); assert.match(p.status.textContent, /Não foi possível ouvir/);
++  p.handlers.error(); assert.equal(p.button.textContent, 'Retomar ao vivo');
++  p.handlers.ended(); assert.match(p.status.textContent, /terminou/);
++});
++test('late play rejection cannot overwrite a newer pause action', async () => {
++  let reject; const p = player(() => new Promise((_, fail) => { reject = fail; }));
++  p.actions.play(); p.actions.pause(); reject(Error('aborted')); await new Promise(resolve => setImmediate(resolve));
++  assert.match(p.status.textContent, /pausado/); assert.equal(p.button.disabled, false);
++});
+diff --git a/listener-smoke.cjs b/listener-smoke.cjs
+new file mode 100644
+--- /dev/null
++++ b/listener-smoke.cjs
+@@ -0,0 +1,44 @@
++const { app, BrowserWindow } = require('electron');
++const { WebSocket } = require('ws');
++const { once } = require('node:events');
++const fs = require('node:fs'), assert = require('node:assert/strict');
++const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
++app.commandLine.appendSwitch('autoplay-policy', 'document-user-activation-required');
++app.whenReady().then(async () => {
++  let server, win, timer, presenter;
++  try {
++    let bridge;
++    class Bridge { constructor(emit) { this.emit=emit; bridge=this; } start(){this.emit({ready:true});} stop(){} audio(){} }
++    server=require('./server.cjs').createTranslationServer({port:0,host:'127.0.0.1',Bridge});
++    const info=await server.listen(), address=new URL(info.presenterUrl), origin=address.origin;
++    presenter=new WebSocket(origin.replace('http:','ws:')+'/presenter-ws',{origin});
++    await once(presenter,'open');
++    const auth=new Promise(resolve=>presenter.on('message',raw=>{if(JSON.parse(raw).authenticated)resolve();}));
++    presenter.send(JSON.stringify({token:address.hash.slice(1)}));await auth;
++    const ready=new Promise(resolve=>presenter.on('message',raw=>{if(JSON.parse(raw).ready)resolve();}));
++    presenter.send(JSON.stringify({action:'start',key:'synthetic-test-key'}));await ready;
++    const pcm=Buffer.alloc(9600);for(let i=0;i<4800;i++)pcm.writeInt16LE(Math.round(5000*Math.sin(2*Math.PI*440*i/24000)),i*2);
++    let words=0;
++    timer=setInterval(()=>bridge.emit({content:{outputTranscription:{text:words++===0?'Welcome. We are glad you are here. ':''},modelTurn:{parts:[{inlineData:{data:pcm.toString('base64'),mimeType:'audio/pcm;rate=24000'}}]}}}),200);
++    win=new BrowserWindow({show:false,width:430,height:1000,webPreferences:{sandbox:true,contextIsolation:true,backgroundThrottling:false}});
++    await win.loadURL(origin+'/listen/'+server.room);
++    const run=code=>win.webContents.executeJavaScript(code,true);
++    await wait(600);
++    assert.equal(await run("document.getElementById('radio').currentSrc"),'');
++    await run("document.getElementById('listen').click()");
++    for(let i=0;i<40;i++){if(await run("document.getElementById('radio').currentTime > 0"))break;await wait(200);}
++    console.log(await run("JSON.stringify({time:document.getElementById('radio').currentTime,ready:document.getElementById('radio').readyState,error:document.getElementById('radio').error?.message,status:document.getElementById('radio-status').textContent})"));
++    assert.equal(await run("document.getElementById('radio').paused"),false);
++    fs.writeFileSync('C:/Users/Adrielli/source/repos/Ponte/private-storage/translation/listener-0.3.1.png',(await win.webContents.capturePage()).toPNG());
++    assert.ok(await run("document.getElementById('radio').currentTime > 0"),'native MP3 must actually decode and advance');
++    assert.match(await run("document.getElementById('text').textContent"),/Welcome/);
++    await run("document.getElementById('listen').click()");
++    assert.equal(await run("document.getElementById('radio').paused"),true);
++    await run("document.getElementById('listen').click()");for(let i=0;i<50;i++){if(await run("document.getElementById('listen').textContent === 'Pausar áudio'"))break;await wait(200);}
++    assert.equal(await run("document.getElementById('radio').paused"),false);
++    assert.equal(await run("document.getElementById('listen').textContent"),'Pausar áudio');
++    fs.writeFileSync('C:/Users/Adrielli/source/repos/Ponte/private-storage/translation/listener-0.3.1.png',(await win.webContents.capturePage()).toPNG());
++    console.log('PASS: real native MP3 playback, transcript, pause, live resume, mobile screenshot');
++  } catch(error){console.error(error);process.exitCode=1;}
++  finally {clearInterval(timer);presenter?.terminate();win?.destroy();await server?.close();app.exit(process.exitCode || 0);}
++});

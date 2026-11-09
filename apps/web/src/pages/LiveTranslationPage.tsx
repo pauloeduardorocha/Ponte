@@ -10,107 +10,77 @@ import {
   Typography,
 } from '@mui/material';
 import TranslateRounded from '@mui/icons-material/TranslateRounded';
-import { useEffect, useRef } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { PageHeader } from '../components/PageParts';
 import { useLiveTranslation } from '../lib/live-translation';
-import { useLocalTranslation } from '../lib/use-local-translation';
 
 export function LiveTranslationPage({
   publicAccess = false,
 }: { publicAccess?: boolean } = {}) {
   const session = useLiveTranslation({ publicAccess });
   const url = session.active ? (session.data?.audienceUrl ?? null) : null;
-  const player = useLocalTranslation(url);
-  const backgroundUrl = url ? `${url}?mode=background` : null;
-  const transcript = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (transcript.current)
-      transcript.current.scrollTop = transcript.current.scrollHeight;
-  }, [player.text]);
   return (
     <Stack spacing={3}>
       <PageHeader
         title="Tradução ao vivo"
         subtitle="Acompanhe a mensagem em inglês, com áudio e texto."
       />
-      {!session.active ? (
+      {session.isPending ? (
+        <Alert severity="info">Procurando a tradução ao vivo…</Alert>
+      ) : session.isError ? (
+        <Alert
+          severity="warning"
+          action={
+            <Button color="inherit" onClick={() => void session.refetch()}>
+              Tentar novamente
+            </Button>
+          }
+        >
+          Não foi possível verificar a transmissão. Confira sua conexão.
+        </Alert>
+      ) : !session.active ? (
         <Alert severity="info">
-          Não há tradução publicada neste momento. O menu aparece quando o
-          computador da igreja publica uma transmissão.
+          Não há tradução publicada neste momento. Aguarde o início da tradução
+          do culto.
         </Alert>
       ) : (
-        <>
-          <Alert severity="info">
-            Conecte-se ao Wi-Fi da igreja. Se solicitado, permita que o Ponte
-            acesse a rede local. Use fones de ouvido.
-          </Alert>
-          <Card>
-            <CardContent>
-              <Stack spacing={2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <TranslateRounded color="primary" />
-                  <Typography variant="h6">Português → English</Typography>
-                  <Chip label={player.status} size="small" />
-                </Stack>
-                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                  <Button
-                    variant="contained"
-                    onClick={() => void player.connect()}
-                    disabled={player.connected}
-                  >
-                    {player.connected ? 'Conectado' : 'Conectar à tradução'}
-                  </Button>
-                  {player.connected && (
-                    <Button onClick={player.toggleMute}>
-                      {player.muted ? 'Ativar áudio' : 'Silenciar áudio'}
-                    </Button>
-                  )}
-                  <Button href={url!} target="_blank" rel="noopener noreferrer">
-                    Abrir página local
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    href={backgroundUrl!}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={player.stop}
-                  >
-                    Ouvir com o ecrã bloqueado
-                  </Button>
-                </Stack>
-                <Typography variant="body2" color="text.secondary">
-                  Para minimizar ou bloquear o ecrã, use o leitor de áudio acima
-                  e toque em Ouvir ao vivo na página que abrir. Esse modo exige
-                  o aplicativo do computador atualizado para a versão 0.3.0 ou
-                  superior. Continue no Wi-Fi da igreja.
-                </Typography>
-                {player.error && (
-                  <Alert severity="warning">{player.error}</Alert>
-                )}
-                <Box
-                  ref={transcript}
-                  role="log"
-                  aria-live="polite"
-                  aria-label="Texto da tradução"
-                  sx={{
-                    whiteSpace: 'pre-wrap',
-                    fontSize: { xs: '1.2rem', md: '1.5rem' },
-                    lineHeight: 1.8,
-                    minHeight: 200,
-                    maxHeight: '55vh',
-                    overflow: 'auto',
-                    p: 2,
-                    bgcolor: 'background.default',
-                    borderRadius: 2,
-                  }}
-                >
-                  {player.text || 'A tradução aparecerá aqui após a conexão.'}
-                </Box>
+        <Card>
+          <CardContent>
+            <Stack spacing={2}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                flexWrap="wrap"
+                useFlexGap
+              >
+                <TranslateRounded color="primary" />
+                <Typography variant="h6">Português → English</Typography>
+                <Chip label="Disponível ao vivo" size="small" color="success" />
               </Stack>
-            </CardContent>
-          </Card>
-        </>
+              <Alert severity="info">
+                Conecte-se ao Wi-Fi da igreja e use fones de ouvido.
+              </Alert>
+              <Typography>
+                Ouça e acompanhe o texto na mesma tela. Use o mesmo leitor com a
+                tela aberta, minimizada ou bloqueada, quando o aparelho
+                permitir.
+              </Typography>
+              <Button variant="contained" href={url!}>
+                Abrir tradução ao vivo
+              </Button>
+              <Typography variant="body2" color="text.secondary">
+                A tradução abre nesta aba, diretamente no computador da igreja.
+                Na próxima tela, toque em Ouvir ao vivo. Use o botão Voltar do
+                navegador para retornar ao Ponte.
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Mantenha o Wi-Fi conectado e esta aba aberta. Ao pausar e
+                retomar, ouvirá a transmissão atual.
+              </Typography>
+            </Stack>
+          </CardContent>
+        </Card>
       )}
     </Stack>
   );

@@ -49,12 +49,12 @@
     {
       "title": "5. Orientar quem vai ouvir",
       "steps": [
-        "Peça às pessoas que se conectem ao Wi-Fi da igreja. O link local não funciona para quem está em casa ou usando somente os dados móveis.",
-        "No Ponte, cada pessoa abre Tradução ao vivo e toca em Conectar à tradução. Se o navegador pedir acesso à rede local, a pessoa precisa permitir para se conectar ao computador.",
-        "O texto em inglês aparece na tela e o áudio é reproduzido com fones de ouvido. Silenciar áudio mantém o texto disponível.",
-        "Se a conexão dentro do Ponte for bloqueada pelo navegador, toque em Abrir página local. Nessa outra página, toque em Enable audio para ouvir.",
-        "Para ouvir com o ecrã bloqueado ou com outro aplicativo aberto, toque em Ouvir com o ecrã bloqueado no Ponte e, na página local que abrir, toque em Ouvir ao vivo. É necessário o aplicativo do computador na versão 0.3.0 ou superior. Não feche a aba nem encerre o navegador; continue no Wi-Fi da igreja.",
-        "Se o Brave ou o Android ainda pausarem o som, confira as opções de reprodução em segundo plano e de uso da bateria do navegador. O sistema pode interromper áudio durante chamadas ou ao encerrar o navegador. Faça esse teste no celular antes do culto."
+        "Peça às pessoas que se conectem ao Wi-Fi da igreja e usem fones de ouvido. O link local não funciona em casa ou somente com dados móveis.",
+        "No Ponte, abra Tradução ao vivo e toque em Abrir tradução ao vivo. A tela do ouvinte abre na mesma aba. Use o botão Voltar do navegador para retornar ao Ponte.",
+        "Na tela do ouvinte, toque em Ouvir ao vivo. O texto em inglês aparece na mesma tela; ele pode chegar antes do áudio.",
+        "Use Pausar áudio para interromper o som sem perder o texto. Retomar ao vivo reconecta à transmissão atual, sem repetir o áudio da pausa.",
+        "O mesmo leitor funciona com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir. Não é preciso escolher outro modo. Atualize o aplicativo Windows para 0.3.1 ou superior; não feche a aba nem encerre o navegador.",
+        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto."
       ]
     },
     {
@@ -90,11 +90,11 @@
     },
     {
       "problem": "O menu aparece, mas o celular não conecta",
-      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Tente Abrir página local. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
+      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Abra novamente a tradução pelo Ponte. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
     },
     {
       "problem": "O texto aparece, mas não ouço o áudio",
-      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Na página local, toque em Enable audio. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
+      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Toque em Ouvir ao vivo ou Retomar ao vivo. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
     },
     {
       "problem": "Aparece que a porta já está em uso",

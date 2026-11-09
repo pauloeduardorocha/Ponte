@@ -42,14 +42,17 @@ describe('Live translation in the Ponte PWA', () => {
     ).toBeInTheDocument();
     fireEvent.click(button);
     expect(
-      await screen.findByRole('button', { name: 'Conectar à tradução' }),
+      await screen.findByRole('link', { name: 'Abrir tradução ao vivo' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Abrir página local' }),
+      screen.getByRole('link', { name: 'Abrir tradução ao vivo' }),
     ).toHaveAttribute('href', audienceUrl);
     expect(
-      screen.getByRole('link', { name: 'Ouvir com o ecrã bloqueado' }),
-    ).toHaveAttribute('href', audienceUrl + '?mode=background');
+      screen.queryByRole('link', { name: 'Ouvir com o ecrã bloqueado' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Abrir tradução ao vivo' }),
+    ).not.toHaveAttribute('target', '_blank');
     expect(
       requests.some((request) => request.path === '/live-translation/status'),
     ).toBe(false);
@@ -109,7 +112,7 @@ describe('Live translation in the Ponte PWA', () => {
       ).queryByRole('link', { name: 'Tradução ao vivo' }),
     ).not.toBeInTheDocument();
   });
-  it('shows the published menu and a local fallback without fetching the audio from the API', async () => {
+  it('offers one same-tab player for authenticated listeners without fetching audio from the API', async () => {
     const audienceUrl = 'http://192.168.1.20:3210/listen/' + 'a'.repeat(24);
     const requests = mockApi({
       ...sessionRoutes(makeUser()),
@@ -123,10 +126,10 @@ describe('Live translation in the Ponte PWA', () => {
     });
     renderApp('/live-translation');
     expect(
-      await screen.findByRole('button', { name: 'Conectar à tradução' }),
+      await screen.findByRole('link', { name: 'Abrir tradução ao vivo' }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('link', { name: 'Abrir página local' }),
+      screen.getByRole('link', { name: 'Abrir tradução ao vivo' }),
     ).toHaveAttribute('href', audienceUrl);
     expect(
       screen.getByRole('link', { name: 'Tradução ao vivo' }),
