@@ -1,6 +1,6 @@
 # Dashboard da tesouraria
 
-Em Tesouraria → Dashboard (`/finance?tab=dashboard`), o acesso exige
+Na página Financeiro → Dashboard (`/finance/dashboard`), o acesso exige
 `FINANCE_TRANSACTION_READ`. Leitores apenas de resumo continuam a ver o resumo
 existente. A API `GET /api/v1/finance/charts?start=YYYY-MM-DD&end=YYYY-MM-DD`
 exige a mesma permissão e retorna somente agregados, sem dados pessoais.
@@ -9,7 +9,14 @@ O intervalo inclusivo filtra quatro pizzas: receitas e despesas por categoria
 e por centro de custos. Centros ausentes aparecem como “Sem centro de custos”.
 O gráfico de linhas apresenta saldo acumulado, receitas e despesas diárias.
 Ele possui um campo próprio de data fim para projeção independente das pizzas;
-alterar o intervalo geral reinicia esse campo. O Resumo existente permanece disponível.
+alterar o intervalo geral reinicia esse campo. A tesouraria e seu Resumo permanecem na página `/finance`, sem aba de Dashboard.
+O endereço antigo `/finance?tab=dashboard` redireciona para a nova página.
+
+Os gráficos usam Recharts, carregado sob demanda somente nessa rota: animações
+(respeitando a preferência por movimento reduzido), tooltips com valores e
+percentuais nas pizzas, tooltips diários nas linhas, controles para mostrar/ocultar
+séries e faixa de seleção para ampliar o período. A tabela de valores continua
+disponível para leitura acessível.
 Cada moeda tem seus próprios gráficos; valores de moedas diferentes não são somados.
 
 São considerados lançamentos COMPLETED: receitas pela data e despesas por paidAt.

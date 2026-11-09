@@ -37,6 +37,7 @@ describe('Direct route authorization', () => {
     '/notification-templates',
     '/library',
     '/finance',
+    '/finance/dashboard',
     '/audit',
     '/audit/errors',
     '/unknown-module',

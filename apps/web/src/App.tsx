@@ -87,6 +87,11 @@ const MembersListPage = lazy(() =>
     default: m.MembersListPage,
   })),
 );
+const FinanceChartsPage = lazy(() =>
+  import('./pages/FinanceChartsPage').then((m) => ({
+    default: m.FinanceChartsPage,
+  })),
+);
 const FinancePage = lazy(() =>
   import('./pages/FinancePage').then((m) => ({ default: m.FinancePage })),
 );
@@ -247,6 +252,10 @@ export function App({ children }: { children?: ReactNode }) {
                   element={<OperationsPage key="events" resource="events" />}
                 />
                 <Route path="finance" element={<FinancePage />} />
+                <Route
+                  path="finance/dashboard"
+                  element={<FinanceChartsPage />}
+                />
                 <Route path="audit" element={<AuditPage />} />
                 <Route path="audit/errors" element={<FrontendErrorsPage />} />
                 <Route

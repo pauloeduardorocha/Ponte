@@ -208,6 +208,12 @@ const navigation: NavigationItem[] = [
     icon: AccountBalanceRounded,
   },
   {
+    label: 'Dashboard',
+    group: 'Financeiro',
+    to: '/finance/dashboard',
+    icon: DashboardRounded,
+  },
+  {
     label: 'Meus reembolsos',
     group: 'Financeiro',
     to: '/reimbursements',
@@ -217,7 +223,8 @@ const navigation: NavigationItem[] = [
 
 function isNavigationActive(to: string, location: { pathname: string }) {
   const [pathname] = to.split('?');
-  if (pathname === '/audit') return location.pathname === pathname;
+  if (pathname === '/audit' || pathname === '/finance')
+    return location.pathname === pathname;
   return (
     location.pathname === pathname ||
     (pathname !== '/' && location.pathname.startsWith(`${pathname}/`))
@@ -232,7 +239,10 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const [expandedGroups, setExpandedGroups] = useState<NavigationGroup[]>(() =>
     navigationGroups.filter(
       (group) =>
-        (group === 'Datas' || group === 'Vídeos' || group === 'Auditoria') &&
+        (group === 'Datas' ||
+          group === 'Vídeos' ||
+          group === 'Auditoria' ||
+          group === 'Financeiro') &&
         navigation.some(
           (item) =>
             item.group === group && isNavigationActive(item.to, location),

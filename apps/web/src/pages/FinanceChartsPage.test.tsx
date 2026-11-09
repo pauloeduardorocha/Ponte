@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   makeUser,
   mockApi,
@@ -28,7 +28,45 @@ const currency = {
   ],
 };
 describe('Treasury dashboard', () => {
-  beforeEach(resetTestState);
+  beforeEach(() => {
+    resetTestState();
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+  it('opens a separate page from the financial menu and keeps treasury tabs unchanged', async () => {
+    const requests = mockApi({
+      ...sessionRoutes(makeUser(['FINANCE_TRANSACTION_READ'])),
+      'GET /finance/incomes': {
+        body: { items: [], total: 0, page: 1, pageSize: 20 },
+      },
+      'GET /finance/charts': { body: { currencies: [] } },
+    });
+    renderApp('/finance');
+    await screen.findByText('Nenhum registro.');
+    expect(
+      screen.queryByRole('tab', { name: 'Dashboard' }),
+    ).not.toBeInTheDocument();
+    expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
+    fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }));
+    await screen.findByRole('heading', { name: 'Dashboard da tesouraria' });
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('redirects the old tab address to the new page', async () => {
+    mockApi({
+      ...sessionRoutes(makeUser(['FINANCE_TRANSACTION_READ'])),
+      'GET /finance/charts': { body: { currencies: [] } },
+    });
+    renderApp('/finance?tab=dashboard');
+    await screen.findByRole('heading', { name: 'Dashboard da tesouraria' });
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
   it('allows a detailed financial data reader to filter all charts and select a future end', async () => {
     const requests = mockApi({
       ...sessionRoutes(makeUser(['FINANCE_TRANSACTION_READ'])),
@@ -36,7 +74,7 @@ describe('Treasury dashboard', () => {
         body: { through: '2026-11-07', currencies: [currency] },
       },
     });
-    renderApp('/finance?tab=dashboard');
+    renderApp('/finance/dashboard');
     expect(
       await screen.findByRole(
         'heading',
@@ -52,6 +90,16 @@ describe('Treasury dashboard', () => {
     expect(
       screen.getByRole('img', { name: /Despesas por centro de custos: Sede/ }),
     ).toBeVisible();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
+      'href',
+      '/finance/dashboard',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Ocultar Saldo' }));
+    expect(
+      screen.getByRole('button', { name: 'Mostrar Saldo' }),
+    ).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar Saldo' }));
     fireEvent.change(screen.getByLabelText('Data fim'), {
       target: { value: '2099-01-01' },
     });
@@ -91,12 +139,11 @@ describe('Treasury dashboard', () => {
           body: { month: '2026-11', balances: [], latestTransactions: [] },
         },
       });
-      renderApp('/finance?tab=dashboard');
-      await screen.findByText(
-        /Ainda não há data de atualização disponível/,
-        {},
-        { timeout: 10000 },
-      );
+      renderApp('/finance/dashboard');
+      await screen.findByRole('heading', { name: 'Acesso negado' });
+      expect(
+        screen.queryByRole('link', { name: 'Dashboard' }),
+      ).not.toBeInTheDocument();
       expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
     },
   );

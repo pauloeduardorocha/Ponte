@@ -3,12 +3,11 @@ import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
 import { useDebouncedValue } from '../lib/use-debounced-value';
-import { FinanceChartsPage } from './FinanceChartsPage';
 import { FinancialDashboardPanel } from './FinancialDashboardPanel';
 import { StatusChip } from '../components/DataPresentation';
 import { ReportsPage } from './ReportsPage';
 import { useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, Navigate, useSearchParams } from 'react-router-dom';
 import { BankingPage } from './BankingPage';
 import { InvoicesPage } from './InvoicesPage';
 import { ReimbursementsPage } from './reimbursements/ReimbursementsPage';
@@ -62,7 +61,6 @@ const modules = [
     read: 'FINANCE_BANK_IMPORT',
   },
   { route: 'summary', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
-  { route: 'dashboard', label: 'Dashboard', read: 'FINANCE_TRANSACTION_READ' },
   { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
   {
     route: 'reimbursements',
@@ -207,6 +205,9 @@ const labels: Record<string, string> = {
 };
 export function FinancePage() {
   const { user, hasPermission } = useAuth();
+  const [financeParams] = useSearchParams();
+  if (financeParams.get('tab') === 'dashboard')
+    return <Navigate to="/finance/dashboard" replace />;
   if (!user?.permissions.some((p) => p.startsWith('FINANCE_')))
     return <Alert severity="warning">Sem permissão financeira.</Alert>;
   const managesFinance = user?.permissions.some(
@@ -235,7 +236,6 @@ function FinanceManagementPage() {
   const [selected, setSelected] = useState('');
   const current =
     allowed.find((m) => m.route === (params.get('tab') ?? selected)) ??
-    allowed.find((m) => m.route !== 'dashboard') ??
     allowed[0];
   const route = current?.route ?? '';
   const [page, setPage] = useState(1);
@@ -289,14 +289,9 @@ function FinanceManagementPage() {
       }),
     enabled:
       Boolean(current) &&
-      ![
-        'summary',
-        'dashboard',
-        'banking',
-        'reports',
-        'invoices',
-        'reimbursements',
-      ].includes(route),
+      !['summary', 'banking', 'reports', 'invoices', 'reimbursements'].includes(
+        route,
+      ),
   });
   const useLookup = (name: string, permission: Permission) =>
     useQuery({
@@ -416,7 +411,6 @@ function FinanceManagementPage() {
       )}
       {data.isFetching && <Typography>Carregando…</Typography>}
       {route === 'summary' && <FinancialDashboardPanel />}
-      {route === 'dashboard' && <FinanceChartsPage />}
       {canWrite && (
         <Button variant="contained" onClick={() => open(null)}>
           Cadastrar {current.label.toLowerCase()}
@@ -424,7 +418,6 @@ function FinanceManagementPage() {
       )}
       {![
         'summary',
-        'dashboard',
         'banking',
         'reports',
         'invoices',

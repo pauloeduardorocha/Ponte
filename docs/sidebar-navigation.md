@@ -14,9 +14,9 @@ Todos os itens sem menu pai aparecem antes dos grupos recolhíveis, conforme as 
 
 O grupo Financeiro contém Tesouraria (`/finance`) e Meus reembolsos (`/reimbursements`). Tesouraria mantém as permissões da antiga opção Financeiro; Meus reembolsos mantém o acesso pessoal existente. As funcionalidades internas da tesouraria continuam na própria página.
 
-Tesouraria inclui a aba Dashboard (`/finance?tab=dashboard`), restrita a
+O grupo Financeiro inclui uma página independente Dashboard (`/finance/dashboard`), restrita a
 `FINANCE_TRANSACTION_READ`, com gráficos por categoria e centro de custos e
-evolução/projeção do saldo. A aba Resumo permanece disponível. Consulte
+evolução/projeção do saldo. Tesouraria (`/finance`) mantém sua aba Resumo; o Dashboard não é uma aba da tesouraria. Consulte
 [Dashboard da tesouraria](treasury-dashboard.md) para filtros e cálculo da projeção.
 
 O grupo Datas contém Calendário (`/calendar`), Gestão de eventos e Agenda de eventos. O grupo abre ao acessar uma dessas rotas. O calendário está disponível para contas aprovadas autenticadas; os itens de eventos preservam suas permissões.
