@@ -1,7 +1,7 @@
 # Tradução ao vivo na rede local
 
 O aplicativo Windows tem código e ciclo de publicação próprios, fora deste
-repositório. Os patches versionados abaixo descrevem as versões 0.3.1/0.3.2;
+repositório. Os patches versionados abaixo mantêm o leitor, o atualizador e o empacotamento;
 a existência deles não comprova a versão do ZIP atualmente distribuído.
 
 Validação do leitor: a fixture `listener-smoke.cjs` na pasta Live translation inicia o servidor local com Gemini simulado, abre a tela em Electron com largura de celular e verifica início do MP3 nativo, transcrição, pausa e retomada. Salva uma captura para revisão visual, sem contas reais ou chamadas ao Gemini. Execute `node_modules/electron/dist/electron.exe listener-smoke.cjs` com a variável `ELECTRON_RUN_AS_NODE` removida do ambiente. Os testes da PWA verificam a entrada pública/autenticada e as permissões administrativas.
@@ -12,7 +12,7 @@ O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiên
 
 ### Uma única tela para ouvir e ler (Windows 0.3.1+)
 
-O Ponte oferece **Abrir tradução ao vivo**, na mesma aba. O endereço local abre uma única tela com texto e um leitor HTML de MP3 contínuo, com o navegador visível, minimizado ou com o ecrã bloqueado, conforme suporte do aparelho. Toque em **Ouvir ao vivo** para começar; **Pausar áudio** mantém o texto conectado e **Retomar ao vivo** abre uma nova conexão à transmissão atual, descartando o áudio acumulado. Os controles Media Session usam as mesmas ações. Links antigos com `?mode=background` abrem essa mesma tela.
+O Ponte oferece **Abrir tradução ao vivo**, na mesma aba. O endereço local abre uma única tela com texto e um leitor HTML de MP3 contínuo, com o navegador visível, minimizado ou com o ecrã bloqueado, conforme suporte do aparelho. Toque em **Ouvir ao vivo** para começar; **Pausar áudio** mantém o texto conectado e **Retomar ao vivo** abre uma nova conexão à transmissão atual, descartando o áudio acumulado. Os controles Media Session usam as mesmas ações. Não há botão nem página separados para ouvir com a tela desligada; o pacote Windows inclui apenas a tela normal de áudio e texto. Links antigos com `?mode=background` abrem essa mesma tela.
 
 A navegação para a origem local evita carregar áudio HTTP de um IP privado dentro da PWA HTTPS, que pode ser bloqueado pelo navegador ([MDN: mixed content](https://developer.mozilla.org/en-US/docs/Web/Security/Defenses/Mixed_content)). O texto usa WebSocket e reconecta independentemente; falhas ou suspensão do texto não param o áudio nativo. O texto pode chegar antes do áudio. Ao ler trechos anteriores, a página respeita a posição de rolagem.
 
@@ -44,6 +44,8 @@ Extraia o ZIP e execute **Instalar.cmd**. O instalador usa sempre **%LOCALAPPDAT
 Na migração de um ZIP portátil anterior, instale uma vez e passe a abrir pelo atalho. A pasta portátil antiga não é apagada. Versões anteriores a 0.3.2 ainda não verificam atualizações: esta primeira instalação precisa ser feita manualmente. O novo pacote e sua release precisam ser publicados para a igreja recebê-los.
 
 As mudanças sobre o aplicativo Windows 0.3.1 estão no patch **docs/windows-updater-0.3.2.patch**, incluindo testes e instalador. Aplique na pasta Live translation com git apply --no-index após aplicar o patch do leitor 0.3.1, se necessário. Verificações: node --test update-checker.test.cjs installer.test.cjs, além da suíte existente; o teste do instalador usa uma pasta temporária sem alterar a instalação real nem os atalhos do usuário.
+
+O empacotamento do leitor único é mantido pelo patch `scripts/translation-windows/single-listener.patch`, aplicado sobre o código Windows 0.3.2 com `git apply --no-index`. Ele exclui a página dedicada do pacote e mantém o leitor normal e os links de acesso existentes.
 
 ## Download e publicação de uma versão Windows
 

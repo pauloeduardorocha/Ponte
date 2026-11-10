@@ -1,0 +1,73 @@
+diff --git a/radio.html b/radio.html
+deleted file mode 100644
+--- a/radio.html
++++ /dev/null
+@@ -1,9 +0,0 @@
+-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Ouvir em segundo plano</title><link rel="stylesheet" href="/style.css"></head><body><main>
+-<header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Inglês</span></div></header>
+-<p class="eyebrow">ÁUDIO AO VIVO · REDE LOCAL</p><h1>Ouvir com o ecrã bloqueado.</h1>
+-<p>Toque em Ouvir ao vivo e aguarde o áudio começar. Depois, experimente minimizar o navegador ou bloquear o ecrã. É preciso continuar no Wi-Fi da igreja.</p>
+-<section class="settings"><audio id="radio" controls preload="none" aria-label="Tradução em inglês ao vivo"></audio><div class="controls"><button id="listen">Ouvir ao vivo</button><button id="pause">Pausar</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p></section>
+-<p>Este leitor recebe áudio contínuo diretamente do computador da igreja. O texto continua disponível na página de acompanhamento.</p><a id="transcript" class="button-link">Acompanhar o texto</a>
+-<details><summary>Se o áudio ainda parar no Android ou Brave</summary><p>Confira se o navegador permite reprodução em segundo plano e se o Android não está restringindo sua atividade por economia de bateria. Volte a esta página e toque em Ouvir ao vivo. Não feche esta aba nem encerre o navegador. O comportamento depende do aparelho e da versão do navegador.</p></details>
+-<footer>O áudio pode ter um pequeno atraso para manter a reprodução contínua. Chamadas, outros aplicativos de áudio e o sistema podem interromper a escuta.</footer>
+-</main><script src="/radio.js"></script></body></html>
+diff --git a/build-windows.cjs b/build-windows.cjs
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -9,7 +9,7 @@ const application = path.join(destination, 'resources', 'app');
+ fs.cpSync(path.join(root, 'node_modules', 'electron', 'dist'), destination, { recursive: true });
+ fs.renameSync(path.join(destination, 'electron.exe'), path.join(destination, 'Ponte-Traducao.exe'));
+ fs.mkdirSync(application, { recursive: true });
+-const sources = ['main.cjs','update-checker.cjs','server.cjs','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.html','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
++const sources = ['main.cjs','update-checker.cjs','server.cjs','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
+ for (const file of sources) fs.copyFileSync(path.join(root, file), path.join(application, file));
+ fs.writeFileSync(path.join(application, 'package.json'), JSON.stringify({ name: 'ponte-traducao', productName: 'Ponte · Tradução ao vivo', version, main: 'main.cjs' }, null, 2));
+ fs.mkdirSync(path.join(application, 'node_modules'), { recursive: true });
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.2",
++  "version": "0.3.3",
+   "private": true,
+   "description": "Tradução do microfone para inglês com Gemini",
+   "main": "main.cjs",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.2",
++  "version": "0.3.3",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.3.2",
++      "version": "0.3.3",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/update-checker.test.cjs b/update-checker.test.cjs
+--- a/update-checker.test.cjs
++++ b/update-checker.test.cjs
+@@ -76,12 +76,12 @@ test('desktop startup triggers a non-blocking check and exposes a manual menu ac
+     __dirname, require: name => {
+       if (name === 'electron') return electron;
+       if (name === './server.cjs') return { createTranslationServer: () => ({ listen: async () => ({ presenterUrl: 'http://localhost:3210/presenter#test' }) }) };
+-      if (name === './update-checker.cjs') return { createUpdateChecker: config => { assert.equal(config.version, '0.3.2'); return settings => { checks.push(settings); return pending; }; } };
++      if (name === './update-checker.cjs') return { createUpdateChecker: config => { assert.equal(config.version, require('./package.json').version); return settings => { checks.push(settings); return pending; }; } };
+       return require(name);
+     },
+   });
+   await ready();
+-  assert.equal(loaded, true); assert.equal(windows.length, 1); assert.match(options.title, /0.3.2/);
++  assert.equal(loaded, true); assert.equal(windows.length, 1); assert.ok(options.title.endsWith(require('./package.json').version));
+   assert.equal(checks.length, 1, 'startup checks once without waiting for the network');
+   menu.find(item => item.label === 'Ajuda').submenu[0].click();
+   assert.equal(checks[1].manual, true);
