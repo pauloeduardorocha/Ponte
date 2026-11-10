@@ -8,6 +8,8 @@ Validação do leitor: a fixture `listener-smoke.cjs` na pasta Live translation 
 
 O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiência no Wi-Fi. Na versão do leitor MP3 descrita abaixo, áudio MP3 e texto seguem diretamente do computador para os ouvintes; não passam pela Vercel nem são salvos no banco do Ponte.
 
+As telas locais usam a missão **Conhecer a Cristo e fazê-lo conhecido** no apresentador e **To know Christ and make Him known** no ouvinte. O patch `scripts/translation-windows/mission-statement.patch` mantém esses textos no código Windows, sobre a versão 0.3.3.
+
 ## Configuração e uso
 
 ### Uma única tela para ouvir e ler (Windows 0.3.1+)

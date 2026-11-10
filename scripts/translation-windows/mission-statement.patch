@@ -1,0 +1,52 @@
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -3,7 +3,7 @@
+ <meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="style.css"></head>
+ <body><main>
+ <header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Computador da igreja</span></div></header>
+-<p class="eyebrow">APRESENTADOR · PORTUGUÊS → ENGLISH</p><h1>A mensagem chega a todos.</h1>
++<p class="eyebrow">APRESENTADOR · PORTUGUÊS → ENGLISH</p><h1>Conhecer a Cristo e fazê-lo conhecido</h1>
+ <p>Fale no microfone. Ouça e acompanhe a tradução em tempo real.</p>
+ <section class="settings">
+ <label for="key">Chave Gemini API</label><input id="key" type="password" autocomplete="off" placeholder="Cole sua chave do Google AI Studio">
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,6 +1,6 @@
+ <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
+ <body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Inglês</span></div></header>
+-<p class="eyebrow">PORTUGUÊS → ENGLISH</p><h1>Tradução ao vivo</h1><p>Ouça a mensagem em inglês e acompanhe o texto nesta mesma tela.</p>
++<p class="eyebrow">PORTUGUÊS → ENGLISH</p><h1 lang="en">To know Christ and make Him known</h1><p>Ouça a mensagem em inglês e acompanhe o texto nesta mesma tela.</p>
+ <section class="settings" aria-label="Reprodução da tradução"><audio id="radio" preload="none" aria-label="Tradução em inglês ao vivo"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
+ <section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
+ <details><summary>Precisa de ajuda para ouvir?</summary><p>Confira o volume, os fones e o Wi-Fi da igreja. Se o áudio parar, toque em Retomar ao vivo. Ao retomar, ouvirá a transmissão atual.</p><p>Chamadas e economia de bateria podem interromper o áudio. O suporte com o ecrã bloqueado depende do aparelho e do navegador.</p></details><footer>Áudio e texto vêm diretamente do computador da igreja. Não é preciso usar o microfone nem entrar na conta.</footer>
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.3",
++  "version": "0.3.4",
+   "private": true,
+   "description": "Tradução do microfone para inglês com Gemini",
+   "main": "main.cjs",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.3",
++  "version": "0.3.4",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.3.3",
++      "version": "0.3.4",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
