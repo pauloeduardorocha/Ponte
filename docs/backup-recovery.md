@@ -2,24 +2,15 @@
 
 ## Estado e objetivos
 
-Inspeção de 27/10/2026: o projeto Neon `proud-dream-93315359` usa PostgreSQL 18,
-plano Free, histórico de 21 600 segundos (6 horas) e nenhuma agenda de snapshots
-na branch de produção `br-icy-fire-b2v6raw9`. A cópia externa complementa esse
-histórico e não exige mudança de plano.
+A rotina usa **Restic + rclone** para criar cópias encriptadas no Google Drive.
+Os dados são encriptados antes de sair da máquina; Restic acessa diretamente
+a API via rclone, sem depender da pasta sincronizada do Drive.
 
-Implementação preparada para Google Drive com **Restic + rclone**. Os dados são
-encriptados antes de sair da máquina; não usar a pasta sincronizada do Drive
-como repositório local. Restic acessa diretamente a API via rclone.
-Configuração externa concluída em 27/10/2026. Primeira cópia real aprovada:
-snapshot `4ccfd51f`, aproximadamente 8,3 MiB armazenados, verificação estrutural
-sem erros e retenção aplicada. [Execução no GitHub](https://github.com/pauloeduardorocha/Ponte/actions/runs/40551281770).
-Esses são registros históricos, não uma verificação da habilitação ou da última
-execução atual. O plano de outubro registra também um ensaio externo aprovado;
-confira os resultados nos Actions e escolha uma cópia recente para novo ensaio.
+Confirme a habilitação do workflow, os secrets e a última execução nos Actions.
 O restabelecimento completo da aplicação e o RPO/RTO não são demonstrados apenas
 pelo restauro SQL.
 
-Política inicial proposta, a confirmar com o responsável pela operação:
+Política operacional proposta, a confirmar com o responsável pela operação:
 
 | Item                 | Política                                                                                                          |
 | -------------------- | ----------------------------------------------------------------------------------------------------------------- |
@@ -128,7 +119,7 @@ Para verificar uma cópia do Drive sem instalar ferramentas no computador:
 1. Abrir **Actions → Drive backup recovery drill → Run workflow**.
 2. Selecionar `main` e informar em `snapshot` o ID completo ou prefixo único de
    pelo menos oito caracteres, obtido da listagem atual de snapshots.
-   Não presuma que a primeira cópia de outubro ainda exista após a retenção.
+   Escolha uma cópia disponível que atenda ao objetivo do ensaio.
 3. Acionar **Run workflow** e acompanhar o job `recovery`.
 4. Confirmar sucesso e a mensagem `Recovered snapshot ... database/documents/runtime login verified`.
 

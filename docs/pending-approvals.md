@@ -19,4 +19,4 @@ Aplique a migration `20261026120000_pending_approval` antes de publicar a API. E
 Testes de serviço/HTTP com banco simulado ficam em `pending-approval.spec.ts`.
 As suítes de autenticação com PostgreSQL descartável e os testes de cadastro,
 lista de espera, permissões e rotas verificam a integração. Use os comandos
-do [CI](ci.md); resultados da implementação de outubro são históricos.
+do [CI](ci.md); esses comandos preparam o destino de teste apropriado.

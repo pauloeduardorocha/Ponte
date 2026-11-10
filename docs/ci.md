@@ -9,7 +9,7 @@ acionamento manual. Existem dois checks independentes:
   banco e cria os builds de produção.
 - **PostgreSQL integration and restricted login:** executa as suítes reais com
   PostgreSQL 17 descartável e verifica também os privilégios do login de execução.
-  Inclui um segundo ensaio com PostgreSQL 18 (versão registrada em produção na inspeção de outubro), backup
+  Inclui um segundo ensaio com PostgreSQL 18, backup
   encriptado, restauro e verificação da API e dos documentos recuperados.
 
 Node está definido em `.node-version`. O CI não usa segredos de produção, não

@@ -1,6 +1,6 @@
 # Autenticação, auditoria e privacidade
 
-Referência do código atual; não é uma certificação de segurança ou de conformidade. A [revisão de 07/10/2026](archive/security-review-20261007.md) foi preservada como histórico. Resultados de auditoria de dependências e testes daquela data não descrevem a árvore atual.
+Referência dos controles implementados no código atual. Não constitui certificação de segurança ou conformidade.
 
 ## Autenticação e autorização
 

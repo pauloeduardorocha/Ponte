@@ -1,7 +1,7 @@
 # Pesquisa de ISBNs antes de associar capas
 
-Piloto histórico de 20 registos do acervo, com títulos brasileiros e de outras línguas.
-O estado posterior de enriquecimento do conjunto está em [ISBN-RESEARCH.md](ISBN-RESEARCH.md).
+O piloto de 20 registos exercita as ferramentas de pesquisa e revisão.
+O fluxo de enriquecimento do conjunto está em [ISBN-RESEARCH.md](ISBN-RESEARCH.md).
 A pesquisa assistida consulta metadados de editoras, livrarias, Google Books
 (páginas públicas), Open Library e bibliografias nacionais. Não se exige chave.
 
@@ -20,12 +20,6 @@ python -B -m unittest discover -s . -p test_isbn_review.py -v
 Python 3.10+, sem dependências externas. Executar na pasta deste script ou ajustar
 os caminhos. A saída é criada exclusivamente, sem sobrescrever um CSV anterior.
 Não há ligação ao banco nem aplicação automática de ISBN, língua, editora ou capa.
-
-Resultado da pesquisa de 22/10/2026: 16 registos com candidatos (18 fichas de
-edições), 4 pendentes. Isso inclui um possível box de Evangelhos para todos;
-não se pode concluir que o ISBN do conjunto corresponda ao exemplar do acervo.
-Também há fichas comunitárias e uma ficha de Teologia Sistemática com dados
-editoriais divergentes. Os candidatos não têm todos o mesmo grau de sustentação.
 
 O CSV mantém o título e autor originais separados dos encontrados, registos com
 zeros, fonte, língua, editora, ano/formato quando informados e observações.

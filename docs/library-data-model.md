@@ -30,7 +30,7 @@ O pacote versionado contém 384 fichas, 426 exemplares com quantidade conhecida 
 - [Preparador](../apps/api/prisma/library-production/prepare-seed.cjs): gera seed e relatório sem conectar ao banco.
 - [Ferramentas e execução](../apps/api/prisma/library-production/README.md): comandos, proteções e testes.
 
-A pesquisa de ISBN, editoras e capas pode fornecer candidatos; dígito verificador correto ou URL acessível não confirma a edição física. O [registro de enriquecimento](../apps/api/prisma/library-production/ISBN-RESEARCH.md) documenta a importação provisória de outubro e sua proveniência. Arquivos de `outputs/` e caches citados nesse histórico são locais e podem não existir num clone novo.
+A pesquisa de ISBN, editoras e capas pode fornecer candidatos; dígito verificador correto ou URL acessível não confirma a edição física. O [guia de enriquecimento](../apps/api/prisma/library-production/ISBN-RESEARCH.md) descreve a pesquisa, a proveniência e a aplicação controlada de candidatos. Resultados em `outputs/` e caches são locais e precisam ser preparados antes do uso.
 
 ## Operações administrativas
 

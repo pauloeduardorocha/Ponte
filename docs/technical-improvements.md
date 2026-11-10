@@ -1,6 +1,6 @@
 # Manutenção e melhorias técnicas
 
-Revisão documental em 09/11/2026, baseada no código versionado. Não atesta configuração ou disponibilidade de produção. O [plano de outubro](archive/technical-improvements-20261027.md) misturava itens já integrados com pendências de publicação daquela data.
+Recursos implementados e limitações identificáveis no código versionado. Configuração e disponibilidade de produção devem ser conferidas no ambiente.
 
 ## Recursos implementados
 

@@ -1,6 +1,6 @@
 # Documentação do Ponte
 
-Revisão do conteúdo próprio do projeto em **09/11/2026**, confrontando documentação com fontes, schema, rotas, scripts, testes e workflows versionados. Os guias descrevem o código; não certificam o estado atual de produção, serviços externos ou dispositivos. O [registro da revisão](documentation-review-20261109.md) explica escopo e validação.
+Os guias descrevem o código, os contratos e os procedimentos atuais do projeto. Configuração de produção, serviços externos e dispositivos devem ser conferidos nos respectivos ambientes.
 
 ## Começar e manter
 
@@ -70,9 +70,7 @@ Revisão do conteúdo próprio do projeto em **09/11/2026**, confrontando docume
 | [Sugestões de classificação](bank-classification-suggestions.md) | Evidência histórica de categoria/centro de custo              |
 | [Faturas e e-Fatura](EFATURA.md)                                 | Consulta, importação e vínculo com despesas                   |
 
-## Referências, gerados e histórico
-
-[Arquivo histórico](archive/README.md) contém publicações, incidentes, investigações e validações datadas. Não use seus comandos como roteiro atual nem suas autorizações como permissão permanente. Os nomes antigos de alguns guias foram mantidos para compatibilidade com referências existentes.
+## Referências e gerados
 
 A biblioteca mantém documentação especializada junto dos scripts: [Bing Imagens](../apps/api/prisma/library-production/GOOGLE-COVERS.md) (nome legado), [Open Library](../apps/api/prisma/library-production/OPENLIBRARY-COVERS.md), [piloto de ISBN](../apps/api/prisma/library-production/ISBN-REVIEW.md) e [pesquisa/enriquecimento](../apps/api/prisma/library-production/ISBN-RESEARCH.md). Fontes externas e edição física exigem conferência.
 
@@ -88,4 +86,4 @@ Execute `npm run docs:check` ao revisar documentos; o mesmo comando roda no CI.
 Ele verifica destinos locais, políticas de cache e os gerados da biblioteca; o
 OpenAPI tem sua própria verificação.
 
-Cada assunto deve ter uma referência principal. Ao mudar comportamento, revise interface, API, permissões e persistência e atualize esse guia. Evite copiar tabelas completas de endpoints para o README; use OpenAPI e os guias de domínio. Registre resultados de intervenções com data no histórico. Não publique identidades de operadores, credenciais ou dados pessoais como configuração de referência.
+Cada assunto deve ter uma referência principal. Ao mudar comportamento, revise interface, API, permissões e persistência e atualize esse guia. Evite copiar tabelas completas de endpoints para o README; use OpenAPI e os guias de domínio. Mantenha os guias limitados ao estado atual; relatos de intervenções e resultados pontuais não fazem parte da documentação. Não publique identidades de operadores, credenciais ou dados pessoais como configuração de referência.

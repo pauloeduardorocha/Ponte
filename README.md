@@ -2,7 +2,7 @@
 
 Sistema de gestão da igreja em monorepo npm: API NestJS/Prisma/PostgreSQL, frontend React/Vite/MUI e contratos compartilhados. Inclui contas e aprovação, membros e famílias, comunidade, biblioteca, eventos, ministérios, escalas, financeiro, reembolsos e auditoria.
 
-A [documentação por assunto](docs/README.md) separa guias atuais e registros históricos. Os contratos HTTP são gerados em [OpenAPI](docs/openapi.json).
+A [documentação por assunto](docs/README.md) reúne os guias do estado atual. Os contratos HTTP são gerados em [OpenAPI](docs/openapi.json).
 
 ## Requisitos e estrutura
 
@@ -14,7 +14,7 @@ Use o Node de [.node-version](.node-version) (24.15.0) e npm 10 ou superior. O m
 | `apps/web`        | Interface, PWA e testes de componentes                    |
 | `packages/shared` | Tipos, permissões e políticas compartilhadas              |
 | `scripts`         | Contratos, integração e recuperação                       |
-| `docs`            | Guias, contratos gerados, exemplos e histórico            |
+| `docs`            | Guias, contratos gerados e exemplos                       |
 
 ## Desenvolvimento local
 

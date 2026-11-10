@@ -18,17 +18,15 @@ não um livro adicional. As linhas vazias no final não são registos.
 
 `category-proposals.json` mantém um registo de revisão para cada obra, mesmo
 quando não há categoria proposta. As propostas ainda não foram confirmadas.
-`seed.json` destina-se à biblioteca; não deve ser entregue ao seed de demonstração. As associações propostas têm `reviewedAt: null`. O campo legado `approvedForProduction` no artefato indica a preparação daquela carga, não autorização permanente para reset ou aplicação em outra base.
+`seed.json` destina-se à biblioteca; não deve ser entregue ao seed de demonstração. As associações propostas têm `reviewedAt: null`. O campo `approvedForProduction` no artefato não substitui autorização específica para reset ou aplicação em outra base.
 
 O resultado tem 384 fichas, 426 exemplares, 102 categorias e 379 associações
 propostas. As três quantidades desconhecidas não criam exemplares. Os autores ausentes ficam nulos; o código de idioma `und` indica que não foi informado. A condição e localização
 não verificadas são indicadas como tal; a disponibilidade aguarda conferência.
 
-A carga inicial de outubro teve autorização específica, registrada no histórico
-do projeto. Isso não autoriza repetir uma limpeza. `reset-seed` apaga históricos
-operacionais da biblioteca; uma nova execução exige autorização própria, destino
-confirmado e recuperação testada. A classificação continua sujeita a revisão.
-O executor preserva auditoria global e dados das outras áreas.
+`reset-seed` apaga históricos operacionais da biblioteca e exige autorização
+específica, destino confirmado e recuperação testada. A classificação continua
+sujeita a revisão. O executor preserva auditoria global e dados das outras áreas.
 
 ```powershell
 # DATABASE_URL e LIBRARY_EXPECT_HOST são injetados no processo, sem credenciais no Git.
@@ -42,7 +40,7 @@ node apps/api/prisma/library-production/database.cjs seed
 
 A migração tem checksum e registo em `_prisma_migrations` e reaplica os privilégios
 de runtime. O transporte HTTPS é usado apenas nos comandos de administração,
-porque a ligação TCP local não completou TLS; a aplicação mantém Prisma.
+com validação explícita de destino; a aplicação mantém Prisma.
 Criar uma branch de recuperação antes da migração/reset de produção. Testar com:
 
 ```powershell

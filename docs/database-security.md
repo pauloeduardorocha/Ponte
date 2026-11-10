@@ -33,8 +33,6 @@ Confirme host, banco, branch e papel antes de manutenção. `.env`, contexto `.n
 
 `apps/api/scripts/protect-local-secrets.ps1` atende ao arquivamento legado com DPAPI. Os arquivos dependem do usuário Windows e do computador que os criou; não substituem gestor de segredos recuperável em outra máquina. Não versione credenciais, dumps ou arquivos de ambiente.
 
-A antiga configuração local está no [registro histórico de outubro](archive/database-security-20261020.md). Branches temporárias e cofres ali citados não devem ser presumidos disponíveis.
-
 ## Backup, rede e recuperação
 
 Siga [backup e recuperação](backup-recovery.md). Os workflows estão versionados; secrets, habilitação, última execução e RPO/RTO reais precisam ser confirmados no ambiente. Ensaio de banco não demonstra recuperação completa da aplicação.

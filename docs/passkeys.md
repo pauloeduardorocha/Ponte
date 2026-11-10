@@ -77,10 +77,3 @@ interface com a API e o autenticador simulados: convite após senha, confirmaç�
 explícita, adiamento, recusa/cancelamento, redirecionamento, login seguinte nas
 duas larguras de tela, remoção e saída explícita. A confirmação física de PIN ou
 biometria exige validação num dispositivo real compatível.
-
-Também foi executado um teste local no Chrome com autenticador virtual interno,
-nas larguras de 1440 e 390 px. A API foi interceptada apenas para o teste, com
-geração de opções e verificação criptográfica reais pelo SimpleWebAuthn. Foram
-confirmados cadastro, assinatura no acesso seguinte, preservação do destino,
-saída sem reentrada automática e diálogo sem overflow. Esse teste não utilizou
-a API ou a base de dados de produção.

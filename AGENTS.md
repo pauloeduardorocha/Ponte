@@ -8,6 +8,7 @@ Estas instruções aplicam-se a todo o repositório. Registre aqui os acordos du
 - Preserve os padrões do módulo alterado e mantenha o trabalho limitado ao pedido do usuário.
 - Ao alterar uma funcionalidade, confira o fluxo completo entre interface, API, permissões e persistência. Preserve os contratos existentes quando não houver mudança solicitada.
 - Atualize a documentação correspondente em `docs/` quando o comportamento ou o contrato mudar.
+- Mantenha a documentação relativa ao estado atual do projeto. Não crie `docs/archive` nem relatos de intervenções, publicações ou resultados pontuais de validação; o histórico permanece no Git.
 - Execute testes relevantes e verificações de TypeScript/lint nos módulos afetados. Informe exatamente o que foi validado e eventuais limitações.
 - Não inclua credenciais, dados pessoais ou arquivos de ambiente em commits.
 
@@ -36,5 +37,6 @@ Estas instruções aplicam-se a todo o repositório. Registre aqui os acordos du
 - Diff antes do commit: `git diff --check` e revisão do conteúdo em staging.
 
 <!-- postman-cli:installation:start -->
+
 Postman CLI is installed on this device, and can be used for API Engineering work.
 <!-- postman-cli:installation:end -->

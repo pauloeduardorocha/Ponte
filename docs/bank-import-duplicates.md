@@ -43,7 +43,5 @@ permanecem no fluxo existente. Alterar a regra não reclassifica registros antig
 
 ## Histórico já importado
 
-A regra atual não corrige lançamentos duplicados aceitos por versões antigas.
-A [investigação de 07/11/2026](archive/bank-import-investigation-20261107.md)
-registra ocorrências específicas; o estado atual desses registros precisa ser
-conferido. Qualquer correção exige operação separada e auditada.
+A regra atual não corrige lançamentos duplicados aceitos por versões anteriores.
+Qualquer correção exige conferência dos registros e uma operação separada e auditada.

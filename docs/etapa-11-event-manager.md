@@ -27,8 +27,6 @@ npm run db:deploy --workspace @church/api
 
 A validação desta etapa aplica todas as migrations em schemas PostgreSQL temporários. A base da aplicação não é migrada pelos testes.
 
-A migration desta etapa também foi aplicada separadamente à base local de desenvolvimento.
-
 ## RBAC e políticas
 
 O guard global de autenticação carrega permissões atuais da base em cada pedido. O `PermissionGuard` e os decorators existentes continuam responsáveis pelo RBAC; `PermissionAny` acrescenta alternativas explícitas para manter compatibilidade com `EVENT_MANAGE` nas rotas antigas.
