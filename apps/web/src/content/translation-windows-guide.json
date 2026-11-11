@@ -31,11 +31,13 @@
       ]
     },
     {
-      "title": "3. Escolher o microfone e testar",
+      "title": "3. Abrir canais, escolher o microfone e testar",
       "steps": [
+        "Em Canais de tradução, o inglês já vem aberto. Escolha outro idioma e toque em Abrir canal para disponibilizar até três canais simultâneos. O idioma falado é detectado automaticamente.",
+        "É preciso ter pelo menos um canal aberto para iniciar. Pode abrir e fechar canais antes ou durante a transmissão. Um canal aberto durante a tradução começa a receber as próximas palavras. Cada canal usa uma sessão de tradução, compartilhada por todos os seus ouvintes.",
         "Cole a chave fornecida pelo responsável no campo Chave Gemini API. Essa chave permite que o serviço faça a tradução; ela não é a ligação do Ponte.",
         "Clique em Atualizar microfones. Se aparecer um pedido para usar o microfone, permita o acesso. No campo Microfone, escolha o que será usado no culto.",
-        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto em inglês aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
+        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto no idioma do canal selecionado aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
         "Se quiser ouvir o teste neste computador, use fones e marque Ouvir tradução neste computador. Evite reproduzir a tradução nas caixas de som perto do microfone, pois isso pode causar eco."
       ]
     },
@@ -53,10 +55,11 @@
       "steps": [
         "Peça às pessoas que se conectem ao Wi-Fi da igreja e usem fones de ouvido. O link local não funciona em casa ou somente com dados móveis.",
         "No Ponte, abra Tradução ao vivo e toque em Abrir tradução ao vivo. A tela do ouvinte abre na mesma aba. Use o botão Voltar do navegador para retornar ao Ponte.",
-        "Na tela do ouvinte, toque em Ouvir ao vivo. O texto em inglês aparece na mesma tela; ele pode chegar antes do áudio.",
+        "Na tela do ouvinte, escolha um dos canais abertos e toque em Ouvir ao vivo. Pode trocar de canal a qualquer momento; áudio e texto mudam juntos. O texto pode chegar antes do áudio.",
         "Use Pausar áudio para interromper o som sem perder o texto. Retomar ao vivo reconecta à transmissão atual, sem repetir o áudio da pausa.",
         "O mesmo leitor funciona com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir. Não é preciso escolher outro modo. Atualize o aplicativo Windows para 0.3.1 ou superior; não feche a aba nem encerre o navegador.",
-        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto."
+        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto.",
+        "Se o canal escolhido for fechado, o áudio para e a tela pede para selecionar outro. Uma falha em um canal não interrompe os outros; no computador, use Reconectar para tentar novamente."
       ]
     },
     {

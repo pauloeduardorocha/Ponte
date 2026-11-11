@@ -1,0 +1,1664 @@
+diff --git a/server.cjs b/server.cjs
+--- a/server.cjs
++++ b/server.cjs
+@@ -7,63 +7,76 @@ const { WebSocketServer, WebSocket } = require('ws');
+ const { TranslationBridge } = require('./bridge.cjs');
+ const audioCodec = require('./audio-codec.js');
+ const { PontePublisher } = require('./ponte-publisher.cjs');
+-const { RadioStream } = require('./radio-stream.cjs');
++const { TranslationChannels } = require('./translation-channels.cjs');
+ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = TranslationBridge } = {}) {
+   const presenterToken = randomBytes(32).toString('hex'), room = randomBytes(12).toString('hex');
+-  let presenter = null, state = 'idle', transcript = '';
++  let presenter = null;
+   const audience = new Set();
+   const send = (client, data) => {
+     if (client.readyState !== WebSocket.OPEN) return;
+     if (client.bufferedAmount > 1024 * 1024) { client.close(1013, 'Connection too slow'); return; }
+     client.send(JSON.stringify(data));
+   };
+-  const broadcast = data => { for (const client of audience) send(client, data); };
+-  const broadcastAudio = packet => {
+-    for (const client of audience) {
+-      if (client.readyState !== WebSocket.OPEN) continue;
+-      if (client.bufferedAmount > 128000) { client.close(1013, 'Connection too slow'); continue; }
+-      client.send(packet, { binary: true });
+-    }
+-  };
+-  const counts = () => { if (presenter) send(presenter, { viewers: audience.size + radio.listenerCount }); };
+-  const radio = new RadioStream(counts);
++  const counts = () => { if (presenter) send(presenter, { viewers: audience.size }); };
+   const publisher = new PontePublisher(message => { if (presenter) send(presenter, message); });
+-  const bridge = new Bridge(message => {
+-    if (message.ready) state = 'live';
+-    if (message.error) { state = 'idle'; radio.stop(); void publisher.unpublish(); }
+-    if (message.content?.outputTranscription?.text) transcript = (transcript + message.content.outputTranscription.text).slice(-50000);
+-    if (message.content?.turnComplete) transcript = (transcript + '\n\n').slice(-50000);
+-    if (presenter) send(presenter, message);
+-    if (message.error) broadcast({ state: 'idle' });
+-    else {
+-      const content = message.content;
+-      if (!content) { broadcast({ ...message, state }); return; }
+-      const packets = [];
+-      if (content.interrupted) radio.clear();
+-      const publicContent = { ...content };
+-      if (content.modelTurn) {
+-        const parts = [];
+-        for (const part of content.modelTurn.parts || []) {
+-          if (part.inlineData) {
+-            const { mimeType = '', data } = part.inlineData;
+-            if (!mimeType.startsWith('audio/pcm') || typeof data !== 'string') continue;
+-            const rate = Number(/rate=(\d+)/.exec(mimeType)?.[1] || 24000);
+-            try { const pcm = Buffer.from(data, 'base64'); packets.push(audioCodec.encode(pcm, rate)); radio.enqueue(pcm, rate); }
+-            catch { if (presenter) send(presenter, { audioWarning: 'Um bloco de áudio inválido foi descartado.' }); }
+-          } else parts.push(part);
++  const selectedSnapshot = client => {
++    const channel = channels.channels.get(client.channelId);
++    return { selectedChannel: channel?.id ?? null, channelId: channel?.id ?? null, state: channel?.state ?? 'idle', snapshot: channel?.transcript ?? '', reset: true };
++  };
++  const channels = new TranslationChannels({ Bridge, onCount: counts,
++    onCatalogue: () => {
++      const data = { channels: channels.list(), running: channels.running, state: channels.state };
++      if (presenter) send(presenter, data);
++      for (const client of audience) {
++        if (client.channelId && !channels.channels.has(client.channelId)) { client.channelId = null; send(client, { ...data, ...selectedSnapshot(client), channelClosed: true }); }
++        else send(client, { ...data, state: channels.channels.get(client.channelId)?.state ?? 'idle', channelId: client.channelId });
++      }
++      if (channels.state === 'idle') void publisher.unpublish();
++    },
++    onError: (channel, error) => { if (presenter) send(presenter, { channelError: channel.name + ': ' + error, errorChannelId: channel.id }); },
++    onMessage: (channel, message) => {
++      if (presenter) send(presenter, { ...message, channelId: channel.id });
++      const packets = [], content = message.content;
++      let publicContent;
++      if (content) {
++        if (content.interrupted) channel.radio.clear();
++        publicContent = { ...content };
++        if (content.modelTurn) {
++          const parts = [];
++          for (const part of content.modelTurn.parts || []) {
++            if (part.inlineData) {
++              const { mimeType = '', data } = part.inlineData;
++              if (!mimeType.startsWith('audio/pcm') || typeof data !== 'string') continue;
++              const rate = Number(/rate=(\d+)/.exec(mimeType)?.[1] || 24000);
++              try { const pcm = Buffer.from(data, 'base64'); packets.push(audioCodec.encode(pcm, rate)); channel.radio.enqueue(pcm, rate); }
++              catch { if (presenter) send(presenter, { audioWarning: 'Um bloco de áudio inválido foi descartado.', channelId: channel.id }); }
++            } else parts.push(part);
++          }
++          publicContent.modelTurn = { ...content.modelTurn, parts };
++        }
++      }
++      const data = { ...message, channelId: channel.id, state: channel.state };
++      if (publicContent) data.content = publicContent;
++      for (const client of audience) {
++        if (client.channelId !== channel.id) continue;
++        send(client, data);
++        for (const packet of packets) {
++          if (client.readyState !== WebSocket.OPEN) break;
++          if (client.bufferedAmount > 128000) { client.close(1013, 'Connection too slow'); break; }
++          client.send(packet, { binary: true });
+         }
+-        publicContent.modelTurn = { ...content.modelTurn, parts };
+       }
+-      broadcast({ content: publicContent, state });
+-      for (const packet of packets) broadcastAudio(packet);
+     }
+   });
+-  const files = { '/presenter': 'index.html', '/renderer.js': 'renderer.js', '/transport.js': 'transport.js', '/capture.js': 'capture.js', '/style.css': 'style.css', '/audience.js': 'audience.js', '/playback.js': 'playback.js', '/audio-codec.js': 'audio-codec.js', '/logo.png': 'logo.png', '/radio.js': 'radio.js' };
++  const files = { '/presenter': 'index.html', '/renderer.js': 'renderer.js', '/transport.js': 'transport.js', '/capture.js': 'capture.js', '/style.css': 'style.css', '/audience.js': 'audience.js', '/playback.js': 'playback.js', '/audio-codec.js': 'audio-codec.js', '/logo.png': 'logo.png', '/radio.js': 'radio.js', '/languages.js': 'languages.js' };
+   const server = http.createServer((req, res) => {
+     const url = new URL(req.url, 'http://localhost'), pathname = url.pathname;
+     if (pathname === `/audio/${room}.mp3`) {
+-      if (req.method !== 'GET' || state !== 'live') { res.writeHead(503, { 'Cache-Control': 'no-store' }); res.end('A tradução não está ativa.'); return; }
+-      try { radio.subscribe(res); } catch { res.destroy(); }
++      const id = url.searchParams.get('channel') ?? channels.defaultId;
++      const channel = channels.channels.get(id);
++      if (!channel) { res.writeHead(404, { 'Cache-Control': 'no-store' }); res.end('Canal não disponível.'); return; }
++      if (req.method !== 'GET' || channel.state !== 'live') { res.writeHead(503, { 'Cache-Control': 'no-store' }); res.end('A tradução não está ativa.'); return; }
++      try { channel.radio.subscribe(res); } catch { res.destroy(); }
+       return;
+     }
+     let file = Object.hasOwn(files, pathname) ? files[pathname] : undefined;
+@@ -87,34 +100,48 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+     client.isAlive = true;
+     client.on('pong', () => { client.isAlive = true; }); client.on('error', () => {});
+     if (pathname.startsWith('/audience-ws/')) {
+-      audience.add(client); send(client, { state, snapshot: transcript }); counts();
++      client.channelId = channels.defaultId;
++      audience.add(client); send(client, { channels: channels.list(), ...selectedSnapshot(client) }); counts();
++      client.on('message', (raw, binary) => {
++        if (binary) return;
++        let message; try { message = JSON.parse(raw.toString()); } catch { return; }
++        if (message?.action !== 'select-channel') return;
++        if (typeof message.channelId !== 'string' || !channels.channels.has(message.channelId)) { send(client, { selectionError: 'Este canal não está mais disponível.' }); return; }
++        client.channelId = message.channelId; send(client, selectedSnapshot(client));
++      });
+       client.on('close', () => { audience.delete(client); counts(); }); return;
+     }
+     let authenticated = false;
+     const timeout = setTimeout(() => client.close(1008, 'Authentication required'), 5000);
+     client.on('close', () => {
+       clearTimeout(timeout);
+-      if (presenter === client) { presenter = null; bridge.stop(); radio.stop(); void publisher.unpublish(); state = 'idle'; broadcast({ state }); }
++      if (presenter === client) { presenter = null; channels.stop(); void publisher.unpublish(); }
+     });
+     client.on('message', (raw, binary) => {
+-      if (binary) { if (authenticated && presenter === client && state === 'live') bridge.audio(raw); return; }
++      if (binary) { if (authenticated && presenter === client && channels.running) channels.audio(raw); return; }
+       let message; try { message = JSON.parse(raw.toString()); } catch { client.close(1008); return; }
+       if (!message || typeof message !== 'object') { client.close(1008); return; }
+       if (!authenticated) {
+         const token = Buffer.from(typeof message.token === 'string' ? message.token : '');
+         if (token.length !== presenterToken.length || !timingSafeEqual(token, Buffer.from(presenterToken)) || presenter) { client.close(1008, 'Access denied'); return; }
+         clearTimeout(timeout); authenticated = true; presenter = client;
+-        send(client, { authenticated: true, links: audienceLinks(), viewers: audience.size }); return;
++        send(client, { authenticated: true, links: audienceLinks(), viewers: audience.size, channels: channels.list(), running: channels.running, state: channels.state }); return;
+       }
+       if (message.action === 'start' && typeof message.key === 'string' && message.key.trim() && message.key.length < 512) {
+-        bridge.stop(); radio.stop(); void publisher.unpublish(); transcript = ''; state = 'connecting'; broadcast({ reset: true, state });
+-        try { bridge.start(message.key.trim()); } catch { bridge.stop(); state = 'idle'; send(client, { error: 'Não foi possível iniciar a conexão.' }); broadcast({ state }); }
+-      } else if (message.action === 'stop') { bridge.stop(); radio.stop(); void publisher.unpublish(); state = 'idle'; broadcast({ state }); }
+-      else if (message.action === 'clear') { transcript = ''; broadcast({ reset: true }); }
++        try { channels.start(message.key.trim()); }
++        catch (error) { send(client, { channelError: error.message }); }
++      } else if (message.action === 'stop') { channels.stop(); void publisher.unpublish(); }
++      else if (message.action === 'open-channel') {
++        try { channels.add(message.languageCode); } catch (error) { send(client, { channelError: error.message }); }
++      } else if (message.action === 'close-channel') {
++        try { channels.remove(message.channelId); } catch (error) { send(client, { channelError: error.message }); }
++      } else if (message.action === 'retry-channel') {
++        try { channels.retry(message.channelId); } catch (error) { send(client, { channelError: error.message }); }
++      } else if (message.action === 'clear') channels.clear(message.channelId);
+       else if (message.action === 'configure-ponte' && typeof message.configuration === 'string' && message.configuration.length < 2048) {
+         try { publisher.configure(message.configuration); }
+         catch (error) { send(client, { publication: { error: error.message } }); }
+-      } else if (message.action === 'publish' && state === 'live') {
++      } else if (message.action === 'publish' && channels.state === 'live') {
+         const links = audienceLinks();
+         if (!links.includes(message.audienceUrl) || message.audienceUrl.startsWith('http://localhost:')) { send(client, { publication: { error: 'Selecione o endereço da rede Wi-Fi da igreja.' } }); return; }
+         void publisher.publish(message.audienceUrl).catch(error => send(client, { publication: { published: false, error: error.message } }));
+@@ -133,7 +160,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       server.once('error', reject);
+       server.listen(port, host, () => { server.removeListener('error', reject); resolve({ presenterUrl: `http://localhost:${server.address().port}/presenter#${presenterToken}`, audienceLinks: audienceLinks() }); });
+     }),
+-    close: async () => { clearInterval(heartbeat); bridge.stop(); radio.stop(); await publisher.unpublish(); for (const client of wss.clients) client.terminate(); wss.close(); return new Promise(resolve => server.close(resolve)); }
++    close: async () => { clearInterval(heartbeat); channels.stop(); await publisher.unpublish(); for (const client of wss.clients) client.terminate(); wss.close(); return new Promise(resolve => server.close(resolve)); }
+   };
+ }
+ module.exports = { createTranslationServer };
+diff --git a/translation-channels.cjs b/translation-channels.cjs
+new file mode 100644
+--- /dev/null
++++ b/translation-channels.cjs
+@@ -0,0 +1,155 @@
++const { languages, maxChannels } = require("./languages.js");
++const { RadioStream } = require("./radio-stream.cjs");
++class TranslationChannels {
++  constructor({
++    Bridge,
++    onCatalogue = () => {},
++    onMessage = () => {},
++    onError = () => {},
++    onCount = () => {},
++  }) {
++    this.Bridge = Bridge;
++    this.onCatalogue = onCatalogue;
++    this.onMessage = onMessage;
++    this.onError = onError;
++    this.onCount = onCount;
++    this.channels = new Map();
++    this.running = false;
++    this.key = "";
++    this.add("en", false);
++  }
++  list() {
++    return [...this.channels.values()].map(
++      ({ id, name, nativeName, state }) => ({ id, name, nativeName, state }),
++    );
++  }
++  get state() {
++    return [...this.channels.values()].some((c) => c.state === "live")
++      ? "live"
++      : [...this.channels.values()].some((c) => c.state === "connecting")
++        ? "connecting"
++        : "idle";
++  }
++  get defaultId() {
++    return this.channels.has("en")
++      ? "en"
++      : (this.channels.keys().next().value ?? null);
++  }
++  get listenerCount() {
++    return [...this.channels.values()].reduce(
++      (n, c) => n + c.radio.listenerCount,
++      0,
++    );
++  }
++  add(id, notify = true) {
++    const language = languages.find((item) => item.id === id);
++    if (!language) throw Error("Escolha um idioma disponível.");
++    if (this.channels.has(id))
++      throw Error("Este idioma já tem um canal aberto.");
++    if (this.channels.size >= maxChannels)
++      throw Error("É possível abrir no máximo 3 canais.");
++    const channel = {
++      ...language,
++      state: "idle",
++      transcript: "",
++      radio: new RadioStream(this.onCount),
++    };
++    channel.bridge = new this.Bridge((message) => {
++      if (
++        this.channels.get(id) !== channel ||
++        !this.running ||
++        !["connecting", "live"].includes(channel.state)
++      )
++        return;
++      if (message.error) {
++        channel.state = "error";
++        channel.bridge.stop();
++        channel.radio.stop();
++        this.onError(channel, message.error);
++        this.onCatalogue();
++        return;
++      }
++      if (message.ready) {
++        channel.state = "live";
++        this.onCatalogue();
++      }
++      if (message.content && channel.state !== "live") return;
++      const content = message.content;
++      if (content?.outputTranscription?.text)
++        channel.transcript = (
++          channel.transcript + content.outputTranscription.text
++        ).slice(-50000);
++      if (content?.turnComplete)
++        channel.transcript = (channel.transcript + "\n\n").slice(-50000);
++      this.onMessage(channel, message);
++    });
++    this.channels.set(id, channel);
++    if (notify) this.onCatalogue();
++    if (this.running) this.startChannel(channel);
++    return channel;
++  }
++  startChannel(channel) {
++    channel.state = "connecting";
++    channel.transcript = "";
++    this.onCatalogue();
++    this.onMessage(channel, { reset: true });
++    try {
++      channel.bridge.start(this.key, channel.id);
++    } catch {
++      channel.state = "error";
++      channel.bridge.stop();
++      this.onError(channel, "Não foi possível iniciar este canal.");
++      this.onCatalogue();
++    }
++  }
++  retry(id) {
++    const channel = this.channels.get(id);
++    if (!channel || !this.running || channel.state !== "error")
++      throw Error("Este canal não está disponível para reconectar.");
++    this.startChannel(channel);
++  }
++  remove(id) {
++    const channel = this.channels.get(id);
++    if (!channel) throw Error("Este canal já foi fechado.");
++    this.channels.delete(id);
++    channel.bridge.stop();
++    channel.radio.stop();
++    if (!this.channels.size) {
++      this.running = false;
++      this.key = "";
++    }
++    this.onCatalogue();
++  }
++  start(key) {
++    if (!this.channels.size)
++      throw Error("Abra pelo menos um canal antes de iniciar a tradução.");
++    if (this.running) throw Error("A tradução já está em andamento.");
++    this.running = true;
++    this.key = key;
++    for (const channel of this.channels.values()) this.startChannel(channel);
++  }
++  stop() {
++    this.running = false;
++    this.key = "";
++    for (const channel of this.channels.values()) {
++      channel.state = "idle";
++      channel.bridge.stop();
++      channel.radio.stop();
++    }
++    this.onCatalogue();
++  }
++  audio(bytes) {
++    if (this.running)
++      for (const channel of this.channels.values())
++        if (channel.state === "live") channel.bridge.audio(bytes);
++  }
++  clear(id) {
++    for (const channel of this.channels.values())
++      if (!id || channel.id === id) {
++        channel.transcript = "";
++        channel.radio.clear();
++        this.onMessage(channel, { reset: true });
++      }
++  }
++}
++module.exports = { TranslationChannels };
+diff --git a/languages.js b/languages.js
+new file mode 100644
+--- /dev/null
++++ b/languages.js
+@@ -0,0 +1,88 @@
++(function (root) {
++  const entries = [
++    ["en", "Inglês", "English"],
++    ["es", "Espanhol", "Español"],
++    ["pt-BR", "Português (Brasil)", "Português (Brasil)"],
++    ["pt-PT", "Português (Portugal)", "Português (Portugal)"],
++    ["fr", "Francês", "Français"],
++    ["de", "Alemão", "Deutsch"],
++    ["it", "Italiano", "Italiano"],
++    ["af", "Africâner", "Afrikaans"],
++    ["ak", "Akan", "Akan"],
++    ["sq", "Albanês", "Shqip"],
++    ["am", "Amárico", "አማርኛ"],
++    ["ar", "Árabe", "العربية"],
++    ["hy", "Armênio", "Հայերեն"],
++    ["az", "Azerbaijano", "Azərbaycanca"],
++    ["eu", "Basco", "Euskara"],
++    ["be", "Bielorrusso", "Беларуская"],
++    ["bn", "Bengali", "বাংলা"],
++    ["bg", "Búlgaro", "Български"],
++    ["my", "Birmanês", "မြန်မာ"],
++    ["ca", "Catalão", "Català"],
++    ["zh-Hans", "Chinês simplificado", "简体中文"],
++    ["zh-Hant", "Chinês tradicional", "繁體中文"],
++    ["hr", "Croata", "Hrvatski"],
++    ["cs", "Tcheco", "Čeština"],
++    ["da", "Dinamarquês", "Dansk"],
++    ["nl", "Holandês", "Nederlands"],
++    ["et", "Estoniano", "Eesti"],
++    ["fil", "Filipino", "Filipino"],
++    ["fi", "Finlandês", "Suomi"],
++    ["gl", "Galego", "Galego"],
++    ["ka", "Georgiano", "ქართული"],
++    ["el", "Grego", "Ελληνικά"],
++    ["gu", "Guzerate", "ગુજરાતી"],
++    ["ha", "Hauçá", "Hausa"],
++    ["he", "Hebraico", "עברית"],
++    ["hi", "Hindi", "हिन्दी"],
++    ["hu", "Húngaro", "Magyar"],
++    ["is", "Islandês", "Íslenska"],
++    ["id", "Indonésio", "Bahasa Indonesia"],
++    ["ja", "Japonês", "日本語"],
++    ["jv", "Javanês", "Basa Jawa"],
++    ["kn", "Canarês", "ಕನ್ನಡ"],
++    ["kk", "Cazaque", "Қазақша"],
++    ["km", "Khmer", "ខ្មែរ"],
++    ["rw", "Quiniaruanda", "Kinyarwanda"],
++    ["ko", "Coreano", "한국어"],
++    ["lo", "Laosiano", "ລາວ"],
++    ["lv", "Letão", "Latviešu"],
++    ["lt", "Lituano", "Lietuvių"],
++    ["mk", "Macedônio", "Македонски"],
++    ["ms", "Malaio", "Bahasa Melayu"],
++    ["ml", "Malaiala", "മലയാളം"],
++    ["mr", "Marata", "मराठी"],
++    ["mn", "Mongol", "Монгол"],
++    ["ne", "Nepalês", "नेपाली"],
++    ["nb", "Norueguês", "Norsk"],
++    ["fa", "Persa", "فارسی"],
++    ["pl", "Polonês", "Polski"],
++    ["pa", "Panjabi", "ਪੰਜਾਬੀ"],
++    ["ro", "Romeno", "Română"],
++    ["ru", "Russo", "Русский"],
++    ["sr", "Sérvio", "Српски"],
++    ["sd", "Sindi", "سنڌي"],
++    ["si", "Cingalês", "සිංහල"],
++    ["sk", "Eslovaco", "Slovenčina"],
++    ["sl", "Esloveno", "Slovenščina"],
++    ["su", "Sundanês", "Basa Sunda"],
++    ["sw", "Suaíli", "Kiswahili"],
++    ["sv", "Sueco", "Svenska"],
++    ["ta", "Tâmil", "தமிழ்"],
++    ["te", "Telugu", "తెలుగు"],
++    ["th", "Tailandês", "ไทย"],
++    ["tr", "Turco", "Türkçe"],
++    ["uk", "Ucraniano", "Українська"],
++    ["ur", "Urdu", "اردو"],
++    ["uz", "Uzbeque", "Oʻzbekcha"],
++    ["vi", "Vietnamita", "Tiếng Việt"],
++    ["zu", "Zulu", "IsiZulu"],
++  ].map(([id, name, nativeName]) => Object.freeze({ id, name, nativeName }));
++  const value = Object.freeze({
++    languages: Object.freeze(entries),
++    maxChannels: 3,
++  });
++  if (typeof module !== "undefined" && module.exports) module.exports = value;
++  else root.TranslationLanguages = value;
++})(globalThis);
+diff --git a/bridge.cjs b/bridge.cjs
+--- a/bridge.cjs
++++ b/bridge.cjs
+@@ -2,7 +2,7 @@ const WebSocket = require('ws');
+ class TranslationBridge {
+   constructor(emit, Socket = WebSocket) { this.emit = emit; this.Socket = Socket; }
+   stop() { clearTimeout(this.timer); const old = this.socket; this.socket = null; if (old) old.terminate(); }
+-  start(key) {
++  start(key, targetLanguageCode = 'en') {
+     this.stop();
+     const current = new this.Socket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent', { headers: { 'x-goog-api-key': key }, maxPayload: 8 * 1024 * 1024 });
+     this.socket = current;
+@@ -10,7 +10,7 @@ class TranslationBridge {
+     this.timer = setTimeout(() => fail('Tempo esgotado ao conectar ao Gemini.'), 20000);
+     current.on('open', () => current.send(JSON.stringify({ setup: {
+       model: 'models/gemini-3.5-live-translate-preview',
+-      generationConfig: { responseModalities: ['AUDIO'], translationConfig: { targetLanguageCode: 'en', echoTargetLanguage: true } },
++      generationConfig: { responseModalities: ['AUDIO'], translationConfig: { targetLanguageCode, echoTargetLanguage: true } },
+       outputAudioTranscription: {}, realtimeInputConfig: { automaticActivityDetection: { disabled: false } }
+     } })));
+     current.on('message', raw => {
+diff --git a/index.html b/index.html
+--- a/index.html
++++ b/index.html
+@@ -3,18 +3,20 @@
+ <meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="style.css"></head>
+ <body><main>
+ <header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Computador da igreja</span></div></header>
+-<p class="eyebrow">APRESENTADOR · PORTUGUÊS → ENGLISH</p><h1>Conhecer a Cristo e fazê-lo conhecido</h1>
++<p class="eyebrow">APRESENTADOR · CANAIS DE TRADUÇÃO</p><h1>Conhecer a Cristo e fazê-lo conhecido</h1>
+ <p>Fale no microfone. Ouça e acompanhe a tradução em tempo real.</p>
+ <section class="settings">
+ <label for="key">Chave Gemini API</label><input id="key" type="password" autocomplete="off" placeholder="Cole sua chave do Google AI Studio">
+ <small>A chave fica apenas na memória durante o uso. O áudio é enviado ao Google.</small>
++<section class="channel-settings" aria-labelledby="channels-title"><div class="heading"><h2 id="channels-title">Canais de tradução</h2><span id="channel-count">1 de 3 abertos</span></div><p>O idioma falado é detectado automaticamente. Cada canal traduz para um idioma. Pode abrir ou fechar até 3 canais, inclusive durante a transmissão.</p><div id="channel-list" role="list" aria-label="Canais abertos"></div><label for="channel-language">Idioma do novo canal</label><select id="channel-language"></select><button id="open-channel">Abrir canal</button><p id="channel-notice" role="status"></p></section>
+ <label for="microphone">Microfone</label><select id="microphone"><option value="">Padrão do sistema</option></select>
+ <button id="refresh">Atualizar microfones</button>
++<label for="monitor-channel">Canal para acompanhar neste computador</label><select id="monitor-channel"></select>
+ <label class="check"><input id="speak" type="checkbox"> Ouvir tradução neste computador</label>
+ <small>Use fones de ouvido para evitar que a tradução volte pelo microfone.</small>
+ <div class="controls"><button id="start">Iniciar tradução</button><button id="stop" disabled>Parar</button><span id="status" role="status">Pronto para iniciar</span></div>
+ </section>
+ <section class="sharing"><div class="heading"><h2>Publicar no Ponte</h2><span id="viewers">0 ouvintes</span></div><p>Inicie a tradução e publique para habilitar o menu na PWA. Os ouvintes precisam estar na rede Wi-Fi da igreja.</p><label for="ponte-config">Ligação gerada pelo administrador</label><input id="ponte-config" type="password" autocomplete="off" placeholder="Cole a ligação da página Aplicativo de tradução"><button id="connect-ponte" disabled>Conectar ao Ponte</button><label for="audience-address">Endereço do computador na rede da igreja</label><select id="audience-address"></select><div class="controls"><button id="publish" disabled>Publicar tradução</button><button id="unpublish" disabled>Retirar publicação</button></div><p id="publication-status" role="status">Conecte ao Ponte para publicar.</p><details><summary>Links para acesso direto</summary><div id="links">Preparando links…</div></details></section>
+-<section class="transcript"><div class="heading"><h2>Tradução em inglês</h2><button id="clear">Limpar</button></div><div id="text" role="log" aria-live="polite"></div></section>
++<section class="transcript"><div class="heading"><h2 id="monitor-title">Texto do canal</h2><button id="clear">Limpar</button></div><div id="text" dir="auto" role="log" aria-live="polite"></div></section>
+ <footer>Áudio da audiência comprimido em ADPCM · Transmissão pela rede local.<br>Gemini Live Translate · Requer internet e cota disponível na API.</footer>
+-</main><script src="transport.js"></script><script src="renderer.js"></script></body></html>
++</main><script src="/languages.js"></script><script src="transport.js"></script><script src="renderer.js"></script></body></html>
+diff --git a/renderer.js b/renderer.js
+--- a/renderer.js
++++ b/renderer.js
+@@ -1,6 +1,36 @@
+ const $ = id => document.getElementById(id);
+ let context, stream, capture, source, nextTime = 0, generation = 0, active = false;
+-let ponteConfigured = false, published = false, translationReady = false;
++let ponteConfigured = false, published = false, translationReady = false, audioWired = false;
++let channels = [], monitorId = 'en';
++const channelTexts = new Map();
++const channelStates = { idle: 'Pronto', connecting: 'Conectando…', live: 'Ao vivo', error: 'Falha de conexão' };
++for (const language of window.TranslationLanguages.languages) $('channel-language').add(new Option(language.name, language.id));
++function renderChannels() {
++  $('channel-count').textContent = channels.length + ' de 3 abertos';
++  $('channel-list').replaceChildren();
++  for (const channel of channels) {
++    const row = document.createElement('div'); row.className = 'channel-row'; row.setAttribute('role', 'listitem');
++    const label = document.createElement('span'); label.textContent = channel.name + ' · ' + (channelStates[channel.state] || 'Pronto');
++    const close = document.createElement('button'); close.textContent = 'Fechar'; close.setAttribute('aria-label', 'Fechar canal ' + channel.name); close.onclick = () => window.translator.closeChannel(channel.id);
++    row.append(label, close);
++    if (channel.state === 'error' && active) { const retry = document.createElement('button'); retry.textContent = 'Reconectar'; retry.setAttribute('aria-label', 'Reconectar canal ' + channel.name); retry.onclick = () => window.translator.retryChannel(channel.id); row.append(retry); }
++    $('channel-list').append(row);
++  }
++  for (const option of $('channel-language').options) option.disabled = channels.some(channel => channel.id === option.value);
++  if ($('channel-language').selectedOptions[0]?.disabled) $('channel-language').value = [...$('channel-language').options].find(option => !option.disabled)?.value || '';
++  $('open-channel').disabled = channels.length >= 3;
++  $('channel-language').disabled = channels.length >= 3;
++  $('monitor-channel').replaceChildren(...channels.map(channel => new Option(channel.name, channel.id)));
++  if (!channels.some(channel => channel.id === monitorId)) { monitorId = channels[0]?.id ?? ''; silence(); }
++  $('monitor-channel').value = monitorId;
++  $('monitor-channel').disabled = !channels.length;
++  $('monitor-title').textContent = 'Texto do canal' + (channels.find(channel => channel.id === monitorId) ? ' · ' + channels.find(channel => channel.id === monitorId).name : '');
++  $('text').textContent = channelTexts.get(monitorId) || '';
++  $('start').disabled = active || !channels.length;
++  translationReady = channels.some(channel => channel.state === 'live'); publicationButtons();
++}
++$('open-channel').onclick = () => { $('channel-notice').textContent = ''; window.translator.openChannel($('channel-language').value); };
++$('monitor-channel').onchange = () => { monitorId = $('monitor-channel').value; silence(); renderChannels(); };
+ function publicationButtons() {
+   $('publish').disabled = !ponteConfigured || !translationReady || published;
+   $('unpublish').disabled = !published;
+@@ -8,11 +38,11 @@ function publicationButtons() {
+ const playing = new Set();
+ function silence() { for (const node of playing) { try { node.stop(); } catch {} } playing.clear(); nextTime = 0; }
+ function stop(message = 'Parado') {
+-  generation++; active = false; window.translator.stop();
++  generation++; active = false; audioWired = false; window.translator.stop();
+   translationReady = false; publicationButtons();
+   capture?.disconnect(); source?.disconnect(); stream?.getTracks().forEach(track => track.stop());
+   silence(); context?.close().catch(() => {}); context = stream = capture = source = null;
+-  $('start').disabled = false; $('stop').disabled = true; $('microphone').disabled = false; $('status').textContent = message;
++  $('start').disabled = !channels.length; $('stop').disabled = true; $('microphone').disabled = false; $('status').textContent = message;
+ }
+ async function microphones() {
+   const devices = await navigator.mediaDevices.enumerateDevices();
+@@ -26,6 +56,8 @@ $('refresh').onclick = async () => {
+   catch { $('status').textContent = 'Não foi possível acessar os microfones. Verifique a permissão no Windows.'; }
+ };
+ $('start').onclick = async () => {
++  if (!channels.length) { $('status').textContent = 'Abra pelo menos um canal antes de iniciar.'; return; }
++  channelTexts.clear(); $('text').replaceChildren();
+   if (!$('key').value.trim()) { $('status').textContent = 'Informe sua chave Gemini API.'; return; }
+   const token = ++generation; active = true;
+   $('start').disabled = true; $('stop').disabled = false; $('microphone').disabled = true; $('status').textContent = 'Conectando…';
+@@ -44,6 +76,19 @@ $('start').onclick = async () => {
+   } catch (error) { if (token === generation) stop(error.message); }
+ };
+ window.translator.listen(message => {
++  if (message.channels) {
++    channels = message.channels;
++    for (const id of channelTexts.keys()) if (!channels.some(channel => channel.id === id)) channelTexts.delete(id);
++    if (active && message.running === false) stop('Nenhum canal aberto. Abra um canal para iniciar.');
++    renderChannels();
++    if (active) $('status').textContent = translationReady ? 'Ouvindo · ' + channels.filter(channel => channel.state === 'live').length + ' canal(is) ao vivo' : 'Aguardando conexão dos canais. Pode reconectar ou abrir outro canal.';
++  }
++  if (message.channelError) $('channel-notice').textContent = message.channelError;
++  if (message.reset && message.channelId) { channelTexts.set(message.channelId, ''); if (message.channelId === monitorId) { $('text').replaceChildren(); silence(); } }
++  if (message.content) {
++    const addition = (message.content.outputTranscription?.text || '') + (message.content.turnComplete ? '\n\n' : '');
++    if (addition) channelTexts.set(message.channelId, ((channelTexts.get(message.channelId) || '') + addition).slice(-50000));
++  }
+   if (message.links) {
+     $('connect-ponte').disabled = false;
+     window.audiencePath = new URL(message.links[0]).pathname;
+@@ -68,9 +113,9 @@ window.translator.listen(message => {
+   }
+   if (!active) return;
+   if (message.error) { stop(message.error); return; }
+-  if (message.ready && source && capture) { source.connect(capture); capture.connect(context.destination); translationReady = true; publicationButtons(); $('status').textContent = 'Ouvindo • traduzindo para inglês'; return; }
++  if (message.ready && source && capture && !audioWired) { source.connect(capture); capture.connect(context.destination); audioWired = true; return; }
+   const content = message.content;
+-  if (!content) return;
++  if (!content || message.channelId !== monitorId) return;
+   if (content.interrupted) silence();
+   if (content.outputTranscription?.text) { $('text').append(document.createTextNode(content.outputTranscription.text)); $('text').scrollTop = $('text').scrollHeight; }
+   if (content.turnComplete) $('text').append(document.createTextNode('\n\n'));
+@@ -88,7 +133,7 @@ window.translator.listen(message => {
+   }
+ });
+ $('stop').onclick = () => stop();
+-$('clear').onclick = () => { $('text').replaceChildren(); window.translator.clear(); };
++$('clear').onclick = () => { channelTexts.set(monitorId, ''); $('text').replaceChildren(); window.translator.clear(monitorId); };
+ $('connect-ponte').onclick = () => { window.translator.configure($('ponte-config').value); $('ponte-config').value = ''; };
+ $('publish').onclick = () => { $('publish').disabled = true; $('publication-status').textContent = 'Publicando…'; window.translator.publish($('audience-address').value); };
+ $('unpublish').onclick = () => { $('unpublish').disabled = true; window.translator.unpublish(); };
+diff --git a/transport.js b/transport.js
+--- a/transport.js
++++ b/transport.js
+@@ -25,7 +25,10 @@
+       socket.send(JSON.stringify({ action: 'start', key }));
+     },
+     stop: () => { if (authenticated) socket.send(JSON.stringify({ action: 'stop' })); },
+-    clear: () => { if (authenticated) socket.send(JSON.stringify({ action: 'clear' })); },
++    clear: channelId => { if (authenticated) socket.send(JSON.stringify({ action: 'clear', channelId })); },
++    openChannel: languageCode => { if (authenticated) socket.send(JSON.stringify({ action: 'open-channel', languageCode })); },
++    closeChannel: channelId => { if (authenticated) socket.send(JSON.stringify({ action: 'close-channel', channelId })); },
++    retryChannel: channelId => { if (authenticated) socket.send(JSON.stringify({ action: 'retry-channel', channelId })); },
+     configure: configuration => { if (authenticated) socket.send(JSON.stringify({ action: 'configure-ponte', configuration })); },
+     publish: audienceUrl => { if (authenticated) socket.send(JSON.stringify({ action: 'publish', audienceUrl })); },
+     unpublish: () => { if (authenticated) socket.send(JSON.stringify({ action: 'unpublish' })); },
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,7 +1,7 @@
+ <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
+-<body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Inglês</span></div></header>
+-<p class="eyebrow">PORTUGUÊS → ENGLISH</p><h1 lang="en">To know Christ and make Him known</h1><p>Ouça a mensagem em inglês e acompanhe o texto nesta mesma tela.</p>
+-<section class="settings" aria-label="Reprodução da tradução"><audio id="radio" preload="none" aria-label="Tradução em inglês ao vivo"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
+-<section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
++<body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Canais</span></div></header>
++<p class="eyebrow">TRADUÇÃO AO VIVO</p><h1 lang="en">To know Christ and make Him known</h1><p>Escolha um canal para ouvir a mensagem e acompanhar o texto no seu idioma.</p>
++<section class="settings" aria-label="Reprodução da tradução"><div class="channel-select"><label for="listener-channel">Canal de tradução / Translation channel</label><select id="listener-channel" disabled><option value="">Carregando canais…</option></select><p id="channel-notice" role="status"></p></div><audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
++<section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
+ <details><summary>Precisa de ajuda para ouvir?</summary><p>Confira o volume, os fones e o Wi-Fi da igreja. Se o áudio parar, toque em Retomar ao vivo. Ao retomar, ouvirá a transmissão atual.</p><p>Chamadas e economia de bateria podem interromper o áudio. O suporte com o ecrã bloqueado depende do aparelho e do navegador.</p></details><footer>Áudio e texto vêm diretamente do computador da igreja. Não é preciso usar o microfone nem entrar na conta.</footer>
+ </main><script src="/radio.js"></script><script src="/audience.js"></script></body></html>
+diff --git a/audience.js b/audience.js
+--- a/audience.js
++++ b/audience.js
+@@ -1,29 +1,50 @@
+-const text = document.getElementById('text'), status = document.getElementById('status');
+-let connection, retry, closed = false;
+-function connect() {
+-  clearTimeout(retry);
+-  const room = location.pathname.split('/').pop();
+-  connection = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/audience-ws/${room}`);
+-  connection.onmessage = event => {
+-    // The native MP3 player owns audio; this socket only updates the transcript.
+-    if (typeof event.data !== 'string') return;
+-    let message;
+-    try { message = JSON.parse(event.data); } catch { return; }
+-    if (message.state) status.textContent = { live: 'Texto ao vivo', idle: 'Aguardando o apresentador', connecting: 'Apresentador conectando…' }[message.state] || 'Aguardando o apresentador';
+-    if (message.reset) text.replaceChildren();
+-    if (typeof message.snapshot === 'string') text.textContent = message.snapshot;
+-    const content = message.content;
+-    if (!content) return;
+-    const follow = text.scrollHeight - text.scrollTop - text.clientHeight < 60;
+-    if (content.outputTranscription?.text) text.append(document.createTextNode(content.outputTranscription.text));
+-    if (content.turnComplete) text.append(document.createTextNode('\n\n'));
+-    if (text.textContent.length > 50000) text.textContent = text.textContent.slice(-50000);
+-    if (follow) text.scrollTop = text.scrollHeight;
+-  };
+-  connection.onclose = () => { status.textContent = 'Texto desconectado. Reconectando…'; if (!closed) retry = setTimeout(connect, 2500); };
+-  connection.onerror = () => connection.close();
+-}
+-window.addEventListener('pagehide', () => { closed = true; clearTimeout(retry); connection?.close(); });
+-window.addEventListener('pageshow', () => { if (closed) { closed = false; connect(); } });
+-document.addEventListener('visibilitychange', () => { if (!document.hidden && !closed && connection?.readyState === WebSocket.CLOSED) connect(); });
+-connect();
++(() => {
++  const text=document.getElementById('text'),status=document.getElementById('status'),select=document.getElementById('listener-channel'),notice=document.getElementById('channel-notice');
++  let connection,retry,closed=false,channels=[],selected=null,initialized=false;
++  const labels={live:'ao vivo',idle:'aguardando',connecting:'conectando',error:'indisponível'};
++  function choose(id,notify=true){
++    const channel=channels.find(item=>item.id===id);selected=channel?.id??null;select.value=selected||'';text.replaceChildren();
++    window.translationPlayer.selectChannel(selected,channel?.nativeName,channel?.state);
++    status.textContent=channel?(labels[channel.state]||'aguardando'):'Escolha um canal';
++    if(notify && selected && connection?.readyState===WebSocket.OPEN)connection.send(JSON.stringify({action:'select-channel',channelId:selected}));
++  }
++  select.onchange=()=>{notice.textContent='';choose(select.value);};
++  function catalogue(list){
++    channels=list;select.replaceChildren(new Option(list.length?'Escolha um canal':'Nenhum canal aberto',''),...list.map(channel=>new Option(channel.nativeName+' · '+(labels[channel.state]||'aguardando'),channel.id)));
++    select.disabled=!list.length;
++    if(selected && !list.some(channel=>channel.id===selected)){choose(null,false);notice.textContent='O canal que você ouvia foi fechado. Escolha outro canal aberto.';}
++    else {select.value=selected||'';const current=channels.find(channel=>channel.id===selected);if(current)window.translationPlayer.updateState(current.state);}
++  }
++  function connect(){
++    clearTimeout(retry);const room=location.pathname.split('/').pop();
++    connection=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/audience-ws/${room}`);
++    connection.onmessage=event=>{
++      if(typeof event.data!=='string')return;
++      let message;try{message=JSON.parse(event.data);}catch{return;}
++      if(message.channels)catalogue(message.channels);
++      if(!initialized && message.channels){initialized=true;choose(message.selectedChannel??channels[0]?.id??null,false);}
++      if(message.selectionError){notice.textContent=message.selectionError;return;}
++      if(message.channelClosed){choose(null,false);notice.textContent='O canal que você ouvia foi fechado. Escolha outro canal aberto.';}
++      // On reconnect request the previous selection instead of accepting the server default.
++      if(Object.hasOwn(message,'selectedChannel') && message.selectedChannel!==selected){
++        if(selected && channels.some(channel=>channel.id===selected)){connection.send(JSON.stringify({action:'select-channel',channelId:selected}));return;}
++      }
++      if(message.channelId!==selected || !selected)return;
++      if(message.state){status.textContent=labels[message.state]||'aguardando';window.translationPlayer.updateState(message.state);}
++      if(message.reset)text.replaceChildren();
++      if(typeof message.snapshot==='string')text.textContent=message.snapshot;
++      const content=message.content;if(!content)return;
++      const follow=text.scrollHeight-text.scrollTop-text.clientHeight<60;
++      if(content.outputTranscription?.text)text.append(document.createTextNode(content.outputTranscription.text));
++      if(content.turnComplete)text.append(document.createTextNode('\n\n'));
++      if(text.textContent.length>50000)text.textContent=text.textContent.slice(-50000);
++      if(follow)text.scrollTop=text.scrollHeight;
++    };
++    connection.onclose=()=>{status.textContent='Texto desconectado. Reconectando…';if(!closed)retry=setTimeout(connect,2500);};
++    connection.onerror=()=>connection.close();
++  }
++  window.addEventListener('pagehide',()=>{closed=true;clearTimeout(retry);connection?.close();});
++  window.addEventListener('pageshow',()=>{if(closed){closed=false;connect();}});
++  document.addEventListener('visibilitychange',()=>{if(!document.hidden && !closed && connection?.readyState===WebSocket.CLOSED)connect();});
++  connect();
++})();
+diff --git a/radio.js b/radio.js
+--- a/radio.js
++++ b/radio.js
+@@ -1,46 +1,36 @@
+-const audio = document.getElementById('radio'), radioStatus = document.getElementById('radio-status'), listen = document.getElementById('listen');
+-const room = location.pathname.split('/').pop(), sourceUrl = `/audio/${room}.mp3`;
+-let generation = 0, active = false;
+-try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch { /* optional browser API */ }
+-function mediaState(state) { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = state; }
+-function stopLive() {
+-  generation++; active = false;
+-  audio.pause(); audio.removeAttribute('src'); audio.load();
+-  listen.disabled = false; listen.textContent = 'Retomar ao vivo';
+-  radioStatus.textContent = 'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.';
+-  mediaState('paused');
+-}
+-async function startLive() {
+-  const attempt = ++generation;
+-  active = true; listen.disabled = false; listen.textContent = 'Cancelar conexão';
+-  radioStatus.textContent = 'Conectando ao áudio da igreja…';
+-  audio.src = sourceUrl; audio.load();
+-  try { await audio.play(); }
+-  catch {
+-    if (attempt !== generation) return;
+-    active = false; listen.textContent = 'Tentar ouvir novamente';
+-    radioStatus.textContent = 'Não foi possível ouvir. Confira o Wi-Fi e se a tradução está ativa; depois tente novamente.';
+-    mediaState('none');
+-  } finally { if (attempt === generation) listen.disabled = false; }
+-}
+-listen.onclick = () => { if (active) stopLive(); else void startLive(); };
+-audio.addEventListener('playing', () => {
+-  active = true; listen.disabled = false; listen.textContent = 'Pausar áudio';
+-  radioStatus.textContent = 'Reproduzindo ao vivo · áudio em inglês.';
+-  mediaState('playing');
+-});
+-audio.addEventListener('pause', () => { if (active && !audio.ended && !audio.error) stopLive(); });
+-audio.addEventListener('waiting', () => { if (active) radioStatus.textContent = 'Aguardando áudio da igreja…'; });
+-function unavailable(message) {
+-  generation++; active = false; listen.disabled = false; listen.textContent = 'Retomar ao vivo';
+-  radioStatus.textContent = message; mediaState('none');
+-}
+-audio.addEventListener('ended', () => unavailable('A transmissão terminou. Aguarde o apresentador e toque em Retomar ao vivo.'));
+-audio.addEventListener('error', () => unavailable('O áudio foi interrompido. Confira o Wi-Fi e toque em Retomar ao vivo.'));
+-if ('mediaSession' in navigator) {
+-  if (typeof MediaMetadata !== 'undefined') navigator.mediaSession.metadata = new MediaMetadata({ title: 'Tradução ao vivo — Inglês', artist: 'A Ponte', artwork: [{ src: new URL('/logo.png', location.origin).href, type: 'image/png' }] });
+-  for (const [action, handler] of Object.entries({ play: () => void startLive(), pause: stopLive, stop: stopLive })) {
+-    try { navigator.mediaSession.setActionHandler(action, handler); } catch { /* optional media control */ }
++(() => {
++  const audio=document.getElementById('radio'), status=document.getElementById('radio-status'), button=document.getElementById('listen');
++  const room=location.pathname.split('/').pop();
++  let generation=0, active=false, channelId=null, channelName='', state='idle';
++  try { if(navigator.audioSession)navigator.audioSession.type='playback'; } catch { /* optional */ }
++  function mediaState(value){if('mediaSession' in navigator)navigator.mediaSession.playbackState=value;}
++  function release(){generation++;active=false;audio.pause();audio.removeAttribute('src');audio.load();mediaState('paused');}
++  function pause(){release();button.textContent='Retomar ao vivo';button.disabled=!channelId;status.textContent=channelId?'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.':'Escolha um canal aberto para ouvir.';}
++  async function start(){
++    if(!channelId || state!=='live'){status.textContent=channelId?'Este canal ainda não está ao vivo. Aguarde o apresentador.':'Escolha um canal aberto para ouvir.';return;}
++    const attempt=++generation;active=true;button.disabled=false;button.textContent='Cancelar conexão';status.textContent='Conectando ao canal '+channelName+'…';
++    audio.src='/audio/'+room+'.mp3?channel='+encodeURIComponent(channelId);audio.load();
++    try{await audio.play();}catch{if(attempt!==generation)return;active=false;button.textContent='Tentar ouvir novamente';status.textContent='Não foi possível ouvir. Confira o Wi-Fi e se o canal está ao vivo; depois tente novamente.';mediaState('none');}
++    finally{if(attempt===generation)button.disabled=false;}
+   }
+-}
+-window.addEventListener('pagehide', stopLive);
++  function selectChannel(id,name,nextState){
++    if(id===channelId){updateState(nextState);return;}
++    const resume=active;release();channelId=id;channelName=name||'';state=nextState||'idle';button.disabled=!id;button.textContent='Ouvir ao vivo';
++    status.textContent=id?'Canal '+channelName+' selecionado. Toque em Ouvir ao vivo.':'O canal foi fechado. Escolha outro canal para continuar.';
++    if('mediaSession' in navigator && typeof MediaMetadata!=='undefined')navigator.mediaSession.metadata=new MediaMetadata({title:'Tradução ao vivo — '+channelName,artist:'A Ponte',artwork:[{src:new URL('/logo.png',location.origin).href,type:'image/png'}]});
++    if(resume && state==='live')void start();
++  }
++  function updateState(next){
++    state=next||'idle';
++    if(state!=='live' && active){pause();status.textContent='O canal está '+(state==='error'?'indisponível. Escolha outro canal ou aguarde.':'aguardando tradução. Toque em Retomar ao vivo quando voltar.');}
++  }
++  button.disabled=true;button.onclick=()=>{if(active)pause();else void start();};
++  audio.addEventListener('playing',()=>{if(!channelId || !active)return;button.disabled=false;button.textContent='Pausar áudio';status.textContent='Reproduzindo ao vivo · '+channelName;mediaState('playing');});
++  audio.addEventListener('pause',()=>{if(active && audio.paused && !audio.ended && !audio.error)pause();});
++  audio.addEventListener('waiting',()=>{if(active)status.textContent='Aguardando áudio do canal '+channelName+'…';});
++  function unavailable(message){if(!channelId || !active)return;generation++;active=false;button.disabled=false;button.textContent='Retomar ao vivo';status.textContent=message;mediaState('none');}
++  audio.addEventListener('ended',()=>unavailable('A transmissão deste canal terminou. Escolha outro ou toque em Retomar ao vivo.'));
++  audio.addEventListener('error',()=>unavailable('O áudio foi interrompido. Confira o Wi-Fi e toque em Retomar ao vivo.'));
++  if('mediaSession' in navigator)for(const [action,handler]of Object.entries({play:()=>void start(),pause,stop:pause})){try{navigator.mediaSession.setActionHandler(action,handler);}catch{/* optional */}}
++  window.translationPlayer={selectChannel,updateState,pause};window.addEventListener('pagehide',pause);
++})();
+diff --git a/radio-stream.cjs b/radio-stream.cjs
+--- a/radio-stream.cjs
++++ b/radio-stream.cjs
+@@ -19,7 +19,7 @@ class RadioStream {
+         for (let sent = 0; this.frames < due && sent < 5; sent++) { this.pulse(); this.frames++; }
+       }, 20);
+     }
+-    response.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store', 'Accept-Ranges': 'none', 'X-Content-Type-Options': 'nosniff', 'icy-name': 'Ponte - English live translation' });
++    response.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store', 'Accept-Ranges': 'none', 'X-Content-Type-Options': 'nosniff', 'icy-name': 'Ponte - Live translation' });
+     response.flushHeaders();
+     this.clients.add(response); this.onCount();
+     response.on('close', () => {
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@ -2,3 +2,4 @@
+ :root .button-link{display:inline-block;padding:10px 16px;border:1px solid #d5d7de;border-radius:8px;text-decoration:none;color:#ad0d13;font-weight:650;font-size:14px}.button-link:focus-visible{outline:2px solid #d91017;outline-offset:3px}audio{width:100%;margin-bottom:12px}
+
+ .listener .brand{margin-bottom:24px}.listener .settings{margin:20px 0;padding:18px}.listener #listen{width:100%;min-height:48px;background:#d91017;color:white;border-color:#d91017;font-size:16px}.listener #listen:hover{background:#ad0d13}.listener #radio-status{font-size:14px}.listener .settings p{font-size:14px;line-height:1.6}.listener .transcript{margin-top:20px}.listener #text:empty::before{content:"Aguardando as próximas palavras traduzidas…";color:#62646e;font-size:16px}.listener #text{min-height:160px}
++.channel-settings{border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:20px 0;margin:20px 0}.channel-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid #eef0f3}.channel-row span{flex:1;min-width:140px}.channel-row button{min-height:44px}.listener .channel-select{margin-top:16px}.listener .channel-select select{font-size:17px;min-height:48px}#channel-count{font-size:13px;color:#62646e}#channel-notice{color:#ad0d13}
+diff --git a/build-windows.cjs b/build-windows.cjs
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -9,7 +9,7 @@ const application = path.join(destination, 'resources', 'app');
+ fs.cpSync(path.join(root, 'node_modules', 'electron', 'dist'), destination, { recursive: true });
+ fs.renameSync(path.join(destination, 'electron.exe'), path.join(destination, 'Ponte-Traducao.exe'));
+ fs.mkdirSync(application, { recursive: true });
+-const sources = ['main.cjs','update-checker.cjs','server.cjs','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
++const sources = ['main.cjs','update-checker.cjs','server.cjs','translation-channels.cjs','languages.js','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
+ for (const file of sources) fs.copyFileSync(path.join(root, file), path.join(application, file));
+ fs.writeFileSync(path.join(application, 'package.json'), JSON.stringify({ name: 'ponte-traducao', productName: 'Ponte · Tradução ao vivo', version, main: 'main.cjs' }, null, 2));
+ fs.mkdirSync(path.join(application, 'node_modules'), { recursive: true });
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.4",
++  "version": "0.4.0",
+   "private": true,
+   "description": "Tradução do microfone para inglês com Gemini",
+   "main": "main.cjs",
+@@ -8,8 +8,8 @@
+     "start": "electron .",
+     "server": "node server.cjs",
+     "package:windows": "node build-windows.cjs",
+-    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs update-checker.test.cjs installer.test.cjs",
+-    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs"
++    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs update-checker.test.cjs installer.test.cjs channels.test.cjs bridge.test.cjs",
++    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs && node --check languages.js && node --check translation-channels.cjs"
+   },
+   "devDependencies": {
+     "electron": "^42.0.0"
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.3.4",
++  "version": "0.4.0",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.3.4",
++      "version": "0.4.0",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -1,89 +1,39 @@
+ # Ponte — Tradução ao vivo para Windows
+
+-Uma página do apresentador captura o microfone e uma página de audiência distribui áudio e texto em inglês via Gemini Live Translate.
+-O servidor roda no seu computador; a tradução exige internet e envia áudio ao Google.
+-Todos os ouvintes compartilham uma única sessão de tradução. Não é necessário LiveKit ou Docker.
++O aplicativo captura um microfone e distribui áudio e texto em canais de tradução. O servidor roda no computador da igreja; a tradução exige internet e envia áudio ao Google Gemini. Os ouvintes precisam estar no mesmo Wi-Fi.
+
+-## Publicar na PWA do Ponte
++## Instalar e atualizar
+
+-O administrador acessa **Comunicação → Aplicativo de tradução** no Ponte, baixa e extrai o ZIP Windows e gera uma ligação para o computador. No aplicativo, cole essa ligação em **Ligação gerada pelo administrador** e clique em **Conectar ao Ponte**. A ligação e a chave Gemini ficam apenas na memória durante a execução.
++Extraia o ZIP inteiro e execute **Instalar.cmd**. A instalação usa **%LOCALAPPDATA%\Ponte-Traducao**, sem privilégios de administrador, e cria o atalho **Ponte - Tradução** na Área de Trabalho e no menu Iniciar. Abra pelo atalho.
+
+-Inicie a tradução, selecione o endereço da rede Wi-Fi da igreja e clique em **Publicar tradução**. O menu **Tradução ao vivo** aparece na PWA em até um minuto. Texto e áudio comprimido continuam na rede local; o Ponte recebe somente o endereço e confirmações de disponibilidade. Alguns navegadores pedem permissão de rede local; a PWA oferece **Abrir página local** como alternativa.
++Para atualizar, termine a transmissão, feche o aplicativo e execute Instalar.cmd do novo ZIP. O instalador substitui o runtime no mesmo local e mantém os atalhos. Uma pasta portátil antiga não é apagada automaticamente. O aplicativo verifica releases oficiais ao iniciar e oferece **Baixar atualização** ou **Agora não**; também é possível usar **Ajuda → Verificar atualizações**. A consulta não impede o uso sem internet e não instala código automaticamente.
+
+-**Retirar publicação**, parar a tradução, falha no Gemini ou fechar o aplicativo retiram a publicação. Se o computador cair sem avisar, o Ponte expira a publicação em até dois minutos. Não feche o computador durante o culto. O firewall deve permitir a porta TCP 3210 na rede privada e a rede Wi-Fi precisa permitir alcançar o computador.
++## Canais de tradução
+
+-O pacote portátil inclui o runtime e abre por `Ponte-Traducao.exe`, sem instalar Node.js. Para gerar o ZIP no Windows: `node build-windows.cjs`. Um segundo argumento com o caminho do repositório Ponte copia o ZIP para o download local autenticado. Em produção, a página administrativa usa `TRANSLATION_APP_DOWNLOAD_URL` para baixar de um serviço de arquivos separado, sem transmitir o binário pelas Functions da Vercel.
++O inglês vem aberto por padrão. Escolha o idioma de saída e toque em **Abrir canal** para disponibilizar até três canais de idiomas diferentes. O idioma falado é detectado automaticamente. É preciso ter pelo menos um canal aberto para iniciar a tradução.
+
+-## Compressão na rede local
++Informe a chave Gemini, escolha o microfone e toque em **Iniciar tradução**. A captura é única e alimenta uma sessão Gemini por canal; todos os ouvintes do mesmo canal compartilham essa tradução. Cada canal usa a cota da API enquanto traduz.
+
+-### Ouvir ao minimizar ou bloquear o ecrã (0.3.0+)
++Pode abrir e fechar canais durante a transmissão. Um canal novo traduz as próximas palavras, sem reiniciar os demais. Se um canal falhar, use **Reconectar**; os outros continuam funcionando. **Fechar** interrompe apenas aquele canal. Fechar o último para a captura e retira a publicação. **Parar** encerra a tradução e mantém a lista de canais até fechar o aplicativo. Ao reabrir, volta o padrão inglês.
+
+-Atualize o aplicativo do PC e use **Ouvir com o ecrã bloqueado** no Ponte (ou **Listen with screen locked** na página local). Na página de áudio, toque em **Ouvir ao vivo** antes de minimizar. O leitor nativo recebe MP3 contínuo a 48 kbit/s diretamente deste computador; não depende do WebSocket ou de timers JavaScript do celular. A mesma codificação é compartilhada entre ouvintes. O silêncio entre frases é gerado no PC, sem chamadas extras ao Gemini.
++Use **Canal para acompanhar neste computador** para selecionar texto e monitoração de áudio. Marque **Ouvir tradução neste computador** somente com fones para evitar eco.
+
+-Esse modo pode ter alguns segundos adicionais de atraso. Mantenha a aba/navegador abertos e o Wi-Fi conectado. Brave/Android, economia de bateria, chamadas e outras aplicações de áudio ainda podem interromper a reprodução; a confirmação final precisa ser feita no telemóvel real. Ao retomar, o botão Ouvir ao vivo volta à transmissão atual. O modo normal de texto e áudio ADPCM permanece disponível.
++## Publicar no Ponte
+
+-O servidor comprime o áudio traduzido uma única vez em IMA ADPCM de 4 bits e distribui blocos binários por WebSocket. A página da audiência decodifica os blocos com JavaScript e reproduz com Web Audio, sem precisar de codecs instalados, WebCodecs ou HTTPS na rede local.
++Um administrador acessa **Comunicação → Aplicativo de tradução**, gera uma ligação e a cola em **Ligação gerada pelo administrador**. A ligação e a chave Gemini ficam somente na memória durante a execução.
+
+-Para áudio mono de 24 kHz, o conteúdo de áudio passa de 384 kbit/s em PCM para aproximadamente 96 kbit/s em ADPCM. Em relação ao fluxo anterior de PCM em Base64 (aproximadamente 512 kbit/s), a economia é cerca de 81%, fora cabeçalhos e tráfego de texto. Para 100 ouvintes, estime aproximadamente 9,6 Mbit/s de áudio, além da sobrecarga da rede, durante fala contínua.
++Com pelo menos um canal ao vivo, selecione o endereço da rede Wi-Fi da igreja e clique em **Publicar tradução**. O menu aparece na PWA em até um minuto. O Ponte recebe somente o endereço da audiência e confirmações de disponibilidade; áudio, texto e catálogo de canais ficam na rede local.
+
+-ADPCM é uma compressão com perdas. Ela preserva a quantidade de amostras e a duração e não espera juntar uma frase antes de transmitir. Cada bloco contém o estado necessário para decodificar, permitindo entrada tardia e reconexão sem reproduzir áudio antigo. O microfone enviado ao Gemini e a monitoração no apresentador continuam em PCM; a compressão aplica-se à distribuição para a audiência.
++**Retirar publicação**, parar, fechar o último canal, perder todos os canais por falha ou fechar o aplicativo retira a publicação. Uma falha abrupta do computador expira em até dois minutos. Mantenha o computador ligado; o firewall deve permitir a porta TCP 3210 na rede privada, e o Wi-Fi deve permitir comunicação com esse computador.
+
+-## Executar
++## Ouvir
+
+-Requer Node.js 22 ou superior com npm.
++Abra **Tradução ao vivo** no Ponte e depois **Abrir tradução ao vivo**. Na tela local, escolha um canal e toque em **Ouvir ao vivo**. Pode trocar de canal a qualquer momento: áudio e texto mudam juntos e a escuta retoma no ponto atual. Se estava pausado, continua pausado. Se o canal for fechado, escolha outro; nenhum idioma alternativo começa a tocar sozinho.
+
+-```powershell
+-npm install
+-npm start
+-```
++O mesmo player HTML recebe MP3 mono contínuo a 48 kbit/s e permite minimizar ou bloquear o ecrã quando o aparelho suportar. Mantenha a aba aberta e o Wi-Fi conectado. Chamadas, políticas de bateria e o sistema podem interromper áudio; valide no celular real. O texto usa WebSocket independentemente e pode chegar antes do áudio. O servidor mantém ADPCM para clientes compatíveis anteriores, sem enviar PCM bruto à audiência.
+
+-Depois de instalar as dependências, você também pode abrir `Iniciar.cmd` com dois cliques.
+-Se seu gerenciador bloquear scripts de instalação e o executável do Electron estiver ausente, execute `node node_modules/electron/install.js`.
++## Empacotar e verificar
+
+-1. Crie uma chave em https://aistudio.google.com/apikey.
+-2. Cole a chave no aplicativo. Ela não é salva em arquivo.
+-3. Clique em **Atualizar microfones**, autorize o acesso e selecione o microfone.
+-4. Use fones de ouvido e clique em **Iniciar tradução**.
+-5. Compartilhe um link da seção **Página da audiência**. Para outros dispositivos na mesma rede, use o link **Na rede Wi-Fi**.
+-6. Os ouvintes abrem o link no navegador e clicam em **Enable audio** para ouvir; o texto aparece automaticamente.
+-7. Fale em português. A tradução aparece na tela. Marque **Ouvir tradução neste computador** caso também queira ouvir no apresentador.
+-8. Clique em **Parar** para liberar o microfone e encerrar a conexão.
++No Windows, execute **node build-windows.cjs**. Passe o caminho do repositório Ponte para incluir o guia compartilhado e copiar o ZIP para o download local autenticado. O pacote contém Electron, a aplicação e as dependências de execução; não inclui credenciais ou modelos locais de IA. Em produção, o download usa TRANSLATION_APP_DOWNLOAD_URL e a release oficial do GitHub.
+
+-O aplicativo não grava áudio nem salva histórico em disco. O servidor mantém até 50.000 caracteres da tradução em memória para ouvintes que entram depois; o histórico é apagado ao iniciar uma tradução, limpar ou fechar o aplicativo.
+-Fechar a página do apresentador encerra a tradução. O público reconecta automaticamente se perder a conexão.
+-O link privado do apresentador contém uma autorização no fragmento da URL. Não o compartilhe: compartilhe somente o link `/listen/...` da audiência. Quem tem o link da audiência pode ler e ouvir a tradução dessa sessão.
+-
+-## Navegador sem Electron
+-
+-Execute `npm run server` e abra o link privado do apresentador impresso no terminal. Use `localhost` nesse computador para permitir o microfone. A porta padrão é 3210; pode ser alterada pela variável `PORT` nesse modo.
+-
+-## Acesso na igreja
+-
+-A transmissão é local. O link publicado só funciona para quem consegue alcançar o computador no Wi-Fi da igreja. O botão Publicar tradução habilita a descoberta na PWA; ele não expõe o computador à internet nem altera o firewall automaticamente.
+-
+-## Modelo e disponibilidade
+-
+-Usa `gemini-3.5-live-translate-preview`, com tradução nativa para `en`, seguindo a configuração do exemplo Google:
+-https://github.com/google-gemini/gemini-live-translate-livekit
+-
+-Consulte preços e cotas da sua conta antes de usar:
+-https://ai.google.dev/gemini-api/docs/pricing
+-https://ai.google.dev/gemini-api/docs/rate-limits
+-
+-A faixa gratuita está sujeita a disponibilidade e cotas e pode usar os dados para melhorar produtos Google. Modelo preview pode mudar.
+-Chave inválida, ausência de acesso ao modelo, cota esgotada ou sessão expirada encerram a captura e mostram o erro. Clique em Iniciar para tentar outra sessão.
+-
+-## Validação
+-
+-`npm run check` verifica a sintaxe. `npm test` valida o codec com um vetor de referência, fidelidade de um sinal sintético, tamanho dos pacotes, entradas inválidas, autenticação, isolamento da audiência, distribuição binária de áudio/texto, histórico, limpeza e encerramento usando uma API simulada e conexões WebSocket reais.
+-As duas páginas também foram verificadas no Electron com áudio simulado. A validação completa da tradução precisa de chave válida, acesso ao modelo, microfone e uma pessoa conferindo o áudio e o texto.
+-Esta versão não inclui instalador, microfone virtual, hospedagem pública ou reconexão automática com o Gemini. A audiência reconecta ao servidor automaticamente.
+-
+-
+-## Atualizações (Windows 0.3.2+)
+-
+-Extraia o ZIP e execute Instalar.cmd; abra pelo atalho Ponte - Tradução. Instala em %LOCALAPPDATA%\Ponte-Traducao sem privilégios de administrador. Para atualizar, feche o aplicativo e execute Instalar.cmd do novo ZIP: substitui o runtime e mantém os atalhos. Pastas portáteis antigas não são apagadas; passe a usar o atalho.
+-
+-O aplicativo verifica releases estáveis oficiais no startup, em segundo plano, e oferece Baixar atualização ou Agora não. Sem internet, continua abrindo normalmente. Ajuda → Verificar atualizações permite repetir a consulta. Não instala versões automaticamente nem interrompe uma tradução. A versão 0.3.2 precisa ser instalada manualmente uma vez para habilitar esta funcionalidade.
+-
+-Testes: node --test update-checker.test.cjs installer.test.cjs. O instalador é testado somente em pastas temporárias, com lançamento e criação de atalhos desabilitados.
++Execute **npm test** e **npm run check**. **channels-smoke.cjs** é uma fixture Electron com microfone e Gemini simulados, reprodução MP3 real, criação durante a transmissão, seleção, fechamento e reconexão de canais. Aceita um diretório de saída opcional para capturas. **installer-package-smoke.cjs** testa instalação e substituição do runtime em pasta temporária, sem alterar os atalhos ou a instalação real do usuário.
+diff --git a/windows-guide.json b/windows-guide.json
+--- a/windows-guide.json
++++ b/windows-guide.json
+@@ -31,11 +31,13 @@
+       ]
+     },
+     {
+-      "title": "3. Escolher o microfone e testar",
++      "title": "3. Abrir canais, escolher o microfone e testar",
+       "steps": [
++        "Em Canais de tradução, o inglês já vem aberto. Escolha outro idioma e toque em Abrir canal para disponibilizar até três canais simultâneos. O idioma falado é detectado automaticamente.",
++        "É preciso ter pelo menos um canal aberto para iniciar. Pode abrir e fechar canais antes ou durante a transmissão. Um canal aberto durante a tradução começa a receber as próximas palavras. Cada canal usa uma sessão de tradução, compartilhada por todos os seus ouvintes.",
+         "Cole a chave fornecida pelo responsável no campo Chave Gemini API. Essa chave permite que o serviço faça a tradução; ela não é a ligação do Ponte.",
+         "Clique em Atualizar microfones. Se aparecer um pedido para usar o microfone, permita o acesso. No campo Microfone, escolha o que será usado no culto.",
+-        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto em inglês aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
++        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto no idioma do canal selecionado aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
+         "Se quiser ouvir o teste neste computador, use fones e marque Ouvir tradução neste computador. Evite reproduzir a tradução nas caixas de som perto do microfone, pois isso pode causar eco."
+       ]
+     },
+@@ -53,10 +55,11 @@
+       "steps": [
+         "Peça às pessoas que se conectem ao Wi-Fi da igreja e usem fones de ouvido. O link local não funciona em casa ou somente com dados móveis.",
+         "No Ponte, abra Tradução ao vivo e toque em Abrir tradução ao vivo. A tela do ouvinte abre na mesma aba. Use o botão Voltar do navegador para retornar ao Ponte.",
+-        "Na tela do ouvinte, toque em Ouvir ao vivo. O texto em inglês aparece na mesma tela; ele pode chegar antes do áudio.",
++        "Na tela do ouvinte, escolha um dos canais abertos e toque em Ouvir ao vivo. Pode trocar de canal a qualquer momento; áudio e texto mudam juntos. O texto pode chegar antes do áudio.",
+         "Use Pausar áudio para interromper o som sem perder o texto. Retomar ao vivo reconecta à transmissão atual, sem repetir o áudio da pausa.",
+         "O mesmo leitor funciona com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir. Não é preciso escolher outro modo. Atualize o aplicativo Windows para 0.3.1 ou superior; não feche a aba nem encerre o navegador.",
+-        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto."
++        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto.",
++        "Se o canal escolhido for fechado, o áudio para e a tela pede para selecionar outro. Uma falha em um canal não interrompe os outros; no computador, use Reconectar para tentar novamente."
+       ]
+     },
+     {
+diff --git a/server.test.cjs b/server.test.cjs
+--- a/server.test.cjs
++++ b/server.test.cjs
+@@ -74,7 +74,7 @@ test('presenter authentication, live fan-out, audio, snapshots, clearing and dis
+   presenter.socket.send(JSON.stringify({ action: 'clear' }));
+   assert.equal((await second.next(message => message.reset)).reset, true);
+   bridge.emit({ error: 'private diagnostic' });
+-  const safe = await second.next(message => message.state === 'idle');
++  const safe = await second.next(message => message.state === 'error');
+   assert.equal(safe.error, undefined);
+   presenter.socket.close(); await once(presenter.socket, 'close');
+   assert.equal((await first.next(message => message.state === 'idle')).state, 'idle');
+diff --git a/audience.test.cjs b/audience.test.cjs
+--- a/audience.test.cjs
++++ b/audience.test.cjs
+@@ -1,35 +1,42 @@
+ const test = require('node:test'), assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs');
+ function player(play = async () => {}) {
+   const handlers = {}, actions = {}, audio = { src: '', pause() { handlers.pause?.(); }, removeAttribute() { this.src = ''; }, load() { this.loads = (this.loads || 0) + 1; }, play, addEventListener(name, handler) { handlers[name] = handler; } };
++  const window = { addEventListener() {} };
+   const button = {}, status = {}, navigator = { mediaSession: { setActionHandler(name, handler) { actions[name] = handler; } } };
+   const elements = { radio: audio, listen: button, 'radio-status': status };
+-  vm.runInNewContext(fs.readFileSync(__dirname + '/radio.js', 'utf8'), { document: { getElementById: id => elements[id] }, location: { pathname: '/listen/room' }, navigator, window: { addEventListener() {} } });
+-  return { audio, button, status, actions, handlers, navigator };
++  vm.runInNewContext(fs.readFileSync(__dirname + '/radio.js', 'utf8'), { document: { getElementById: id => elements[id] }, location: { pathname: '/listen/room' }, navigator, window });
++  window.translationPlayer.selectChannel('en','English','live');
++  return { audio, button, status, actions, handlers, navigator, player: window.translationPlayer };
+ }
+ test('one native player starts on a gesture, pauses and resumes from a fresh live connection', async () => {
+   let plays = 0; const p = player(async () => { plays++; });
+   assert.equal(p.audio.src, '', 'no audio or network request before user gesture');
+   p.button.onclick(); await Promise.resolve(); p.handlers.playing();
+-  assert.equal(p.audio.src, '/audio/room.mp3'); assert.equal(p.button.textContent, 'Pausar áudio');
++  assert.equal(p.audio.src, '/audio/room.mp3?channel=en'); assert.equal(p.button.textContent, 'Pausar áudio');
+   p.button.onclick(); assert.equal(p.audio.src, ''); assert.match(p.status.textContent, /texto continua/);
+   p.button.onclick(); await Promise.resolve(); p.handlers.playing();
+-  assert.equal(plays, 2); assert.equal(p.audio.loads, 3); assert.equal(p.navigator.mediaSession.playbackState, 'playing');
++  assert.equal(plays, 2); assert.equal(p.audio.loads, 4); assert.equal(p.navigator.mediaSession.playbackState, 'playing');
+ });
+ test('screen controls use the same pause and fresh-live resume actions', async () => {
+   const p = player(); p.actions.play(); await Promise.resolve(); p.handlers.playing();
+   p.actions.pause(); assert.equal(p.audio.src, '');
+-  p.actions.play(); await Promise.resolve(); assert.equal(p.audio.src, '/audio/room.mp3');
++  p.actions.play(); await Promise.resolve(); assert.equal(p.audio.src, '/audio/room.mp3?channel=en');
+   p.actions.stop(); assert.equal(p.navigator.mediaSession.playbackState, 'paused');
+ });
+ test('blocked playback and stream failures leave a usable retry button', async () => {
+   const p = player(async () => { throw Error('autoplay denied'); });
+   p.button.onclick(); await new Promise(resolve => setImmediate(resolve));
+   assert.equal(p.button.disabled, false); assert.match(p.status.textContent, /Não foi possível ouvir/);
+-  p.handlers.error(); assert.equal(p.button.textContent, 'Retomar ao vivo');
+-  p.handlers.ended(); assert.match(p.status.textContent, /terminou/);
++  p.actions.play(); p.handlers.error(); assert.equal(p.button.textContent, 'Retomar ao vivo');
++  p.actions.play(); p.handlers.ended(); assert.match(p.status.textContent, /terminou/);
+ });
+ test('late play rejection cannot overwrite a newer pause action', async () => {
+   let reject; const p = player(() => new Promise((_, fail) => { reject = fail; }));
+   p.actions.play(); p.actions.pause(); reject(Error('aborted')); await new Promise(resolve => setImmediate(resolve));
+   assert.match(p.status.textContent, /pausado/); assert.equal(p.button.disabled, false);
+ });
++test('switching channel replaces the native source while listening; closing it disables playback', async()=>{
++ const p=player();p.button.onclick();await Promise.resolve();p.handlers.playing();
++ p.player.selectChannel('es','Español','live');await Promise.resolve();assert.equal(p.audio.src,'/audio/room.mp3?channel=es');p.handlers.playing();assert.match(p.status.textContent,/Español/);
++ p.player.selectChannel(null,'','idle');assert.equal(p.audio.src,'');assert.equal(p.button.disabled,true);assert.match(p.status.textContent,/fechado/);p.actions.play();assert.equal(p.audio.src,'');
++});
+diff --git a/channels.test.cjs b/channels.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/channels.test.cjs
+@@ -0,0 +1,259 @@
++const test = require("node:test"),
++  assert = require("node:assert/strict"),
++  { once } = require("node:events"),
++  { WebSocket } = require("ws");
++const { TranslationChannels } = require("./translation-channels.cjs");
++const { createTranslationServer } = require("./server.cjs");
++function fixture() {
++  const bridges = [],
++    messages = [],
++    errors = [];
++  class Bridge {
++    constructor(emit) {
++      this.emit = emit;
++      this.audioCalls = [];
++      bridges.push(this);
++    }
++    start(key, id) {
++      this.key = key;
++      this.id = id;
++      this.emit({ ready: true });
++    }
++    stop() {
++      this.stopped = true;
++    }
++    audio(data) {
++      this.audioCalls.push(Buffer.from(data));
++    }
++  }
++  const manager = new TranslationChannels({
++    Bridge,
++    onMessage: (c, m) => messages.push([c.id, m]),
++    onError: (c, e) => errors.push([c.id, e]),
++  });
++  return { manager, bridges, messages, errors, Bridge };
++}
++test("English starts open; three unique supported channels are allowed and last-channel close prevents starting", () => {
++  const { manager: m, bridges } = fixture();
++  assert.deepEqual(
++    m.list().map((c) => c.id),
++    ["en"],
++  );
++  m.add("es");
++  m.add("fr");
++  assert.throws(() => m.add("de"), /3 canais/);
++  assert.throws(() => m.add("es"), /já tem/);
++  assert.throws(() => m.add("not-a-language"), /disponível/);
++  m.start("synthetic-key");
++  assert.equal(m.state, "live");
++  assert.deepEqual(
++    bridges.map((b) => b.id),
++    ["en", "es", "fr"],
++  );
++  assert.throws(() => m.start("other"), /andamento/);
++  m.remove("en");
++  m.remove("es");
++  m.remove("fr");
++  assert.equal(m.running, false);
++  assert.equal(m.key, "");
++  assert.throws(() => m.start("synthetic-key"), /pelo menos um canal/);
++  m.add("pt-PT");
++  assert.equal(m.list()[0].state, "idle");
++  m.stop();
++});
++test("live additions share microphone input, failures stay isolated, and removed callbacks cannot contaminate reopened channels", () => {
++  const { manager: m, bridges } = fixture();
++  m.start("synthetic-key");
++  m.add("es");
++  m.audio(Buffer.from([1, 2]));
++  assert.equal(bridges[0].audioCalls.length, 1);
++  assert.equal(bridges[1].audioCalls.length, 1);
++  bridges[0].emit({ content: { outputTranscription: { text: "English" } } });
++  bridges[1].emit({ content: { outputTranscription: { text: "Español" } } });
++  assert.equal(m.channels.get("en").transcript, "English");
++  assert.equal(m.channels.get("es").transcript, "Español");
++  bridges[1].emit({ error: "private diagnostic" });
++  assert.equal(m.channels.get("es").state, "error");
++  assert.equal(m.channels.get("en").state, "live");
++  assert.equal(m.running, true);
++  m.audio(Buffer.from([3, 4]));
++  assert.equal(bridges[1].audioCalls.length, 1);
++  m.retry("es");
++  assert.equal(m.channels.get("es").state, "live");
++  m.clear("en");
++  assert.equal(m.channels.get("en").transcript, "");
++  m.remove("es");
++  m.add("es");
++  bridges[1].emit({ content: { outputTranscription: { text: "stale" } } });
++  assert.equal(m.channels.get("es").transcript, "");
++  m.stop();
++  assert.equal(m.key, "");
++  assert.ok(bridges.every((b) => b.stopped));
++});
++function inbox(socket) {
++  const queue = [],
++    waiting = [];
++  socket.on("message", (raw, binary) => {
++    const data = binary ? { audio: raw } : JSON.parse(raw);
++    if (waiting.length) waiting.shift()(data);
++    else queue.push(data);
++  });
++  return async (predicate = () => true) => {
++    while (true) {
++      const data = queue.length
++        ? queue.shift()
++        : await new Promise((resolve) => waiting.push(resolve));
++      if (predicate(data)) return data;
++    }
++  };
++}
++test(
++  "listeners discover channels, switch isolated transcripts, receive closures, and cannot manage the presenter",
++  { timeout: 12000 },
++  async (t) => {
++    const bridges = [];
++    class Bridge {
++      constructor(emit) {
++        this.emit = emit;
++        bridges.push(this);
++      }
++      start(key, id) {
++        this.id = id;
++        this.emit({ ready: true });
++      }
++      stop() {}
++      audio() {}
++    }
++    const server = createTranslationServer({
++      port: 0,
++      host: "127.0.0.1",
++      Bridge,
++    });
++    t.after(() => server.close());
++    const info = await server.listen(),
++      url = new URL(info.presenterUrl),
++      base = url.origin.replace("localhost", "127.0.0.1");
++    async function connect(route) {
++      const socket = new WebSocket(base.replace("http:", "ws:") + route, {
++        origin: base,
++      });
++      const next = inbox(socket);
++      await once(socket, "open");
++      return { socket, next };
++    }
++    const host = await connect("/presenter-ws");
++    host.socket.send(JSON.stringify({ token: url.hash.slice(1) }));
++    const auth = await host.next((m) => m.authenticated);
++    assert.deepEqual(
++      auth.channels.map((c) => c.id),
++      ["en"],
++    );
++    const first = await connect("/audience-ws/" + server.room),
++      second = await connect("/audience-ws/" + server.room);
++    await first.next();
++    await second.next();
++    first.socket.send(
++      JSON.stringify({ action: "open-channel", languageCode: "de" }),
++    );
++    host.socket.send(
++      JSON.stringify({ action: "open-channel", languageCode: "es" }),
++    );
++    host.socket.send(
++      JSON.stringify({ action: "open-channel", languageCode: "fr" }),
++    );
++    const list = await first.next((m) => m.channels?.length === 3);
++    assert.deepEqual(
++      list.channels.map((c) => c.id),
++      ["en", "es", "fr"],
++    );
++    assert.ok(!JSON.stringify(list).includes("synthetic-key"));
++    host.socket.send(
++      JSON.stringify({ action: "open-channel", languageCode: "de" }),
++    );
++    assert.match(
++      (await host.next((m) => m.channelError)).channelError,
++      /3 canais/,
++    );
++    host.socket.send(JSON.stringify({ action: "start", key: "synthetic-key" }));
++    await host.next((m) => m.channelId === "fr" && m.ready);
++    first.socket.send(
++      JSON.stringify({ action: "select-channel", channelId: "es" }),
++    );
++    const ack = await first.next((m) => m.selectedChannel === "es");
++    assert.equal(ack.snapshot, "");
++    bridges
++      .find((b) => b.id === "en")
++      .emit({ content: { outputTranscription: { text: "Welcome" } } });
++    bridges
++      .find((b) => b.id === "es")
++      .emit({ content: { outputTranscription: { text: "Bienvenidos" } } });
++    const spanish = await first.next((m) => m.content);
++    assert.equal(spanish.channelId, "es");
++    assert.equal(spanish.content.outputTranscription.text, "Bienvenidos");
++    const english = await second.next((m) => m.content);
++    assert.equal(english.channelId, "en");
++    assert.equal(english.content.outputTranscription.text, "Welcome");
++    first.socket.send(
++      JSON.stringify({ action: "select-channel", channelId: "en" }),
++    );
++    assert.equal(
++      (await first.next((m) => m.selectedChannel === "en")).snapshot,
++      "Welcome",
++    );
++    first.socket.send(
++      JSON.stringify({ action: "select-channel", channelId: "invalid" }),
++    );
++    assert.match(
++      (await first.next((m) => m.selectionError)).selectionError,
++      /disponível/,
++    );
++    assert.equal(
++      (await fetch(base + "/audio/" + server.room + ".mp3?channel=invalid"))
++        .status,
++      404,
++    );
++    const esStream = await fetch(
++      base + "/audio/" + server.room + ".mp3?channel=es",
++    );
++    assert.equal(esStream.status, 200);
++    assert.match(esStream.headers.get("content-type"), /audio\/mpeg/);
++    const reader = esStream.body.getReader();
++    assert.ok((await reader.read()).value.length);
++    first.socket.send(
++      JSON.stringify({ action: "select-channel", channelId: "es" }),
++    );
++    await first.next((m) => m.selectedChannel === "es");
++    host.socket.send(
++      JSON.stringify({ action: "close-channel", channelId: "es" }),
++    );
++    const closed = await first.next((m) => m.channelClosed);
++    assert.equal(closed.selectedChannel, null);
++    assert.equal(closed.snapshot, "");
++    while (!(await reader.read()).done) {
++      /* drain stream closed with channel */
++    }
++    assert.equal(
++      (await fetch(base + "/audio/" + server.room + ".mp3?channel=es")).status,
++      404,
++    );
++    bridges
++      .find((b) => b.id === "en")
++      .emit({ content: { outputTranscription: { text: " still live" } } });
++    assert.equal(
++      (await second.next((m) => m.content)).content.outputTranscription.text,
++      " still live",
++    );
++    host.socket.send(
++      JSON.stringify({ action: "close-channel", channelId: "en" }),
++    );
++    host.socket.send(
++      JSON.stringify({ action: "close-channel", channelId: "fr" }),
++    );
++    await host.next((m) => m.channels?.length === 0);
++    host.socket.send(JSON.stringify({ action: "start", key: "synthetic-key" }));
++    assert.match(
++      (await host.next((m) => m.channelError)).channelError,
++      /pelo menos um canal/,
++    );
++  },
++);
+diff --git a/bridge.test.cjs b/bridge.test.cjs
+new file mode 100644
+--- /dev/null
++++ b/bridge.test.cjs
+@@ -0,0 +1,63 @@
++const test = require("node:test"),
++  assert = require("node:assert/strict"),
++  { EventEmitter } = require("node:events");
++const { TranslationBridge } = require("./bridge.cjs");
++test("each Gemini bridge configures its channel target and redacts its key from errors", (t) => {
++  const sockets = [],
++    events = [];
++  class Socket extends EventEmitter {
++    constructor(url, options) {
++      super();
++      this.url = url;
++      this.options = options;
++      this.sent = [];
++      this.readyState = 1;
++      sockets.push(this);
++    }
++    send(raw) {
++      this.sent.push(JSON.parse(raw));
++    }
++    terminate() {
++      this.terminated = true;
++    }
++  }
++  const bridge = new TranslationBridge((m) => events.push(m), Socket);
++  t.after(() => bridge.stop());
++  bridge.start("synthetic-private-key", "es");
++  sockets[0].emit("open");
++  assert.equal(
++    sockets[0].sent[0].setup.generationConfig.translationConfig
++      .targetLanguageCode,
++    "es",
++  );
++  assert.ok(
++    !JSON.stringify(sockets[0].sent[0]).includes("synthetic-private-key"),
++  );
++  sockets[0].emit("message", JSON.stringify({ setupComplete: {} }));
++  assert.equal(events[0].ready, true);
++  bridge.audio(Buffer.from([1, 2]));
++  assert.equal(
++    sockets[0].sent[1].realtimeInput.audio.mimeType,
++    "audio/pcm;rate=16000",
++  );
++  sockets[0].emit(
++    "message",
++    JSON.stringify({ error: { message: "Denied synthetic-private-key" } }),
++  );
++  assert.ok(!events.at(-1).error.includes("synthetic-private-key"));
++  bridge.start("synthetic-private-key", "pt-PT");
++  sockets[1].emit("open");
++  assert.equal(
++    sockets[1].sent[0].setup.generationConfig.translationConfig
++      .targetLanguageCode,
++    "pt-PT",
++  );
++  const count = events.length;
++  sockets[0].emit(
++    "message",
++    JSON.stringify({
++      serverContent: { outputTranscription: { text: "stale" } },
++    }),
++  );
++  assert.equal(events.length, count);
++});
+diff --git a/channels-smoke.cjs b/channels-smoke.cjs
+new file mode 100644
+--- /dev/null
++++ b/channels-smoke.cjs
+@@ -0,0 +1,253 @@
++const { app, BrowserWindow, session } = require("electron"),
++  fs = require("node:fs"),
++  path = require("node:path"),
++  assert = require("node:assert/strict"),
++  { WebSocket } = require("ws");
++const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
++app.commandLine.appendSwitch("use-fake-device-for-media-stream");
++app.commandLine.appendSwitch("use-fake-ui-for-media-stream");
++const output = process.argv[2]
++  ? path.resolve(process.argv[2])
++  : app.getPath("temp");
++app.whenReady().then(async () => {
++  let server, timer;
++  const windows = [],
++    bridges = [],
++    errors = [];
++  try {
++    session.defaultSession.setPermissionRequestHandler(
++      (_contents, _permission, callback) => callback(true),
++    );
++    class Bridge {
++      constructor(emit) {
++        this.emit = emit;
++        this.inputs = 0;
++        bridges.push(this);
++      }
++      start(key, id) {
++        assert.equal(key, "synthetic-smoke-key");
++        this.id = id;
++        this.live = true;
++        this.emit({ ready: true });
++      }
++      stop() {
++        this.live = false;
++      }
++      audio() {
++        this.inputs++;
++      }
++    }
++    server = require("./server.cjs").createTranslationServer({
++      port: 0,
++      host: "127.0.0.1",
++      Bridge,
++    });
++    const info = await server.listen(),
++      origin = new URL(info.presenterUrl).origin;
++    const pcm = Buffer.alloc(9600);
++    for (let i = 0; i < 4800; i++)
++      pcm.writeInt16LE(
++        Math.round(5000 * Math.sin((2 * Math.PI * 440 * i) / 24000)),
++        i * 2,
++      );
++    const words = {
++      en: "Hello everyone. ",
++      es: "Hola a todos. ",
++      fr: "Bonjour à tous. ",
++    };
++    timer = setInterval(() => {
++      for (const bridge of bridges)
++        if (bridge.live)
++          bridge.emit({
++            content: {
++              outputTranscription: { text: words[bridge.id] || bridge.id },
++              modelTurn: {
++                parts: [
++                  {
++                    inlineData: {
++                      data: pcm.toString("base64"),
++                      mimeType: "audio/pcm;rate=24000",
++                    },
++                  },
++                ],
++              },
++            },
++          });
++    }, 200);
++    async function window(url, width) {
++      const win = new BrowserWindow({
++        show: false,
++        width,
++        height: 1100,
++        webPreferences: { sandbox: true, backgroundThrottling: false },
++      });
++      windows.push(win);
++      win.webContents.on("console-message", (_event, ...args) => {
++        if (
++          args.some(
++            (value) => typeof value === "string" && value.includes("Uncaught"),
++          )
++        )
++          errors.push(args);
++      });
++      await win.loadURL(url);
++      return win;
++    }
++    const run = (win, code) => win.webContents.executeJavaScript(code, true);
++    async function until(win, code) {
++      for (let i = 0; i < 100; i++) {
++        if (await run(win, code)) return;
++        await wait(100);
++      }
++      throw Error("Timed out: " + code);
++    }
++    const host = await window(info.presenterUrl, 1000);
++    await until(
++      host,
++      "document.querySelectorAll('#channel-list [role=listitem]').length===1",
++    );
++    await run(
++      host,
++      "document.querySelector('[aria-label=\"Fechar canal Inglês\"]').click()",
++    );
++    await until(
++      host,
++      "document.getElementById('start').disabled && document.querySelectorAll('#channel-list [role=listitem]').length===0",
++    );
++    await run(
++      host,
++      "document.getElementById('channel-language').value='en';document.getElementById('open-channel').click()",
++    );
++    await until(
++      host,
++      "document.querySelectorAll('#channel-list [role=listitem]').length===1",
++    );
++    await run(
++      host,
++      "document.getElementById('key').value='synthetic-smoke-key';document.getElementById('start').click()",
++    );
++    await until(
++      host,
++      "document.getElementById('status').textContent.includes('ao vivo')",
++    );
++    for (const id of ["es", "fr"]) {
++      await run(
++        host,
++        `document.getElementById('channel-language').value='${id}';document.getElementById('open-channel').click()`,
++      );
++      await until(
++        host,
++        `document.querySelectorAll('#channel-list [role=listitem]').length===${id === "es" ? 2 : 3}`,
++      );
++    }
++    assert.equal(
++      await run(host, "document.getElementById('open-channel').disabled"),
++      true,
++    );
++    const listener = await window(origin + "/listen/" + server.room, 390);
++    await until(
++      listener,
++      "document.getElementById('listener-channel').options.length===4",
++    );
++    await run(listener, "document.getElementById('listen').click()");
++    await until(listener, "document.getElementById('radio').currentTime>0");
++    for (const id of ["es", "en", "fr", "es"]) {
++      await run(
++        listener,
++        `document.getElementById('listener-channel').value='${id}';document.getElementById('listener-channel').dispatchEvent(new Event('change'))`,
++      );
++      await until(
++        listener,
++        `document.getElementById('text').textContent.includes('${id === "en" ? "Hello" : id === "es" ? "Hola" : "Bonjour"}')`,
++      );
++    }
++    await until(
++      listener,
++      "document.getElementById('radio').currentTime>0 && document.getElementById('radio').src.includes('channel=es')",
++    );
++    assert.equal(
++      await run(
++        listener,
++        "document.getElementById('text').textContent.includes('Hello') || document.getElementById('text').textContent.includes('Bonjour')",
++      ),
++      false,
++    );
++    await run(
++      host,
++      "document.getElementById('monitor-channel').value='fr';document.getElementById('monitor-channel').dispatchEvent(new Event('change'))",
++    );
++    await until(
++      host,
++      "document.getElementById('text').textContent.includes('Bonjour')",
++    );
++    for (const win of [host, listener])
++      assert.ok(
++        await run(win, "document.documentElement.scrollWidth<=innerWidth"),
++        "viewport overflow",
++      );
++    fs.mkdirSync(output, { recursive: true });
++    fs.writeFileSync(
++      path.join(output, "channels-presenter.png"),
++      (await host.webContents.capturePage()).toPNG(),
++    );
++    fs.writeFileSync(
++      path.join(output, "channels-listener.png"),
++      (await listener.webContents.capturePage()).toPNG(),
++    );
++    assert.ok(
++      bridges.filter((b) => b.live).every((b) => b.inputs > 0),
++      "all active channels must receive microphone packets",
++    );
++    await run(
++      host,
++      "document.querySelector('[aria-label=\"Fechar canal Espanhol\"]').click()",
++    );
++    await until(
++      listener,
++      "document.getElementById('listener-channel').value==='' && document.getElementById('listen').disabled",
++    );
++    assert.match(
++      await run(
++        listener,
++        "document.getElementById('channel-notice').textContent",
++      ),
++      /fechado/,
++    );
++    bridges
++      .find((b) => b.id === "en")
++      .emit({ error: "simulated channel failure" });
++    await until(
++      host,
++      "!!document.querySelector('[aria-label=\"Reconectar canal Inglês\"]')",
++    );
++    assert.ok(bridges.find((b) => b.id === "fr").live);
++    await run(
++      host,
++      "document.querySelector('[aria-label=\"Reconectar canal Inglês\"]').click()",
++    );
++    await until(
++      host,
++      "!document.querySelector('[aria-label=\"Reconectar canal Inglês\"]')",
++    );
++    await run(
++      host,
++      "document.querySelector('[aria-label=\"Fechar canal Inglês\"]').click();document.querySelector('[aria-label=\"Fechar canal Francês\"]').click()",
++    );
++    await until(
++      host,
++      "document.getElementById('stop').disabled && document.getElementById('start').disabled",
++    );
++    assert.equal(errors.length, 0, JSON.stringify(errors));
++    console.log(
++      "PASS: real presenter capture, live channel creation, limit, native MP3 switching, isolated transcripts, closure, retry, last-channel stop, and mobile layout.",
++    );
++  } catch (error) {
++    console.error(error.stack);
++    process.exitCode = 1;
++  } finally {
++    clearInterval(timer);
++    for (const win of windows) win.destroy();
++    await server?.close();
++    app.exit(process.exitCode || 0);
++  }
++});

@@ -23,7 +23,7 @@ export function LiveTranslationPage({
     <Stack spacing={3}>
       <PageHeader
         title="Tradução ao vivo"
-        subtitle="Acompanhe a mensagem em inglês, com áudio e texto."
+        subtitle="Escolha um canal e acompanhe a mensagem no seu idioma, com áudio e texto."
       />
       {session.isPending ? (
         <Alert severity="info">Procurando a tradução ao vivo…</Alert>
@@ -55,7 +55,7 @@ export function LiveTranslationPage({
                 useFlexGap
               >
                 <TranslateRounded color="primary" />
-                <Typography variant="h6">Português → English</Typography>
+                <Typography variant="h6">Canais de tradução</Typography>
                 <Chip label="Disponível ao vivo" size="small" color="success" />
               </Stack>
               <Alert severity="info">
@@ -71,8 +71,8 @@ export function LiveTranslationPage({
               </Button>
               <Typography variant="body2" color="text.secondary">
                 A tradução abre nesta aba, diretamente no computador da igreja.
-                Na próxima tela, toque em Ouvir ao vivo. Use o botão Voltar do
-                navegador para retornar ao Ponte.
+                Na próxima tela, escolha um canal e toque em Ouvir ao vivo. Use
+                o botão Voltar do navegador para retornar ao Ponte.
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 Mantenha o Wi-Fi conectado e esta aba aberta. Ao pausar e

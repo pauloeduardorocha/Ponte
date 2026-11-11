@@ -10,6 +10,18 @@ O aplicativo Windows captura o microfone, conecta-se ao Gemini e serve a audiên
 
 As telas locais usam a missão **Conhecer a Cristo e fazê-lo conhecido** no apresentador e **To know Christ and make Him known** no ouvinte. O patch `scripts/translation-windows/mission-statement.patch` mantém esses textos no código Windows, sobre a versão 0.3.3.
 
+## Canais de tradução (Windows 0.4.0+)
+
+O computador abre com um canal em inglês. O apresentador pode abrir até três canais simultâneos, cada um para um idioma suportado diferente, e fechá-los a qualquer momento. É preciso ter pelo menos um canal aberto para iniciar a captura. A entrada tem detecção automática de idioma. Cada canal tem sua própria sessão Gemini, transcrição e transmissão MP3, compartilhadas pelos ouvintes desse canal; a captura do microfone é única. O consumo da API depende dos canais ativos, sem criar uma tradução por ouvinte.
+
+Abrir um canal durante a tradução conecta a nova sessão e passa a traduzir as próximas palavras, sem reiniciar os demais. Uma falha afeta somente aquele canal, que pode ser reconectado pelo apresentador. Fechar o último canal para a captura, apaga a chave da sessão em memória e retira a publicação. Parar mantém os canais abertos para a próxima execução. Ao fechar o aplicativo, as escolhas são descartadas; ao reabrir, o inglês volta como padrão.
+
+A tela local lista os canais abertos com estado de conexão. O ouvinte pode escolher ou trocar de canal a qualquer momento. A troca limpa o texto anterior e reconecta o áudio nativo ao vivo no novo idioma, mantendo o estado pausado se já estava pausado. Se o canal for fechado, o áudio para e a pessoa escolhe outro canal; nenhum idioma alternativo começa a tocar automaticamente. O suporte à tela bloqueada continua no mesmo player, incluindo controles Media Session.
+
+O catálogo e a seleção de canais passam diretamente pelo WebSocket local. A publicação no Ponte continua divulgando apenas a URL de audiência e sua validade: não há nova tabela ou credencial por canal. A administração de canais permanece restrita ao apresentador autenticado pelo segredo local. Os ouvintes só podem selecionar canais existentes e não recebem chave Gemini ou diagnóstico privado.
+
+No protocolo local, as mensagens de conteúdo incluem channelId; o catálogo contém id, name, nativeName e state (idle, connecting, live ou error). O ouvinte usa select-channel com channelId e recebe selectedChannel, snapshot e state. O áudio usa /audio/<sala>.mp3?channel=<código>. A URL sem canal mantém o padrão inglês, ou o primeiro aberto quando não houver inglês. As ações open-channel (languageCode), close-channel e retry-channel (channelId) exigem autenticação do apresentador. O patch de sincronização da fonte Windows é scripts/translation-windows/channels.patch, aplicado sobre 0.3.4.
+
 ## Configuração e uso
 
 ### Uma única tela para ouvir e ler (Windows 0.3.1+)
