@@ -22,32 +22,31 @@
       ]
     },
     {
-      "title": "2. Abrir e conectar ao Ponte",
+      "title": "2. Informar as duas chaves",
       "steps": [
-        "Abra o atalho Ponte - Tradução. Ao iniciar, o aplicativo consulta novas versões. Se houver uma atualização, clique em Baixar atualização para abrir o download no navegador, ou Agora não para continuar. Você também pode usar Ajuda → Verificar atualizações.",
-        "No Ponte, entre com uma conta de administrador e abra Comunicação → Aplicativo de tradução. Clique em Gerar ligação para o computador e depois em Copiar ligação. Gerar uma nova ligação cancela a anterior e retira uma transmissão que já esteja publicada.",
-        "Volte à janela do aplicativo. Clique no campo Ligação gerada pelo administrador, pressione Ctrl+V para colar e clique em Conectar ao Ponte. Aguarde a mensagem Conectado ao Ponte.",
-        "Se o Windows impedir a abertura, peça ao responsável da igreja para conferir a origem e a versão do pacote. Não é necessário desativar o antivírus para seguir este guia."
+        "Abra o atalho Ponte - Tradução. O aplicativo verifica novas versões ao iniciar. Você também pode usar Ajuda → Verificar atualizações.",
+        "No primeiro campo, Chave Gemini API, cole a chave fornecida pelo responsável. Ela é usada para gerar a tradução.",
+        "No Ponte, um administrador abre Comunicação → Aplicativo de tradução, gera uma ligação para o computador e copia. Cole esse conteúdo no segundo campo, Ligação gerada pelo administrador. Gerar outra ligação revoga a anterior.",
+        "As duas chaves ficam somente na memória durante o uso. Não as compartilhe com os ouvintes. A ligação é validada quando você inicia a transmissão."
       ]
     },
     {
-      "title": "3. Abrir canais, escolher o microfone e testar",
+      "title": "3. Microfone e três painéis de canais",
       "steps": [
-        "Em Canais de tradução, o inglês já vem aberto. Escolha outro idioma e toque em Abrir canal para disponibilizar até três canais simultâneos. O idioma falado é detectado automaticamente.",
-        "É preciso ter pelo menos um canal aberto para iniciar. Pode abrir e fechar canais antes ou durante a transmissão. Um canal aberto durante a tradução começa a receber as próximas palavras. Cada canal usa uma sessão de tradução, compartilhada por todos os seus ouvintes.",
-        "Cole a chave fornecida pelo responsável no campo Chave Gemini API. Essa chave permite que o serviço faça a tradução; ela não é a ligação do Ponte.",
-        "Clique em Atualizar microfones. Se aparecer um pedido para usar o microfone, permita o acesso. No campo Microfone, escolha o que será usado no culto.",
-        "Clique em Iniciar tradução e fale uma frase curta em português. Aguarde o texto no idioma do canal selecionado aparecer. A tradução pode levar alguns instantes para acompanhar a fala.",
-        "Se quiser ouvir o teste neste computador, use fones e marque Ouvir tradução neste computador. Evite reproduzir a tradução nas caixas de som perto do microfone, pois isso pode causar eco."
+        "O campo seguinte é Microfone. Escolha o dispositivo do culto. Atualizar microfones permite autorizar o acesso e atualizar os nomes dos dispositivos.",
+        "Abaixo há exatamente três colunas de canais. O inglês já vem aberto; os dois painéis inativos ficam em cinza. Neles, escolha um idioma e toque em Abrir canal.",
+        "É preciso ter pelo menos um canal aberto para iniciar. Pode abrir ou fechar canais durante a transmissão; o painel fechado volta a ficar cinza. O idioma falado é detectado automaticamente.",
+        "O texto de cada canal aparece no próprio painel. Para ouvir naquele computador, use fones e toque em Ouvir neste PC no canal desejado. A monitoração de um canal não altera a escolha dos ouvintes."
       ]
     },
     {
-      "title": "4. Publicar para as pessoas da igreja",
+      "title": "4. Iniciar e publicar com um botão",
       "steps": [
-        "Com a tradução funcionando, vá à seção Publicar no Ponte. Em Endereço do computador na rede da igreja, escolha o endereço da conexão usada pela igreja. Se houver mais de uma opção, peça ao responsável da rede para confirmar qual funciona nos celulares.",
-        "Clique em Publicar tradução. Aguarde a confirmação. Apenas abrir o aplicativo ou iniciar o microfone não publica a tradução no Ponte.",
-        "O menu Tradução ao vivo aparecerá no Ponte em até 1 minuto para usuários com conta aprovada. Mantenha o computador ligado, conectado à rede e com o aplicativo aberto.",
-        "Não suspenda o computador nem feche a tampa do notebook durante o culto. A tradução depende dele enquanto estiver sendo usada."
+        "Com as duas chaves preenchidas, o microfone escolhido e um canal aberto, clique em Iniciar tradução e publicar. O aplicativo conecta os canais e publica no Ponte assim que um deles estiver ao vivo.",
+        "O endereço de rede é escolhido automaticamente; não é necessário escolher o IP. Mantenha o computador conectado ao Wi-Fi ou à rede da igreja.",
+        "Se a tradução iniciar mas a publicação falhar, confira a mensagem e use Tentar publicar no mesmo botão. Isso repete a publicação sem reiniciar o microfone nem os canais.",
+        "O menu Tradução ao vivo aparece no Ponte em até um minuto após a publicação. Para compartilhar diretamente, use Copiar link ou o QR code exibido ao lado: ambos abrem a mesma página de canais para ouvintes no Wi-Fi.",
+        "Parar transmissão encerra a captura, os canais ao vivo e a publicação. Não suspenda o computador nem feche a tampa durante o culto."
       ]
     },
     {
@@ -65,8 +64,7 @@
     {
       "title": "6. Encerrar e usar no próximo culto",
       "steps": [
-        "Ao terminar, clique em Parar e depois feche o aplicativo. Parar interrompe a tradução e retira a publicação do Ponte; o menu pode levar até 1 minuto para atualizar.",
-        "Retirar publicação esconde a transmissão do menu, mas não substitui Parar. Para encerrar o trabalho, use Parar.",
+        "Ao terminar, clique em Parar transmissão e depois feche o aplicativo. Parar interrompe a tradução e retira a publicação do Ponte; o menu pode levar até 1 minuto para atualizar.",
         "Se o computador desligar ou perder a conexão sem avisar, a publicação expira em até 2 minutos após a última confirmação.",
         "No próximo culto, abra Ponte-Traducao.exe na mesma pasta extraída e repita a conexão e o teste. A chave Gemini e a ligação do Ponte ficam apenas na memória e precisam ser coladas novamente ao reabrir."
       ]
@@ -86,8 +84,8 @@
       "solution": "Confira se o computador tem internet e se a chave foi colada no campo correto, sem espaços extras. Peça ao responsável para verificar a validade da chave e o limite de uso da conta. Depois tente Iniciar tradução novamente."
     },
     {
-      "problem": "O botão Publicar tradução está apagado",
-      "solution": "Primeiro conecte o aplicativo ao Ponte e inicie a tradução. Aguarde a indicação de que ele está ouvindo. Só então o botão Publicar tradução fica disponível."
+      "problem": "O botão Iniciar tradução e publicar está apagado",
+      "solution": "Preencha as duas chaves, escolha o microfone e abra pelo menos um canal. Use Iniciar tradução e publicar; a publicação acontece automaticamente quando um canal fica pronto."
     },
     {
       "problem": "O menu não aparece no celular",
@@ -95,7 +93,7 @@
     },
     {
       "problem": "O menu aparece, mas o celular não conecta",
-      "solution": "Confira se o celular está no Wi-Fi da igreja e se o endereço escolhido no computador está correto. Abra novamente a tradução pelo Ponte. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
+      "solution": "Confira se o celular está no Wi-Fi da igreja e se o computador também está conectado à rede da igreja. Abra novamente a tradução pelo Ponte. Se continuar, peça ao responsável para verificar o firewall do Windows e se a rede permite que os celulares alcancem o computador. Não desative o firewall."
     },
     {
       "problem": "O texto aparece, mas não ouço o áudio",

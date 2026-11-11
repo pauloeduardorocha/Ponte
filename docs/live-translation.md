@@ -22,6 +22,16 @@ O catálogo e a seleção de canais passam diretamente pelo WebSocket local. A p
 
 No protocolo local, as mensagens de conteúdo incluem channelId; o catálogo contém id, name, nativeName e state (idle, connecting, live ou error). O ouvinte usa select-channel com channelId e recebe selectedChannel, snapshot e state. O áudio usa /audio/<sala>.mp3?channel=<código>. A URL sem canal mantém o padrão inglês, ou o primeiro aberto quando não houver inglês. As ações open-channel (languageCode), close-channel e retry-channel (channelId) exigem autenticação do apresentador. O patch de sincronização da fonte Windows é scripts/translation-windows/channels.patch, aplicado sobre 0.3.4.
 
+## Tela do apresentador (Windows 0.5.0+)
+
+A configuração segue a ordem: chave Gemini, ligação gerada pelo administrador e microfone. Abaixo há exatamente três colunas de canais. Painéis sem canal ficam em cinza e permitem escolher o idioma e abrir um canal. Cada painel ativo contém seu texto e controles para monitorar áudio neste computador, limpar texto, reconectar ou fechar o canal. A monitoração é independente da seleção dos ouvintes.
+
+**Iniciar tradução e publicar** valida a ligação, inicia a captura e publica assim que houver um canal ao vivo. As duas chaves, uma rede privada alcançável e pelo menos um canal são necessários. **Parar transmissão** encerra captura e publicação; em falha de publicação, **Tentar publicar** usa o mesmo botão e não reinicia a tradução. Comandos de configuração e publicação continuam restritos ao apresentador autenticado.
+
+O aplicativo escolhe automaticamente o endereço IPv4 privado da rede, considerando a rota do sistema e priorizando interfaces físicas sobre adaptadores virtuais/VPN. O endereço não é um campo de configuração. Link de acesso direto e QR code apontam para a mesma URL pública de audiência na rede local, sem chave Gemini, credencial de administrador ou segredo do apresentador. O QR é gerado no próprio servidor, sem serviço externo, e não usa localhost ou um IP público. Computador e ouvintes precisam estar numa rede que permita comunicação entre si.
+
+No protocolo local, start-service recebe key e configuration e coordena a conexão dos canais e a publicação; publish-service repete somente a publicação. A URL selecionada é enviada ao apresentador como audienceUrl. /qr/<sala>.svg entrega o QR do endereço atual. A biblioteca de QR é distribuída em um módulo pequeno, com licenças incluídas; o leitor independente jsqr é uma dependência apenas de desenvolvimento. A fonte do módulo está em scripts/translation-windows/qr-entry.mjs e o build em build-qr.mjs. O patch scripts/translation-windows/presenter-ui.patch sincroniza a aplicação Windows sobre 0.4.0.
+
 ## Configuração e uso
 
 ### Uma única tela para ouvir e ler (Windows 0.3.1+)
@@ -39,13 +49,13 @@ Visitantes sem conta também podem acompanhar a tradução. O login consulta `GE
 1. Um usuário ADMIN ou SUPER_ADMIN abre **Comunicação → Aplicativo de tradução** (`/translation-app`).
 2. Baixa o pacote Windows, extrai a pasta inteira e executa `Instalar.cmd`. Depois abre o atalho **Ponte - Tradução**. Não precisa instalar Node.js nem ter privilégios de administrador.
 3. Gera uma ligação e copia para o aplicativo local. Essa credencial é exibida uma vez na PWA e fica somente na memória no aplicativo; a API guarda apenas SHA-256. Gerar outra revoga a anterior e retira qualquer publicação ativa.
-4. No aplicativo, configura a chave Gemini, escolhe o microfone e inicia a tradução. Escolhe o IP da rede da igreja (não VPN) e clica em **Publicar tradução**.
+4. No aplicativo, informa a chave Gemini e a ligação do administrador, escolhe o microfone e os canais e clica em **Iniciar tradução e publicar**. O endereço da rede é escolhido automaticamente.
 5. O menu **Tradução ao vivo** aparece para contas aprovadas na PWA em até 1 minuto. A página `/live-translation` oferece **Abrir tradução ao vivo**, que navega para o leitor no computador da igreja; o usuário precisa estar no mesmo Wi-Fi.
-6. **Retirar publicação**, parar, falha no Gemini ou fechar o aplicativo retira a publicação. Uma falha abrupta expira em até 120 segundos após a última confirmação. Clientes em primeiro plano consultam a disponibilidade a cada 60 segundos; a interface também respeita a expiração localmente.
+6. **Parar transmissão**, fechar o último canal, perder todos os canais por falha ou fechar o aplicativo retira a publicação. Uma falha abrupta expira em até 120 segundos após a última confirmação. Clientes em primeiro plano consultam a disponibilidade a cada 60 segundos; a interface também respeita a expiração localmente.
 
 O PC confirma presença a cada 30 segundos apenas enquanto publicado. São pedidos HTTP curtos de metadados, sem áudio, texto ou chave Gemini. Uma única publicação simultânea é permitida; outra sessão precisa esperar a expiração ou a revogação da ligação. Membros sem acesso administrativo não podem criar credenciais ou baixar o pacote pelo backend.
 
-O firewall do Windows deve permitir a porta TCP 3210 na rede privada e a rede Wi-Fi deve permitir comunicação com esse computador. O pacote não altera firewall ou roteador automaticamente. O PC precisa continuar ligado. Trocar o IP exige selecionar o novo endereço e republicar.
+O firewall do Windows deve permitir a porta TCP 3210 na rede privada e a rede Wi-Fi deve permitir comunicação com esse computador. O pacote não altera firewall ou roteador automaticamente. O PC precisa continuar ligado. Ao mudar de rede, pare e inicie novamente para atualizar o endereço e o QR code.
 
 ## Atualizações do aplicativo Windows (0.3.2+)
 
