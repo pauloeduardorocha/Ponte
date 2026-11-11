@@ -1,0 +1,129 @@
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,6 +1,7 @@
+ <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
+ <body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Canais</span></div></header>
+ <p class="eyebrow">TRADUÇÃO AO VIVO</p><h1 lang="en">To know Christ and make Him known</h1><p>Escolha um canal para ouvir a mensagem e acompanhar o texto no seu idioma.</p>
++<div id="broadcast-notice" class="broadcast-notice" role="status" hidden>Não há nenhuma transmissão ativa no momento. Por favor, aguarde o início da transmissão.</div>
+ <section class="settings" aria-label="Reprodução da tradução"><div class="channel-select"><label for="listener-channel">Canal de tradução / Translation channel</label><select id="listener-channel" disabled><option value="">Carregando canais…</option></select><p id="channel-notice" role="status"></p></div><audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
+ <section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
+ <details><summary>Precisa de ajuda para ouvir?</summary><p>Confira o volume, os fones e o Wi-Fi da igreja. Se o áudio parar, toque em Retomar ao vivo. Ao retomar, ouvirá a transmissão atual.</p><p>Chamadas e economia de bateria podem interromper o áudio. O suporte com o ecrã bloqueado depende do aparelho e do navegador.</p></details><footer>Áudio e texto vêm diretamente do computador da igreja. Não é preciso usar o microfone nem entrar na conta.</footer>
+diff --git a/audience.js b/audience.js
+--- a/audience.js
++++ b/audience.js
+@@ -10,6 +10,7 @@
+   }
+   select.onchange=()=>{notice.textContent='';choose(select.value);};
+   function catalogue(list){
++    document.getElementById('broadcast-notice').hidden=list.some(channel=>channel.state==='live');
+     channels=list;select.replaceChildren(new Option(list.length?'Escolha um canal':'Nenhum canal aberto',''),...list.map(channel=>new Option(channel.nativeName+' · '+(labels[channel.state]||'aguardando'),channel.id)));
+     select.disabled=!list.length;
+     if(selected && !list.some(channel=>channel.id===selected)){choose(null,false);notice.textContent='O canal que você ouvia foi fechado. Escolha outro canal aberto.';}
+diff --git a/radio.js b/radio.js
+--- a/radio.js
++++ b/radio.js
+@@ -5,7 +5,7 @@
+   try { if(navigator.audioSession)navigator.audioSession.type='playback'; } catch { /* optional */ }
+   function mediaState(value){if('mediaSession' in navigator)navigator.mediaSession.playbackState=value;}
+   function release(){generation++;active=false;audio.pause();audio.removeAttribute('src');audio.load();mediaState('paused');}
+-  function pause(){release();button.textContent='Retomar ao vivo';button.disabled=!channelId;status.textContent=channelId?'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.':'Escolha um canal aberto para ouvir.';}
++  function pause(){release();button.textContent='Retomar ao vivo';button.disabled=!channelId||state!=='live';status.textContent=channelId?'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.':'Escolha um canal aberto para ouvir.';}
+   async function start(){
+     if(!channelId || state!=='live'){status.textContent=channelId?'Este canal ainda não está ao vivo. Aguarde o apresentador.':'Escolha um canal aberto para ouvir.';return;}
+     const attempt=++generation;active=true;button.disabled=false;button.textContent='Cancelar conexão';status.textContent='Conectando ao canal '+channelName+'…';
+@@ -15,13 +15,13 @@
+   }
+   function selectChannel(id,name,nextState){
+     if(id===channelId){updateState(nextState);return;}
+-    const resume=active;release();channelId=id;channelName=name||'';state=nextState||'idle';button.disabled=!id;button.textContent='Ouvir ao vivo';
++    const resume=active;release();channelId=id;channelName=name||'';state=nextState||'idle';button.disabled=!id||state!=='live';button.textContent='Ouvir ao vivo';
+     status.textContent=id?'Canal '+channelName+' selecionado. Toque em Ouvir ao vivo.':'O canal foi fechado. Escolha outro canal para continuar.';
+     if('mediaSession' in navigator && typeof MediaMetadata!=='undefined')navigator.mediaSession.metadata=new MediaMetadata({title:'Tradução ao vivo — '+channelName,artist:'A Ponte',artwork:[{src:new URL('/logo.png',location.origin).href,type:'image/png'}]});
+     if(resume && state==='live')void start();
+   }
+   function updateState(next){
+-    state=next||'idle';
++    state=next||'idle';button.disabled=!channelId||state!=='live';
+     if(state!=='live' && active){pause();status.textContent='O canal está '+(state==='error'?'indisponível. Escolha outro canal ou aguarde.':'aguardando tradução. Toque em Retomar ao vivo quando voltar.');}
+   }
+   button.disabled=true;button.onclick=()=>{if(active)pause();else void start();};
+diff --git a/audience.test.cjs b/audience.test.cjs
+--- a/audience.test.cjs
++++ b/audience.test.cjs
+@@ -40,3 +40,5 @@ test('switching channel replaces the native source while listening; closing it d
+  p.player.selectChannel('es','Español','live');await Promise.resolve();assert.equal(p.audio.src,'/audio/room.mp3?channel=es');p.handlers.playing();assert.match(p.status.textContent,/Español/);
+  p.player.selectChannel(null,'','idle');assert.equal(p.audio.src,'');assert.equal(p.button.disabled,true);assert.match(p.status.textContent,/fechado/);p.actions.play();assert.equal(p.audio.src,'');
+ });
++
++test('waiting channel enables listening automatically only when it becomes live',()=>{const p=player();p.player.selectChannel('es','Español','idle');assert.equal(p.button.disabled,true);p.player.updateState('connecting');assert.equal(p.button.disabled,true);p.player.updateState('live');assert.equal(p.button.disabled,false);p.player.updateState('idle');assert.equal(p.button.disabled,true);});
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@ -4,3 +4,5 @@
+ .listener .brand{margin-bottom:24px}.listener .settings{margin:20px 0;padding:18px}.listener #listen{width:100%;min-height:48px;background:#d91017;color:white;border-color:#d91017;font-size:16px}.listener #listen:hover{background:#ad0d13}.listener #radio-status{font-size:14px}.listener .settings p{font-size:14px;line-height:1.6}.listener .transcript{margin-top:20px}.listener #text:empty::before{content:"Aguardando as próximas palavras traduzidas…";color:#62646e;font-size:16px}.listener #text{min-height:160px}
+ .channel-settings{border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:20px 0;margin:20px 0}.channel-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid #eef0f3}.channel-row span{flex:1;min-width:140px}.channel-row button{min-height:44px}.listener .channel-select{margin-top:16px}.listener .channel-select select{font-size:17px;min-height:48px}#channel-count{font-size:13px;color:#62646e}#channel-notice{color:#ad0d13}
+ .presenter main{max-width:1280px}.presenter .brand{margin-bottom:18px}.presenter h1{font-size:30px;margin:8px 0 22px}.presenter .setup{padding:24px;margin-top:20px}.presenter .setup>label{font-weight:650;margin-top:18px}.presenter .setup>label:first-child{margin-top:0}.presenter small{font-size:13px;margin:8px 0 16px}.microphone-row{display:flex;gap:12px;align-items:center}.microphone-row select{flex:1;min-width:0}.microphone-row button{white-space:nowrap}.service-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:24px}.service-controls #start{min-height:48px;font-size:16px}.presenter #publication-status{margin:12px 0 0}.channel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:18px 0}.channel-panel{display:flex;flex-direction:column;gap:16px;min-width:0;border:1px solid #dedfe5;border-radius:14px;padding:20px;background:white}.channel-panel h3{font-size:19px;margin:0}.channel-badge{font-size:12px;color:#69707c;background:#f2f4f7;border-radius:20px;padding:5px 9px;white-space:nowrap}.channel-panel.is-inactive{background:#eceef1;border-style:dashed;border-color:#cdd0d6;color:#626976;min-height:350px}.channel-panel.is-inactive p{font-size:14px}.channel-panel.is-inactive label{margin:12px 0 -8px}.channel-panel.is-inactive select{background:#f8f9fa}.channel-panel.is-inactive button{margin-top:auto}.channel-actions{display:flex;gap:8px;flex-wrap:wrap}.channel-actions button{font-size:13px;padding:9px 11px}.channel-actions button[aria-pressed=true]{background:#fff0f1;border-color:#d91017}.channel-text{white-space:pre-wrap;font-size:18px;line-height:1.8;min-height:180px;max-height:300px;overflow:auto;overflow-wrap:anywhere;background:#f7f8fa;border-radius:8px;padding:12px;flex:1}.channel-text:empty::before{content:'O texto deste canal aparecerá aqui.';font-size:14px;color:#747b86}.channel-panel>button:last-child{align-self:flex-start}.channel-help{font-size:14px;margin-bottom:0}.direct-access{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:32px;align-items:center}.direct-link{display:block;color:#ad0d13;overflow-wrap:anywhere;margin:12px 0;font-size:16px}.direct-access figure{margin:0;text-align:center}.direct-access img{display:block;background:white;width:180px;height:180px;margin:auto}.direct-access figcaption{font-size:12px;color:#69707c;margin-top:8px}.presenter [hidden]{display:none!important}.presenter button:disabled{opacity:.55}.presenter #link-status{font-size:13px}@media(max-width:850px){.channel-grid{grid-template-columns:repeat(3,minmax(240px,1fr));overflow-x:auto;padding-bottom:12px}.direct-access{grid-template-columns:1fr}.microphone-row{flex-wrap:wrap}.microphone-row select{flex-basis:100%}}
++
++.listener .broadcast-notice{margin:24px 0;padding:20px;border:1px solid #e1c6c8;border-left:4px solid #d91017;border-radius:10px;background:#fff4f4;font-size:17px;line-height:1.7}.listener .broadcast-notice[hidden]{display:none}
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.5.0",
++  "version": "0.5.1",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.5.0",
++  "version": "0.5.1",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.5.0",
++      "version": "0.5.1",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/channels-smoke.cjs b/channels-smoke.cjs
+--- a/channels-smoke.cjs
++++ b/channels-smoke.cjs
+@@ -194,6 +194,11 @@ app.whenReady().then(async () => {
+       path.join(output, "presenter-inactive.png"),
+       (await host.webContents.capturePage()).toPNG(),
+     );
++    const listener = await window(origin + "/listen/" + server.room, 390);
++    await until(listener, "!document.getElementById('broadcast-notice').hidden");
++    assert.equal(await run(listener, "document.getElementById('listen').disabled"), true);
++    assert.match(await run(listener, "document.getElementById('broadcast-notice').textContent"), /Não há nenhuma transmissão ativa no momento.*aguarde/);
++    fs.writeFileSync(path.join(output, "listener-waiting.png"), (await listener.webContents.capturePage()).toPNG());
+     const configuration = JSON.stringify({
+       apiUrl: "http://127.0.0.1:" + api.address().port + "/api/v1",
+       token: "a".repeat(64),
+@@ -252,7 +257,7 @@ app.whenReady().then(async () => {
+       host,
+       "document.getElementById('text-fr').textContent.includes('Bonjour')",
+     );
+-    const listener = await window(origin + "/listen/" + server.room, 390);
++    await until(listener, "document.getElementById('broadcast-notice').hidden");
+     await until(
+       listener,
+       "document.getElementById('listener-channel').options.length===4",
+@@ -331,6 +336,7 @@ app.whenReady().then(async () => {
+       "document.getElementById('stop').disabled && !document.getElementById('start').disabled",
+     );
+     assert.ok(bridges.every((b) => !b.live));
++    await until(listener, "!document.getElementById('broadcast-notice').hidden");
+     assert.equal(errors.length, 0, JSON.stringify(errors));
+     console.log(
+       "PASS: ordered setup, three stable columns, inactive panels, one-action start/publish, retry without restart, independently decoded QR, native audio switching, and stop.",

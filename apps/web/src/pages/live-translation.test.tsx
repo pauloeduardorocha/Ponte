@@ -90,7 +90,9 @@ describe('Live translation in the Ponte PWA', () => {
     });
     renderApp('/listen-translation');
     expect(
-      await screen.findByText(/Não há tradução publicada/),
+      await screen.findByText(
+        /Não há nenhuma transmissão ativa no momento\. Por favor, aguarde/,
+      ),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Voltar ao login' }),
@@ -104,7 +106,9 @@ describe('Live translation in the Ponte PWA', () => {
     });
     renderApp('/live-translation');
     expect(
-      await screen.findByText(/Não há tradução publicada/),
+      await screen.findByText(
+        /Não há nenhuma transmissão ativa no momento\. Por favor, aguarde/,
+      ),
     ).toBeInTheDocument();
     expect(
       within(

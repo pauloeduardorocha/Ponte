@@ -40,8 +40,8 @@ export function LiveTranslationPage({
         </Alert>
       ) : !session.active ? (
         <Alert severity="info">
-          Não há tradução publicada neste momento. Aguarde o início da tradução
-          do culto.
+          Não há nenhuma transmissão ativa no momento. Por favor, aguarde o
+          início da transmissão.
         </Alert>
       ) : (
         <Card>
