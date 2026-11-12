@@ -1,0 +1,72 @@
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,6 +1,6 @@
+ <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A Ponte</title><link rel="stylesheet" href="/style.css"></head>
+ <body><main class="listener listener-minimal"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><strong>A Ponte</strong></header>
+-<div id="broadcast-notice" class="broadcast-notice" role="status" hidden>Não há nenhuma transmissão ativa no momento. Por favor, aguarde o início da transmissão.</div>
++<div id="broadcast-notice" class="broadcast-notice" role="status" hidden><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></svg><strong>Aguardando a transmissão</strong><p>Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.</p></div>
+ <div id="listener-channel" class="listener-channel-grid" data-count="0" role="group" aria-label="Canais de tradução"></div>
+ <audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio>
+ <div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução" hidden></div>
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@ -5,6 +5,6 @@
+ .channel-settings{border-top:1px solid #e5e7eb;border-bottom:1px solid #e5e7eb;padding:20px 0;margin:20px 0}.channel-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 0;border-bottom:1px solid #eef0f3}.channel-row span{flex:1;min-width:140px}.channel-row button{min-height:44px}.listener .channel-select{margin-top:16px}.listener .channel-select select{font-size:17px;min-height:48px}#channel-count{font-size:13px;color:#62646e}#channel-notice{color:#ad0d13}
+ .presenter main{max-width:1280px}.presenter .brand{margin-bottom:18px}.presenter h1{font-size:30px;margin:8px 0 22px}.presenter .setup{padding:24px;margin-top:20px}.presenter .setup>label{font-weight:650;margin-top:18px}.presenter .setup>label:first-child{margin-top:0}.presenter small{font-size:13px;margin:8px 0 16px}.microphone-row{display:flex;gap:12px;align-items:center}.microphone-row select{flex:1;min-width:0}.microphone-row button{white-space:nowrap}.service-controls{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:24px}.service-controls #start{min-height:48px;font-size:16px}.presenter #publication-status{margin:12px 0 0}.channel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:18px 0}.channel-panel{display:flex;flex-direction:column;gap:16px;min-width:0;border:1px solid #dedfe5;border-radius:14px;padding:20px;background:white}.channel-panel h3{font-size:19px;margin:0}.channel-badge{font-size:12px;color:#69707c;background:#f2f4f7;border-radius:20px;padding:5px 9px;white-space:nowrap}.channel-panel.is-inactive{background:#eceef1;border-style:dashed;border-color:#cdd0d6;color:#626976;min-height:350px}.channel-panel.is-inactive p{font-size:14px}.channel-panel.is-inactive label{margin:12px 0 -8px}.channel-panel.is-inactive select{background:#f8f9fa}.channel-panel.is-inactive button{margin-top:auto}.channel-actions{display:flex;gap:8px;flex-wrap:wrap}.channel-actions button{font-size:13px;padding:9px 11px}.channel-actions button[aria-pressed=true]{background:#fff0f1;border-color:#d91017}.channel-text{white-space:pre-wrap;font-size:18px;line-height:1.8;min-height:180px;max-height:300px;overflow:auto;overflow-wrap:anywhere;background:#f7f8fa;border-radius:8px;padding:12px;flex:1}.channel-text:empty::before{content:'O texto deste canal aparecerá aqui.';font-size:14px;color:#747b86}.channel-panel>button:last-child{align-self:flex-start}.channel-help{font-size:14px;margin-bottom:0}.direct-access{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:32px;align-items:center}.direct-link{display:block;color:#ad0d13;overflow-wrap:anywhere;margin:12px 0;font-size:16px}.direct-access figure{margin:0;text-align:center}.direct-access img{display:block;background:white;width:180px;height:180px;margin:auto}.direct-access figcaption{font-size:12px;color:#69707c;margin-top:8px}.presenter [hidden]{display:none!important}.presenter button:disabled{opacity:.55}.presenter #link-status{font-size:13px}@media(max-width:850px){.channel-grid{grid-template-columns:repeat(3,minmax(240px,1fr));overflow-x:auto;padding-bottom:12px}.direct-access{grid-template-columns:1fr}.microphone-row{flex-wrap:wrap}.microphone-row select{flex-basis:100%}}
+
+-.listener .broadcast-notice{margin:24px 0;padding:20px;border:1px solid #e1c6c8;border-left:4px solid #d91017;border-radius:10px;background:#fff4f4;font-size:17px;line-height:1.7}.listener .broadcast-notice[hidden]{display:none}
++.listener .broadcast-notice{margin:40px auto;padding:28px 16px;max-width:440px;text-align:center;color:#626976;line-height:1.7}.listener .broadcast-notice svg{display:block;margin:0 auto 20px;color:#8a929e}.listener .broadcast-notice strong{display:block;font-size:21px;font-weight:600;color:#303744}.listener .broadcast-notice p{margin:12px 0 0;font-size:16px;color:inherit}.listener .broadcast-notice[hidden]{display:none}
+ .listener main{max-width:1180px}.listener-channel-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:4px 0 20px}.listener-channel-grid[data-count="0"]{display:none}.listener-channel-grid[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}.listener-channel-grid[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}.listener-channel-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;min-width:0;min-height:150px;background:#f7f8fa;border:2px solid #e0e3e8;border-radius:12px;padding:18px 12px;color:#626976}.listener-channel-tile:hover{background:#fff4f4}.listener-channel-tile[aria-pressed="true"]{border-color:#d91017;background:#fff4f4;box-shadow:0 0 0 1px #d91017}.listener-channel-tile .language-flag{display:block;width:160px;max-width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;filter:drop-shadow(0 2px 3px #0002);border-radius:3px}.listener-channel-state{font-size:13px;font-weight:500;color:#626976}.listener-channel-tile[aria-pressed="true"] .listener-channel-state{color:#ad0d13}.listener-channel-grid[data-count="3"] .language-flag{width:128px}.listener [hidden]{display:none!important}@media(max-width:500px){.listener-channel-grid{gap:8px}.listener-channel-tile{min-height:108px;padding:14px 8px;gap:10px}.listener-channel-state{font-size:11px}.listener-channel-grid[data-count="1"] .language-flag{max-width:160px}}
+ .screen-reader-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.listener-minimal .brand{margin:4px 0 28px}.listener-minimal .brand strong{font-size:24px}.listener-minimal .listener-channel-grid{margin:0 0 24px}.listener-minimal #text{min-height:0;max-height:65vh;margin-top:24px;padding:20px;background:white;border:1px solid #e5e7eb;border-radius:12px;overflow-wrap:anywhere}.listener-minimal #text:empty::before{content:none}.listener-minimal .listener-channel-tile{position:relative;gap:0;min-height:144px}.listener-minimal .listener-channel-tile[data-playback="playing"]{box-shadow:0 0 0 2px #d91017}.listener-minimal .listener-channel-tile[data-playback="paused"]{border-color:#afb4be;box-shadow:none}.listener-minimal .listener-channel-tile[data-playback="error"]{border-color:#b57914;box-shadow:0 0 0 1px #b57914}.listener-minimal audio{display:none}@media(max-width:500px){.listener-minimal .listener-channel-tile{min-height:100px}.listener-minimal #text{font-size:20px;padding:16px}}
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.0",
++  "version": "0.7.1",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.0",
++  "version": "0.7.1",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.7.0",
++      "version": "0.7.1",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/channels-smoke.cjs b/channels-smoke.cjs
+--- a/channels-smoke.cjs
++++ b/channels-smoke.cjs
+@@ -239,7 +239,7 @@ app.whenReady().then(async () => {
+     assert.equal(
+       await run(
+         listener,
+-        "document.querySelectorAll('h1,h2,p,footer,details,.listener-channel-state').length",
++        "document.querySelectorAll('h1,h2,p:not(.broadcast-notice p),footer,details,.listener-channel-state').length",
+       ),
+       0,
+     );
+@@ -248,7 +248,7 @@ app.whenReady().then(async () => {
+         listener,
+         "document.getElementById('broadcast-notice').textContent",
+       ),
+-      /Não há nenhuma transmissão ativa no momento.*aguarde/,
++      /Aguardando a transmissão[\s\S]*Pode manter esta página aberta/,
+     );
+     fs.writeFileSync(
+       path.join(output, "listener-waiting.png"),

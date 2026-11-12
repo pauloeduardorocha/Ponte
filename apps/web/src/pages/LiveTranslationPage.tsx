@@ -39,10 +39,22 @@ export function LiveTranslationPage({
           Não foi possível verificar a transmissão. Confira sua conexão.
         </Alert>
       ) : !session.active ? (
-        <Alert severity="info">
-          Não há nenhuma transmissão ativa no momento. Por favor, aguarde o
-          início da transmissão.
-        </Alert>
+        <Box
+          role="status"
+          sx={{ py: 6, px: 2, textAlign: 'center', color: 'text.secondary' }}
+        >
+          <TranslateRounded
+            aria-hidden="true"
+            sx={{ fontSize: 40, mb: 2, opacity: 0.6 }}
+          />
+          <Typography variant="h6" color="text.primary">
+            Aguardando a transmissão
+          </Typography>
+          <Typography sx={{ mt: 1, maxWidth: 440, mx: 'auto' }}>
+            Assim que começar, a tradução aparecerá aqui. Pode manter esta
+            página aberta.
+          </Typography>
+        </Box>
       ) : (
         <Card>
           <CardContent>
