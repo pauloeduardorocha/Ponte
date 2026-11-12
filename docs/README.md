@@ -75,7 +75,7 @@ Os guias descrevem o código, os contratos e os procedimentos atuais do projeto.
 
 A biblioteca mantém documentação especializada junto dos scripts: [Bing Imagens](../apps/api/prisma/library-production/GOOGLE-COVERS.md) (nome legado), [Open Library](../apps/api/prisma/library-production/OPENLIBRARY-COVERS.md), [piloto de ISBN](../apps/api/prisma/library-production/ISBN-REVIEW.md) e [pesquisa/enriquecimento](../apps/api/prisma/library-production/ISBN-RESEARCH.md). Fontes externas e edição física exigem conferência.
 
-[Exemplo de conversa](examples/conversations/dia-da-reforma.md) e [prompt da capa](examples/conversations/dia-da-reforma-imagem-prompt.md) são material editorial de exemplo, não especificação funcional. Os patches [leitor Windows 0.3.1](windows-listener-0.3.1.patch) e [atualizador 0.3.2](windows-updater-0.3.2.patch) são referências para o aplicativo externo; confira a base antes de aplicar.
+[Exemplo de conversa](examples/conversations/dia-da-reforma.md) e [prompt da capa](examples/conversations/dia-da-reforma-imagem-prompt.md) são material editorial de exemplo, não especificação funcional. A sequência de patches do aplicativo Windows externo, as versões de base e o fluxo de empacotamento estão em [Tradução ao vivo](live-translation.md#manutenção-da-fonte-windows).
 
 `openapi.json` é gerado por `npm run openapi:generate`; `library-seed-review.md` e `seed.json` são gerados pelo preparador da biblioteca. Corrija a fonte/gerador quando necessário, sem editar resultados manualmente. A coleção [Postman](database-security.postman_collection.json) é um smoke test público de leitura; selecione o destino explicitamente.
 

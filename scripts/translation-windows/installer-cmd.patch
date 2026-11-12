@@ -1,0 +1,150 @@
+diff --git a/Instalar.cmd b/Instalar.cmd
+--- a/Instalar.cmd
++++ b/Instalar.cmd
+@@ -1,10 +1,11 @@
+ @echo off
+ chcp 65001 >nul
+ setlocal
+-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-windows.ps1"
++powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0install-windows.ps1" %*
+ if errorlevel 1 (
+   echo.
+   echo A instalação não foi concluída. Confira a mensagem acima.
+   pause
+   exit /b 1
+ )
++exit /b 0
+diff --git a/build-windows.cjs b/build-windows.cjs
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -2,6 +2,7 @@ const fs = require('node:fs');
+ const path = require('node:path');
+ const { spawnSync } = require('node:child_process');
+ const { createHash } = require('node:crypto');
++const { writeWindowsScript } = require('./windows-script.cjs');
+ if (process.platform !== 'win32') throw new Error('Execute o empacotamento no Windows.');
+ const root = __dirname, version = require('./package.json').version;
+ const destination = path.join(root, 'dist', `Ponte-Traducao-${version}-${Date.now()}`);
+@@ -26,7 +27,10 @@ const text = [guide.title,'A Ponte · Tradução ao vivo',guide.introduction,'',
+ fs.writeFileSync(path.join(destination, 'GUIA-COMECE-AQUI.html'), html);
+ fs.writeFileSync(path.join(destination, 'LEIA-ME-PRIMEIRO.txt'), '\ufeff' + text);
+ fs.copyFileSync(path.join(root, 'logo.png'), path.join(destination, 'logo.png'));
+-for (const file of ['Instalar.cmd', 'install-windows.ps1']) fs.copyFileSync(path.join(root, file), path.join(destination, file));
++for (const file of ['Instalar.cmd', 'install-windows.ps1']) {
++  // CMD requires CRLF; Windows PowerShell 5.1 requires a BOM for UTF-8 accents.
++  writeWindowsScript(path.join(root, file), path.join(destination, file));
++}
+ const output = path.join(root, 'dist', 'Ponte-Traducao-Windows.zip');
+ // Native Windows tar creates ZIP files; arguments are passed without shell interpolation.
+ const result = spawnSync('tar.exe', ['-a','-cf',output,'-C',path.dirname(destination),path.basename(destination)], { stdio: 'inherit', windowsHide: true });
+diff --git a/installer.test.cjs b/installer.test.cjs
+--- a/installer.test.cjs
++++ b/installer.test.cjs
+@@ -1,6 +1,37 @@
+ const test = require('node:test'), assert = require('node:assert/strict');
+ const fs = require('node:fs'), os = require('node:os'), path = require('node:path'), { spawnSync } = require('node:child_process');
+ const installer = path.join(__dirname, 'install-windows.ps1');
++const { writeWindowsScript } = require('./windows-script.cjs');
++test('CMD launcher runs from another working directory, handles spaces and preserves success/failure', { skip: process.platform !== 'win32', timeout: 30000 }, t => {
++  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponte-cmd-launcher-'));
++  t.after(() => {
++    const resolved = path.resolve(temp);
++    assert.ok(resolved.startsWith(path.resolve(os.tmpdir()) + path.sep) && path.basename(resolved).startsWith('ponte-cmd-launcher-'));
++    fs.rmSync(resolved, { recursive: true, force: true });
++  });
++  const source = path.join(temp, 'pacote com espaços & teste');
++  fs.mkdirSync(source);
++  const batch = path.join(source, 'Instalar.cmd'), marker = path.join(temp, 'invoked.txt');
++  const checkoutScript = path.join(temp, 'checkout.cmd');
++  fs.writeFileSync(checkoutScript, fs.readFileSync(path.join(__dirname, 'Instalar.cmd'), 'utf8').replace(/\r\n/g, '\n'));
++  writeWindowsScript(checkoutScript, batch);
++  const script = fs.readFileSync(batch);
++  assert.ok(!script.toString('utf8').replace(/\r\n/g, '').includes('\n'), 'packaged CMD must use CRLF');
++  assert.notEqual(script.subarray(0, 3).toString('hex'), 'efbbbf', 'CMD must not start with a UTF-8 BOM');
++  fs.writeFileSync(batch, script);
++  fs.writeFileSync(path.join(source, 'install-windows.ps1'), 'param([switch]$NoLaunch, [switch]$NoShortcuts)\r\nif (-not $NoLaunch -or -not $NoShortcuts) { exit 99 }\r\nSet-Content -LiteralPath $env:PONTE_INSTALLER_MARKER -Value $PSScriptRoot -Encoding UTF8\r\nexit ([int]$env:PONTE_INSTALLER_EXIT)\r\n');
++  for (const exitCode of [0, 23]) {
++    const result = spawnSync('cmd.exe', ['/d', '/s', '/c', '""' + batch + '" -NoLaunch -NoShortcuts"'], {
++      windowsVerbatimArguments: true, windowsHide: true, encoding: 'utf8', input: '\r\n', timeout: 10000,
++      cwd: path.join(process.env.WINDIR, 'System32'),
++      env: { ...process.env, PONTE_INSTALLER_MARKER: marker, PONTE_INSTALLER_EXIT: String(exitCode) },
++    });
++    assert.equal(result.status, exitCode === 0 ? 0 : 1, result.stdout + result.stderr);
++    assert.equal(result.stderr, '');
++    assert.equal(fs.readFileSync(marker, 'utf8').trim(), source);
++    if (exitCode) assert.match(result.stdout, /instalação não foi concluída/);
++  }
++});
+ test('Windows installer replaces the same installation, removes stale runtime files, and refuses downgrade or unrelated folders', { skip: process.platform !== 'win32', timeout: 45000 }, t => {
+   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponte-installer-test-'));
+   t.after(() => { const resolved = path.resolve(temp); assert.ok(resolved.startsWith(path.resolve(os.tmpdir()) + path.sep) && path.basename(resolved).startsWith('ponte-installer-test-')); fs.rmSync(resolved, { recursive: true, force: true }); });
+diff --git a/installer-package-smoke.cjs b/installer-package-smoke.cjs
+--- a/installer-package-smoke.cjs
++++ b/installer-package-smoke.cjs
+@@ -4,11 +4,16 @@ const { spawn, spawnSync } = require('node:child_process');
+ async function main() {
+   const source = path.resolve(process.argv[2] || '');
+   assert.ok(fs.existsSync(path.join(source, 'Instalar.cmd')), 'provide the built package folder');
++  for (const name of ['Instalar.cmd', 'install-windows.ps1']) {
++    const bytes = fs.readFileSync(path.join(source, name));
++    assert.ok(!bytes.toString('utf8').replace(/\r\n/g, '').includes('\n'), name + ' requires CRLF');
++    assert.equal(bytes.subarray(0, 3).toString('hex') === 'efbbbf', name.endsWith('.ps1'), name + ' encoding');
++  }
+   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ponte-package-install-'));
+   let running;
+   try {
+     const local = path.join(temp, 'LocalAppData'), target = path.join(local, 'Ponte-Traducao');
+-    const install = () => spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(source, 'install-windows.ps1'), '-NoLaunch', '-NoShortcuts'], { cwd: source, env: { ...process.env, LOCALAPPDATA: local }, encoding: 'utf8', windowsHide: true, timeout: 45000 });
++    const install = () => spawnSync('cmd.exe', ['/d', '/s', '/c', '""' + path.join(source, 'Instalar.cmd') + '" -NoLaunch -NoShortcuts"'], { windowsVerbatimArguments: true, input: '\r\n', cwd: path.join(process.env.WINDIR, 'System32'), env: { ...process.env, LOCALAPPDATA: local }, encoding: 'utf8', windowsHide: true, timeout: 45000 });
+     let r = install(); assert.equal(r.status, 0, r.stdout + r.stderr);
+     const packageFile = path.join(target, 'resources', 'app', 'package.json');
+     const expected = JSON.parse(fs.readFileSync(packageFile, 'utf8')).version;
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.1",
++  "version": "0.7.2",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+@@ -9,7 +9,7 @@
+     "server": "node server.cjs",
+     "package:windows": "node build-windows.cjs",
+     "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs update-checker.test.cjs installer.test.cjs channels.test.cjs bridge.test.cjs presenter-service.test.cjs language-flags.test.cjs",
+-    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs && node --check languages.js && node --check translation-channels.cjs && node --check network-address.cjs && node --check qr-code.cjs && node --check language-flags.js"
++    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs && node --check languages.js && node --check translation-channels.cjs && node --check network-address.cjs && node --check qr-code.cjs && node --check language-flags.js && node --check windows-script.cjs"
+   },
+   "devDependencies": {
+     "electron": "^42.0.0",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.1",
++  "version": "0.7.2",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.7.1",
++      "version": "0.7.2",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/windows-script.cjs b/windows-script.cjs
+new file mode 100644
+--- /dev/null
++++ b/windows-script.cjs
+@@ -0,0 +1,6 @@
++const fs = require('node:fs');
++function writeWindowsScript(source, destination) {
++  const text = fs.readFileSync(source, 'utf8').replace(/^\ufeff/, '').replace(/\r?\n/g, '\r\n');
++  fs.writeFileSync(destination, (destination.toLowerCase().endsWith('.ps1') ? '\ufeff' : '') + text);
++}
++module.exports = { writeWindowsScript };

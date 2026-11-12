@@ -43,3 +43,9 @@ publicações, documentos, títulos de vídeos e outros conteúdos introduzidos 
 utilizadores ou fornecidos por serviços externos conservam o conteúdo original.
 As traduções são distribuídas com a aplicação e funcionam sem serviço externo
 de tradução em tempo de execução.
+
+## Manutenção dos testes
+
+As expectativas usam o idioma predefinido pt-PT, salvo quando o teste escolhe outro idioma explicitamente. Preserve os valores das fixtures recebidos da API: nomes e mensagens desconhecidas do servidor não devem ser traduzidos para fazer um teste passar. A tradução dos rótulos pode interpolar esses valores sem modificá-los.
+
+Atributos HTML, nomes de propriedades, URLs e identificadores de contrato permanecem estáveis; por exemplo, o atributo de download continua a chamar-se download, independentemente do texto do botão. Os testes das notificações devem cobrir a preferência guardada nos três idiomas e o fallback pt-PT quando o cache ou o idioma não estiverem disponíveis.

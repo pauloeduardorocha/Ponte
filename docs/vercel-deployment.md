@@ -50,7 +50,11 @@ Os `vercel.json` de `apps/api` e `apps/web` permitem configurar dois projetos, c
 
 ## Verificação de publicação
 
-Antes do push, siga as verificações e a sincronização Git de [AGENTS.md](../AGENTS.md). Após o deploy, confirme:
+Antes do push, siga as verificações e a sincronização Git de [AGENTS.md](../AGENTS.md). Acompanhe os dois jobs do CI: qualidade (TypeScript, lint, testes unitários, build e OpenAPI) e integração (PostgreSQL, login restrito e recuperação). Corrija falhas e verifique novamente o SHA final.
+
+Uma build READY pode ainda não estar associada ao domínio público. Confira os aliases e o commit servido; se uma promoção informar que a implantação já é a produção atual, verifique esses destinos antes de repetir a operação. Alterações de variáveis de ambiente exigem um novo deploy para entrar em vigor. A distribuição Windows segue o fluxo separado de [tradução ao vivo](live-translation.md).
+
+Após o deploy, confirme:
 
 - Commit e estado da implantação nos metadados da Vercel; push não comprova deploy.
 - `/api/v1/health` pela origem pública e carregamento de rotas profundas do frontend.
