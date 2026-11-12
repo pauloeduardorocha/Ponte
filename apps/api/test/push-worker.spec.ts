@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { runInNewContext } from 'node:vm';
 
 describe('Push service worker', () => {
-  function setup() {
+  function setup(locale?: string) {
     const handlers: Record<string, (event: unknown) => void> = {};
     const client = {
       url: 'https://ponte.example/account',
@@ -27,12 +27,23 @@ describe('Push service worker', () => {
         resolve(process.cwd(), '../web/public/push-worker.js'),
         'utf8',
       ),
-      { self: worker, URL },
+      {
+        self: worker,
+        URL,
+        caches:
+          locale === undefined
+            ? undefined
+            : {
+                open: async () => ({
+                  match: async () => ({ text: async () => locale }),
+                }),
+              },
+      },
     );
     return { worker, client, handlers };
   }
   it('displays the notification subject and message and signals open tabs', async () => {
-    const { worker, client, handlers } = setup();
+    const { worker, client, handlers } = setup('en');
     let completion: Promise<void> = Promise.resolve();
     handlers.push!({
       data: {
@@ -126,8 +137,31 @@ describe('Push service worker', () => {
       expect(worker.registration.showNotification).toHaveBeenCalledWith(
         'A Ponte',
         expect.objectContaining({
-          body: 'Você tem uma nova mensagem. Abra a caixa de notificações.',
+          body: 'Tem uma nova mensagem. Abra a caixa de notificações.',
         }),
+      );
+    },
+  );
+  it.each([
+    ['pt-PT', 'Tem uma nova mensagem. Abra a caixa de notificações.'],
+    ['pt-BR', 'Você tem uma nova mensagem. Abra a caixa de notificações.'],
+    ['en', 'You have a new message. Open your notifications inbox.'],
+    ['invalid', 'Tem uma nova mensagem. Abra a caixa de notificações.'],
+  ])(
+    'uses the saved %s preference for fallback notification text',
+    async (locale, body) => {
+      const { worker, handlers } = setup(locale);
+      let completion = Promise.resolve();
+      handlers.push!({
+        data: { json: () => ({}) },
+        waitUntil: (promise: Promise<void>) => {
+          completion = promise;
+        },
+      });
+      await completion;
+      expect(worker.registration.showNotification).toHaveBeenCalledWith(
+        'A Ponte',
+        expect.objectContaining({ body }),
       );
     },
   );
