@@ -14,7 +14,7 @@ describe('Community registration and permissions', () => {
     const requests = mockApi(sessionRoutes(makeUser([])));
     renderApp('/visitors');
     expect(
-      await screen.findByText('Você não tem permissão para acessar esta área.'),
+      await screen.findByText('Não tem permissão para aceder a esta área.'),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/community'))).toBe(false);
   });
@@ -25,15 +25,15 @@ describe('Community registration and permissions', () => {
       'POST /operations/visitors': { status: 201, body: { id: 'visitor-1' } },
     });
     renderApp('/visitors');
-    fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Registar' }));
     const dialog = within(screen.getByRole('dialog'));
     fireEvent.change(dialog.getByRole('textbox', { name: /^Nome/ }), {
       target: { value: 'Visitante' },
     });
-    fireEvent.change(dialog.getByRole('textbox', { name: /Sobrenome/ }), {
+    fireEvent.change(dialog.getByRole('textbox', { name: /Apelido/ }), {
       target: { value: 'de teste' },
     });
-    fireEvent.click(dialog.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(
         requests.find(
@@ -46,7 +46,7 @@ describe('Community registration and permissions', () => {
       }),
     );
     expect(
-      await screen.findByText('Cadastro salvo com sucesso.'),
+      await screen.findByText('Registo guardado com sucesso.'),
     ).toBeInTheDocument();
     expect(
       requests

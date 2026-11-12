@@ -40,7 +40,7 @@ describe('Frontend error charts', () => {
       },
     });
     show();
-    expect(await screen.findByText('API: 80 (80.0%)')).toBeInTheDocument();
+    expect(await screen.findByText('API: 80 (80,0%)')).toBeInTheDocument();
     expect(screen.getByText('100')).toBeInTheDocument();
     expect(screen.getByText('/videos')).toBeInTheDocument();
     expect(
@@ -54,7 +54,7 @@ describe('Frontend error charts', () => {
     mockApi({ 'GET /audit/frontend-errors/stats': { body: { rows: [] } } });
     show();
     expect(
-      await screen.findByText('Nenhum erro registrado no período.'),
+      await screen.findByText('Nenhum erro registado no período.'),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('img', { name: /Gráfico de pizza.*sem ocorrências/ }),

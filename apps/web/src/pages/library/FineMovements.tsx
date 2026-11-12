@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -13,6 +14,7 @@ import { formatDate } from '../../lib/format';
 import { QueryError } from '../../components/PageParts';
 
 export function FineMovements({ fineId }: { fineId: string }) {
+  useLocale();
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -24,10 +26,14 @@ export function FineMovements({ fineId }: { fineId: string }) {
   return (
     <Stack spacing={1}>
       <Button onClick={() => setOpen(!open)} aria-expanded={open}>
-        {open ? 'Ocultar pagamentos e ajustes' : 'Ver pagamentos e ajustes'}
+        {open
+          ? translate('Ocultar pagamentos e ajustes')
+          : translate('Ver pagamentos e ajustes')}
       </Button>
       {open && history.isPending && (
-        <CircularProgress aria-label="Carregando movimentos da multa" />
+        <CircularProgress
+          aria-label={translate('Carregando movimentos da multa')}
+        />
       )}
       {open && history.isError && (
         <QueryError
@@ -39,18 +45,28 @@ export function FineMovements({ fineId }: { fineId: string }) {
         <>
           {history.data.payments.map((payment) => (
             <Typography key={payment.id} variant="body2">
-              Pagamento {payment.amount} · {formatDate(payment.createdAt)} ·{' '}
+              {translate('Pagamento ')}
+              {payment.amount} · {formatDate(payment.createdAt)} ·{' '}
               {payment.createdBy}
             </Typography>
           ))}
           {history.data.adjustments.map((adjustment) => (
             <Typography key={adjustment.id} variant="body2">
-              {adjustment.kind} {adjustment.amount} · {adjustment.justification}{' '}
-              · {formatDate(adjustment.createdAt)} · {adjustment.createdBy}
+              {translate(
+                {
+                  DISCOUNT: 'Desconto',
+                  FORGIVE: 'Perdoado',
+                  CANCEL: 'Cancelado',
+                }[adjustment.kind] ?? adjustment.kind,
+              )}{' '}
+              {adjustment.amount} · {adjustment.justification} ·{' '}
+              {formatDate(adjustment.createdAt)} · {adjustment.createdBy}
             </Typography>
           ))}
           {!history.data.totalPayments && !history.data.totalAdjustments && (
-            <Alert severity="info">Nenhum pagamento ou ajuste.</Alert>
+            <Alert severity="info">
+              {translate('Nenhum pagamento ou ajuste.')}
+            </Alert>
           )}
           <TablePagination
             component="div"
@@ -66,12 +82,12 @@ export function FineMovements({ fineId }: { fineId: string }) {
               setPage(1);
             }}
             onPageChange={(_, next) => setPage(next + 1)}
-            labelRowsPerPage="Por página em cada lista"
-            labelDisplayedRows={() => `Página ${page}`}
+            labelRowsPerPage={translate('Por página em cada lista')}
+            labelDisplayedRows={() => translate('Página {0}', [page])}
             getItemAriaLabel={(type) =>
               type === 'next'
-                ? 'Próxima página dos movimentos'
-                : 'Página anterior dos movimentos'
+                ? translate('Próxima página dos movimentos')
+                : translate('Página anterior dos movimentos')
             }
           />
         </>

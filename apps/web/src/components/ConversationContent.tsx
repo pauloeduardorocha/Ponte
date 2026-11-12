@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { errorMessage } from './conversation-utils';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -44,6 +45,7 @@ export function ConversationComposer({
   parentId?: string;
   onSaved: (id: string, page?: number) => void;
 }) {
+  useLocale();
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [references, setReferences] = useState<
@@ -107,7 +109,9 @@ export function ConversationComposer({
       file.size > 1024 * 1024 ||
       !['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
     ) {
-      setFileError('Escolha uma imagem PNG, JPEG ou WebP de até 1 MB.');
+      setFileError(
+        translate('Escolha uma imagem PNG, JPEG ou WebP de até 1 MB.'),
+      );
       return;
     }
     setReading(true);
@@ -116,7 +120,7 @@ export function ConversationComposer({
         const reader = new FileReader();
         reader.onload = () => resolve(String(reader.result));
         reader.onerror = () =>
-          reject(new Error('Não foi possível ler a imagem.'));
+          reject(new Error(translate('Não foi possível ler a imagem.')));
         reader.readAsDataURL(file);
       });
       setImage(result);
@@ -134,7 +138,7 @@ export function ConversationComposer({
     <Stack component="form" spacing={2} onSubmit={submit}>
       {!topicId && (
         <TextField
-          label="Título da conversa"
+          label={translate('Título da conversa')}
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           required
@@ -144,10 +148,10 @@ export function ConversationComposer({
       <TextField
         label={
           parentId
-            ? 'Sua resposta ao comentário'
+            ? translate('Sua resposta ao comentário')
             : topicId
-              ? 'Escreva um comentário'
-              : 'Tópico inicial'
+              ? translate('Escreva um comentário')
+              : translate('Tópico inicial')
         }
         multiline
         minRows={topicId ? 2 : 4}
@@ -165,19 +169,25 @@ export function ConversationComposer({
           if (input.current)
             detect(input.current.value, input.current.selectionStart);
         }}
-        helperText="Links são aceitos. Digite @ e pelo menos 2 letras para encontrar um membro."
+        helperText={translate(
+          'Links são aceitos. Digite @ e pelo menos 2 letras para encontrar um membro.',
+        )}
         slotProps={{ htmlInput: { maxLength: 10000 } }}
       />
       {mention && search === mention.q && search.length >= 2 && (
-        <Box aria-label="Sugestões de membros">
+        <Box aria-label={translate('Sugestões de membros')}>
           {members.isFetching && (
-            <Typography role="status">Buscando membros…</Typography>
+            <Typography role="status">
+              {translate('Buscando membros…')}
+            </Typography>
           )}
           {members.isError && (
-            <Alert severity="error">Não foi possível buscar membros.</Alert>
+            <Alert severity="error">
+              {translate('Não foi possível buscar membros.')}
+            </Alert>
           )}
           {members.data?.length === 0 && (
-            <Typography>Nenhum membro encontrado.</Typography>
+            <Typography>{translate('Nenhum membro encontrado.')}</Typography>
           )}
           {members.data?.map((member) => (
             <Button
@@ -224,7 +234,7 @@ export function ConversationComposer({
         </Box>
       )}
       <Button component="label" disabled={reading || save.isPending}>
-        Anexar imagem (até 1 MB)
+        {translate('Anexar imagem (até 1 MB)')}
         <input
           hidden
           type="file"
@@ -240,10 +250,12 @@ export function ConversationComposer({
           <Box
             component="img"
             src={image}
-            alt="Imagem anexada"
+            alt={translate('Imagem anexada')}
             sx={{ maxWidth: '100%', maxHeight: 240 }}
           />
-          <Button onClick={() => setImage(undefined)}>Remover imagem</Button>
+          <Button onClick={() => setImage(undefined)}>
+            {translate('Remover imagem')}
+          </Button>
         </Box>
       )}
       {fileError && <Alert severity="error">{fileError}</Alert>}
@@ -261,18 +273,19 @@ export function ConversationComposer({
         }
       >
         {save.isPending
-          ? 'Publicando…'
+          ? translate('Publicando…')
           : topicId
             ? parentId
-              ? 'Responder'
-              : 'Comentar'
-            : 'Criar conversa'}
+              ? translate('Responder')
+              : translate('Comentar')
+            : translate('Criar conversa')}
       </Button>
     </Stack>
   );
 }
 
 export function MessageText({ post }: { post: Post }) {
+  useLocale();
   const parts = post.body.split(
     /(@\[[^\]\r\n]{1,120}\]\([0-9a-f-]{36}\)|https?:\/\/[^\s<>]+)/gi,
   );
@@ -292,7 +305,7 @@ export function MessageText({ post }: { post: Post }) {
             >
               @
               {post.mentions.find((m) => m.id === mention[1]!.toLowerCase())
-                ?.name ?? 'membro indisponível'}
+                ?.name ?? translate('membro indisponível')}
             </Box>
           );
         if (/^https?:\/\//i.test(part))
@@ -313,28 +326,33 @@ export function MessageText({ post }: { post: Post }) {
 }
 
 export function ConversationImage({ id }: { id: string }) {
+  useLocale();
   const image = useQuery({
     queryKey: ['conversations', 'image', id],
     queryFn: () => apiRequest<{ image: string }>(`/conversations/${id}/image`),
   });
   if (image.isPending)
-    return <CircularProgress size={24} aria-label="Carregando imagem" />;
+    return (
+      <CircularProgress size={24} aria-label={translate('Carregando imagem')} />
+    );
   if (image.isError)
     return (
       <Alert
         severity="warning"
         action={
-          <Button onClick={() => void image.refetch()}>Tentar novamente</Button>
+          <Button onClick={() => void image.refetch()}>
+            {translate('Tentar novamente')}
+          </Button>
         }
       >
-        Imagem indisponível.
+        {translate('Imagem indisponível.')}
       </Alert>
     );
   return (
     <Box
       component="img"
       src={image.data.image}
-      alt="Imagem da publicação"
+      alt={translate('Imagem da publicação')}
       sx={{
         maxWidth: '100%',
         maxHeight: 600,

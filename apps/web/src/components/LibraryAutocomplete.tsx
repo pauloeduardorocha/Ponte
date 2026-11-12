@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState, type ChangeEvent } from 'react';
 import {
   Autocomplete,
@@ -23,7 +24,7 @@ const optionLabel = (option: Option) =>
     ? `${option.book?.title ?? ''} · ${option.assetCode}`
     : option.title
       ? `${option.title} · ${option.author ?? ''}`
-      : (option.name ?? 'Registro selecionado');
+      : (option.name ?? translate('Registro selecionado'));
 
 /** Fetches one bounded page on opening, typing or explicitly scrolling. */
 export function LibraryAutocomplete({
@@ -38,6 +39,7 @@ export function LibraryAutocomplete({
   query?: Record<string, string>;
   excludeId?: string;
 }) {
+  useLocale();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Option | null>(null);
@@ -78,11 +80,11 @@ export function LibraryAutocomplete({
       isOptionEqualToValue={(option, current) => option.id === current.id}
       filterOptions={(items) => items}
       loading={options.isFetching || search !== debounced}
-      loadingText="Carregando opções…"
+      loadingText={translate('Carregando opções…')}
       noOptionsText={
         options.isError
-          ? 'Não foi possível carregar as opções.'
-          : 'Nenhum resultado.'
+          ? translate('Não foi possível carregar as opções.')
+          : translate('Nenhum resultado.')
       }
       onInputChange={(_, text, reason) => {
         if (reason === 'input' || reason === 'clear') setSearch(text);

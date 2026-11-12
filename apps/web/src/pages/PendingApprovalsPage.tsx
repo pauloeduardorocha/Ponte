@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -30,6 +31,7 @@ type PendingAccount = {
 };
 
 export function PendingApprovalsPage() {
+  useLocale();
   const { user } = useAuth();
   const client = useQueryClient();
   const [page, setPage] = useState(1);
@@ -49,7 +51,7 @@ export function PendingApprovalsPage() {
     mutationFn: (id: string) =>
       apiRequest(`/users/${id}/approve`, { method: 'POST' }),
     onSuccess: async () => {
-      setNotice('Conta aprovada com acesso padrão de membro.');
+      setNotice(translate('Conta aprovada com acesso padrão de membro.'));
       await client.invalidateQueries({ queryKey: ['pending-approvals'] });
       await client.invalidateQueries({ queryKey: ['members'] });
       if (query.data?.items.length === 1 && page > 1) setPage(page - 1);
@@ -59,30 +61,34 @@ export function PendingApprovalsPage() {
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Lista de espera"
-        subtitle="Aprove os cadastros para liberar o acesso padrão de membro. Nenhuma função administrativa será atribuída."
+        title={translate('Lista de espera')}
+        subtitle={translate(
+          'Aprove os cadastros para liberar o acesso padrão de membro. Nenhuma função administrativa será atribuída.',
+        )}
       />
       <TextField
-        label="Buscar por nome ou e-mail"
+        label={translate('Buscar por nome ou e-mail')}
         value={search}
         onChange={(event) => {
           setSearch(event.target.value);
           setPage(1);
         }}
       />
-      {notice && <Alert severity="success">{notice}</Alert>}
+      {notice && <Alert severity="success">{translate(notice ?? '')}</Alert>}
       {approval.isError && (
         <Alert severity="error">{errorMessage(approval.error)}</Alert>
       )}
       {query.isPending && (
-        <CircularProgress aria-label="Carregando lista de espera" />
+        <CircularProgress
+          aria-label={translate('Carregando lista de espera')}
+        />
       )}
       {query.isError && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void query.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -91,11 +97,13 @@ export function PendingApprovalsPage() {
       )}
       {query.data && (
         <Typography>
-          {query.data.total} cadastro(s) aguardando aprovação
+          {query.data.total} {translate(' cadastro(s) aguardando aprovação')}
         </Typography>
       )}
       {query.data?.items.length === 0 && (
-        <Alert severity="info">Nenhum cadastro aguardando aprovação.</Alert>
+        <Alert severity="info">
+          {translate('Nenhum cadastro aguardando aprovação.')}
+        </Alert>
       )}
       {query.data?.items.map((account) => (
         <Card key={account.id} variant="outlined">
@@ -106,27 +114,29 @@ export function PendingApprovalsPage() {
               </Typography>
               <Typography>{account.email}</Typography>
               <Typography>
-                Telefone: {account.member?.phone ?? 'Não informado'}
+                {translate('Telefone: ')}
+                {account.member?.phone ?? translate('Não informado')}
               </Typography>
               <Typography>
-                Nascimento:{' '}
+                {translate('Nascimento:')}{' '}
                 {account.member?.birthDate
                   ? formatDateOnly(account.member.birthDate)
-                  : 'Não informado'}
+                  : translate('Não informado')}
               </Typography>
               <Typography>
-                Cadastrado em {formatDate(account.createdAt)}
+                {translate('Cadastrado em ')}
+                {formatDate(account.createdAt)}
               </Typography>
               <Button
                 variant="contained"
                 disabled={approval.isPending}
-                aria-label={`Aprovar ${account.name}`}
+                aria-label={translate('Aprovar {0}', [account.name])}
                 onClick={() => {
                   setNotice('');
                   approval.mutate(account.id);
                 }}
               >
-                Aprovar cadastro
+                {translate('Aprovar cadastro')}
               </Button>
             </Stack>
           </CardContent>
@@ -137,7 +147,7 @@ export function PendingApprovalsPage() {
           count={Math.ceil(query.data.total / 20)}
           page={page}
           onChange={(_, value) => setPage(value)}
-          aria-label="Páginas da lista de espera"
+          aria-label={translate('Páginas da lista de espera')}
         />
       )}
     </Stack>

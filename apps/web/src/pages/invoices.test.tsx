@@ -183,10 +183,10 @@ describe('Financial invoices tab', () => {
     fireEvent.change(screen.getByLabelText(/^NIF/), {
       target: { value: '123456789' },
     });
-    fireEvent.change(screen.getByLabelText(/^Senha das Finanças/), {
+    fireEvent.change(screen.getByLabelText(/^Palavra-passe das Finanças/), {
       target: { value: 'segredo' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Buscar faturas' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Procurar faturas' }));
     await waitFor(() =>
       expect(
         requests.find((r) => r.path === '/finance/invoices/fetch')?.body,
@@ -197,7 +197,9 @@ describe('Financial invoices tab', () => {
       }),
     );
     await waitFor(() => expect(calls).toBeGreaterThan(1));
-    expect(screen.getByLabelText(/^Senha das Finanças/)).toHaveValue('');
+    expect(screen.getByLabelText(/^Palavra-passe das Finanças/)).toHaveValue(
+      '',
+    );
     expect(
       requests.filter((r) => r.path.startsWith('/finance/banking/imports/')),
     ).toHaveLength(0);

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDate } from '../lib/format';
 import { retryQuery } from '../lib/query-retry';
 import { useRef } from 'react';
@@ -30,6 +31,7 @@ type Video = {
 const channelUrl = 'https://www.youtube.com/@IGREJAPONTE';
 
 export function YouTubeCarousel() {
+  useLocale();
   const track = useRef<HTMLDivElement>(null);
   const query = useQuery({
     queryKey: ['church-videos'],
@@ -63,10 +65,10 @@ export function YouTubeCarousel() {
       >
         <Box>
           <Typography id="church-videos-title" component="h2" variant="h6">
-            Últimos vídeos da igreja
+            {translate('Últimos vídeos da igreja')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Continue a acompanhar as mensagens de A Ponte.
+            {translate('Continue a acompanhar as mensagens de A Ponte.')}
           </Typography>
         </Box>
         <Button
@@ -75,14 +77,14 @@ export function YouTubeCarousel() {
           rel="noopener noreferrer"
           startIcon={<YouTube />}
         >
-          Ver canal
+          {translate('Ver canal')}
         </Button>
       </Stack>
       {query.isPending && (
         <Skeleton
           variant="rounded"
           height={230}
-          aria-label="Carregando vídeos da igreja"
+          aria-label={translate('Carregando vídeos da igreja')}
         />
       )}
       {query.isError && (
@@ -90,23 +92,25 @@ export function YouTubeCarousel() {
           severity="warning"
           action={
             <Button onClick={() => void query.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar os vídeos. Pode acompanhar as mensagens no
-          canal da igreja.
+          {translate(
+            'Não foi possível carregar os vídeos. Pode acompanhar as mensagens no canal da igreja.',
+          )}
         </Alert>
       )}
       {query.data?.stale && (
         <Alert severity="info" sx={{ mb: 2 }}>
-          A atualização está temporariamente indisponível. A mostrar os últimos
-          vídeos carregados.
+          {translate(
+            'A atualização está temporariamente indisponível. A mostrar os últimos vídeos carregados.',
+          )}
         </Alert>
       )}
       {query.data && !query.data.items.length && (
         <Typography color="text.secondary">
-          Ainda não há vídeos disponíveis no canal.
+          {translate('Ainda não há vídeos disponíveis no canal.')}
         </Typography>
       )}
       {!!query.data?.items.length && (
@@ -114,7 +118,7 @@ export function YouTubeCarousel() {
           <Box
             ref={track}
             role="region"
-            aria-label="Vídeos recentes — deslize para ver mais"
+            aria-label={translate('Vídeos recentes — deslize para ver mais')}
             tabIndex={0}
             sx={{
               display: 'flex',
@@ -138,7 +142,9 @@ export function YouTubeCarousel() {
                   href={video.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={`Assistir: ${video.title} (abre no YouTube)`}
+                  aria-label={translate('Assistir: {0} (abre no YouTube)', [
+                    video.title,
+                  ])}
                   sx={{ height: '100%', display: 'block' }}
                 >
                   <Box
@@ -192,12 +198,15 @@ export function YouTubeCarousel() {
           </Box>
           <Stack direction="row" justifyContent="flex-end">
             <IconButton
-              aria-label="Vídeos anteriores"
+              aria-label={translate('Vídeos anteriores')}
               onClick={() => scroll(-1)}
             >
               <ChevronLeft />
             </IconButton>
-            <IconButton aria-label="Próximos vídeos" onClick={() => scroll(1)}>
+            <IconButton
+              aria-label={translate('Próximos vídeos')}
+              onClick={() => scroll(1)}
+            >
               <ChevronRight />
             </IconButton>
           </Stack>

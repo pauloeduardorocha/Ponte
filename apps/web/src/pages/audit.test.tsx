@@ -16,13 +16,11 @@ describe('Audit access', () => {
       const requests = mockApi({ ...sessionRoutes(makeUser(['AUDIT_READ'])) });
       renderApp(route);
       expect(
-        await screen.findByText(
-          'Você não tem permissão para acessar esta área.',
-        ),
+        await screen.findByText('Não tem permissão para aceder a esta área.'),
       ).toBeInTheDocument();
       expect(requests.some((r) => r.path.startsWith('/audit'))).toBe(false);
       expect(
-        screen.queryByRole('link', { name: 'Registros de auditoria' }),
+        screen.queryByRole('link', { name: 'Registos de auditoria' }),
       ).not.toBeInTheDocument();
       expect(
         screen.queryByRole('link', { name: 'Erros de frontend' }),
@@ -60,7 +58,7 @@ describe('Audit access', () => {
     expect(screen.getByText(/"name": "Antes"/)).toBeInTheDocument();
     expect(screen.getByText(/"name": "Depois"/)).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Excluir|Apagar|Editar/ }),
+      screen.queryByRole('button', { name: /Eliminar|Apagar|Editar/ }),
     ).not.toBeInTheDocument();
     expect(requests.some((r) => r.path === '/audit/frontend-errors')).toBe(
       false,
@@ -180,7 +178,7 @@ describe('Audit access', () => {
     renderApp('/audit/errors');
     expect(await screen.findByText('Não identificado')).toBeInTheDocument();
     expect(
-      screen.getByText('Conta isolada (sem cadastro associado)'),
+      screen.getByText('Conta isolada (sem registo associado)'),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: /Conta isolada/ }),
@@ -195,7 +193,7 @@ describe('Audit access', () => {
     renderApp('/audit');
     const group = await screen.findByRole('list', { name: 'Auditoria' });
     const audit = within(group).getByRole('link', {
-      name: 'Registros de auditoria',
+      name: 'Registos de auditoria',
     });
     const errors = within(group).getByRole('link', {
       name: 'Erros de frontend',
@@ -210,7 +208,7 @@ describe('Audit access', () => {
     expect(errors).toHaveAttribute('aria-current', 'page');
     expect(audit).not.toHaveAttribute('aria-current');
     expect(
-      screen.queryByRole('table', { name: 'Registros de auditoria' }),
+      screen.queryByRole('table', { name: 'Registos de auditoria' }),
     ).not.toBeInTheDocument();
   });
 });

@@ -15,7 +15,7 @@ describe('Localized dates', () => {
             type="date"
             {...form.register('date')}
           />
-          <button type="submit">Salvar</button>
+          <button type="submit">Guardar</button>
           <button
             type="button"
             onClick={() => form.reset({ date: '2026-01-02' })}
@@ -29,7 +29,7 @@ describe('Localized dates', () => {
     const input = screen.getByRole('textbox', { name: 'Data' });
     expect(input).toHaveValue('07/10/2026');
     fireEvent.change(input, { target: { value: '09/11/2026' } });
-    fireEvent.click(screen.getByText('Salvar'));
+    fireEvent.click(screen.getByText('Guardar'));
     await vi.waitFor(() =>
       expect(save).toHaveBeenCalledWith(
         { date: '2026-11-09' },

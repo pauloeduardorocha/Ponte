@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useId, useRef, useState } from 'react';
 import {
   Alert,
@@ -30,6 +31,7 @@ export function ReimbursementForm({
   initial?: Reimbursement;
   onSaved: (receipt: { id: string; possibleDuplicate?: boolean }) => void;
 }) {
+  useLocale();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const profile = useQuery({
@@ -104,7 +106,7 @@ export function ReimbursementForm({
     if (save.isPending || preparingRef.current || !selected?.length) return;
     const incoming = Array.from(selected);
     if (files.length + incoming.length > 3) {
-      setFileError('Selecione até 3 documentos no envio inicial.');
+      setFileError(translate('Selecione até 3 documentos no envio inicial.'));
       return;
     }
     preparingRef.current = true;
@@ -119,7 +121,7 @@ export function ReimbursementForm({
       setFileError(
         error instanceof Error
           ? error.message
-          : 'Não foi possível preparar os documentos.',
+          : translate('Não foi possível preparar os documentos.'),
       );
     } finally {
       preparingRef.current = false;
@@ -144,15 +146,16 @@ export function ReimbursementForm({
       }}
     >
       <Typography variant="body2">
-        O pedido é registado em seu nome. Indique o valor, o seu IBAN e a
-        categoria da despesa para guardar o pedido.
+        {translate(
+          'O pedido é registado em seu nome. Indique o valor, o seu IBAN e a categoria da despesa para guardar o pedido.',
+        )}
       </Typography>
       {!initial && (
         <>
           <Box
             role="button"
             tabIndex={busy ? -1 : 0}
-            aria-label="Carregar documentos"
+            aria-label={translate('Carregar documentos')}
             aria-describedby={dropHintId}
             aria-disabled={busy}
             onClick={() => {
@@ -209,18 +212,20 @@ export function ReimbursementForm({
             <CloudUploadRounded color="primary" sx={{ fontSize: 40, mb: 1 }} />
             <Typography fontWeight={600}>
               {dragging
-                ? 'Largue os documentos aqui'
-                : 'Arraste os documentos para aqui'}
+                ? translate('Largue os documentos aqui')
+                : translate('Arraste os documentos para aqui')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              ou clique para escolher os ficheiros
+              {translate('ou clique para escolher os ficheiros')}
             </Typography>
             <Typography
               id={dropHintId}
               variant="caption"
               color="text.secondary"
             >
-              Fotos JPEG/PNG até 10 MB · PDFs até 1 MB · até 3 documentos
+              {translate(
+                'Fotos JPEG/PNG até 10 MB · PDFs até 1 MB · até 3 documentos',
+              )}
             </Typography>
           </Box>
           <input
@@ -237,7 +242,7 @@ export function ReimbursementForm({
           />
           <Stack direction="row" gap={1} flexWrap="wrap">
             <Button component="label" disabled={busy}>
-              Tirar fotografia
+              {translate('Tirar fotografia')}
               <input
                 hidden
                 type="file"
@@ -252,12 +257,14 @@ export function ReimbursementForm({
             </Button>
           </Stack>
           <Typography variant="caption">
-            Todas as fotos, da câmera ou da galeria, são otimizadas para até 768
-            KB, sem recortes. Confira se o documento continua legível na
-            pré-visualização.
+            {translate(
+              'Todas as fotos, da câmera ou da galeria, são otimizadas para até 768 KB, sem recortes. Confira se o documento continua legível na pré-visualização.',
+            )}
           </Typography>
           {preparing && (
-            <Typography role="status">A preparar os documentos…</Typography>
+            <Typography role="status">
+              {translate('A preparar os documentos…')}
+            </Typography>
           )}
           <DocumentGallery
             disabled={busy}
@@ -271,21 +278,23 @@ export function ReimbursementForm({
             actions={(document, index) => (
               <Button
                 disabled={busy}
-                aria-label={`Remover ${document.filename}`}
+                aria-label={translate('Remover {0}', [document.filename])}
                 onClick={() =>
                   setFiles((previous) => previous.filter((_, i) => i !== index))
                 }
               >
-                Remover
+                {translate('Remover')}
               </Button>
             )}
           />
         </>
       )}
       <TextField
-        label="Quem recebe o reembolso?"
+        label={translate('Quem recebe o reembolso?')}
         value={beneficiaryName}
-        helperText="Nome preenchido automaticamente pela sua conta. Não pode ser alterado."
+        helperText={translate(
+          'Nome preenchido automaticamente pela sua conta. Não pode ser alterado.',
+        )}
         slotProps={{
           input: { readOnly: true },
           htmlInput: { readOnly: true, 'aria-readonly': true },
@@ -297,7 +306,7 @@ export function ReimbursementForm({
       />
       <TextField
         required
-        label="IBAN do beneficiário"
+        label={translate('IBAN do beneficiário')}
         value={iban}
         onChange={(e) =>
           setIban(e.target.value.replace(/\s/g, '').toUpperCase())
@@ -313,7 +322,7 @@ export function ReimbursementForm({
       <TextField
         select
         required
-        label="Categoria da despesa"
+        label={translate('Categoria da despesa')}
         value={categoryId}
         onChange={(event) => setCategoryId(event.target.value)}
         disabled={save.isPending || categories.isPending}
@@ -330,12 +339,12 @@ export function ReimbursementForm({
       {profile.error && <Alert severity="error">{profile.error.message}</Alert>}
       {profile.isSuccess && !profile.data && (
         <Alert severity="warning">
-          O cadastro de reembolsos é exclusivo para membros.
+          {translate('O cadastro de reembolsos é exclusivo para membros.')}
         </Alert>
       )}
       <TextField
         required
-        label="Valor total (€)"
+        label={translate('Valor total (€)')}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         slotProps={{
@@ -347,7 +356,7 @@ export function ReimbursementForm({
         disabled={save.isPending}
       />
       <TextField
-        label="Para que foi esta despesa?"
+        label={translate('Para que foi esta despesa?')}
         multiline
         minRows={2}
         value={purpose}
@@ -360,17 +369,19 @@ export function ReimbursementForm({
       {!initial && save.isPending && progress && (
         <Typography role="status">
           {progress.retrying
-            ? 'Ligação interrompida. A tentar novamente…'
+            ? translate('Ligação interrompida. A tentar novamente…')
             : progress.sent === progress.total
-              ? 'Documentos enviados. A confirmar o pedido…'
-              : `A enviar documentos: ${Math.floor((100 * progress.sent) / progress.total)}%`}
+              ? translate('Documentos enviados. A confirmar o pedido…')
+              : translate('A enviar documentos: {0}%', [
+                  Math.floor((100 * progress.sent) / progress.total),
+                ])}
         </Typography>
       )}
       {!initial && save.error && (
         <Typography variant="body2">
-          Os documentos continuam neste formulário. Ao tentar novamente com os
-          mesmos dados, o envio retoma sem criar um pedido duplicado. Mantenha
-          esta página aberta.
+          {translate(
+            'Os documentos continuam neste formulário. Ao tentar novamente com os mesmos dados, o envio retoma sem criar um pedido duplicado. Mantenha esta página aberta.',
+          )}
         </Typography>
       )}
       <Button
@@ -386,10 +397,10 @@ export function ReimbursementForm({
         }
       >
         {save.isPending
-          ? 'A guardar…'
+          ? translate('A guardar…')
           : initial
-            ? 'Guardar alterações'
-            : 'Guardar pedido'}
+            ? translate('Guardar alterações')
+            : translate('Guardar pedido')}
       </Button>
     </Stack>
   );

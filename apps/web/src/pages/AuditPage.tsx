@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { formatDateTime } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
@@ -36,6 +37,7 @@ interface AuditRecord {
   createdAt: string;
 }
 export function AuditPage() {
+  useLocale();
   const { hasPermission } = useAuth();
   const allowed = AUDIT_PERMISSIONS.every(hasPermission);
   const [page, setPage] = useState(0);
@@ -62,21 +64,22 @@ export function AuditPage() {
   if (!allowed)
     return (
       <Alert severity="warning">
-        Você não tem permissão para consultar a auditoria.
+        {translate('Você não tem permissão para consultar a auditoria.')}
       </Alert>
     );
   return (
     <Stack spacing={3}>
       <Box>
-        <Typography variant="h4">Auditoria</Typography>
+        <Typography variant="h4">{translate('Auditoria')}</Typography>
         <Typography color="text.secondary">
-          Histórico de operações, acessos e alterações. Os registros são
-          preservados e não podem ser editados.
+          {translate(
+            'Histórico de operações, acessos e alterações. Os registros são preservados e não podem ser editados.',
+          )}
         </Typography>
       </Box>
       <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
         <TextField
-          label="Ação exata"
+          label={translate('Ação exata')}
           value={action}
           onChange={(e) => {
             setAction(e.target.value);
@@ -84,7 +87,7 @@ export function AuditPage() {
           }}
         />
         <TextField
-          label="Entidade"
+          label={translate('Entidade')}
           value={entity}
           onChange={(e) => {
             setEntity(e.target.value);
@@ -92,7 +95,7 @@ export function AuditPage() {
           }}
         />
         <TextField
-          label="Desde (UTC)"
+          label={translate('Desde (UTC)')}
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={start}
@@ -102,7 +105,7 @@ export function AuditPage() {
           }}
         />
         <TextField
-          label="Até (UTC)"
+          label={translate('Até (UTC)')}
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={end}
@@ -114,22 +117,22 @@ export function AuditPage() {
       </Stack>
       {logs.isError && (
         <Alert severity="error">
-          Não foi possível carregar os registros de auditoria.
+          {translate('Não foi possível carregar os registros de auditoria.')}
         </Alert>
       )}
       <Card sx={{ overflowX: 'auto' }}>
         <SortableTable
           nonSortableColumns={[5]}
-          aria-label="Registros de auditoria"
+          aria-label={translate('Registros de auditoria')}
         >
           <TableHead>
             <TableRow>
-              <TableCell>Data</TableCell>
-              <TableCell>Usuário</TableCell>
-              <TableCell>Ação</TableCell>
-              <TableCell>Entidade</TableCell>
+              <TableCell>{translate('Data')}</TableCell>
+              <TableCell>{translate('Usuário')}</TableCell>
+              <TableCell>{translate('Ação')}</TableCell>
+              <TableCell>{translate('Entidade')}</TableCell>
               <TableCell>IP</TableCell>
-              <TableCell>Detalhes</TableCell>
+              <TableCell>{translate('Detalhes')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -138,20 +141,22 @@ export function AuditPage() {
                 <TableCell data-sort-value={log.createdAt}>
                   {formatDateTime(log.createdAt)}
                 </TableCell>
-                <TableCell>{log.userId ?? 'Sistema'}</TableCell>
+                <TableCell>{log.userId ?? translate('Sistema')}</TableCell>
                 <TableCell>{log.action}</TableCell>
                 <TableCell>{log.entity}</TableCell>
                 <TableCell>{log.ip ?? '—'}</TableCell>
                 <TableCell>
                   <Button onClick={() => setSelected(log)}>
-                    Ver alteração
+                    {translate('Ver alteração')}
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
             {!logs.isLoading && logs.data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6}>Nenhum registro encontrado.</TableCell>
+                <TableCell colSpan={6}>
+                  {translate('Nenhum registro encontrado.')}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -171,7 +176,7 @@ export function AuditPage() {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Detalhes da operação</DialogTitle>
+        <DialogTitle>{translate('Detalhes da operação')}</DialogTitle>
         <DialogContent>
           <Box
             component="pre"

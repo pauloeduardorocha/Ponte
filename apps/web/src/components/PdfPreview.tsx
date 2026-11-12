@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -23,6 +24,7 @@ export function PdfPreview({
   thumbnail?: boolean;
   zoom?: number;
 }) {
+  useLocale();
   const canvas = useRef<HTMLCanvasElement>(null);
   const [document, setDocument] = useState<PDFDocumentProxy>();
   const [page, setPage] = useState(1);
@@ -48,7 +50,9 @@ export function PdfPreview({
       } catch {
         if (!disposed)
           setError(
-            'Não foi possível visualizar este PDF. Pode descarregá-lo para o abrir.',
+            translate(
+              'Não foi possível visualizar este PDF. Pode descarregá-lo para o abrir.',
+            ),
           );
       }
     }
@@ -92,7 +96,7 @@ export function PdfPreview({
       } catch {
         if (!disposed) {
           setRendering(false);
-          setError('Não foi possível apresentar esta página.');
+          setError(translate('Não foi possível apresentar esta página.'));
         }
       }
     }
@@ -109,21 +113,21 @@ export function PdfPreview({
           severity="warning"
           sx={{ fontSize: thumbnail ? '0.75rem' : undefined }}
         >
-          {error}
+          {translate(error ?? '')}
         </Alert>
       ) : (
         <>
           {rendering && (
             <CircularProgress
               size={thumbnail ? 22 : 32}
-              aria-label="A carregar PDF"
+              aria-label={translate('A carregar PDF')}
             />
           )}
           <Box
             component="canvas"
             ref={canvas}
             role="img"
-            aria-label={`Página ${page} do PDF`}
+            aria-label={translate('Página {0} do PDF', [page])}
             sx={{
               maxWidth: '100%',
               maxHeight: thumbnail ? 152 : undefined,
@@ -140,7 +144,7 @@ export function PdfPreview({
             disabled={page === 1 || rendering}
             onClick={() => setPage((value) => value - 1)}
           >
-            Página anterior
+            {translate('Página anterior')}
           </Button>
           <Typography>
             {page} / {document.numPages}
@@ -149,7 +153,7 @@ export function PdfPreview({
             disabled={page === document.numPages || rendering}
             onClick={() => setPage((value) => value + 1)}
           >
-            Página seguinte
+            {translate('Página seguinte')}
           </Button>
         </Stack>
       )}

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,7 +20,7 @@ import {
 
 const loginSchema = z.object({
   email: emailSchema,
-  password: z.string().min(1, 'Informe a senha.'),
+  password: z.string().min(1, { error: () => translate('Informe a senha.') }),
 });
 
 type LoginFields = z.infer<typeof loginSchema>;
@@ -30,6 +31,7 @@ interface LoginLocationState {
 }
 
 export function LoginPage() {
+  useLocale();
   const translation = useLiveTranslation({ publicAccess: true });
   const { login, loginWithPasskey, signOutNotice, sessionError } = useAuth();
   const [passkeyBusy, setPasskeyBusy] = useState(false);
@@ -78,7 +80,7 @@ export function LoginPage() {
     } catch (err) {
       setError(
         err instanceof ApiError && err.status === 401
-          ? 'E-mail ou senha inválidos.'
+          ? translate('E-mail ou senha inválidos.')
           : errorMessage(err),
       );
     }
@@ -86,17 +88,17 @@ export function LoginPage() {
 
   return (
     <AuthCard
-      title="Acesse sua conta"
-      subtitle="Entre para continuar na plataforma da igreja."
+      title={translate('Acesse sua conta')}
+      subtitle={translate('Entre para continuar na plataforma da igreja.')}
       notice={state.notice ?? signOutNotice ?? undefined}
       error={error ?? sessionError}
       footer={
         <>
           <Link component={RouterLink} to="/forgot-password">
-            Esqueci minha senha
+            {translate('Esqueci minha senha')}
           </Link>
           <Link component={RouterLink} to="/register">
-            Criar uma conta
+            {translate('Criar uma conta')}
           </Link>
         </>
       }
@@ -104,8 +106,9 @@ export function LoginPage() {
       {translation.active && (
         <Stack spacing={1.5} sx={{ mb: 3 }}>
           <Alert severity="info">
-            Tradução ao vivo disponível, sem precisar de conta. É preciso estar
-            conectado ao Wi-Fi da igreja para ouvir e acompanhar o texto.
+            {translate(
+              'Tradução ao vivo disponível, sem precisar de conta. É preciso estar conectado ao Wi-Fi da igreja para ouvir e acompanhar o texto.',
+            )}
           </Alert>
           <Button
             component={RouterLink}
@@ -115,28 +118,28 @@ export function LoginPage() {
             startIcon={<TranslateRounded />}
             fullWidth
           >
-            Ouvir tradução ao vivo — sem entrar
+            {translate('Ouvir tradução ao vivo — sem entrar')}
           </Button>
         </Stack>
       )}
       <Box component="form" onSubmit={onSubmit} noValidate>
         <Stack spacing={2}>
           <TextField
-            label="E-mail"
+            label={translate('E-mail')}
             type="email"
             autoComplete="username"
             fullWidth
             error={Boolean(formState.errors.email)}
-            helperText={formState.errors.email?.message}
+            helperText={translate(formState.errors.email?.message ?? '')}
             {...register('email')}
           />
           <TextField
-            label="Senha"
+            label={translate('Senha')}
             type="password"
             autoComplete="current-password"
             fullWidth
             error={Boolean(formState.errors.password)}
-            helperText={formState.errors.password?.message}
+            helperText={translate(formState.errors.password?.message ?? '')}
             {...register('password')}
           />
           <Button
@@ -145,7 +148,7 @@ export function LoginPage() {
             size="large"
             disabled={formState.isSubmitting || passkeyBusy}
           >
-            Entrar
+            {translate('Entrar')}
           </Button>
           {passkeysSupported() && (!automaticPasskey || passkeyFailed) && (
             <Button
@@ -154,7 +157,9 @@ export function LoginPage() {
               disabled={formState.isSubmitting || passkeyBusy}
               onClick={onPasskeyLogin}
             >
-              {passkeyBusy ? 'A confirmar…' : 'Entrar com biometria ou passkey'}
+              {passkeyBusy
+                ? translate('A confirmar…')
+                : translate('Entrar com biometria ou passkey')}
             </Button>
           )}
         </Stack>

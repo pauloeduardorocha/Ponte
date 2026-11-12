@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -25,10 +26,18 @@ import { formatDateOnly } from '../lib/format';
 import { STATUS_LABELS } from '../lib/status-labels';
 
 const labels: Record<FamilyRelation, string> = {
-  FATHER: 'Pai',
-  MOTHER: 'Mãe',
-  CHILD: 'Filho(a)',
-  SPOUSE: 'Cônjuge',
+  get FATHER() {
+    return translate('Pai');
+  },
+  get MOTHER() {
+    return translate('Mãe');
+  },
+  get CHILD() {
+    return translate('Filho(a)');
+  },
+  get SPOUSE() {
+    return translate('Cônjuge');
+  },
 };
 const emptyForm = {
   name: '',
@@ -45,6 +54,7 @@ export function MemberFamily({
   memberId?: string;
   canEdit?: boolean;
 }) {
+  useLocale();
   const client = useQueryClient();
   const base = `/member-family/${encodeURIComponent(memberId)}`;
   const family = useQuery({
@@ -86,8 +96,10 @@ export function MemberFamily({
       setFields(emptyForm);
       setNotice(
         input.createAccount
-          ? 'Familiar cadastrado. O acesso está aguardando aprovação.'
-          : 'Vínculo familiar salvo.',
+          ? translate(
+              'Familiar cadastrado. O acesso está aguardando aprovação.',
+            )
+          : translate('Vínculo familiar salvo.'),
       );
       await refresh();
     },
@@ -99,7 +111,7 @@ export function MemberFamily({
       }),
     onSuccess: async () => {
       setRemoving(null);
-      setNotice('Vínculo removido dos dois cadastros.');
+      setNotice(translate('Vínculo removido dos dois cadastros.'));
       await refresh();
     },
   });
@@ -141,26 +153,31 @@ export function MemberFamily({
     <Card variant="outlined">
       <CardContent>
         <Stack spacing={2}>
-          <Typography variant="h6">Família</Typography>
+          <Typography variant="h6">{translate('Família')}</Typography>
           {family.isPending && (
-            <CircularProgress size={24} aria-label="Carregando familiares" />
+            <CircularProgress
+              size={24}
+              aria-label={translate('Carregando familiares')}
+            />
           )}
           {family.isError && (
             <Alert
               severity="error"
               action={
                 <Button onClick={() => void family.refetch()}>
-                  Tentar novamente
+                  {translate('Tentar novamente')}
                 </Button>
               }
             >
               {errorMessage(family.error)}
             </Alert>
           )}
-          {notice && <Alert severity="success">{notice}</Alert>}
+          {notice && (
+            <Alert severity="success">{translate(notice ?? '')}</Alert>
+          )}
           {family.data?.length === 0 && (
             <Typography color="text.secondary">
-              Nenhum vínculo familiar cadastrado.
+              {translate('Nenhum vínculo familiar cadastrado.')}
             </Typography>
           )}
           {family.data?.map((link) => (
@@ -175,19 +192,22 @@ export function MemberFamily({
                   {link.member.name} · {labels[link.relation]}
                 </Typography>
                 <Typography variant="body2">
-                  Nascimento: {formatDateOnly(link.member.birthDate)} ·{' '}
+                  {translate('Nascimento: ')}
+                  {formatDateOnly(link.member.birthDate)} ·{' '}
                   {link.member.user
                     ? STATUS_LABELS[link.member.user.status]
-                    : 'Sem acesso ao sistema'}
+                    : translate('Sem acesso ao sistema')}
                 </Typography>
               </Box>
               {canEdit && (
                 <Stack direction="row">
                   <Button
                     onClick={() => start(link)}
-                    aria-label={`Editar vínculo com ${link.member.name}`}
+                    aria-label={translate('Editar vínculo com {0}', [
+                      link.member.name,
+                    ])}
                   >
-                    Editar vínculo
+                    {translate('Editar vínculo')}
                   </Button>
                   <Button
                     color="error"
@@ -195,9 +215,11 @@ export function MemberFamily({
                       remove.reset();
                       setRemoving(link);
                     }}
-                    aria-label={`Remover vínculo com ${link.member.name}`}
+                    aria-label={translate('Remover vínculo com {0}', [
+                      link.member.name,
+                    ])}
                   >
-                    Remover
+                    {translate('Remover')}
                   </Button>
                 </Stack>
               )}
@@ -206,7 +228,7 @@ export function MemberFamily({
           {canEdit && (
             <Box>
               <Button variant="outlined" onClick={() => start()}>
-                Adicionar familiar
+                {translate('Adicionar familiar')}
               </Button>
             </Box>
           )}
@@ -225,14 +247,16 @@ export function MemberFamily({
       >
         <Box component="form" onSubmit={submit}>
           <DialogTitle>
-            {editing ? 'Editar vínculo familiar' : 'Adicionar familiar'}
+            {editing
+              ? translate('Editar vínculo familiar')
+              : translate('Adicionar familiar')}
           </DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ pt: 1 }}>
               {!editing && (
                 <TextField
                   select
-                  label="Cadastro do familiar"
+                  label={translate('Cadastro do familiar')}
                   value={mode}
                   onChange={(e) => {
                     setMode(e.target.value as 'new' | 'existing');
@@ -241,13 +265,15 @@ export function MemberFamily({
                     setCreateAccount(false);
                   }}
                 >
-                  <MenuItem value="new">Novo familiar</MenuItem>
-                  <MenuItem value="existing">Membro existente</MenuItem>
+                  <MenuItem value="new">{translate('Novo familiar')}</MenuItem>
+                  <MenuItem value="existing">
+                    {translate('Membro existente')}
+                  </MenuItem>
                 </TextField>
               )}
               <TextField
                 select
-                label="Grau de parentesco do familiar"
+                label={translate('Grau de parentesco do familiar')}
                 value={relation}
                 onChange={(e) => setRelation(e.target.value as FamilyRelation)}
               >
@@ -260,14 +286,14 @@ export function MemberFamily({
               {relation === 'CHILD' && (
                 <TextField
                   select
-                  label="O membro principal é"
+                  label={translate('O membro principal é')}
                   value={parentRole}
                   onChange={(e) =>
                     setParentRole(e.target.value as 'FATHER' | 'MOTHER')
                   }
                 >
-                  <MenuItem value="FATHER">Pai</MenuItem>
-                  <MenuItem value="MOTHER">Mãe</MenuItem>
+                  <MenuItem value="FATHER">{translate('Pai')}</MenuItem>
+                  <MenuItem value="MOTHER">{translate('Mãe')}</MenuItem>
                 </TextField>
               )}
               {mode === 'existing' ? (
@@ -277,7 +303,7 @@ export function MemberFamily({
                   ) : (
                     <>
                       <TextField
-                        label="Buscar membro pelo nome"
+                        label={translate('Buscar membro pelo nome')}
                         value={search}
                         onChange={(e) => {
                           setSearch(e.target.value);
@@ -294,12 +320,12 @@ export function MemberFamily({
                             void results.refetch();
                         }}
                       >
-                        Buscar membro
+                        {translate('Buscar membro')}
                       </Button>
                       {results.isFetching && (
                         <CircularProgress
                           size={24}
-                          aria-label="Buscando membros"
+                          aria-label={translate('Buscando membros')}
                         />
                       )}
                       {results.isError && (
@@ -308,13 +334,15 @@ export function MemberFamily({
                         </Alert>
                       )}
                       {results.data?.length === 0 && (
-                        <Typography>Nenhum membro encontrado.</Typography>
+                        <Typography>
+                          {translate('Nenhum membro encontrado.')}
+                        </Typography>
                       )}
                       {!!results.data?.length && (
                         <TextField
                           select
                           required
-                          label="Membro existente"
+                          label={translate('Membro existente')}
                           value={selected?.id ?? ''}
                           onChange={(e) =>
                             setSelected(
@@ -338,7 +366,7 @@ export function MemberFamily({
                 <>
                   <TextField
                     required
-                    label="Nome do familiar"
+                    label={translate('Nome do familiar')}
                     value={fields.name}
                     onChange={(e) =>
                       setFields({ ...fields, name: e.target.value })
@@ -347,7 +375,7 @@ export function MemberFamily({
                   />
                   <TextField
                     required
-                    label="Data de nascimento do familiar"
+                    label={translate('Data de nascimento do familiar')}
                     type="date"
                     value={fields.birthDate}
                     onChange={(e) =>
@@ -368,11 +396,11 @@ export function MemberFamily({
                         }}
                       />
                     }
-                    label="Criar acesso ao sistema para o familiar"
+                    label={translate('Criar acesso ao sistema para o familiar')}
                   />
                   <TextField
                     required={createAccount}
-                    label="E-mail do familiar"
+                    label={translate('E-mail do familiar')}
                     type="email"
                     value={fields.email}
                     onChange={(e) =>
@@ -382,7 +410,7 @@ export function MemberFamily({
                   />
                   <TextField
                     required={createAccount}
-                    label="Telefone do familiar"
+                    label={translate('Telefone do familiar')}
                     type="tel"
                     value={fields.phone}
                     onChange={(e) =>
@@ -394,27 +422,29 @@ export function MemberFamily({
                     <>
                       <TextField
                         required
-                        label="Senha do familiar"
+                        label={translate('Senha do familiar')}
                         type="password"
                         autoComplete="new-password"
                         value={fields.password}
                         onChange={(e) =>
                           setFields({ ...fields, password: e.target.value })
                         }
-                        helperText="Entre 12 e 128 caracteres"
+                        helperText={translate('Entre 12 e 128 caracteres')}
                         slotProps={{
                           htmlInput: { minLength: 12, maxLength: 128 },
                         }}
                       />
                       <Alert severity="info">
-                        O acesso será enviado para a fila de aprovação.
+                        {translate(
+                          'O acesso será enviado para a fila de aprovação.',
+                        )}
                       </Alert>
                     </>
                   )}
                 </>
               )}
               <Typography variant="body2" color="text.secondary">
-                O vínculo será atualizado nos dois cadastros.
+                {translate('O vínculo será atualizado nos dois cadastros.')}
               </Typography>
               {save.isError && (
                 <Alert severity="error">{errorMessage(save.error)}</Alert>
@@ -429,14 +459,14 @@ export function MemberFamily({
                 setFields(emptyForm);
               }}
             >
-              Cancelar
+              {translate('Cancelar')}
             </Button>
             <Button
               type="submit"
               variant="contained"
               disabled={save.isPending || (mode === 'existing' && !selected)}
             >
-              Salvar vínculo
+              {translate('Salvar vínculo')}
             </Button>
           </DialogActions>
         </Box>
@@ -447,11 +477,14 @@ export function MemberFamily({
           if (!remove.isPending) setRemoving(null);
         }}
       >
-        <DialogTitle>Remover vínculo familiar</DialogTitle>
+        <DialogTitle>{translate('Remover vínculo familiar')}</DialogTitle>
         <DialogContent>
           <Typography>
-            Remover o vínculo com {removing?.member.name} dos dois cadastros? O
-            cadastro e o acesso do familiar serão mantidos.
+            {translate('Remover o vínculo com ')}
+            {removing?.member.name}{' '}
+            {translate(
+              ' dos dois cadastros? O cadastro e o acesso do familiar serão mantidos.',
+            )}
           </Typography>
           {remove.isError && (
             <Alert severity="error">{errorMessage(remove.error)}</Alert>
@@ -459,14 +492,14 @@ export function MemberFamily({
         </DialogContent>
         <DialogActions>
           <Button disabled={remove.isPending} onClick={() => setRemoving(null)}>
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             color="error"
             disabled={remove.isPending}
             onClick={() => removing && remove.mutate(removing)}
           >
-            Confirmar remoção
+            {translate('Confirmar remoção')}
           </Button>
         </DialogActions>
       </Dialog>

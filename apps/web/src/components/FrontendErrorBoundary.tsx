@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Alert, Box, Typography } from '@mui/material';
 import { checkForAppUpdate, UPDATE_MESSAGE } from '../lib/app-update';
@@ -35,13 +36,15 @@ export class FrontendErrorBoundary extends Component<
       <Box sx={{ p: 3 }}>
         {this.state.checking ? (
           <Typography role="status">
-            Verificando se há uma nova versão…
+            {translate('Verificando se há uma nova versão…')}
           </Typography>
         ) : (
           <Alert severity={this.state.newer ? 'info' : 'error'}>
             {this.state.newer
-              ? UPDATE_MESSAGE
-              : 'Não foi possível carregar esta tela. Tente novamente mais tarde.'}
+              ? translate(UPDATE_MESSAGE)
+              : translate(
+                  'Não foi possível carregar esta tela. Tente novamente mais tarde.',
+                )}
           </Alert>
         )}
       </Box>

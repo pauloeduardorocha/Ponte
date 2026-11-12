@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -31,18 +32,23 @@ import { MemberFamily } from '../components/MemberFamily';
 
 const passwordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, 'Informe a senha atual.'),
+    currentPassword: z
+      .string()
+      .min(1, { error: () => translate('Informe a senha atual.') }),
     newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'As senhas não conferem.',
+    get message() {
+      return translate('As senhas não conferem.');
+    },
   });
 
 type PasswordFields = z.infer<typeof passwordFormSchema>;
 
 export function AccountPage() {
+  useLocale();
   const {
     user,
     clearSession,
@@ -125,7 +131,9 @@ export function AccountPage() {
       await changePassword({ currentPassword, newPassword });
       // The API revokes every session after a password change; the auth guard
       // then redirects to login showing this notice.
-      clearSession('Senha alterada. Entre novamente com a nova senha.');
+      clearSession(
+        translate('Senha alterada. Entre novamente com a nova senha.'),
+      );
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -134,15 +142,17 @@ export function AccountPage() {
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Minha conta"
-        subtitle="Consulte seus dados, personalize a aparência e altere sua senha."
+        title={translate('Minha conta')}
+        subtitle={translate(
+          'Consulte seus dados, personalize a aparência e altere sua senha.',
+        )}
       />
       <Box className="account-grid">
         <Card variant="outlined">
           <CardContent>
             <Stack spacing={2}>
               <Typography variant="h6" fontWeight={700}>
-                Dados da conta
+                {translate('Dados da conta')}
               </Typography>
               <Stack
                 direction="row"
@@ -158,12 +168,12 @@ export function AccountPage() {
                   {user?.name?.charAt(0)}
                 </Avatar>
                 <Button component="label" disabled={savingAvatar}>
-                  Alterar foto
+                  {translate('Alterar foto')}
                   <input
                     hidden
                     type="file"
                     accept="image/jpeg,image/png,image/webp"
-                    aria-label="Selecionar foto"
+                    aria-label={translate('Selecionar foto')}
                     disabled={savingAvatar}
                     onChange={(event) => {
                       const file = event.target.files?.[0];
@@ -177,30 +187,35 @@ export function AccountPage() {
                     disabled={savingAvatar}
                     onClick={() => void saveAvatar(null)}
                   >
-                    Remover foto
+                    {translate('Remover foto')}
                   </Button>
                 )}
               </Stack>
               <Typography variant="body2" color="text.secondary">
-                JPEG, PNG ou WebP. A foto é comprimida para até 0,5 MB antes do
-                envio.
+                {translate(
+                  'JPEG, PNG ou WebP. A foto é comprimida para até 0,5 MB antes do envio.',
+                )}
               </Typography>
               {savingAvatar && (
-                <Typography role="status">Salvando foto…</Typography>
+                <Typography role="status">
+                  {translate('Salvando foto…')}
+                </Typography>
               )}
               {avatarError && <Alert severity="error">{avatarError}</Alert>}
               {avatarSaved && (
-                <Alert severity="success">Foto atualizada.</Alert>
+                <Alert severity="success">
+                  {translate('Foto atualizada.')}
+                </Alert>
               )}
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  Nome
+                  {translate('Nome')}
                 </Typography>
                 <Typography>{user?.name}</Typography>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">
-                  E-mail
+                  {translate('E-mail')}
                 </Typography>
                 <Typography>{user?.email}</Typography>
               </Box>
@@ -210,10 +225,10 @@ export function AccountPage() {
                   color={user?.status === 'ACTIVE' ? 'success' : 'default'}
                   label={
                     user?.status === 'PENDING_APPROVAL'
-                      ? 'Aguardando aprovação'
+                      ? translate('Aguardando aprovação')
                       : user?.status === 'ACTIVE'
-                        ? 'Ativa'
-                        : 'Desativada'
+                        ? translate('Ativa')
+                        : translate('Desativada')
                   }
                 />
               </Box>
@@ -225,34 +240,44 @@ export function AccountPage() {
             <Box component="form" onSubmit={onSubmit} noValidate>
               <Stack spacing={2}>
                 <Typography variant="h6" fontWeight={700}>
-                  Alterar senha
+                  {translate('Alterar senha')}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Ao alterar a senha, todas as sessões serão encerradas.
+                  {translate(
+                    'Ao alterar a senha, todas as sessões serão encerradas.',
+                  )}
                 </Typography>
-                {error && <Alert severity="error">{error}</Alert>}
+                {error && (
+                  <Alert severity="error">{translate(error ?? '')}</Alert>
+                )}
                 <TextField
-                  label="Senha atual"
+                  label={translate('Senha atual')}
                   type="password"
                   autoComplete="current-password"
                   error={Boolean(formState.errors.currentPassword)}
-                  helperText={formState.errors.currentPassword?.message}
+                  helperText={translate(
+                    formState.errors.currentPassword?.message ?? '',
+                  )}
                   {...register('currentPassword')}
                 />
                 <TextField
-                  label="Nova senha"
+                  label={translate('Nova senha')}
                   type="password"
                   autoComplete="new-password"
                   error={Boolean(formState.errors.newPassword)}
-                  helperText={formState.errors.newPassword?.message}
+                  helperText={translate(
+                    formState.errors.newPassword?.message ?? '',
+                  )}
                   {...register('newPassword')}
                 />
                 <TextField
-                  label="Confirmar nova senha"
+                  label={translate('Confirmar nova senha')}
                   type="password"
                   autoComplete="new-password"
                   error={Boolean(formState.errors.confirmPassword)}
-                  helperText={formState.errors.confirmPassword?.message}
+                  helperText={translate(
+                    formState.errors.confirmPassword?.message ?? '',
+                  )}
                   {...register('confirmPassword')}
                 />
                 <Box>
@@ -261,7 +286,7 @@ export function AccountPage() {
                     variant="contained"
                     disabled={formState.isSubmitting}
                   >
-                    Alterar senha
+                    {translate('Alterar senha')}
                   </Button>
                 </Box>
               </Stack>
@@ -273,15 +298,17 @@ export function AccountPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography variant="h6" fontWeight={700}>
-              Aparência
+              {translate('Aparência')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Escolha o modo de cores da sua conta. Por padrão, a aparência
-              segue o dispositivo. Sua preferência é salva automaticamente e
-              usada nos seus dispositivos.
+              {translate(
+                'Escolha o modo de cores da sua conta. Por padrão, a aparência segue o dispositivo. Sua preferência é salva automaticamente e usada nos seus dispositivos.',
+              )}
             </Typography>
             <FormControl disabled={savingAppearance}>
-              <FormLabel id="color-mode-label">Modo de cores</FormLabel>
+              <FormLabel id="color-mode-label">
+                {translate('Modo de cores')}
+              </FormLabel>
               <RadioGroup
                 row
                 aria-labelledby="color-mode-label"
@@ -298,25 +325,29 @@ export function AccountPage() {
                 <FormControlLabel
                   value="system"
                   control={<Radio />}
-                  label="Seguir o dispositivo"
+                  label={translate('Seguir o dispositivo')}
                 />
                 <FormControlLabel
                   value="light"
                   control={<Radio />}
-                  label="Claro"
+                  label={translate('Claro')}
                 />
                 <FormControlLabel
                   value="dark"
                   control={<Radio />}
-                  label="Escuro"
+                  label={translate('Escuro')}
                 />
               </RadioGroup>
             </FormControl>
             {savingAppearance && (
-              <Typography role="status">Salvando preferência…</Typography>
+              <Typography role="status">
+                {translate('Salvando preferência…')}
+              </Typography>
             )}
             {appearanceSaved && (
-              <Alert severity="success">Preferência de aparência salva.</Alert>
+              <Alert severity="success">
+                {translate('Preferência de aparência salva.')}
+              </Alert>
             )}
             {appearanceError && (
               <Alert severity="error">{appearanceError}</Alert>
@@ -331,11 +362,12 @@ export function AccountPage() {
           <CardContent>
             <Stack spacing={1.5}>
               <Typography variant="h6" fontWeight={700}>
-                Notificações push
+                {translate('Notificações push')}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Escolha quais avisos do sistema quer receber nos dispositivos
-                com notificações ativadas.
+                {translate(
+                  'Escolha quais avisos do sistema quer receber nos dispositivos com notificações ativadas.',
+                )}
               </Typography>
               <FormControlLabel
                 control={
@@ -350,7 +382,9 @@ export function AccountPage() {
                     }
                   />
                 }
-                label="Novos pedidos na fila financeira de reembolsos"
+                label={translate(
+                  'Novos pedidos na fila financeira de reembolsos',
+                )}
               />
               <FormControlLabel
                 control={
@@ -365,7 +399,9 @@ export function AccountPage() {
                     }
                   />
                 }
-                label="Pedidos de reembolso de inscrições em eventos"
+                label={translate(
+                  'Pedidos de reembolso de inscrições em eventos',
+                )}
               />
               <FormControlLabel
                 control={
@@ -377,7 +413,7 @@ export function AccountPage() {
                     }
                   />
                 }
-                label="Empréstimos de livros em atraso"
+                label={translate('Empréstimos de livros em atraso')}
               />
               <FormControlLabel
                 control={
@@ -392,7 +428,9 @@ export function AccountPage() {
                     }
                   />
                 }
-                label="Exemplares disponíveis para as minhas reservas"
+                label={translate(
+                  'Exemplares disponíveis para as minhas reservas',
+                )}
               />
               <FormControlLabel
                 control={
@@ -404,14 +442,16 @@ export function AccountPage() {
                     }
                   />
                 }
-                label="Aniversariantes do dia"
+                label={translate('Aniversariantes do dia')}
               />
               {pushPreferenceSaving && (
-                <Typography role="status">Salvando preferência…</Typography>
+                <Typography role="status">
+                  {translate('Salvando preferência…')}
+                </Typography>
               )}
               {pushPreferenceSaved && (
                 <Alert severity="success">
-                  Preferência de notificações salva.
+                  {translate('Preferência de notificações salva.')}
                 </Alert>
               )}
               {pushPreferenceError && (

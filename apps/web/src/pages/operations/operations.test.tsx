@@ -16,7 +16,7 @@ describe('Operational workflows', () => {
       'GET /operations/people': { body: { items: [] } },
     });
     renderApp('/notifications');
-    fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Registar' }));
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Enviar para' }));
     expect(
       screen.getByRole('option', { name: 'Grupos familiares' }),
@@ -33,7 +33,7 @@ describe('Operational workflows', () => {
   });
   it.each([
     ['SENT', 'Notificação enviada.', 'success'],
-    ['PENDING', 'Notificação salva. Entrega pendente.', 'success'],
+    ['PENDING', 'Notificação guardada. Entrega pendente.', 'success'],
     [
       'FAILED',
       'Não foi possível enviar a notificação. Consulte a situação do envio.',
@@ -52,7 +52,7 @@ describe('Operational workflows', () => {
         'POST /operations/notifications': { body: { id: 'n1', status } },
       });
       renderApp('/notifications');
-      fireEvent.click(await screen.findByRole('button', { name: 'Cadastrar' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Registar' }));
       const recipient = await screen.findByRole('combobox', {
         name: 'Destinatários: membros',
       });
@@ -63,7 +63,7 @@ describe('Operational workflows', () => {
       fireEvent.change(screen.getByLabelText(/Mensagem/), {
         target: { value: 'Comunicado' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
       expect(
         (await screen.findByText(notice)).closest('[role="alert"]'),
       ).toHaveClass(
@@ -131,7 +131,7 @@ describe('Operational workflows', () => {
       expect(
         screen.getByText('Membros ativos sem grupo familiar'),
       ).toBeInTheDocument();
-      expect(screen.queryByText('Aguardando contato')).not.toBeInTheDocument();
+      expect(screen.queryByText('A aguardar contacto')).not.toBeInTheDocument();
       expect(
         screen.queryByText('Grupos familiares ativas'),
       ).not.toBeInTheDocument();
@@ -179,7 +179,7 @@ describe('Operational workflows', () => {
         ?.query.get('memberId'),
     ).toBeNull();
     expect(
-      screen.queryByRole('button', { name: 'Cadastrar' }),
+      screen.queryByRole('button', { name: 'Registar' }),
     ).not.toBeInTheDocument();
   });
   it('keeps the operational dashboard separate from financial panels even when both are authorized', async () => {
@@ -206,7 +206,7 @@ describe('Operational workflows', () => {
     const requests = mockApi(sessionRoutes(makeUser([])));
     renderApp('/follow-ups');
     expect(
-      await screen.findByText('Você não tem permissão para acessar esta área.'),
+      await screen.findByText('Não tem permissão para aceder a esta área.'),
     ).toBeInTheDocument();
     expect(
       requests.filter(
@@ -260,7 +260,7 @@ describe('Operational workflows', () => {
       await screen.findByText('Grupo familiar Esperança'),
     ).toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: 'Financeiro' }),
+      screen.queryByRole('link', { name: 'Finanças' }),
     ).not.toBeInTheDocument();
     expect(
       requests
@@ -271,7 +271,7 @@ describe('Operational workflows', () => {
     const dialog = within(await screen.findByRole('dialog'));
     expect(await dialog.findByText(/Saída:/)).toBeInTheDocument();
     expect(
-      dialog.queryByRole('button', { name: 'Registrar saída' }),
+      dialog.queryByRole('button', { name: 'Registar saída' }),
     ).not.toBeInTheDocument();
   });
   it('requires confirmation before recording departure and preserves the displayed history', async () => {
@@ -304,7 +304,7 @@ describe('Operational workflows', () => {
     renderApp('/ministries');
     fireEvent.click(await screen.findByRole('button', { name: 'Detalhes' }));
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Registrar saída' }),
+      await screen.findByRole('button', { name: 'Registar saída' }),
     );
     expect(
       requests.some((r) => r.method === 'POST' && r.path.endsWith('/leave')),
@@ -340,12 +340,12 @@ describe('Operational workflows', () => {
         },
       });
       renderApp('/schedules');
-      await screen.findByText(/Nenhum registro encontrado/);
-      expect(!!screen.queryByRole('button', { name: 'Cadastrar' })).toBe(
+      await screen.findByText(/Nenhum registo encontrado/);
+      expect(!!screen.queryByRole('button', { name: 'Registar' })).toBe(
         canCreate,
       );
       if (canCreate) {
-        fireEvent.click(screen.getByRole('button', { name: 'Cadastrar' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Registar' }));
         const dialog = await screen.findByRole('dialog');
         fireEvent.mouseDown(
           within(dialog).getByRole('combobox', { name: /Ministério/ }),
@@ -392,7 +392,7 @@ describe('Operational workflows', () => {
     fireEvent.change(form.getByRole('textbox', { name: /Função/ }), {
       target: { value: 'Recepção' },
     });
-    fireEvent.click(form.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(form.getByRole('button', { name: 'Guardar' }));
     expect(
       await screen.findByText('Conflito de horário: escolha outro voluntário.'),
     ).toBeInTheDocument();

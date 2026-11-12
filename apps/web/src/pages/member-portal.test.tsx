@@ -23,7 +23,7 @@ describe('Basic member experience', () => {
       screen.getByRole('link', { name: 'Ver evento e inscrever-se' }),
     ).toHaveAttribute('href', '/events/e1/register');
     expect(
-      screen.queryByRole('button', { name: 'Cadastrar' }),
+      screen.queryByRole('button', { name: 'Registar' }),
     ).not.toBeInTheDocument();
   });
   it('reserves a book without choosing another member', async () => {
@@ -274,9 +274,7 @@ describe('Basic member experience', () => {
     fireEvent.click(
       screen.getByRole('button', { name: 'Detalhes do meu grupo' }),
     );
-    expect(
-      await screen.findByText('Endereço: Rua da Ponte'),
-    ).toBeInTheDocument();
+    expect(await screen.findByText('Morada: Rua da Ponte')).toBeInTheDocument();
     await waitFor(() =>
       expect(
         requests.some((r) => r.path === '/member-portal/small-groups/g2'),

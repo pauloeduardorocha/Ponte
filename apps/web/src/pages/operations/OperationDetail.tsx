@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { formatDateOnly, formatDateTime } from '../../lib/format';
 import { ScheduleDocuments } from './ScheduleDocuments';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
@@ -36,6 +37,7 @@ export function OperationDetail({
   entry: Entry;
   onClose: () => void;
 }) {
+  useLocale();
   const { hasPermission } = useAuth(),
     client = useQueryClient();
   const [page, setPage] = useState(0),
@@ -73,7 +75,7 @@ export function OperationDetail({
     mutationFn: (p: string) => apiRequest(p, { method: 'POST' }),
     onSuccess: () => {
       setConfirm(undefined);
-      setNotice('Operação concluída.');
+      setNotice(translate('Operação concluída.'));
       void client.invalidateQueries({ queryKey: ['operations'] });
     },
   });
@@ -90,23 +92,23 @@ export function OperationDetail({
         (resource === 'events' && hasPermission('EVENT_REGISTRATION_MANAGE'));
   const member: Field = {
     key: 'memberId',
-    label: 'Membro',
+    label: translate('Membro'),
     lookup: 'people',
     required: true,
   };
   const assignmentFields: Field[] = [
     member,
-    { key: 'function', label: 'Função', required: true },
+    { key: 'function', label: translate('Função'), required: true },
     ...(!entry.ministryId
       ? [
           {
             key: 'ministryId',
-            label: 'Ministério',
+            label: translate('Ministério'),
             lookup: 'ministries' as const,
           },
         ]
       : []),
-    { key: 'notes', label: 'Observações', type: 'textarea' },
+    { key: 'notes', label: translate('Observações'), type: 'textarea' },
   ];
   return (
     <>
@@ -114,14 +116,14 @@ export function OperationDetail({
         <DialogTitle>
           {entryName(entry)} ·{' '}
           {endpoint === 'history'
-            ? 'Histórico'
+            ? translate('Histórico')
             : endpoint === 'interactions'
-              ? 'Contatos'
+              ? translate('Contatos')
               : endpoint === 'participants'
-                ? 'Participantes'
+                ? translate('Participantes')
                 : endpoint === 'registrations'
-                  ? 'Inscrições'
-                  : 'Voluntários'}
+                  ? translate('Inscrições')
+                  : translate('Voluntários')}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
@@ -134,17 +136,19 @@ export function OperationDetail({
             )}
             {resource === 'ministries' && (
               <Button component={Link} to={`/schedules?ministryId=${entry.id}`}>
-                Ver escalas do minist�rio
+                {translate('Ver escalas do minist�rio')}
               </Button>
             )}
-            {notice && <Alert severity="success">{notice}</Alert>}
+            {notice && (
+              <Alert severity="success">{translate(notice ?? '')}</Alert>
+            )}
             {action.isError && (
               <Alert severity="error">{action.error.message}</Alert>
             )}
             {resource === 'visitors' && (
               <>
                 <Typography>
-                  Primeira visita:{' '}
+                  {translate('Primeira visita:')}{' '}
                   {formatDateOnly(
                     String(entry.visitedAt ?? entry.firstVisitDate),
                   )}
@@ -155,7 +159,7 @@ export function OperationDetail({
                       <Button
                         onClick={() =>
                           setForm({
-                            title: 'Iniciar acompanhamento',
+                            title: translate('Iniciar acompanhamento'),
                             path: '/operations/follow-ups',
                             fields: configs['follow-ups'].fields,
                             initial: {
@@ -166,7 +170,7 @@ export function OperationDetail({
                           })
                         }
                       >
-                        Iniciar acompanhamento
+                        {translate('Iniciar acompanhamento')}
                       </Button>
                     )}
                   {!entry.memberId &&
@@ -176,25 +180,28 @@ export function OperationDetail({
                         variant="contained"
                         onClick={() =>
                           setForm({
-                            title: 'Converter visitante em membro',
+                            title: translate('Converter visitante em membro'),
                             path: `/operations/visitors/${entry.id}/convert`,
                             fields: [
                               {
                                 key: 'memberId',
-                                label: 'Vincular membro existente (opcional)',
+                                label: translate(
+                                  'Vincular membro existente (opcional)',
+                                ),
                                 lookup: 'people',
                               },
                             ],
                           })
                         }
                       >
-                        Converter em membro
+                        {translate('Converter em membro')}
                       </Button>
                     )}
                   {!!entry.memberId && (
                     <Alert severity="info">
-                      Convertido em membro. O histórico do visitante foi
-                      preservado.
+                      {translate(
+                        'Convertido em membro. O histórico do visitante foi preservado.',
+                      )}
                     </Alert>
                   )}
                 </Stack>
@@ -204,12 +211,12 @@ export function OperationDetail({
               <Button
                 onClick={() =>
                   setForm({
-                    title: 'Registrar contato',
+                    title: translate('Registrar contato'),
                     path,
                     fields: [
                       {
                         key: 'type',
-                        label: 'Canal',
+                        label: translate('Canal'),
                         options: [
                           'PHONE',
                           'WHATSAPP',
@@ -221,39 +228,39 @@ export function OperationDetail({
                       },
                       {
                         key: 'interactionDate',
-                        label: 'Data e hora',
+                        label: translate('Data e hora'),
                         type: 'datetime-local',
                         required: true,
                       },
                       {
                         key: 'notes',
-                        label: 'Registro do contato',
+                        label: translate('Registro do contato'),
                         type: 'textarea',
                         required: true,
                       },
                       {
                         key: 'nextActionAt',
-                        label: 'Próxima ação',
+                        label: translate('Próxima ação'),
                         type: 'datetime-local',
                       },
                     ],
                   })
                 }
               >
-                Registrar contato
+                {translate('Registrar contato')}
               </Button>
             )}
             {['small-groups', 'ministries'].includes(resource) && canManage && (
               <Button
                 onClick={() =>
                   setForm({
-                    title: 'Adicionar participante',
+                    title: translate('Adicionar participante'),
                     path,
                     fields: [
                       member,
                       {
                         key: 'role',
-                        label: 'Função',
+                        label: translate('Função'),
                         options:
                           resource === 'ministries'
                             ? ['MEMBER', 'LEADER']
@@ -263,7 +270,7 @@ export function OperationDetail({
                   })
                 }
               >
-                Adicionar participante
+                {translate('Adicionar participante')}
               </Button>
             )}
             {resource === 'events' && canManage && (
@@ -272,16 +279,16 @@ export function OperationDetail({
                   component={Link}
                   to={`/my-events?event=${entry.id}&section=registrations`}
                 >
-                  Gerir inscrições
+                  {translate('Gerir inscrições')}
                 </Button>
                 <Button
                   component={Link}
                   to={`/my-events?event=${entry.id}&section=tickets`}
                 >
-                  Ingressos e lotes
+                  {translate('Ingressos e lotes')}
                 </Button>
                 <Button href={`/events/${entry.id}/register`} target="_blank">
-                  Página pública
+                  {translate('Página pública')}
                 </Button>
               </Stack>
             )}
@@ -289,24 +296,27 @@ export function OperationDetail({
               <Button
                 onClick={() =>
                   setForm({
-                    title: 'Convidar voluntário',
+                    title: translate('Convidar voluntário'),
                     path,
                     fields: assignmentFields,
                   })
                 }
               >
-                Convidar voluntário
+                {translate('Convidar voluntário')}
               </Button>
             )}
             {data.isPending && permitted && (
-              <Skeleton height={120} aria-label="Carregando histórico" />
+              <Skeleton
+                height={120}
+                aria-label={translate('Carregando histórico')}
+              />
             )}
             {data.isError && (
               <Alert
                 severity="error"
                 action={
                   <Button onClick={() => void data.refetch()}>
-                    Tentar novamente
+                    {translate('Tentar novamente')}
                   </Button>
                 }
               >
@@ -314,7 +324,9 @@ export function OperationDetail({
               </Alert>
             )}
             {data.data?.items.length === 0 && (
-              <Alert severity="info">Nenhum registro neste histórico.</Alert>
+              <Alert severity="info">
+                {translate('Nenhum registro neste histórico.')}
+              </Alert>
             )}
             <RecordTable>
               {data.data?.items.map((row) => (
@@ -335,12 +347,12 @@ export function OperationDetail({
                           <Button
                             onClick={() =>
                               setForm({
-                                title: 'Responder à convocação',
+                                title: translate('Responder à convocação'),
                                 path: path + '/' + row.id + '/respond',
                                 fields: [
                                   {
                                     key: 'status',
-                                    label: 'Minha resposta',
+                                    label: translate('Minha resposta'),
                                     options: ['CONFIRMED', 'DECLINED'],
                                     required: true,
                                   },
@@ -348,12 +360,12 @@ export function OperationDetail({
                               })
                             }
                           >
-                            Minha resposta
+                            {translate('Minha resposta')}
                           </Button>
                         )}
                       {resource === 'visitors' && (
                         <Button onClick={() => setNested(row)}>
-                          Ver contatos
+                          {translate('Ver contatos')}
                         </Button>
                       )}
                       {canManage &&
@@ -364,11 +376,13 @@ export function OperationDetail({
                             onClick={() =>
                               setConfirm({
                                 path: path + '/' + row.id + '/leave',
-                                label: 'Registrar saída do participante?',
+                                label: translate(
+                                  'Registrar saída do participante?',
+                                ),
                               })
                             }
                           >
-                            Registrar saída
+                            {translate('Registrar saída')}
                           </Button>
                         )}
                       {canManage &&
@@ -379,11 +393,11 @@ export function OperationDetail({
                             onClick={() =>
                               setConfirm({
                                 path: path + '/' + row.id + '/cancel',
-                                label: 'Cancelar inscrição?',
+                                label: translate('Cancelar inscrição?'),
                               })
                             }
                           >
-                            Cancelar inscrição
+                            {translate('Cancelar inscrição')}
                           </Button>
                         )}
                       {resource === 'schedules' &&
@@ -393,13 +407,13 @@ export function OperationDetail({
                             <Button
                               onClick={() =>
                                 setForm({
-                                  title: 'Atualizar participação',
+                                  title: translate('Atualizar participação'),
                                   path: path + '/' + row.id,
                                   method: 'PATCH',
                                   fields: [
                                     {
                                       key: 'status',
-                                      label: 'Participação',
+                                      label: translate('Participação'),
                                       options: [
                                         'CONFIRMED',
                                         'DECLINED',
@@ -412,19 +426,19 @@ export function OperationDetail({
                                 })
                               }
                             >
-                              Confirmar / recusar
+                              {translate('Confirmar / recusar')}
                             </Button>
                             <Button
                               color="warning"
                               onClick={() =>
                                 setForm({
-                                  title: 'Substituir voluntário',
+                                  title: translate('Substituir voluntário'),
                                   path: path + '/' + row.id + '/replace',
                                   fields: assignmentFields,
                                 })
                               }
                             >
-                              Substituir
+                              {translate('Substituir')}
                             </Button>
                           </>
                         )}
@@ -446,11 +460,11 @@ export function OperationDetail({
                         {
                           (
                             {
-                              interactionDate: 'Contato',
-                              startedAt: 'Início',
-                              joinedAt: 'Entrada',
-                              leftAt: 'Saída',
-                              confirmedAt: 'Confirmação',
+                              interactionDate: translate('Contato'),
+                              startedAt: translate('Início'),
+                              joinedAt: translate('Entrada'),
+                              leftAt: translate('Saída'),
+                              confirmedAt: translate('Confirmação'),
                             } as Record<string, string>
                           )[k]
                         }
@@ -462,7 +476,10 @@ export function OperationDetail({
                     <StatusChip status={row.role} />
                   )}
                   {!!row.function && (
-                    <Typography>Função: {String(row.function)}</Typography>
+                    <Typography>
+                      {translate('Função: ')}
+                      {String(row.function)}
+                    </Typography>
                   )}
                   {!!row.notes && (
                     <Typography sx={{ overflowWrap: 'anywhere' }}>
@@ -471,7 +488,8 @@ export function OperationDetail({
                   )}
                   {!!row.performedBy && (
                     <Typography variant="body2">
-                      Registrado por: {entryName(row.performedBy as Entry)}
+                      {translate('Registrado por: ')}
+                      {entryName(row.performedBy as Entry)}
                     </Typography>
                   )}
                 </RecordRow>
@@ -490,7 +508,7 @@ export function OperationDetail({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={onClose}>Fechar</Button>
+          <Button onClick={onClose}>{translate('Fechar')}</Button>
         </DialogActions>
       </Dialog>
       {form && (
@@ -499,7 +517,7 @@ export function OperationDetail({
           onClose={() => setForm(undefined)}
           onSaved={() => {
             setForm(undefined);
-            setNotice('Operação registrada com sucesso.');
+            setNotice(translate('Operação registrada com sucesso.'));
           }}
         />
       )}
@@ -512,15 +530,19 @@ export function OperationDetail({
       )}
       <Dialog open={!!confirm} onClose={() => setConfirm(undefined)}>
         <DialogTitle>{confirm?.label}</DialogTitle>
-        <DialogContent>O histórico será preservado.</DialogContent>
+        <DialogContent>
+          {translate('O histórico será preservado.')}
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirm(undefined)}>Voltar</Button>
+          <Button onClick={() => setConfirm(undefined)}>
+            {translate('Voltar')}
+          </Button>
           <Button
             color="warning"
             disabled={action.isPending}
             onClick={() => confirm && action.mutate(confirm.path)}
           >
-            Confirmar
+            {translate('Confirmar')}
           </Button>
         </DialogActions>
       </Dialog>

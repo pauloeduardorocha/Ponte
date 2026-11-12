@@ -1,3 +1,5 @@
+import { STATUS_LABELS } from '../../lib/status-labels';
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { BookCatalogDetails } from './BookCatalogDetails';
 import { CachedQueryStatus } from '../../components/CachedQueryStatus';
@@ -45,11 +47,12 @@ import { ActionDialog } from './LibraryActionDialog';
 import { CopyHistoryDialog } from './CopyHistoryDialog';
 
 export function LibraryPage() {
+  useLocale();
   const { user } = useAuth();
   if (!user?.permissions.some((p) => p.startsWith('LIBRARY_')))
     return (
       <Alert severity="warning">
-        Você não tem permissão para consultar a biblioteca.
+        {translate('Você não tem permissão para consultar a biblioteca.')}
       </Alert>
     );
   const managesLibrary = user?.permissions.some(
@@ -65,16 +68,17 @@ export function LibraryPage() {
   );
 }
 function LibraryManagementPage() {
+  useLocale();
   const client = useQueryClient();
   const { hasPermission } = useAuth();
   const tabs = [
-    ['catalog', 'Catálogo', 'LIBRARY_BOOK_READ'],
-    ['copies', 'Exemplares', 'LIBRARY_COPY_READ'],
-    ['loans', 'Empréstimos', 'LIBRARY_LOAN_READ'],
-    ['fines', 'Multas', 'LIBRARY_FINE_READ'],
-    ['reservations', 'Reservas', 'LIBRARY_RESERVATION_READ'],
-    ['settings', 'Configurações', 'LIBRARY_SETTINGS_READ'],
-    ['members', 'Membros / histórico', 'LIBRARY_HISTORY_READ'],
+    ['catalog', translate('Catálogo'), 'LIBRARY_BOOK_READ'],
+    ['copies', translate('Exemplares'), 'LIBRARY_COPY_READ'],
+    ['loans', translate('Empréstimos'), 'LIBRARY_LOAN_READ'],
+    ['fines', translate('Multas'), 'LIBRARY_FINE_READ'],
+    ['reservations', translate('Reservas'), 'LIBRARY_RESERVATION_READ'],
+    ['settings', translate('Configurações'), 'LIBRARY_SETTINGS_READ'],
+    ['members', translate('Membros / histórico'), 'LIBRARY_HISTORY_READ'],
   ] as const;
   const allowed = tabs.filter((tab) => hasPermission(tab[2]));
   const [params, setParams] = useSearchParams();
@@ -178,12 +182,12 @@ function LibraryManagementPage() {
     <Stack spacing={3}>
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
-          {notice}
+          {translate(notice ?? '')}
         </Alert>
       )}
       <PageHeader
-        title="Biblioteca"
-        subtitle="Catálogo, circulação, reservas e multas"
+        title={translate('Biblioteca')}
+        subtitle={translate('Catálogo, circulação, reservas e multas')}
       />
       <CachedQueryStatus
         updatedAt={current.dataUpdatedAt}
@@ -201,7 +205,7 @@ function LibraryManagementPage() {
       </Can>
       {!allowed.length ? (
         <Alert severity="warning">
-          Você não tem permissão para consultar a biblioteca.
+          {translate('Você não tem permissão para consultar a biblioteca.')}
         </Alert>
       ) : (
         <>
@@ -223,7 +227,7 @@ function LibraryManagementPage() {
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
               {(tab === 'catalog' || tab === 'copies' || tab === 'members') && (
                 <TextField
-                  label="Pesquisa"
+                  label={translate('Pesquisa')}
                   value={search}
                   onChange={(e) => filter(setSearch, e.target.value)}
                 />
@@ -232,20 +236,22 @@ function LibraryManagementPage() {
                 <>
                   <EntitySelect
                     endpoint="/library/book-options/authors"
-                    label="Autor"
+                    label={translate('Autor')}
                     value={author}
                     onChange={(e) => filter(setAuthor, e.target.value)}
                   />
                   <EntitySelect
                     endpoint="/library/book-options/categories"
-                    label="Categoria"
+                    label={translate('Categoria')}
                     value={category}
                     onChange={(e) => filter(setCategory, e.target.value)}
                   />
                   <Autocomplete
                     options={['true', 'false']}
                     getOptionLabel={(value) =>
-                      value === 'true' ? 'Disponível' : 'Indisponível'
+                      value === 'true'
+                        ? translate('Disponível')
+                        : translate('Indisponível')
                     }
                     value={available || null}
                     onChange={(_, value) => filter(setAvailable, value ?? '')}
@@ -253,8 +259,8 @@ function LibraryManagementPage() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Disponibilidade"
-                        placeholder="Todos"
+                        label={translate('Disponibilidade')}
+                        placeholder={translate('Todos')}
                       />
                     )}
                   />
@@ -265,7 +271,7 @@ function LibraryManagementPage() {
                     {hasPermission('LIBRARY_BOOK_READ') && (
                       <EntitySelect
                         endpoint="/library/books"
-                        label="Livro (filtro)"
+                        label={translate('Livro (filtro)')}
                         value={bookId}
                         onChange={(e) => filter(setBookId, e.target.value)}
                       />
@@ -274,7 +280,7 @@ function LibraryManagementPage() {
                       hasPermission('LIBRARY_HISTORY_READ') && (
                         <EntitySelect
                           endpoint="/library/members"
-                          label="Membro (filtro)"
+                          label={translate('Membro (filtro)')}
                           value={memberId}
                           onChange={(e) => filter(setMemberId, e.target.value)}
                         />
@@ -305,8 +311,8 @@ function LibraryManagementPage() {
                         renderInput={(params) => (
                           <TextField
                             {...params}
-                            label="Status"
-                            placeholder="Todos"
+                            label={translate('Status')}
+                            placeholder={translate('Todos')}
                           />
                         )}
                       />
@@ -323,13 +329,13 @@ function LibraryManagementPage() {
                   variant="contained"
                   onClick={() =>
                     open(
-                      'Novo livro',
+                      translate('Novo livro'),
                       (v) => api.createBook(bookInput(v)),
                       bookFields,
                     )
                   }
                 >
-                  Novo livro
+                  {translate('Novo livro')}
                 </Button>
               </Can>
             )}
@@ -339,7 +345,7 @@ function LibraryManagementPage() {
                   variant="contained"
                   onClick={() =>
                     open(
-                      'Emprestar exemplar',
+                      translate('Emprestar exemplar'),
                       (v) =>
                         api.borrow({
                           memberId: v.memberId ?? '',
@@ -350,17 +356,20 @@ function LibraryManagementPage() {
                         memberField,
                         {
                           name: 'bookCopyId',
-                          label: 'Exemplar',
+                          label: translate('Exemplar'),
                           endpoint: '/library/copies',
                           query: { status: 'AVAILABLE' },
                           required: true,
                         },
-                        { name: 'observations', label: 'Observações' },
+                        {
+                          name: 'observations',
+                          label: translate('Observações'),
+                        },
                       ],
                     )
                   }
                 >
-                  Emprestar
+                  {translate('Emprestar')}
                 </Button>
               </Can>
             )}
@@ -370,7 +379,7 @@ function LibraryManagementPage() {
                   variant="contained"
                   onClick={() =>
                     open(
-                      'Reservar livro',
+                      translate('Reservar livro'),
                       (v) =>
                         api.reserve({
                           memberId: v.memberId ?? '',
@@ -380,7 +389,7 @@ function LibraryManagementPage() {
                         memberField,
                         {
                           name: 'bookId',
-                          label: 'Livro',
+                          label: translate('Livro'),
                           endpoint: '/library/books',
                           required: true,
                         },
@@ -388,13 +397,13 @@ function LibraryManagementPage() {
                     )
                   }
                 >
-                  Reservar
+                  {translate('Reservar')}
                 </Button>
               </Can>
             )}
           </Stack>
           {current.isPending && (
-            <CircularProgress aria-label="Carregando biblioteca" />
+            <CircularProgress aria-label={translate('Carregando biblioteca')} />
           )}
           {current.isError && (
             <QueryError
@@ -411,8 +420,8 @@ function LibraryManagementPage() {
               setPageSize={setPageSize}
             >
               <RecordTable
-                primaryLabel="Membro"
-                label={'Membros da biblioteca'}
+                primaryLabel={translate('Membro')}
+                label={translate('Membros da biblioteca')}
               >
                 {members.data.items.map((member) => (
                   <RecordRow
@@ -420,20 +429,22 @@ function LibraryManagementPage() {
                     primary={
                       <>
                         <Typography>
-                          {member.name} · {member.status}
+                          {member.name} ·{' '}
+                          {STATUS_LABELS[member.status] ?? member.status}
                         </Typography>
                       </>
                     }
                     actions={
                       <>
                         <Button onClick={() => setHistoryMember(member.id)}>
-                          Histórico da biblioteca
+                          {translate('Histórico da biblioteca')}
                         </Button>
                       </>
                     }
                   >
                     <Typography variant="caption">
-                      ID do membro: {member.id}
+                      {translate('ID do membro: ')}
+                      {member.id}
                     </Typography>
                   </RecordRow>
                 ))}
@@ -505,7 +516,9 @@ function LibraryManagementPage() {
       )}
       {action && (
         <ActionDialog
-          onSaved={() => setNotice('Operação concluída com sucesso.')}
+          onSaved={() =>
+            setNotice(translate('Operação concluída com sucesso.'))
+          }
           action={action}
           close={() => setAction(undefined)}
         />
@@ -523,12 +536,16 @@ function LibraryManagementPage() {
           maxWidth="md"
           onClose={() => setHistoryMember(undefined)}
         >
-          <DialogTitle>Histórico da biblioteca do membro</DialogTitle>
+          <DialogTitle>
+            {translate('Histórico da biblioteca do membro')}
+          </DialogTitle>
           <DialogContent>
             <MemberLibraryHistory memberId={historyMember} />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setHistoryMember(undefined)}>Fechar</Button>
+            <Button onClick={() => setHistoryMember(undefined)}>
+              {translate('Fechar')}
+            </Button>
           </DialogActions>
         </Dialog>
       )}

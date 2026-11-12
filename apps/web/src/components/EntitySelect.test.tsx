@@ -50,9 +50,7 @@ describe('Entity selectors', () => {
     mockApi({ 'GET /finance/members': { status: 403 } });
     show({ endpoint: '/finance/members', label: 'Membro', value: '' });
     expect(
-      await screen.findByText(
-        'Você não tem permissão para realizar esta ação.',
-      ),
+      await screen.findByText('Não tem permissão para realizar esta ação.'),
     ).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Membro' })).toBeDisabled();
   });

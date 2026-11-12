@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useAuth } from '../../auth/auth-context';
 import { Link } from 'react-router-dom';
@@ -17,6 +18,7 @@ import { MetricCard, BreakdownChart } from '../../components/DataPresentation';
 import { QueryError } from '../../components/PageParts';
 import * as api from '../../lib/library-api';
 export function LibraryDashboardPanel() {
+  useLocale();
   const { hasPermission } = useAuth();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -25,7 +27,11 @@ export function LibraryDashboardPanel() {
     queryFn: () => api.getLibraryDashboard({ page, pageSize }),
   });
   if (dashboard.isPending)
-    return <CircularProgress aria-label="Carregando painel da biblioteca" />;
+    return (
+      <CircularProgress
+        aria-label={translate('Carregando painel da biblioteca')}
+      />
+    );
   if (dashboard.isError)
     return (
       <QueryError
@@ -36,11 +42,13 @@ export function LibraryDashboardPanel() {
   const d = dashboard.data;
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Biblioteca — visão geral</Typography>
+      <Typography variant="h5">
+        {translate('Biblioteca — visão geral')}
+      </Typography>
       <Box className="metric-grid">
         {[
           {
-            label: 'Livros',
+            label: translate('Livros'),
             value: d.totalBooks,
             href: hasPermission('LIBRARY_BOOK_READ')
               ? '/library?tab=catalog'
@@ -48,7 +56,7 @@ export function LibraryDashboardPanel() {
             color: 'primary.main',
           },
           {
-            label: 'Exemplares',
+            label: translate('Exemplares'),
             value: d.totalCopies,
             href: hasPermission('LIBRARY_COPY_READ')
               ? '/library?tab=copies'
@@ -56,7 +64,7 @@ export function LibraryDashboardPanel() {
             color: 'info.main',
           },
           {
-            label: 'Empréstimos',
+            label: translate('Empréstimos'),
             value: d.loaned,
             href: hasPermission('LIBRARY_LOAN_READ')
               ? '/library?tab=loans&status=ACTIVE'
@@ -64,7 +72,7 @@ export function LibraryDashboardPanel() {
             color: 'info.main',
           },
           {
-            label: 'Atrasos',
+            label: translate('Atrasos'),
             value: d.overdue,
             href: hasPermission('LIBRARY_LOAN_READ')
               ? '/library?tab=loans&status=OVERDUE'
@@ -72,12 +80,12 @@ export function LibraryDashboardPanel() {
             color: 'error.main',
           },
           {
-            label: 'Multas pendentes',
-            value: new Intl.NumberFormat('pt-PT', {
+            label: translate('Multas pendentes'),
+            value: new Intl.NumberFormat(getLocale(), {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             }).format(Number(d.pendingFines)),
-            detail: 'Valor em aberto',
+            detail: translate('Valor em aberto'),
             href: hasPermission('LIBRARY_FINE_READ')
               ? '/library?tab=fines'
               : undefined,
@@ -89,26 +97,39 @@ export function LibraryDashboardPanel() {
       </Box>
       <Box className="dashboard-panels">
         <BreakdownChart
-          title="Circulação do acervo"
+          title={translate('Circulação do acervo')}
           items={[
-            { label: 'Disponíveis', value: d.available, color: 'success.main' },
             {
-              label: 'Emprestados em dia',
+              label: translate('Disponíveis'),
+              value: d.available,
+              color: 'success.main',
+            },
+            {
+              label: translate('Emprestados em dia'),
               value: Math.max(0, d.loaned - d.overdue),
               color: 'info.main',
             },
-            { label: 'Em atraso', value: d.overdue, color: 'error.main' },
+            {
+              label: translate('Em atraso'),
+              value: d.overdue,
+              color: 'error.main',
+            },
           ]}
         />
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="h6">Mais emprestados</Typography>
+            <Typography variant="h6">
+              {translate('Mais emprestados')}
+            </Typography>
             {!d.mostBorrowed.length && (
               <Typography color="text.secondary" sx={{ mt: 2 }}>
-                Nenhum empréstimo registrado.
+                {translate('Nenhum empréstimo registrado.')}
               </Typography>
             )}
-            <RecordTable primaryLabel="Livro" label={'Mais emprestados'}>
+            <RecordTable
+              primaryLabel={translate('Livro')}
+              label={translate('Mais emprestados')}
+            >
               {d.mostBorrowed.map((book) => (
                 <RecordRow
                   key={book.bookId}
@@ -124,13 +145,15 @@ export function LibraryDashboardPanel() {
                           component={Link}
                           to={`/library?tab=catalog&search=${encodeURIComponent(book.title)}`}
                         >
-                          Ver livro
+                          {translate('Ver livro')}
                         </Button>
                       )}
                     </>
                   }
                 >
-                  <Typography>{book.count} empréstimos</Typography>
+                  <Typography>
+                    {book.count} {translate(' empréstimos')}
+                  </Typography>
                 </RecordRow>
               ))}
             </RecordTable>
@@ -145,11 +168,11 @@ export function LibraryDashboardPanel() {
                 setPage(1);
               }}
               onPageChange={(_, next) => setPage(next + 1)}
-              labelRowsPerPage="Por página"
+              labelRowsPerPage={translate('Por página')}
               getItemAriaLabel={(type) =>
                 type === 'next'
-                  ? 'Próxima página dos mais emprestados'
-                  : 'Página anterior dos mais emprestados'
+                  ? translate('Próxima página dos mais emprestados')
+                  : translate('Página anterior dos mais emprestados')
               }
             />
           </CardContent>

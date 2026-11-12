@@ -49,14 +49,14 @@ describe('Movement attachments interactions', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Renomear receipt.pdf' }),
     );
-    fireEvent.change(screen.getByLabelText('Nome do arquivo'), {
+    fireEvent.change(screen.getByLabelText('Nome do ficheiro'), {
       target: { value: 'Comprovante' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     expect(
       await screen.findByLabelText('Renomeando anexo'),
     ).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Salvando/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /A guardar/ })).toBeDisabled();
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         filename: 'Comprovante.pdf',
@@ -80,11 +80,13 @@ describe('Movement attachments interactions', () => {
     });
     renderAttachments();
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Excluir receipt.pdf' }),
+      await screen.findByRole('button', { name: 'Eliminar receipt.pdf' }),
     );
-    expect(screen.getByRole('dialog')).toHaveTextContent('Excluir anexo?');
-    fireEvent.click(screen.getByRole('button', { name: 'Excluir anexo' }));
-    expect(await screen.findByLabelText('Excluindo anexo')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveTextContent('Eliminar anexo?');
+    fireEvent.click(screen.getByRole('button', { name: 'Eliminar anexo' }));
+    expect(
+      await screen.findByLabelText('A eliminar anexo'),
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();
     await act(async () => pending.resolve());
     await screen.findByText('Anexos (0/5)');
@@ -114,14 +116,14 @@ describe('Movement attachments interactions', () => {
         ],
       },
     });
-    expect(await screen.findByLabelText('Enviando anexos')).toBeInTheDocument();
+    expect(await screen.findByLabelText('A enviar anexos')).toBeInTheDocument();
     expect(
       screen.getByLabelText('Selecionar anexos').closest('label'),
     ).toHaveAttribute('aria-disabled', 'true');
     await act(async () => pending.resolve());
     await waitFor(() =>
       expect(
-        screen.queryByLabelText('Enviando anexos'),
+        screen.queryByLabelText('A enviar anexos'),
       ).not.toBeInTheDocument(),
     );
   });

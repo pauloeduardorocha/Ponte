@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { useState } from 'react';
@@ -43,12 +44,13 @@ async function invoiceFile(path: string, options?: RequestInit) {
     throw new Error(
       typeof data.message === 'string'
         ? data.message
-        : 'Não foi possível processar as faturas',
+        : translate('Não foi possível processar as faturas'),
     );
   }
   return response;
 }
 export function InvoiceLink({ invoice }: { invoice: Invoice }) {
+  useLocale();
   const [error, setError] = useState('');
   return (
     <Stack direction="row" flexWrap="wrap" gap={1}>
@@ -60,7 +62,7 @@ export function InvoiceLink({ invoice }: { invoice: Invoice }) {
           rel="noopener noreferrer"
           referrerPolicy="no-referrer"
         >
-          Abrir fatura no portal
+          {translate('Abrir fatura no portal')}
         </Button>
       )}
       <Button
@@ -80,9 +82,9 @@ export function InvoiceLink({ invoice }: { invoice: Invoice }) {
           }
         }}
       >
-        Arquivo de origem
+        {translate('Arquivo de origem')}
       </Button>
-      {error && <Alert severity="error">{error}</Alert>}
+      {error && <Alert severity="error">{translate(error ?? '')}</Alert>}
     </Stack>
   );
 }
@@ -107,6 +109,7 @@ export function ExpenseInvoices({
   showSuggestions?: boolean;
   onInvoicesChange?: (invoices: Invoice[]) => void;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -163,11 +166,12 @@ export function ExpenseInvoices({
       </Typography>
       {change.error && <Alert severity="error">{change.error.message}</Alert>}
       <Alert severity="info">
-        As sugestões não associam automaticamente. Pesquise para escolher outro
-        documento; um pagamento pode incluir várias faturas.
+        {translate(
+          'As sugestões não associam automaticamente. Pesquise para escolher outro documento; um pagamento pode incluir várias faturas.',
+        )}
       </Alert>
       <TextField
-        label="Pesquisar emitente, NIF ou número"
+        label={translate('Pesquisar emitente, NIF ou número')}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -175,7 +179,7 @@ export function ExpenseInvoices({
         }}
       />
       {(suggestions.isFetching || list.isFetching) && (
-        <Typography>Carregando faturas…</Typography>
+        <Typography>{translate('Carregando faturas…')}</Typography>
       )}
       {(suggestions.error || list.error) && (
         <Alert severity="error">
@@ -184,8 +188,9 @@ export function ExpenseInvoices({
       )}
       {!rows.length && !suggestions.isFetching && !list.isFetching && (
         <Typography>
-          Nenhuma fatura encontrada. Importe as faturas ou pesquise outro
-          documento.
+          {translate(
+            'Nenhuma fatura encontrada. Importe as faturas ou pesquise outro documento.',
+          )}
         </Typography>
       )}
       <RecordTable>
@@ -206,7 +211,8 @@ export function ExpenseInvoices({
                   disabled={change.isPending}
                   onClick={() => change.mutate({ id: invoice.id })}
                 >
-                  Associar {invoice.number}
+                  {translate('Associar ')}
+                  {invoice.number}
                 </Button>
                 <InvoiceLink invoice={invoice} />
               </>
@@ -214,19 +220,24 @@ export function ExpenseInvoices({
           >
             <Typography>
               {formatDateOnly(invoice.date)} · {invoice.amount}{' '}
-              {invoice.currency} · NIF {invoice.issuerTaxId}
+              {invoice.currency} {translate(' · NIF ')}
+              {invoice.issuerTaxId}
             </Typography>
             {(Math.abs(Number(invoice.amount)) !== Number(amount) ||
               invoice.currency !== currency) && (
               <Alert severity="warning">
-                Valor ou moeda diferente da despesa. Confira se faz parte de um
-                pagamento agrupado.
+                {translate(
+                  'Valor ou moeda diferente da despesa. Confira se faz parte de um pagamento agrupado.',
+                )}
               </Alert>
             )}
             {invoice.score && (
               <Chip
                 color={invoice.score >= 85 ? 'success' : 'warning'}
-                label={`Compatibilidade ${invoice.score}% · confirmar manualmente`}
+                label={translate(
+                  'Compatibilidade {0}% · confirmar manualmente',
+                  [invoice.score],
+                )}
               />
             )}
             <Typography variant="caption">
@@ -238,18 +249,23 @@ export function ExpenseInvoices({
       {debounced && (
         <Stack direction="row" gap={1}>
           <Button disabled={page === 1} onClick={() => setPage(page - 1)}>
-            Anterior
+            {translate('Anterior')}
           </Button>
-          <Typography>Página {page}</Typography>
+          <Typography>
+            {translate('Página ')}
+            {page}
+          </Typography>
           <Button
             disabled={page * 20 >= (list.data?.total ?? 0)}
             onClick={() => setPage(page + 1)}
           >
-            Seguinte
+            {translate('Seguinte')}
           </Button>
         </Stack>
       )}
-      {!inline && <Button onClick={() => setOpen(false)}>Fechar</Button>}
+      {!inline && (
+        <Button onClick={() => setOpen(false)}>{translate('Fechar')}</Button>
+      )}
     </Stack>
   );
   return (
@@ -275,32 +291,41 @@ export function ExpenseInvoices({
                       change.mutate({ id: invoice.id, remove: true })
                     }
                   >
-                    Remover associação
+                    {translate('Remover associação')}
                   </Button>
                 )}
                 <InvoiceLink invoice={invoice} />
               </>
             }
           >
-            <Chip color="info" size="small" label="Fatura associada" />
+            <Chip
+              color="info"
+              size="small"
+              label={translate('Fatura associada')}
+            />
             <Typography>
               {invoice.amount} {invoice.currency}
             </Typography>
             <Typography variant="caption">
-              NIF {invoice.issuerTaxId} · {formatDateOnly(invoice.date)} ·
-              Associada por {invoice.associatedBy}
+              NIF {invoice.issuerTaxId} · {formatDateOnly(invoice.date)}{' '}
+              {translate(' · Associada por ')}
+              {invoice.associatedBy}
             </Typography>
           </RecordRow>
         ))}
       </RecordTable>
       {inline && editable && pickerVisible && (
         <Box sx={{ mt: 2 }}>
-          <Typography variant="h6">Sugestões de faturas</Typography>
+          <Typography variant="h6">
+            {translate('Sugestões de faturas')}
+          </Typography>
           {picker}
         </Box>
       )}
       {!inline && editable && (
-        <Button onClick={() => setOpen(true)}>Associar fatura</Button>
+        <Button onClick={() => setOpen(true)}>
+          {translate('Associar fatura')}
+        </Button>
       )}
       {change.error && <Alert severity="error">{change.error.message}</Alert>}
       <Dialog
@@ -309,7 +334,7 @@ export function ExpenseInvoices({
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Associar fatura à despesa</DialogTitle>
+        <DialogTitle>{translate('Associar fatura à despesa')}</DialogTitle>
         <DialogContent>{picker}</DialogContent>
       </Dialog>
     </Box>

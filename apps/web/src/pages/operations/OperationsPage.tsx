@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { formatDateTime } from '../../lib/format';
 import { MemberPortalPage } from '../MemberPortalPage';
@@ -42,6 +43,7 @@ type FormSpec = {
   initial?: Entry;
 };
 export function OperationsPage({ resource }: { resource: Resource }) {
+  useLocale();
   const c = configs[resource],
     { hasPermission, user } = useAuth();
   const ministryAdmin =
@@ -84,41 +86,67 @@ export function OperationsPage({ resource }: { resource: Resource }) {
   const filterFields: Field[] =
     resource === 'follow-ups'
       ? [
-          { key: 'memberId', label: 'Membro', lookup: 'people' },
-          { key: 'visitorId', label: 'Visitante', lookup: 'visitors' },
+          { key: 'memberId', label: translate('Membro'), lookup: 'people' },
+          {
+            key: 'visitorId',
+            label: translate('Visitante'),
+            lookup: 'visitors',
+          },
           {
             key: 'assignedToUserId',
-            label: 'Responsável',
+            label: translate('Responsável'),
             lookup: 'assignees',
           },
         ]
       : resource === 'small-groups' || resource === 'ministries'
-        ? [{ key: 'leaderMemberId', label: 'Líder', lookup: 'people' }]
+        ? [
+            {
+              key: 'leaderMemberId',
+              label: translate('Líder'),
+              lookup: 'people',
+            },
+          ]
         : resource === 'events'
           ? [
-              { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
+              {
+                key: 'ministryId',
+                label: translate('Ministério'),
+                lookup: 'ministries',
+              },
               {
                 key: 'smallGroupId',
-                label: 'Grupo familiar',
+                label: translate('Grupo familiar'),
                 lookup: 'small-groups',
               },
             ]
           : resource === 'schedules'
             ? [
-                { key: 'eventId', label: 'Evento', lookup: 'events' },
+                {
+                  key: 'eventId',
+                  label: translate('Evento'),
+                  lookup: 'events',
+                },
                 {
                   key: 'ministryId',
-                  label: 'Ministério',
+                  label: translate('Ministério'),
                   lookup: 'ministries',
                 },
-                { key: 'memberId', label: 'Membro', lookup: 'people' },
+                {
+                  key: 'memberId',
+                  label: translate('Membro'),
+                  lookup: 'people',
+                },
               ]
             : resource === 'notifications'
               ? [
-                  { key: 'memberId', label: 'Membro', lookup: 'people' },
+                  {
+                    key: 'memberId',
+                    label: translate('Membro'),
+                    lookup: 'people',
+                  },
                   {
                     key: 'visitorId',
-                    label: 'Visitante',
+                    label: translate('Visitante'),
                     lookup: 'visitors',
                   },
                 ]
@@ -173,7 +201,10 @@ export function OperationsPage({ resource }: { resource: Resource }) {
     mutationFn: (path: string) => apiRequest(path, { method: 'POST' }),
     onSuccess: () => {
       setConfirm(undefined);
-      setNotice({ text: 'Operação concluída.', severity: 'success' });
+      setNotice({
+        text: translate('Operação concluída.'),
+        severity: 'success',
+      });
       void client.invalidateQueries({ queryKey: ['operations'] });
       void client.invalidateQueries({ queryKey: ['community'] });
     },
@@ -181,7 +212,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
   const open = (e?: Entry) => {
     const fields = c.fields;
     setForm({
-      title: e ? 'Editar registro' : 'Novo registro',
+      title: e ? translate('Editar registro') : translate('Novo registro'),
       path: `/operations/${resource}${e ? '/' + e.id : ''}`,
       method: e ? 'PATCH' : 'POST',
       fields,
@@ -205,7 +236,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
   if (!allowed)
     return (
       <Alert severity="warning">
-        Você não tem permissão para acessar este módulo.
+        {translate('Você não tem permissão para acessar este módulo.')}
       </Alert>
     );
   return (
@@ -220,27 +251,27 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         <Stack direction="row" gap={1}>
           {resource === 'notifications' && (
             <Button component={Link} to="/notification-templates">
-              Modelos
+              {translate('Modelos')}
             </Button>
           )}
           {canCreate &&
             (resource !== 'schedules' || data.data?.canCreate === true) && (
               <Button variant="contained" onClick={() => open()}>
-                Cadastrar
+                {translate('Cadastrar')}
               </Button>
             )}
         </Stack>
       </Stack>
       <Typography color="text.secondary">
-        Organize a vida de A Ponte e acompanhe cada atividade. O acesso respeita
-        suas responsabilidades.
+        {translate(
+          'Organize a vida de A Ponte e acompanhe cada atividade. O acesso respeita suas responsabilidades.',
+        )}
       </Typography>
       {resource === 'notifications' && (
         <Alert severity="info">
-          As mensagens internas ficam na caixa do destinatário e também geram um
-          alerta nos dispositivos em que ele ativou as notificações. No canal
-          E-mail, cada destinatário recebe uma mensagem no endereço cadastrado.
-          O estado Enviado indica que o provedor aceitou o envio.
+          {translate(
+            'As mensagens internas ficam na caixa do destinatário e também geram um alerta nos dispositivos em que ele ativou as notificações. No canal E-mail, cada destinatário recebe uma mensagem no endereço cadastrado. O estado Enviado indica que o provedor aceitou o envio.',
+          )}
         </Alert>
       )}
       {notice && (
@@ -251,7 +282,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       {action.isError && <Alert severity="error">{action.error.message}</Alert>}
       <Stack direction={{ xs: 'column', md: 'row' }} gap={2} flexWrap="wrap">
         <TextField
-          label="Pesquisar por nome"
+          label={translate('Pesquisar por nome')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -261,7 +292,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         {c.statuses && (
           <TextField
             select
-            label="Situação"
+            label={translate('Situação')}
             value={status}
             onChange={(e) => {
               setStatus(e.target.value);
@@ -269,7 +300,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             }}
             sx={{ minWidth: 160 }}
           >
-            <MenuItem value="">Todas</MenuItem>
+            <MenuItem value="">{translate('Todas')}</MenuItem>
             {c.statuses.map((s) => (
               <MenuItem key={s} value={s}>
                 {operationLabels[s] ?? s}
@@ -282,7 +313,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         ) ? (
           <TextField
             select
-            label="Atividade"
+            label={translate('Atividade')}
             value={active}
             onChange={(e) => {
               setActive(e.target.value);
@@ -290,15 +321,15 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             }}
             sx={{ minWidth: 150 }}
           >
-            <MenuItem value="">Todos</MenuItem>
-            <MenuItem value="true">Ativos</MenuItem>
-            <MenuItem value="false">Inativos</MenuItem>
+            <MenuItem value="">{translate('Todos')}</MenuItem>
+            <MenuItem value="true">{translate('Ativos')}</MenuItem>
+            <MenuItem value="false">{translate('Inativos')}</MenuItem>
           </TextField>
         ) : (
           <>
             <TextField
               type="date"
-              label="De"
+              label={translate('De')}
               slotProps={{ inputLabel: { shrink: true } }}
               value={start}
               onChange={(e) => {
@@ -308,7 +339,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             />
             <TextField
               type="date"
-              label="Até"
+              label={translate('Até')}
               slotProps={{ inputLabel: { shrink: true } }}
               value={end}
               onChange={(e) => {
@@ -321,7 +352,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         {resource === 'small-groups' && (
           <TextField
             select
-            label="Dia"
+            label={translate('Dia')}
             value={meetingDay}
             onChange={(e) => {
               setMeetingDay(e.target.value);
@@ -329,7 +360,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             }}
             sx={{ minWidth: 150 }}
           >
-            <MenuItem value="">Todos</MenuItem>
+            <MenuItem value="">{translate('Todos')}</MenuItem>
             {dayLabels.map((d, i) => (
               <MenuItem key={d} value={String(i)}>
                 {d}
@@ -348,12 +379,12 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             setPage(0);
           }}
         >
-          Limpar filtros
+          {translate('Limpar filtros')}
         </Button>
       </Stack>
       {!!filterFields.length && (
         <details>
-          <summary>Filtros por pessoa e atividade</summary>
+          <summary>{translate('Filtros por pessoa e atividade')}</summary>
           <Stack spacing={2} sx={{ mt: 2, maxWidth: 600 }}>
             {filterFields.map((f) => (
               <LookupField key={f.key} field={f} control={filterForm.control} />
@@ -365,7 +396,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
         <Skeleton
           variant="rounded"
           height={180}
-          aria-label="Carregando registros"
+          aria-label={translate('Carregando registros')}
         />
       )}
       {data.isError && (
@@ -373,7 +404,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -382,10 +413,16 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       )}
       {data.data?.items.length === 0 && (
         <Alert severity="info">
-          Nenhum registro encontrado. Ajuste os filtros ou cadastre o primeiro.
+          {translate(
+            'Nenhum registro encontrado. Ajuste os filtros ou cadastre o primeiro.',
+          )}
         </Alert>
       )}
-      <RecordTable primaryLabel="Nome" label={c.title} summaryLabel="Situação">
+      <RecordTable
+        primaryLabel={translate('Nome')}
+        label={c.title}
+        summaryLabel={translate('Situação')}
+      >
         {data.data?.items.map((e) => (
           <RecordRow
             key={e.id}
@@ -398,13 +435,19 @@ export function OperationsPage({ resource }: { resource: Resource }) {
               <>
                 {!['notifications', 'notification-templates'].includes(
                   resource,
-                ) && <Button onClick={() => setDetail(e)}>Detalhes</Button>}
+                ) && (
+                  <Button onClick={() => setDetail(e)}>
+                    {translate('Detalhes')}
+                  </Button>
+                )}
                 {(canUpdate ||
                   (resource === 'schedules' && e.canManage === true)) &&
                   (resource !== 'ministries' || ministryAdmin) &&
                   e.canManage !== false &&
                   !['notifications'].includes(resource) && (
-                    <Button onClick={() => open(e)}>Editar</Button>
+                    <Button onClick={() => open(e)}>
+                      {translate('Editar')}
+                    </Button>
                   )}
                 {resource === 'notifications' &&
                   canUpdate &&
@@ -418,18 +461,18 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                         }
                         disabled={action.isPending}
                       >
-                        Enviar
+                        {translate('Enviar')}
                       </Button>
                       <Button
                         color="error"
                         onClick={() =>
                           setConfirm({
                             path: `/operations/notifications/${e.id}/cancel`,
-                            text: 'Cancelar notificação?',
+                            text: translate('Cancelar notificação?'),
                           })
                         }
                       >
-                        Cancelar
+                        {translate('Cancelar')}
                       </Button>
                     </>
                   )}
@@ -445,9 +488,9 @@ export function OperationsPage({ resource }: { resource: Resource }) {
           >
             <Typography variant="body2">
               {e.active === true
-                ? 'Ativo'
+                ? translate('Ativo')
                 : e.active === false
-                  ? 'Inativo'
+                  ? translate('Inativo')
                   : ''}
             </Typography>
             {[
@@ -462,11 +505,11 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                   {
                     (
                       {
-                        visitedAt: 'Primeira visita',
-                        nextContactAt: 'Próximo contato',
-                        startsAt: 'Início',
-                        date: 'Data',
-                        scheduledAt: 'Agendamento',
+                        visitedAt: translate('Primeira visita'),
+                        nextContactAt: translate('Próximo contato'),
+                        startsAt: translate('Início'),
+                        date: translate('Data'),
+                        scheduledAt: translate('Agendamento'),
                       } as Record<string, string>
                     )[k]
                   }
@@ -476,7 +519,7 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             )}
             {resource === 'ministries' && (
               <Typography variant="body2">
-                Líderes:{' '}
+                {translate('Líderes:')}{' '}
                 {Array.from(
                   new Set([
                     ...(e.leader ? [entryName(e.leader as Entry)] : []),
@@ -501,13 +544,13 @@ export function OperationsPage({ resource }: { resource: Resource }) {
                   {
                     (
                       {
-                        leader: 'Líder',
-                        assignedTo: 'Responsável',
-                        event: 'Evento',
-                        ministry: 'Ministério',
-                        smallGroup: 'Grupo familiar',
-                        recipientMember: 'Membro',
-                        recipientVisitor: 'Visitante',
+                        leader: translate('Líder'),
+                        assignedTo: translate('Responsável'),
+                        event: translate('Evento'),
+                        ministry: translate('Ministério'),
+                        smallGroup: translate('Grupo familiar'),
+                        recipientMember: translate('Membro'),
+                        recipientVisitor: translate('Visitante'),
                       } as Record<string, string>
                     )[k]
                   }
@@ -571,14 +614,19 @@ export function OperationsPage({ resource }: { resource: Resource }) {
             setNotice({
               text:
                 resource !== 'notifications'
-                  ? 'Cadastro salvo com sucesso.'
+                  ? translate('Cadastro salvo com sucesso.')
                   : batch?.total !== undefined
-                    ? `Destinatários: ${batch.total}. Enviadas: ${batch.sent}. Falhas: ${batch.failed}. Pendentes: ${batch.pending}.`
+                    ? translate(
+                        'Destinatários: {0}. Enviadas: {1}. Falhas: {2}. Pendentes: {3}.',
+                        [batch.total, batch.sent, batch.failed, batch.pending],
+                      )
                     : status === 'SENT'
-                      ? 'Notificação enviada.'
+                      ? translate('Notificação enviada.')
                       : status === 'FAILED'
-                        ? 'Não foi possível enviar a notificação. Consulte a situação do envio.'
-                        : 'Notificação salva. Entrega pendente.',
+                        ? translate(
+                            'Não foi possível enviar a notificação. Consulte a situação do envio.',
+                          )
+                        : translate('Notificação salva. Entrega pendente.'),
               severity:
                 resource === 'notifications' &&
                 (status === 'FAILED' || status === 'PARTIAL')
@@ -599,15 +647,19 @@ export function OperationsPage({ resource }: { resource: Resource }) {
       )}
       <Dialog open={!!confirm} onClose={() => setConfirm(undefined)}>
         <DialogTitle>{confirm?.text}</DialogTitle>
-        <DialogContent>O histórico será preservado.</DialogContent>
+        <DialogContent>
+          {translate('O histórico será preservado.')}
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirm(undefined)}>Voltar</Button>
+          <Button onClick={() => setConfirm(undefined)}>
+            {translate('Voltar')}
+          </Button>
           <Button
             color="error"
             disabled={action.isPending}
             onClick={() => confirm && action.mutate(confirm.path)}
           >
-            Confirmar
+            {translate('Confirmar')}
           </Button>
         </DialogActions>
       </Dialog>

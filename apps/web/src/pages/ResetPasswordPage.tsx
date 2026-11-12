@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,12 +21,15 @@ const resetSchema = z
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'As senhas não conferem.',
+    get message() {
+      return translate('As senhas não conferem.');
+    },
   });
 
 type ResetFields = z.infer<typeof resetSchema>;
 
 export function ResetPasswordPage() {
+  useLocale();
   const [params] = useSearchParams();
   const token = params.get('token') ?? '';
   const navigate = useNavigate();
@@ -41,7 +45,9 @@ export function ResetPasswordPage() {
       await resetPassword({ token, newPassword });
       navigate('/login', {
         replace: true,
-        state: { notice: 'Senha redefinida. Entre com a nova senha.' },
+        state: {
+          notice: translate('Senha redefinida. Entre com a nova senha.'),
+        },
       });
     } catch (err) {
       setError(errorMessage(err));
@@ -50,12 +56,12 @@ export function ResetPasswordPage() {
 
   return (
     <AuthCard
-      title="Redefinir senha"
-      subtitle="Escolha uma nova senha para sua conta."
-      error={error}
+      title={translate('Redefinir senha')}
+      subtitle={translate('Escolha uma nova senha para sua conta.')}
+      error={translate(error ?? '')}
       footer={
         <Link component={RouterLink} to="/login">
-          Voltar para o login
+          {translate('Voltar para o login')}
         </Link>
       }
     >
@@ -63,21 +69,25 @@ export function ResetPasswordPage() {
         <Box component="form" onSubmit={onSubmit} noValidate>
           <Stack spacing={2}>
             <TextField
-              label="Nova senha"
+              label={translate('Nova senha')}
               type="password"
               autoComplete="new-password"
               fullWidth
               error={Boolean(formState.errors.newPassword)}
-              helperText={formState.errors.newPassword?.message}
+              helperText={translate(
+                formState.errors.newPassword?.message ?? '',
+              )}
               {...register('newPassword')}
             />
             <TextField
-              label="Confirmar nova senha"
+              label={translate('Confirmar nova senha')}
               type="password"
               autoComplete="new-password"
               fullWidth
               error={Boolean(formState.errors.confirmPassword)}
-              helperText={formState.errors.confirmPassword?.message}
+              helperText={translate(
+                formState.errors.confirmPassword?.message ?? '',
+              )}
               {...register('confirmPassword')}
             />
             <Button
@@ -86,13 +96,13 @@ export function ResetPasswordPage() {
               size="large"
               disabled={formState.isSubmitting}
             >
-              Redefinir senha
+              {translate('Redefinir senha')}
             </Button>
           </Stack>
         </Box>
       ) : (
         <Alert severity="warning">
-          Link de redefinição inválido. Solicite um novo link.
+          {translate('Link de redefinição inválido. Solicite um novo link.')}
         </Alert>
       )}
     </AuthCard>

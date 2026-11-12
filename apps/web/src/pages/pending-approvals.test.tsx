@@ -43,11 +43,11 @@ describe('Pending approval access', () => {
     });
     renderApp('/');
     expect(
-      await screen.findByText(/Sua conta está aguardando aprovação/),
+      await screen.findByText(/Sua conta está a aguardar aprovação/),
     ).toBeInTheDocument();
     expect(await screen.findByText('Aniversariante')).toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: 'Financeiro' }),
+      screen.queryByRole('link', { name: 'Finanças' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('link', { name: 'Biblioteca' }),
@@ -103,14 +103,14 @@ describe('Pending approval access', () => {
       ).toBeInTheDocument();
       expect(screen.getByText('Nascimento: 20/05/1990')).toBeInTheDocument();
       fireEvent.click(
-        screen.getByRole('button', { name: 'Aprovar Novo cadastro' }),
+        screen.getByRole('button', { name: 'Aprovar Novo registo' }),
       );
       expect(
         await screen.findByText('Conta aprovada com acesso padrão de membro.'),
       ).toBeInTheDocument();
       await waitFor(() =>
         expect(
-          screen.queryByRole('button', { name: 'Aprovar Novo cadastro' }),
+          screen.queryByRole('button', { name: 'Aprovar Novo registo' }),
         ).not.toBeInTheDocument(),
       );
       expect(requests.some((r) => r.path === '/users/p/approve')).toBe(true);

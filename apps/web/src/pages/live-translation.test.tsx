@@ -38,7 +38,7 @@ describe('Live translation in the Ponte PWA', () => {
       name: 'Ouvir tradução ao vivo — sem entrar',
     });
     expect(
-      screen.getByText(/É preciso estar conectado ao Wi-Fi da igreja/),
+      screen.getByText(/É preciso estar ligado ao Wi-Fi da igreja/),
     ).toBeInTheDocument();
     fireEvent.click(button);
     expect(
@@ -69,7 +69,7 @@ describe('Live translation in the Ponte PWA', () => {
       },
     });
     renderApp('/login');
-    await screen.findByRole('heading', { name: 'Acesse sua conta' });
+    await screen.findByRole('heading', { name: 'Aceda à sua conta' });
     await waitFor(() =>
       expect(
         requests.some(
@@ -90,14 +90,12 @@ describe('Live translation in the Ponte PWA', () => {
     });
     renderApp('/listen-translation');
     expect(
-      await screen.findByText(
-        /Aguardando a transmissão/,
-      ),
+      await screen.findByText(/A aguardar a transmissão/),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('link', { name: 'Voltar ao login' }),
     ).toHaveAttribute('href', '/login');
-    expect(screen.queryByLabelText('Senha')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Palavra-passe')).not.toBeInTheDocument();
   });
   it('hides the menu when no session is published', async () => {
     mockApi({
@@ -106,9 +104,7 @@ describe('Live translation in the Ponte PWA', () => {
     });
     renderApp('/live-translation');
     expect(
-      await screen.findByText(
-        /Aguardando a transmissão/,
-      ),
+      await screen.findByText(/A aguardar a transmissão/),
     ).toBeInTheDocument();
     expect(
       within(
@@ -154,7 +150,7 @@ describe('Live translation in the Ponte PWA', () => {
       await screen.findByRole('heading', { name: 'Acesso negado' }),
     ).toBeInTheDocument();
     expect(
-      requests.some((request) => /download|credential/.test(request.path)),
+      requests.some((request) => /transferência|credential/.test(request.path)),
     ).toBe(false);
   });
   it('lets an administrator download the release and generate a one-time pairing configuration', async () => {
@@ -187,7 +183,7 @@ describe('Live translation in the Ponte PWA', () => {
       await screen.findByRole(
         'link',
         {
-          name: 'Baixar aplicativo para Windows',
+          name: 'Descarregar aplicação para Windows',
         },
         { timeout: 15000 },
       ),
@@ -197,7 +193,7 @@ describe('Live translation in the Ponte PWA', () => {
     );
     await waitFor(() =>
       expect(
-        (screen.getByLabelText('Ligação do aplicativo') as HTMLInputElement)
+        (screen.getByLabelText('Ligação da aplicação') as HTMLInputElement)
           .value,
       ).toContain('"token":"' + 'b'.repeat(64)),
     );

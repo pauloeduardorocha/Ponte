@@ -1,7 +1,9 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useEffect, useState } from 'react';
 import QRCode from 'qrcode';
 import { Box, Typography } from '@mui/material';
 export function RegistrationQr({ token }: { token: string }) {
+  useLocale();
   const [url, setUrl] = useState('');
   useEffect(() => {
     let active = true;
@@ -18,7 +20,7 @@ export function RegistrationQr({ token }: { token: string }) {
         <Box
           component="img"
           src={url}
-          alt="QR Code da inscrição"
+          alt={translate('QR Code da inscrição')}
           width={180}
           height={180}
         />

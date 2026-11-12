@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useContext } from 'react';
 import { PwaInstallContext } from '../components/pwa-install-context';
 import { Suspense, useState, type ReactNode } from 'react';
@@ -54,6 +55,7 @@ import {
 } from 'react-router-dom';
 import { useAuth } from '../auth/auth-context';
 import { initials } from '../lib/format';
+import { LanguageSelect } from '../components/LanguageSelect';
 import { canAccessRoute } from '../auth/route-access';
 
 const sidebarWidth = 264;
@@ -86,31 +88,41 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   {
-    label: 'Tradução ao vivo',
+    get label() {
+      return translate('Tradução ao vivo');
+    },
     group: 'Início',
     to: '/live-translation',
     icon: TranslateRounded,
   },
   {
-    label: 'Aplicativo de tradução',
+    get label() {
+      return translate('Aplicativo de tradução');
+    },
     group: 'Comunicação',
     to: '/translation-app',
     icon: DownloadRounded,
   },
   {
-    label: 'Calendário',
+    get label() {
+      return translate('Calendário');
+    },
     group: 'Datas',
     to: '/calendar',
     icon: CalendarMonthRounded,
   },
   {
-    label: 'Lista de espera',
+    get label() {
+      return translate('Lista de espera');
+    },
     group: 'Pessoas',
     to: '/pending-approvals',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Todas as playlists',
+    get label() {
+      return translate('Todas as playlists');
+    },
     group: 'Vídeos',
     to: '/videos',
     icon: VideoLibraryRounded,
@@ -122,111 +134,161 @@ const navigation: NavigationItem[] = [
     icon: VideoLibraryRounded,
   })),
   {
-    label: 'Gestão de eventos',
+    get label() {
+      return translate('Gestão de eventos');
+    },
     group: 'Datas',
     to: '/my-events',
     icon: CalendarMonthRounded,
   },
   {
-    label: 'Vida da igreja',
+    get label() {
+      return translate('Vida da igreja');
+    },
     group: 'Operação',
     to: '/operations',
     icon: DashboardRounded,
   },
   {
-    label: 'Registros de auditoria',
+    get label() {
+      return translate('Registros de auditoria');
+    },
     group: 'Auditoria',
     to: '/audit',
     icon: AdminPanelSettingsRounded,
   },
   {
-    label: 'Erros de frontend',
+    get label() {
+      return translate('Erros de frontend');
+    },
     group: 'Auditoria',
     to: '/audit/errors',
     icon: BugReportRounded,
   },
-  { label: 'Visão geral', group: 'Início', to: '/', icon: DashboardRounded },
-  { label: 'Mural', group: 'Início', to: '/mural', icon: ForumRounded },
   {
-    label: 'Membros',
+    get label() {
+      return translate('Visão geral');
+    },
+    group: 'Início',
+    to: '/',
+    icon: DashboardRounded,
+  },
+  {
+    get label() {
+      return translate('Mural');
+    },
+    group: 'Início',
+    to: '/mural',
+    icon: ForumRounded,
+  },
+  {
+    get label() {
+      return translate('Membros');
+    },
     group: 'Pessoas',
     to: '/members',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Agenda de eventos',
+    get label() {
+      return translate('Agenda de eventos');
+    },
     group: 'Datas',
     to: '/events?view=community',
     icon: CalendarMonthRounded,
   },
   {
-    label: 'Visitantes',
+    get label() {
+      return translate('Visitantes');
+    },
     group: 'Pessoas',
     to: '/visitors',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Acompanhamento',
+    get label() {
+      return translate('Acompanhamento');
+    },
     group: 'Pessoas',
     to: '/follow-ups',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Grupos familiares',
+    get label() {
+      return translate('Grupos familiares');
+    },
     group: 'Grupos e ministérios',
     to: '/small-groups?view=community',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Ministérios',
+    get label() {
+      return translate('Ministérios');
+    },
     group: 'Grupos e ministérios',
     to: '/ministries?view=community',
     icon: PeopleAltRounded,
   },
   {
-    label: 'Escalas',
+    get label() {
+      return translate('Escalas');
+    },
     group: 'Grupos e ministérios',
     to: '/schedules',
     icon: CalendarMonthRounded,
   },
   {
-    label: 'Notificações',
+    get label() {
+      return translate('Notificações');
+    },
     group: 'Comunicação',
     to: '/notifications',
     icon: NotificationsNoneRounded,
   },
   {
-    label: 'Biblioteca',
+    get label() {
+      return translate('Biblioteca');
+    },
     group: 'Biblioteca',
     to: '/library',
     icon: MenuBookRounded,
   },
   {
-    label: 'Tesouraria',
+    get label() {
+      return translate('Tesouraria');
+    },
     group: 'Financeiro',
     to: '/finance',
     icon: AccountBalanceRounded,
   },
   {
-    label: 'Dashboard',
+    get label() {
+      return translate('Dashboard');
+    },
     group: 'Financeiro',
     to: '/finance/dashboard',
     icon: DashboardRounded,
   },
   {
-    label: 'Relatórios',
+    get label() {
+      return translate('Relatórios');
+    },
     group: 'Financeiro',
     to: '/finance/reports',
     icon: AccountBalanceRounded,
   },
   {
-    label: 'Importação bancária',
+    get label() {
+      return translate('Importação bancária');
+    },
     group: 'Financeiro',
     to: '/finance/banking',
     icon: AccountBalanceRounded,
   },
   {
-    label: 'Meus reembolsos',
+    get label() {
+      return translate('Meus reembolsos');
+    },
     group: 'Financeiro',
     to: '/reimbursements',
     icon: AccountBalanceRounded,
@@ -244,6 +306,7 @@ function isNavigationActive(to: string, location: { pathname: string }) {
 }
 
 function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+  useLocale();
   const { user } = useAuth();
   const translation = useLiveTranslation();
   const installButton = useContext(PwaInstallContext);
@@ -287,7 +350,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Box
           component="img"
           src="/logo.png"
-          alt="Logo de A Ponte"
+          alt={translate('Logo de A Ponte')}
           width={42}
           height={42}
           className="brand-mark"
@@ -297,7 +360,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             A Ponte
           </Typography>
           <Typography variant="caption" color="text.secondary">
-            Gestão da Igreja
+            {translate('Gestão da Igreja')}
           </Typography>
         </Box>
       </Stack>
@@ -329,7 +392,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
                   }}
                 >
                   <ListItemText
-                    primary={group}
+                    primary={translate(group)}
                     primaryTypographyProps={{
                       fontSize: '0.85rem',
                       fontWeight: 700,
@@ -345,7 +408,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <Collapse in={expanded} id={groupId}>
                 <List
                   disablePadding
-                  aria-label={group}
+                  aria-label={translate(group)}
                   sx={{ pl: headerless ? 0 : 1 }}
                 >
                   {groupItems.map(({ label, to, icon: Icon }) => (
@@ -389,7 +452,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         <Divider sx={{ mb: 2 }} />
         {installButton}
         <Typography variant="caption" color="text.secondary">
-          Plataforma em configuração
+          {translate('Plataforma em configuração')}
         </Typography>
       </Box>
     </Box>
@@ -397,6 +460,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function ProfileMenu() {
+  useLocale();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
@@ -409,9 +473,9 @@ function ProfileMenu() {
 
   return (
     <>
-      <Tooltip title="Minha conta">
+      <Tooltip title={translate('Minha conta')}>
         <IconButton
-          aria-label="Abrir menu da conta"
+          aria-label={translate('Abrir menu da conta')}
           onClick={(event) => setAnchor(event.currentTarget)}
           size="small"
         >
@@ -447,13 +511,13 @@ function ProfileMenu() {
           <ListItemIcon>
             <ManageAccountsRounded fontSize="small" />
           </ListItemIcon>
-          Minha conta
+          {translate('Minha conta')}
         </MenuItem>
         <MenuItem onClick={() => void handleLogout()}>
           <ListItemIcon>
             <LogoutRounded fontSize="small" />
           </ListItemIcon>
-          Sair
+          {translate('Sair')}
         </MenuItem>
       </Menu>
     </>
@@ -461,6 +525,7 @@ function ProfileMenu() {
 }
 
 export function AppShell({ children }: { children?: ReactNode }) {
+  useLocale();
   const { user } = useAuth();
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
@@ -481,32 +546,33 @@ export function AppShell({ children }: { children?: ReactNode }) {
         <Toolbar className="header-toolbar">
           {!isDesktop && (
             <IconButton
-              aria-label="Abrir menu"
+              aria-label={translate('Abrir menu')}
               edge="start"
               onClick={() => setDrawerOpen(true)}
             >
               <MenuRounded />
             </IconButton>
           )}
-          <Typography fontWeight={600} sx={{ flexGrow: 1 }}>
-            Painel de A Ponte
+          <Typography fontWeight={600} noWrap sx={{ flexGrow: 1, minWidth: 0 }}>
+            {translate('Painel de A Ponte')}
           </Typography>
           {user?.status !== 'PENDING_APPROVAL' && (
-            <Tooltip title="Notificações">
+            <Tooltip title={translate('Notificações')}>
               <IconButton
                 component={NavLink}
                 to="/inbox"
-                aria-label="Notificações"
+                aria-label={translate('Notificações')}
               >
                 <NotificationBell />
               </IconButton>
             </Tooltip>
           )}
+          <LanguageSelect />
           <ProfileMenu />
         </Toolbar>
       </AppBar>
 
-      <Box component="nav" aria-label="Navegação principal">
+      <Box component="nav" aria-label={translate('Navegação principal')}>
         <Drawer
           variant={isDesktop ? 'permanent' : 'temporary'}
           open={isDesktop || drawerOpen}
@@ -538,7 +604,11 @@ export function AppShell({ children }: { children?: ReactNode }) {
           )}
         </Box>
         <Container maxWidth="xl" className="dashboard-content">
-          <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
+          <Suspense
+            fallback={
+              <LinearProgress aria-label={translate('Carregando tela')} />
+            }
+          >
             {children ?? <Outlet />}
           </Suspense>
         </Container>

@@ -113,7 +113,7 @@ describe('Personal member dashboard', () => {
       'GET /member-portal/dashboard': { body: empty },
     });
     renderApp('/');
-    await screen.findByRole('heading', { name: 'Meu grupo familiar' });
+    await screen.findByRole('heading', { name: 'O meu grupo familiar' });
     expect(
       screen.queryByRole('heading', { name: 'Conversas' }),
     ).not.toBeInTheDocument();
@@ -123,11 +123,11 @@ describe('Personal member dashboard', () => {
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',
-      'Meu grupo familiar',
+      'O meu grupo familiar',
       'Próximos eventos',
     ]);
     expect(screen.queryByText('Reembolsos pendentes')).not.toBeInTheDocument();
-    expect(screen.queryByText('Minha biblioteca')).not.toBeInTheDocument();
+    expect(screen.queryByText('A minha biblioteca')).not.toBeInTheDocument();
   });
   it('includes reimbursements before events and all library categories afterwards', async () => {
     const requests = mockApi({
@@ -205,10 +205,10 @@ describe('Personal member dashboard', () => {
       'Últimos vídeos da igreja',
       'Aniversariantes da semana',
       'Próximas escalas',
-      'Meu grupo familiar',
+      'O meu grupo familiar',
       'Reembolsos pendentes',
       'Próximos eventos',
-      'Minha biblioteca',
+      'A minha biblioteca',
     ]);
     expect(screen.getByText(/Reserva: Livro reservado/)).toBeInTheDocument();
     expect(

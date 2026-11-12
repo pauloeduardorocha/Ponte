@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import type { ReactNode } from 'react';
 import { Alert, Box, CircularProgress, Stack, Typography } from '@mui/material';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
@@ -6,15 +7,17 @@ import { useAuth } from './auth-context';
 import { canAccessRoute } from './route-access';
 
 export function FullPageLoader() {
+  useLocale();
   return (
     <Box className="login-page">
-      <CircularProgress aria-label="Carregando sessão" />
+      <CircularProgress aria-label={translate('Carregando sessão')} />
     </Box>
   );
 }
 
 /** Allows access only to authenticated users; otherwise redirects to login. */
 export function RequireAuth() {
+  useLocale();
   const { status, user } = useAuth();
   const location = useLocation();
 
@@ -35,6 +38,7 @@ export function RequireAuth() {
 
 /** Public-only pages (login, register...) redirect authenticated users home. */
 export function PublicOnly() {
+  useLocale();
   const { status } = useAuth();
   const location = useLocation();
   const from = (
@@ -56,13 +60,14 @@ export function PublicOnly() {
 }
 
 export function ForbiddenPage() {
+  useLocale();
   return (
     <Stack spacing={2}>
       <Typography variant="h4" component="h1" fontWeight={700}>
-        Acesso negado
+        {translate('Acesso negado')}
       </Typography>
       <Alert severity="warning">
-        Você não tem permissão para acessar esta área.
+        {translate('Você não tem permissão para acessar esta área.')}
       </Alert>
     </Stack>
   );
@@ -75,12 +80,14 @@ export function RequirePermission({
   permission: Permission;
   children: ReactNode;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   return hasPermission(permission) ? children : <ForbiddenPage />;
 }
 
 /** Reject unauthorized URLs before mounting a page or running its queries. */
 export function RequireRouteAccess() {
+  useLocale();
   const { user } = useAuth();
   const { pathname } = useLocation();
   return canAccessRoute(pathname, user?.permissions ?? [], user) ? (

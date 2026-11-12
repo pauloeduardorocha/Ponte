@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ export function EfaturaFetch({
   disabled?: boolean;
   standalone?: boolean;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const [nif, setNif] = useState('');
@@ -69,20 +71,23 @@ export function EfaturaFetch({
         }}
       >
         {standalone
-          ? 'Executar scraper do e-Fatura'
-          : 'Buscar faturas no e-Fatura'}
+          ? translate('Executar scraper do e-Fatura')
+          : translate('Buscar faturas no e-Fatura')}
       </Button>
       {fetchInvoices.isPending && (
         <Alert severity="info">
-          Consultando o e-Fatura… Você pode continuar categorizando os
-          movimentos.
+          {translate(
+            'Consultando o e-Fatura… Você pode continuar categorizando os movimentos.',
+          )}
         </Alert>
       )}
       {fetchInvoices.data && (
         <Alert severity="success">
-          {fetchInvoices.data.inserted} faturas importadas;{' '}
-          {fetchInvoices.data.duplicates} duplicadas ignoradas. Use “Associar
-          fatura” nas despesas para conferir as sugestões por valor.
+          {fetchInvoices.data.inserted} {translate(' faturas importadas;')}{' '}
+          {fetchInvoices.data.duplicates}{' '}
+          {translate(
+            ' duplicadas ignoradas. Use “Associar fatura” nas despesas para conferir as sugestões por valor.',
+          )}
         </Alert>
       )}
       {!open && fetchInvoices.error && (
@@ -91,8 +96,8 @@ export function EfaturaFetch({
       <Dialog open={open} onClose={close} fullWidth maxWidth="sm">
         <DialogTitle>
           {standalone
-            ? 'Executar scraper do e-Fatura'
-            : 'Buscar faturas deste extrato?'}
+            ? translate('Executar scraper do e-Fatura')
+            : translate('Buscar faturas deste extrato?')}
         </DialogTitle>
         <DialogContent>
           <Stack
@@ -106,19 +111,21 @@ export function EfaturaFetch({
             }}
           >
             <Typography>
-              Consulte o e-Fatura para encontrar faturas que correspondam às
-              despesas importadas.
+              {translate(
+                'Consulte o e-Fatura para encontrar faturas que correspondam às despesas importadas.',
+              )}
             </Typography>
             {period?.start && period.end && (
               <Typography variant="body2">
-                Período: {formatDateOnly(period.start)} a{' '}
+                {translate('Período: ')}
+                {formatDateOnly(period.start)} {translate(' a')}{' '}
                 {formatDateOnly(period.end)}
               </Typography>
             )}
             <Typography variant="body2" color="text.secondary">
-              O NIF e a senha são usados apenas nesta consulta. A senha não é
-              armazenada. A consulta pode não ser concluída se o portal exigir
-              MFA ou CAPTCHA.
+              {translate(
+                'O NIF e a senha são usados apenas nesta consulta. A senha não é armazenada. A consulta pode não ser concluída se o portal exigir MFA ou CAPTCHA.',
+              )}
             </Typography>
             <TextField
               label="NIF"
@@ -136,7 +143,7 @@ export function EfaturaFetch({
               }}
             />
             <TextField
-              label="Senha das Finanças"
+              label={translate('Senha das Finanças')}
               required
               type="password"
               autoComplete="off"
@@ -147,13 +154,17 @@ export function EfaturaFetch({
             />
             {fetchInvoices.error && (
               <Alert severity="error">
-                {fetchInvoices.error.message} A busca de faturas não foi
-                concluída. Você pode continuar a revisão dos movimentos.
+                {fetchInvoices.error.message}{' '}
+                {translate(
+                  ' A busca de faturas não foi concluída. Você pode continuar a revisão dos movimentos.',
+                )}
               </Alert>
             )}
             {fetchInvoices.data && (
               <Alert severity="success">
-                Faturas disponíveis para associação aos movimentos.
+                {translate(
+                  'Faturas disponíveis para associação aos movimentos.',
+                )}
               </Alert>
             )}
           </Stack>
@@ -162,9 +173,9 @@ export function EfaturaFetch({
           <Button onClick={close}>
             {fetchInvoices.isPending || fetchInvoices.data
               ? standalone
-                ? 'Fechar'
-                : 'Continuar nos movimentos'
-              : 'Agora não'}
+                ? translate('Fechar')
+                : translate('Continuar nos movimentos')
+              : translate('Agora não')}
           </Button>
           {!fetchInvoices.data && (
             <Button
@@ -175,7 +186,9 @@ export function EfaturaFetch({
                 fetchInvoices.isPending || !/^\d{9}$/.test(nif) || !password
               }
             >
-              {fetchInvoices.isPending ? 'Consultando…' : 'Buscar faturas'}
+              {fetchInvoices.isPending
+                ? translate('Consultando…')
+                : translate('Buscar faturas')}
             </Button>
           )}
         </DialogActions>

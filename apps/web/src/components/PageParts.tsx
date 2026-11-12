@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { Alert, Box, Button, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { errorMessage } from '../lib/errors';
@@ -11,6 +12,7 @@ export function PageHeader({
   subtitle?: string;
   actions?: ReactNode;
 }) {
+  useLocale();
   return (
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
@@ -44,13 +46,14 @@ export function QueryError({
   error: unknown;
   onRetry?: () => void;
 }) {
+  useLocale();
   return (
     <Alert
       severity="error"
       action={
         onRetry && (
           <Button color="inherit" size="small" onClick={onRetry}>
-            Tentar novamente
+            {translate('Tentar novamente')}
           </Button>
         )
       }

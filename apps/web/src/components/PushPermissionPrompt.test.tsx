@@ -108,7 +108,7 @@ describe('First authenticated visit notification invitation', () => {
     ).toBeInTheDocument();
     view.unmount();
     renderApp('/inbox');
-    await screen.findByRole('heading', { name: 'Minhas notificações' });
+    await screen.findByRole('heading', { name: 'As minhas notificações' });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(requestPermission).not.toHaveBeenCalled();
   });
@@ -142,7 +142,7 @@ describe('First authenticated visit notification invitation', () => {
     fireEvent.change(await screen.findByLabelText(/E-mail/), {
       target: { value: user.email },
     });
-    fireEvent.change(screen.getByLabelText(/^Senha/), {
+    fireEvent.change(screen.getByLabelText(/^Palavra-passe/), {
       target: { value: 'password123' },
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -171,7 +171,7 @@ describe('First authenticated visit notification invitation', () => {
     fireEvent.change(await screen.findByLabelText(/E-mail/), {
       target: { value: user.email },
     });
-    fireEvent.change(screen.getByLabelText(/^Senha/), {
+    fireEvent.change(screen.getByLabelText(/^Palavra-passe/), {
       target: { value: 'password123' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));

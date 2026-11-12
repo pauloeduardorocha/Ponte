@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import {
   Children,
   Fragment,
@@ -26,10 +27,11 @@ type ContentProps = {
   'data-sort-value'?: string | number;
 };
 type ContentElement = ReactElement<ContentProps>;
-const collator = new Intl.Collator('pt-PT', {
-  numeric: true,
-  sensitivity: 'base',
-});
+const collator = () =>
+  new Intl.Collator(getLocale(), {
+    numeric: true,
+    sensitivity: 'base',
+  });
 
 function elements(children: ReactNode): ContentElement[] {
   return Children.toArray(children).flatMap((child) => {
@@ -72,11 +74,12 @@ function comparable(value: string): string | number {
       Number(localDate[6] ?? 0),
     );
   const amount = value.match(
-    /^(-?\d[\d.,\s]*)(?:\s*(?:[A-Z]{3}|€|KB|empréstimos))?$/,
+    /^(?:(?:[A-Z]{3}|[€$£])\s*)?(-?\d[\d.,\s]*)(?:\s*(?:[A-Z]{3}|[€$£]|KB|empréstimos|loans))?$/,
   );
   if (amount) {
     let number = amount[1]!.replace(/\s/g, '');
-    if (number.includes(','))
+    if (getLocale() === 'en') number = number.replace(/,/g, '');
+    else if (number.includes(','))
       number = number.replace(/\./g, '').replace(',', '.');
     const parsed = Number(number);
     if (Number.isFinite(parsed)) return parsed;
@@ -100,6 +103,7 @@ export function SortableTable({
   nonSortableColumns = [],
   ...props
 }: TableProps & { nonSortableColumns?: number[] }) {
+  useLocale();
   const [sort, setSort] = useState<{
     column: number;
     direction: 'asc' | 'desc';
@@ -139,7 +143,7 @@ export function SortableTable({
           const compared =
             typeof av === 'number' && typeof bv === 'number'
               ? av - bv
-              : collator.compare(a.value, b.value);
+              : collator().compare(a.value, b.value);
           return compared
             ? compared * (active.direction === 'asc' ? 1 : -1)
             : a.index - b.index;
@@ -166,7 +170,9 @@ export function SortableTable({
                     >,
                     { sortDirection: selected ? active.direction : false },
                     <TableSortLabel
-                      aria-label={`Ordenar por ${textOf(cell.props.children)}`}
+                      aria-label={translate('Ordenar por {0}', [
+                        textOf(cell.props.children),
+                      ])}
                       active={selected}
                       direction={selected ? active.direction : 'asc'}
                       onClick={() =>
@@ -178,7 +184,7 @@ export function SortableTable({
                               : 'asc',
                         })
                       }
-                      title="Ordenar os registos carregados"
+                      title={translate('Ordenar os registos carregados')}
                     >
                       {cell.props.children}
                     </TableSortLabel>,

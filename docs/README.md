@@ -29,20 +29,21 @@ Os guias descrevem o código, os contratos e os procedimentos atuais do projeto.
 
 ## Conta, pessoas e comunidade
 
-| Documento                                          | Uso                                                |
-| -------------------------------------------------- | -------------------------------------------------- |
-| [Aprovação de cadastro](pending-approvals.md)      | Campos obrigatórios e Lista de espera              |
-| [Cadastro unificado e família](unified-members.md) | Identidades, gestão de acesso e parentesco         |
-| [Aparência](account-appearance.md)                 | Modo do dispositivo, claro e escuro                |
-| [Foto da conta](account-photo.md)                  | Preparação, persistência e exibição de avatar      |
-| [Passkeys](passkeys.md)                            | Configuração, cadastro e login biométrico          |
-| [Aniversariantes](birthdays.md)                    | Listagem e push diário                             |
-| [Conversas e Mural](conversations.md)              | Publicações, menções, imagens e respostas          |
-| [Vídeos](youtube-videos.md)                        | Canal, playlists e chave da API                    |
-| [Tradução ao vivo](live-translation.md)            | Ponte e aplicativo Windows externo, Wi-Fi e pacote |
-| [Navegação](sidebar-navigation.md)                 | Menus, páginas e redirecionamentos                 |
-| [PWA](pwa.md)                                      | Instalação, atualização e limites offline          |
-| [Identidade visual](BRAND_COLORS.md)               | Marca e temas                                      |
+| Documento                                          | Uso                                                 |
+| -------------------------------------------------- | --------------------------------------------------- |
+| [Aprovação de cadastro](pending-approvals.md)      | Campos obrigatórios e Lista de espera               |
+| [Cadastro unificado e família](unified-members.md) | Identidades, gestão de acesso e parentesco          |
+| [Aparência](account-appearance.md)                 | Modo do dispositivo, claro e escuro                 |
+| [Idiomas](internationalization.md)                 | Português de Portugal, português do Brasil e inglês |
+| [Foto da conta](account-photo.md)                  | Preparação, persistência e exibição de avatar       |
+| [Passkeys](passkeys.md)                            | Configuração, cadastro e login biométrico           |
+| [Aniversariantes](birthdays.md)                    | Listagem e push diário                              |
+| [Conversas e Mural](conversations.md)              | Publicações, menções, imagens e respostas           |
+| [Vídeos](youtube-videos.md)                        | Canal, playlists e chave da API                     |
+| [Tradução ao vivo](live-translation.md)            | Ponte e aplicativo Windows externo, Wi-Fi e pacote  |
+| [Navegação](sidebar-navigation.md)                 | Menus, páginas e redirecionamentos                  |
+| [PWA](pwa.md)                                      | Instalação, atualização e limites offline           |
+| [Identidade visual](BRAND_COLORS.md)               | Marca e temas                                       |
 
 ## Operações, eventos e biblioteca
 

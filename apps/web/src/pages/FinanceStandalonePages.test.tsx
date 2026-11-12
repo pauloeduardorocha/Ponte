@@ -96,7 +96,7 @@ describe('Separate financial pages', () => {
       'GET /finance/banking/pending-classification': { body: { total: 0 } },
     });
     renderApp('/finance');
-    await screen.findByText('Nenhum registro.');
+    await screen.findByText('Nenhum registo.');
     expect(
       screen.queryByRole('tab', { name: 'Relatórios' }),
     ).not.toBeInTheDocument();

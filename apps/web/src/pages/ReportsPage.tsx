@@ -1,3 +1,4 @@
+import { t as translate, localized, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { SortableTable } from '../components/SortableTable';
@@ -22,20 +23,23 @@ import {
 import { useAuth } from '../auth/auth-context';
 import { apiRequest, getAccessToken } from '../lib/api';
 const reports: [string, string][] = [
-  ['incomes', 'Receitas por período'],
-  ['expenses', 'Despesas por período'],
-  ['cash-flow', 'Fluxo de caixa'],
-  ['account-balances', 'Saldo por conta'],
-  ['income-categories', 'Receitas por categoria'],
-  ['expense-categories', 'Despesas por categoria'],
-  ['tithes', 'Dízimos'],
-  ['offerings', 'Ofertas'],
-  ['donations', 'Doações'],
-  ['member-contributions', 'Contribuições por membro'],
-  ['supplier-expenses', 'Despesas por fornecedor'],
-  ['unreconciled', 'Movimentos pendentes de revisão'],
-  ['monthly-evolution', 'Evolução mensal'],
-  ['contribution-statement', 'Relatório individual para preparação fiscal'],
+  localized(['incomes', 'Receitas por período']),
+  localized(['expenses', 'Despesas por período']),
+  localized(['cash-flow', 'Fluxo de caixa']),
+  localized(['account-balances', 'Saldo por conta']),
+  localized(['income-categories', 'Receitas por categoria']),
+  localized(['expense-categories', 'Despesas por categoria']),
+  localized(['tithes', 'Dízimos']),
+  localized(['offerings', 'Ofertas']),
+  localized(['donations', 'Doações']),
+  localized(['member-contributions', 'Contribuições por membro']),
+  localized(['supplier-expenses', 'Despesas por fornecedor']),
+  localized(['unreconciled', 'Movimentos pendentes de revisão']),
+  localized(['monthly-evolution', 'Evolução mensal']),
+  localized([
+    'contribution-statement',
+    'Relatório individual para preparação fiscal',
+  ]),
 ];
 const sensitiveKinds = [
   'tithes',
@@ -106,13 +110,27 @@ type Result = {
   }[];
 };
 const names: Record<string, string> = {
-  TITHE: 'Dízimo',
-  OFFERING: 'Oferta',
-  DONATION: 'Doação',
-  OTHER: 'Outra',
-  COMPLETED: 'Concluído',
-  PENDING: 'Pendente',
-  CANCELLED: 'Cancelado',
+  get TITHE() {
+    return translate('Dízimo');
+  },
+  get OFFERING() {
+    return translate('Oferta');
+  },
+  get DONATION() {
+    return translate('Doação');
+  },
+  get OTHER() {
+    return translate('Outra');
+  },
+  get COMPLETED() {
+    return translate('Concluído');
+  },
+  get PENDING() {
+    return translate('Pendente');
+  },
+  get CANCELLED() {
+    return translate('Cancelado');
+  },
 };
 function FilterLookup({
   kind,
@@ -125,6 +143,7 @@ function FilterLookup({
   value: string;
   onChange: (id: string) => void;
 }) {
+  useLocale();
   const [search, setSearch] = useState('');
   const options = useQuery({
     queryKey: ['finance', 'reports', 'lookup', kind, search],
@@ -159,6 +178,7 @@ function FilterLookup({
   );
 }
 export function ReportsPage() {
+  useLocale();
   const { hasPermission } = useAuth();
   const today = new Date().toISOString().slice(0, 10);
   const [filters, setFilters] = useState<Filters>({
@@ -222,14 +242,14 @@ export function ReportsPage() {
   return (
     <Stack spacing={2}>
       <Typography variant="h5" component="h1">
-        Relatórios financeiros
+        {translate('Relatórios financeiros')}
       </Typography>
       <Card>
         <CardContent>
           <Stack spacing={2}>
             <TextField
               select
-              label="Relatório"
+              label={translate('Relatório')}
               value={filters.report}
               onChange={(e) => {
                 setFilters({
@@ -255,14 +275,14 @@ export function ReportsPage() {
             </TextField>
             <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
               <TextField
-                label="Início do período"
+                label={translate('Início do período')}
                 type="date"
                 value={filters.start}
                 onChange={(e) => set('start', e.target.value)}
                 slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
-                label="Fim do período"
+                label={translate('Fim do período')}
                 type="date"
                 value={filters.end}
                 onChange={(e) => set('end', e.target.value)}
@@ -278,14 +298,14 @@ export function ReportsPage() {
             >
               <FilterLookup
                 kind="accounts"
-                label="Conta"
+                label={translate('Conta')}
                 value={filters.accountId ?? ''}
                 onChange={(v) => set('accountId', v)}
               />
               {!balance && (
                 <FilterLookup
                   kind="categories"
-                  label="Categoria"
+                  label={translate('Categoria')}
                   value={filters.categoryId ?? ''}
                   onChange={(v) => set('categoryId', v)}
                 />
@@ -293,7 +313,7 @@ export function ReportsPage() {
               {!balance && canViewMembers && (
                 <FilterLookup
                   kind="members"
-                  label="Membro"
+                  label={translate('Membro')}
                   value={filters.memberId ?? ''}
                   onChange={(v) => set('memberId', v)}
                 />
@@ -301,14 +321,14 @@ export function ReportsPage() {
               {!balance && !sensitive && (
                 <FilterLookup
                   kind="suppliers"
-                  label="Fornecedor"
+                  label={translate('Fornecedor')}
                   value={filters.supplierId ?? ''}
                   onChange={(v) => set('supplierId', v)}
                 />
               )}
               {!balance && !bank && (
                 <TextField
-                  label="Centro de custo"
+                  label={translate('Centro de custo')}
                   value={filters.costCenter ?? ''}
                   onChange={(e) => set('costCenter', e.target.value)}
                 />
@@ -316,14 +336,16 @@ export function ReportsPage() {
               {!balance && filters.report !== 'cash-flow' && (
                 <TextField
                   select
-                  label="Status"
+                  label={translate('Status')}
                   value={(bank ? filters.bankStatus : filters.status) ?? ''}
                   onChange={(e) =>
                     set(bank ? 'bankStatus' : 'status', e.target.value)
                   }
                 >
                   <MenuItem value="">
-                    {bank ? 'Todos os pendentes' : 'Concluídos (padrão)'}
+                    {bank
+                      ? translate('Todos os pendentes')
+                      : translate('Concluídos (padrão)')}
                   </MenuItem>
                   {(bank
                     ? [
@@ -346,11 +368,11 @@ export function ReportsPage() {
                 ) && (
                   <TextField
                     select
-                    label="Tipo de contribuição"
+                    label={translate('Tipo de contribuição')}
                     value={filters.contributionType ?? ''}
                     onChange={(e) => set('contributionType', e.target.value)}
                   >
-                    <MenuItem value="">Todos</MenuItem>
+                    <MenuItem value="">{translate('Todos')}</MenuItem>
                     {['TITHE', 'OFFERING', 'DONATION', 'OTHER'].map((t) => (
                       <MenuItem key={t} value={t}>
                         {names[t]}
@@ -362,22 +384,22 @@ export function ReportsPage() {
             {filters.report === 'contribution-statement' && (
               <>
                 <TextField
-                  label="Identificação da igreja"
+                  label={translate('Identificação da igreja')}
                   value={filters.churchName ?? ''}
                   onChange={(e) => set('churchName', e.target.value)}
                 />
                 <TextField
-                  label="Identificação fiscal da igreja"
+                  label={translate('Identificação fiscal da igreja')}
                   value={filters.churchTaxId ?? ''}
                   onChange={(e) => set('churchTaxId', e.target.value)}
                 />
                 <TextField
-                  label="Endereço da igreja"
+                  label={translate('Endereço da igreja')}
                   value={filters.churchAddress ?? ''}
                   onChange={(e) => set('churchAddress', e.target.value)}
                 />
                 <TextField
-                  label="Observações"
+                  label={translate('Observações')}
                   multiline
                   value={filters.observations ?? ''}
                   onChange={(e) => set('observations', e.target.value)}
@@ -403,12 +425,14 @@ export function ReportsPage() {
                 );
               }}
             >
-              Gerar relatório
+              {translate('Gerar relatório')}
             </Button>
           </Stack>
         </CardContent>
       </Card>
-      {result.isFetching && <Typography>Gerando relatório…</Typography>}
+      {result.isFetching && (
+        <Typography>{translate('Gerando relatório…')}</Typography>
+      )}
       {result.error && <Alert severity="error">{result.error.message}</Alert>}
       {exportError && <Alert severity="error">{exportError}</Alert>}
       {result.data && !result.isFetching && (
@@ -417,12 +441,16 @@ export function ReportsPage() {
             {reports.find(([kind]) => kind === result.data.report)?.[1]}
           </Typography>
           <Typography>
-            Período: {formatDateOnly(result.data.filters.start)} a{' '}
+            {translate('Período: ')}
+            {formatDateOnly(result.data.filters.start)} {translate(' a')}{' '}
             {formatDateOnly(result.data.filters.end)} · {result.data.count}{' '}
-            registros
+            {translate('registros')}
           </Typography>
           {result.data.member && (
-            <Typography>Membro: {result.data.member.name}</Typography>
+            <Typography>
+              {translate('Membro: ')}
+              {result.data.member.name}
+            </Typography>
           )}
           {result.data.report === 'contribution-statement' && (
             <>
@@ -430,13 +458,16 @@ export function ReportsPage() {
                 {result.data.church.name} · {result.data.church.taxId} ·{' '}
                 {result.data.church.address}
               </Typography>
-              <Alert severity="info">{result.data.purpose}</Alert>
+              <Alert severity="info">{translate(result.data.purpose)}</Alert>
               <Typography>
-                Observações: {result.data.observations || 'Sem observações'}
+                {translate('Observações: ')}
+                {result.data.observations || translate('Sem observações')}
               </Typography>
             </>
           )}
-          <Typography variant="body2">{result.data.basis}</Typography>
+          <Typography variant="body2">
+            {translate(result.data.basis)}
+          </Typography>
           <Stack direction="row" gap={1}>
             {[
               'csv',
@@ -450,32 +481,42 @@ export function ReportsPage() {
                 disabled={!canExport || exporting}
                 onClick={() => void download(f)}
               >
-                Exportar {f.toUpperCase()}
+                {translate('Exportar ')}
+                {f.toUpperCase()}
               </Button>
             ))}
           </Stack>
           {!canExport && (
             <Alert severity="warning">
-              A exportação de dados de membros exige permissão específica.
+              {translate(
+                'A exportação de dados de membros exige permissão específica.',
+              )}
             </Alert>
           )}
           {result.data.totals.map((t) => (
             <Typography key={t.currency} fontWeight={700}>
-              Total ({t.currency}): receitas {t.income} · despesas {t.expenses}{' '}
-              · líquido {t.net}
+              {translate('Total (')}
+              {t.currency}
+              {translate('): receitas ')}
+              {t.income} {translate(' · despesas ')}
+              {t.expenses} {translate('· líquido ')}
+              {t.net}
             </Typography>
           ))}
           {result.data.groups.map((g) => (
             <Stack key={g.groupKey}>
               <Typography>
-                {names[g.label] ?? g.label} ({g.currency}): receitas {g.income}{' '}
-                · despesas {g.expenses} · líquido {g.net}
+                {names[g.label] ?? g.label} ({g.currency}
+                {translate('): receitas ')}
+                {g.income} {translate('· despesas ')}
+                {g.expenses} {translate(' · líquido ')}
+                {g.net}
               </Typography>
               <details>
-                <summary>Ver lançamentos deste total</summary>
+                <summary>{translate('Ver lançamentos deste total')}</summary>
                 {g.sourceIds.map((id) => (
                   <Button key={id} component="a" href={`#source-${id}`}>
-                    Localizar lançamento{' '}
+                    {translate('Localizar lançamento')}{' '}
                     {formatDateOnly(
                       result.data.rows.find((r) => r.id === id)?.date ?? null,
                     )}
@@ -487,15 +528,18 @@ export function ReportsPage() {
           {result.data.balances.map((b) => (
             <Stack key={b.accountId}>
               <Typography>
-                {b.account} ({b.currency}): saldo inicial do período {b.opening}{' '}
-                · receitas {b.income} · pagamentos {b.expenses} · saldo final{' '}
-                {b.closing}
+                {b.account} ({b.currency}
+                {translate('): saldo inicial do período ')}
+                {b.opening} {translate('· receitas ')}
+                {b.income} {translate(' · pagamentos ')}
+                {b.expenses} {translate(' · saldo final')} {b.closing}
               </Typography>
               <Button
                 component={Link}
                 to={`/finance?tab=accounts&record=${b.accountId}`}
               >
-                Saldo cadastrado: {b.initialBalance} {b.currency}
+                {translate('Saldo cadastrado: ')}
+                {b.initialBalance} {b.currency}
               </Button>
               {b.openingSources.map((source) => (
                 <Button
@@ -503,8 +547,8 @@ export function ReportsPage() {
                   component={Link}
                   to={`/finance?tab=${source.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${source.id}`}
                 >
-                  Origem do saldo inicial: {formatDateOnly(source.date)} ·{' '}
-                  {source.amount} {b.currency}
+                  {translate('Origem do saldo inicial: ')}
+                  {formatDateOnly(source.date)} · {source.amount} {b.currency}
                 </Button>
               ))}
             </Stack>
@@ -514,15 +558,15 @@ export function ReportsPage() {
               <TableHead>
                 <TableRow>
                   {[
-                    'Data',
-                    'Tipo',
-                    'Descrição / origem',
-                    'Conta / categoria',
-                    'Membro / fornecedor',
-                    'Valor',
-                    'Status',
-                    'Referência',
-                    'Rastreabilidade',
+                    translate('Data'),
+                    translate('Tipo'),
+                    translate('Descrição / origem'),
+                    translate('Conta / categoria'),
+                    translate('Membro / fornecedor'),
+                    translate('Valor'),
+                    translate('Status'),
+                    translate('Referência'),
+                    translate('Rastreabilidade'),
                   ].map((h) => (
                     <TableCell key={h}>{h}</TableCell>
                   ))}
@@ -534,7 +578,9 @@ export function ReportsPage() {
                     <TableCell>{formatDateOnly(r.date)}</TableCell>
                     <TableCell>
                       {names[r.contributionType] ??
-                        (r.direction === 'CREDIT' ? 'Receita' : 'Despesa')}
+                        (r.direction === 'CREDIT'
+                          ? translate('Receita')
+                          : translate('Despesa'))}
                     </TableCell>
                     <TableCell>
                       {r.description}
@@ -544,7 +590,7 @@ export function ReportsPage() {
                     <TableCell>
                       {r.account}
                       <br />
-                      {r.category || 'Sem categoria'}
+                      {r.category || translate('Sem categoria')}
                     </TableCell>
                     <TableCell>{r.member || r.supplier || '—'}</TableCell>
                     <TableCell
@@ -569,7 +615,7 @@ export function ReportsPage() {
                             : `/finance?tab=${r.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${r.id}`
                         }
                       >
-                        Abrir origem
+                        {translate('Abrir origem')}
                       </Button>
                       {r.bankTransactionId &&
                         hasPermission('FINANCE_BANK_IMPORT') &&
@@ -578,7 +624,7 @@ export function ReportsPage() {
                             component={Link}
                             to={`/finance/banking?transactionId=${r.bankTransactionId}`}
                           >
-                            Transação bancária
+                            {translate('Transação bancária')}
                           </Button>
                         )}
                       {r.contributionId && (
@@ -586,7 +632,7 @@ export function ReportsPage() {
                           component={Link}
                           to={`/finance?tab=contributions&record=${r.contributionId}`}
                         >
-                          Contribuição
+                          {translate('Contribuição')}
                         </Button>
                       )}
                     </TableCell>
@@ -597,7 +643,7 @@ export function ReportsPage() {
           </Box>
           {result.data.count === 0 && (
             <Alert severity="info">
-              Nenhum registro neste período e filtros.
+              {translate('Nenhum registro neste período e filtros.')}
             </Alert>
           )}
         </>

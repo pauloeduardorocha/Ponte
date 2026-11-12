@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import type {
   FrontendErrorSummary,
   FrontendErrorDetail,
@@ -33,7 +34,8 @@ function ErrorUser({
   user,
   userId,
 }: Pick<FrontendErrorSummary, 'user' | 'userId'>) {
-  if (!user) return <>{userId ?? 'Não identificado'}</>;
+  useLocale();
+  if (!user) return <>{userId ?? translate('Não identificado')}</>;
   const name = user.name.trim() || user.id;
   return user.memberId ? (
     <Link
@@ -43,11 +45,14 @@ function ErrorUser({
       {name}
     </Link>
   ) : (
-    <>{name} (sem cadastro associado)</>
+    <>
+      {name} {translate(' (sem cadastro associado)')}
+    </>
   );
 }
 
 export function FrontendErrorsPage() {
+  useLocale();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [selected, setSelected] = useState<string | null>(null);
@@ -66,35 +71,37 @@ export function FrontendErrorsPage() {
   });
   return (
     <Stack spacing={2}>
-      <Typography variant="h4">Erros de frontend</Typography>
+      <Typography variant="h4">{translate('Erros de frontend')}</Typography>
       <Typography color="text.secondary">
-        Ocorrências dos últimos 30 dias, da mais recente para a mais antiga.
+        {translate(
+          'Ocorrências dos últimos 30 dias, da mais recente para a mais antiga.',
+        )}
       </Typography>
       <FrontendErrorCharts />
       <FrontendErrorMap onSelect={setSelected} />
       {errors.isError && (
         <Alert severity="error">
-          Não foi possível carregar os erros de frontend.
+          {translate('Não foi possível carregar os erros de frontend.')}
         </Alert>
       )}
       {errors.isLoading && (
-        <Typography role="status">Carregando erros—</Typography>
+        <Typography role="status">{translate('Carregando erros—')}</Typography>
       )}
       <Card sx={{ overflowX: 'auto' }}>
-        <Table aria-label="Erros de frontend">
+        <Table aria-label={translate('Erros de frontend')}>
           <TableHead>
             <TableRow>
               {[
-                'Data da ocorrência',
-                'Tipo',
-                'Usuário',
-                'Mensagem',
-                'Rota',
-                'Versão',
+                translate('Data da ocorrência'),
+                translate('Tipo'),
+                translate('Usuário'),
+                translate('Mensagem'),
+                translate('Rota'),
+                translate('Versão'),
                 'HTTP',
                 'IP',
-                'Localização aproximada',
-                'Detalhes',
+                translate('Localização aproximada'),
+                translate('Detalhes'),
               ].map((label) => (
                 <TableCell key={label}>{label}</TableCell>
               ))}
@@ -128,14 +135,16 @@ export function FrontendErrorsPage() {
                 </TableCell>
                 <TableCell>
                   <Button onClick={() => setSelected(error.id)}>
-                    Ver erro
+                    {translate('Ver erro')}
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
             {errors.data?.items.length === 0 && (
               <TableRow>
-                <TableCell colSpan={10}>Nenhum erro encontrado.</TableCell>
+                <TableCell colSpan={10}>
+                  {translate('Nenhum erro encontrado.')}
+                </TableCell>
               </TableRow>
             )}
           </TableBody>
@@ -159,14 +168,16 @@ export function FrontendErrorsPage() {
         fullWidth
         maxWidth="md"
       >
-        <DialogTitle>Detalhes do erro de frontend</DialogTitle>
+        <DialogTitle>{translate('Detalhes do erro de frontend')}</DialogTitle>
         <DialogContent>
           {detail.isLoading && (
-            <Typography role="status">Carregando detalhes—</Typography>
+            <Typography role="status">
+              {translate('Carregando detalhes—')}
+            </Typography>
           )}
           {detail.isError && (
             <Alert severity="error">
-              Não foi possível carregar os detalhes do erro.
+              {translate('Não foi possível carregar os detalhes do erro.')}
             </Alert>
           )}
           {detail.data && (
@@ -176,14 +187,14 @@ export function FrontendErrorsPage() {
             />
           )}
           {detail.data && (
-            <Table aria-label="Detalhes do erro">
+            <Table aria-label={translate('Detalhes do erro')}>
               <TableBody>
                 {Object.entries(detail.data)
                   .filter(([key]) => key !== 'user')
                   .map(([key, value]) => (
                     <TableRow key={key}>
                       <TableCell component="th" scope="row">
-                        {key === 'userId' ? 'Usuário' : key}
+                        {key === 'userId' ? translate('Usuário') : key}
                       </TableCell>
                       <TableCell
                         sx={{
@@ -214,7 +225,9 @@ export function FrontendErrorsPage() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSelected(null)}>Fechar</Button>
+          <Button onClick={() => setSelected(null)}>
+            {translate('Fechar')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>

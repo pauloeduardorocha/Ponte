@@ -11,7 +11,7 @@ it('shows an offline notice and clears it after connectivity returns', () => {
     online.mockReturnValue(false);
     window.dispatchEvent(new Event('offline'));
   });
-  expect(screen.getByRole('alert')).toHaveTextContent('Sem conexão');
+  expect(screen.getByRole('alert')).toHaveTextContent('Sem ligação');
   act(() => {
     online.mockReturnValue(true);
     window.dispatchEvent(new Event('online'));

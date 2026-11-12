@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 const UPDATE_TIMEOUT = 15_000;
 
 function waitForState(worker: ServiceWorker, ready: () => boolean) {
@@ -12,14 +13,20 @@ function waitForState(worker: ServiceWorker, ready: () => boolean) {
         resolve();
       } else if (worker.state === 'redundant') {
         cleanup();
-        reject(new Error('A atualização foi interrompida. Tente novamente.'));
+        reject(
+          new Error(
+            translate('A atualização foi interrompida. Tente novamente.'),
+          ),
+        );
       }
     };
     const timeout = window.setTimeout(() => {
       cleanup();
       reject(
         new Error(
-          'A atualização demorou mais que o esperado. Tente novamente.',
+          translate(
+            'A atualização demorou mais que o esperado. Tente novamente.',
+          ),
         ),
       );
     }, UPDATE_TIMEOUT);
@@ -51,7 +58,9 @@ export async function applyPwaUpdate(
     await waitForState(worker, () => worker.state !== 'installing');
   }
   if (worker.state === 'redundant') {
-    throw new Error('A atualização foi interrompida. Tente novamente.');
+    throw new Error(
+      translate('A atualização foi interrompida. Tente novamente.'),
+    );
   }
 
   // Observe activation directly: Workbox's controlling/isUpdate classification

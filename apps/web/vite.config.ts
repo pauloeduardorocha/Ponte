@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
           name: 'Ponte — Gestão da Igreja',
           short_name: 'Ponte',
           description: 'A vida da igreja no seu telemóvel.',
-          lang: 'pt',
+          lang: 'pt-PT',
           start_url: '/',
           scope: '/',
           display: 'standalone',

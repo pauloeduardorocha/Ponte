@@ -30,7 +30,7 @@ describe('Member family', () => {
   beforeEach(resetTestState);
   it('registers a relative without requiring contacts or creating access', async () => {
     const requests = setup();
-    await screen.findByText('Nenhum vínculo familiar cadastrado.');
+    await screen.findByText('Nenhum vínculo familiar registado.');
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar familiar' }));
     fireEvent.change(screen.getByLabelText(/Nome do familiar/), {
       target: { value: 'Familiar Teste' },
@@ -41,9 +41,9 @@ describe('Member family', () => {
     expect(screen.getByLabelText(/E-mail do familiar/)).not.toBeRequired();
     expect(screen.getByLabelText(/Telefone do familiar/)).not.toBeRequired();
     expect(
-      screen.queryByLabelText(/Senha do familiar/),
+      screen.queryByLabelText(/Palavra-passe do familiar/),
     ).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar vínculo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar vínculo' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         relation: 'SPOUSE',
@@ -53,7 +53,7 @@ describe('Member family', () => {
       }),
     );
     expect(
-      await screen.findByText('Vínculo familiar salvo.'),
+      await screen.findByText('Vínculo familiar guardado.'),
     ).toBeInTheDocument();
   });
   it('requires contacts and password when access is checked and announces approval', async () => {
@@ -74,20 +74,20 @@ describe('Member family', () => {
     );
     expect(screen.getByLabelText(/E-mail do familiar/)).toBeRequired();
     expect(screen.getByLabelText(/Telefone do familiar/)).toBeRequired();
-    expect(screen.getByLabelText(/Senha do familiar/)).toBeRequired();
+    expect(screen.getByLabelText(/Palavra-passe do familiar/)).toBeRequired();
     fireEvent.change(screen.getByLabelText(/E-mail do familiar/), {
       target: { value: 'family@example.org' },
     });
     fireEvent.change(screen.getByLabelText(/Telefone do familiar/), {
       target: { value: '+351912345678' },
     });
-    fireEvent.change(screen.getByLabelText(/Senha do familiar/), {
+    fireEvent.change(screen.getByLabelText(/Palavra-passe do familiar/), {
       target: { value: 'long-test-password' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar vínculo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar vínculo' }));
     expect(
       await screen.findByText(
-        'Familiar cadastrado. O acesso está aguardando aprovação.',
+        'Familiar registado. O acesso está a aguardar aprovação.',
       ),
     ).toBeInTheDocument();
     expect(requests.find((r) => r.method === 'POST')?.body).toMatchObject({
@@ -163,18 +163,18 @@ describe('Member family', () => {
       await screen.findByRole('button', { name: 'Adicionar familiar' }),
     );
     fireEvent.mouseDown(
-      screen.getByRole('combobox', { name: 'Cadastro do familiar' }),
+      screen.getByRole('combobox', { name: 'Registo do familiar' }),
     );
     fireEvent.click(screen.getByRole('option', { name: 'Membro existente' }));
-    fireEvent.change(screen.getByLabelText('Buscar membro pelo nome'), {
+    fireEvent.change(screen.getByLabelText('Procurar membro pelo nome'), {
       target: { value: 'Membro' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Buscar membro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Procurar membro' }));
     fireEvent.mouseDown(
       await screen.findByRole('combobox', { name: /Membro existente/ }),
     );
     fireEvent.click(screen.getByRole('option', { name: 'Membro Existente' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar vínculo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar vínculo' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         relation: 'SPOUSE',

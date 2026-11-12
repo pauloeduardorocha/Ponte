@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { formatDate } from '../../lib/format';
 import { useState } from 'react';
@@ -27,26 +28,31 @@ import { ReimbursementForm } from './ReimbursementForm';
 import { ReimbursementDocuments } from './ReimbursementDocuments';
 
 export function ReimbursementRequestPage() {
+  useLocale();
   const [receipt, setReceipt] = useState<string>();
   const { status } = useAuth();
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Stack spacing={3}>
-        <Typography variant="h4">Pedir reembolso · A Ponte</Typography>
+        <Typography variant="h4">
+          {translate('Pedir reembolso · A Ponte')}
+        </Typography>
         {status === 'loading' ? (
-          <Typography>A carregar…</Typography>
+          <Typography>{translate('A carregar…')}</Typography>
         ) : receipt ? (
           <>
             <Alert severity="success">
-              Pedido guardado. A tesouraria irá verificar os documentos.
-              Referência: {receipt}
+              {translate(
+                'Pedido guardado. A tesouraria irá verificar os documentos. Referência: ',
+              )}
+              {receipt}
             </Alert>
             <Button onClick={() => setReceipt(undefined)}>
-              Enviar outro pedido
+              {translate('Enviar outro pedido')}
             </Button>
             {status === 'authenticated' && (
               <Button component={Link} to="/reimbursements">
-                Ver os meus pedidos
+                {translate('Ver os meus pedidos')}
               </Button>
             )}
           </>
@@ -65,6 +71,7 @@ export function ReimbursementsPage({
 }: {
   management?: boolean;
 }) {
+  useLocale();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
   const { hasPermission, user } = useAuth();
@@ -89,7 +96,7 @@ export function ReimbursementsPage({
       setDeleteTarget(null);
       if (selected === id) close();
       setPage(0);
-      setNotice('Pedido excluído.');
+      setNotice(translate('Pedido excluído.'));
       await Promise.all([
         client.invalidateQueries({ queryKey: ['reimbursements'] }),
         client.invalidateQueries({ queryKey: ['finance'] }),
@@ -124,11 +131,13 @@ export function ReimbursementsPage({
   return (
     <Stack spacing={2}>
       <Typography variant={management ? 'h5' : 'h4'}>
-        {management ? 'Reembolsos' : 'Os meus pedidos de reembolso'}
+        {management
+          ? translate('Reembolsos')
+          : translate('Os meus pedidos de reembolso')}
       </Typography>
       <Stack direction="row" gap={1} flexWrap="wrap">
         <Button variant="contained" onClick={() => setCreate(true)}>
-          Novo pedido
+          {translate('Novo pedido')}
         </Button>
         {management && (
           <Button
@@ -136,22 +145,26 @@ export function ReimbursementsPage({
               void navigator.clipboard
                 .writeText(`${window.location.origin}/pedir-reembolso`)
                 .then(
-                  () => setNotice('Link para membros copiado.'),
+                  () => setNotice(translate('Link para membros copiado.')),
                   () =>
                     setNotice(
-                      `Link para membros: ${window.location.origin}/pedir-reembolso`,
+                      translate('Link para membros: {0}/pedir-reembolso', [
+                        window.location.origin,
+                      ]),
                     ),
                 );
             }}
           >
-            Copiar link para membros
+            {translate('Copiar link para membros')}
           </Button>
         )}
       </Stack>
-      {notice && <Alert onClose={() => setNotice('')}>{notice}</Alert>}
+      {notice && (
+        <Alert onClose={() => setNotice('')}>{translate(notice ?? '')}</Alert>
+      )}
       <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}>
         <TextField
-          label="Pesquisar beneficiário ou finalidade"
+          label={translate('Pesquisar beneficiário ou finalidade')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -160,7 +173,7 @@ export function ReimbursementsPage({
         />
         <TextField
           select
-          label="Estado"
+          label={translate('Estado')}
           value={status}
           onChange={(e) => {
             setStatus(e.target.value);
@@ -168,7 +181,7 @@ export function ReimbursementsPage({
           }}
           sx={{ minWidth: 240 }}
         >
-          <MenuItem value="">Todos</MenuItem>
+          <MenuItem value="">{translate('Todos')}</MenuItem>
           {Object.entries(statuses).map(([key, label]) => (
             <MenuItem key={key} value={key}>
               {label}
@@ -176,13 +189,15 @@ export function ReimbursementsPage({
           ))}
         </TextField>
       </Stack>
-      {rows.isPending && <Typography>A carregar pedidos…</Typography>}
+      {rows.isPending && (
+        <Typography>{translate('A carregar pedidos…')}</Typography>
+      )}
       {rows.error && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void rows.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -190,18 +205,20 @@ export function ReimbursementsPage({
         </Alert>
       )}
       {rows.data?.items.length === 0 && (
-        <Alert severity="info">Nenhum pedido encontrado.</Alert>
+        <Alert severity="info">{translate('Nenhum pedido encontrado.')}</Alert>
       )}
       <RecordTable
-        label="Pedidos de reembolso"
-        primaryLabel="Beneficiário"
-        summaryLabel="Valor / estado"
-        detailsLabel="Finalidade"
+        label={translate('Pedidos de reembolso')}
+        primaryLabel={translate('Beneficiário')}
+        summaryLabel={translate('Valor / estado')}
+        detailsLabel={translate('Finalidade')}
       >
         {rows.data?.items.map((row) => (
           <RecordRow
             key={row.id}
-            primary={row.beneficiaryName || 'Beneficiário por preencher'}
+            primary={
+              row.beneficiaryName || translate('Beneficiário por preencher')
+            }
             summary={
               <Stack spacing={1}>
                 <Typography>{money(row.amount, row.currency)}</Typography>
@@ -211,20 +228,23 @@ export function ReimbursementsPage({
             actions={
               <>
                 <Button onClick={() => setSelected(row.id)}>
-                  Abrir pedido
+                  {translate('Abrir pedido')}
                 </Button>
                 {canDelete(row) && (
                   <Button color="error" onClick={() => confirmDelete(row)}>
-                    Excluir pedido
+                    {translate('Excluir pedido')}
                   </Button>
                 )}
               </>
             }
           >
-            <Typography>{row.purpose || 'Finalidade por preencher'}</Typography>
+            <Typography>
+              {row.purpose || translate('Finalidade por preencher')}
+            </Typography>
             <Typography variant="caption">
-              Recebido em {formatDate(row.createdAt)} · {row.attachments.length}{' '}
-              documento(s)
+              {translate('Recebido em ')}
+              {formatDate(row.createdAt)} · {row.attachments.length}{' '}
+              {translate('documento(s)')}
             </Typography>
           </RecordRow>
         ))}
@@ -248,7 +268,7 @@ export function ReimbursementsPage({
         aria-labelledby="new-reimbursement"
       >
         <DialogTitle id="new-reimbursement">
-          Novo pedido de reembolso
+          {translate('Novo pedido de reembolso')}
         </DialogTitle>
         <DialogContent>
           <ReimbursementForm
@@ -257,8 +277,10 @@ export function ReimbursementsPage({
               setSelected(result.id);
               setNotice(
                 result.possibleDuplicate
-                  ? 'Pedido guardado. Atenção: um dos documentos já aparece noutro pedido; verifique possíveis duplicados.'
-                  : 'Pedido guardado.',
+                  ? translate(
+                      'Pedido guardado. Atenção: um dos documentos já aparece noutro pedido; verifique possíveis duplicados.',
+                    )
+                  : translate('Pedido guardado.'),
               );
               void client.invalidateQueries({ queryKey: ['reimbursements'] });
             }}
@@ -273,13 +295,15 @@ export function ReimbursementsPage({
         aria-labelledby="reimbursement-detail"
       >
         <DialogTitle id="reimbursement-detail">
-          Pedido de reembolso
+          {translate('Pedido de reembolso')}
           <Button onClick={close} sx={{ float: 'right' }}>
-            Fechar
+            {translate('Fechar')}
           </Button>
         </DialogTitle>
         <DialogContent>
-          {detail.isPending && <Typography>A carregar…</Typography>}
+          {detail.isPending && (
+            <Typography>{translate('A carregar…')}</Typography>
+          )}
           {detail.error && (
             <Alert severity="error">{detail.error.message}</Alert>
           )}
@@ -308,18 +332,19 @@ export function ReimbursementsPage({
         aria-labelledby="delete-reimbursement-title"
       >
         <DialogTitle id="delete-reimbursement-title">
-          Excluir pedido de reembolso?
+          {translate('Excluir pedido de reembolso?')}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography>
-              {deleteTarget?.beneficiaryName || 'Beneficiário por preencher'} ·{' '}
-              {money(deleteTarget?.amount ?? null)}
+              {deleteTarget?.beneficiaryName ||
+                translate('Beneficiário por preencher')}{' '}
+              · {money(deleteTarget?.amount ?? null)}
             </Typography>
             <Typography>
-              O pedido deixará de aparecer nas listas. Pagamentos já efetuados
-              não serão anulados, e documentos associados a movimentos bancários
-              serão preservados.
+              {translate(
+                'O pedido deixará de aparecer nas listas. Pagamentos já efetuados não serão anulados, e documentos associados a movimentos bancários serão preservados.',
+              )}
             </Typography>
             {remove.error && (
               <Alert severity="error">{remove.error.message}</Alert>
@@ -331,7 +356,7 @@ export function ReimbursementsPage({
             disabled={remove.isPending}
             onClick={() => setDeleteTarget(null)}
           >
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             color="error"
@@ -341,7 +366,9 @@ export function ReimbursementsPage({
               if (deleteTarget) remove.mutate(deleteTarget.id);
             }}
           >
-            {remove.isPending ? 'A excluir…' : 'Confirmar exclusão'}
+            {remove.isPending
+              ? translate('A excluir…')
+              : translate('Confirmar exclusão')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -360,6 +387,7 @@ function ReimbursementDetail({
   canLink: boolean;
   onDelete?: () => void;
 }) {
+  useLocale();
   const client = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [paidAt, setPaidAt] = useState(() => {
@@ -401,8 +429,9 @@ function ReimbursementDetail({
     return (
       <Stack spacing={2}>
         <Alert severity="info">
-          Este pedido foi excluído. Os documentos foram preservados para
-          consulta.
+          {translate(
+            'Este pedido foi excluído. Os documentos foram preservados para consulta.',
+          )}
         </Alert>
         <Typography>
           {row.beneficiaryName} · {money(row.amount, row.currency)}
@@ -420,24 +449,27 @@ function ReimbursementDetail({
             void client.invalidateQueries({ queryKey: ['reimbursements'] });
           }}
         />
-        <Button onClick={() => setEditing(false)}>Voltar</Button>
+        <Button onClick={() => setEditing(false)}>{translate('Voltar')}</Button>
       </Stack>
     );
   return (
     <Stack spacing={2}>
       <Chip label={statuses[row.status]} sx={{ alignSelf: 'flex-start' }} />
       <Typography variant="h6">
-        {row.beneficiaryName || 'Beneficiário por preencher'} ·{' '}
+        {row.beneficiaryName || translate('Beneficiário por preencher')} ·{' '}
         {money(row.amount, row.currency)}
       </Typography>
       <Typography>
-        Categoria: {row.category?.name || 'Por preencher'}
+        {translate('Categoria: ')}
+        {row.category?.name || translate('Por preencher')}
       </Typography>
-      <Typography>IBAN: {row.iban || 'Por preencher'}</Typography>
-      <Typography>{row.purpose || 'Finalidade por preencher'}</Typography>
+      <Typography>IBAN: {row.iban || translate('Por preencher')}</Typography>
+      <Typography>
+        {row.purpose || translate('Finalidade por preencher')}
+      </Typography>
       {!row.paidAt && (
         <Button onClick={() => setEditing(true)}>
-          Completar / editar dados
+          {translate('Completar / editar dados')}
         </Button>
       )}
       <ReimbursementDocuments
@@ -449,7 +481,7 @@ function ReimbursementDetail({
         <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
           <TextField
             type="date"
-            label="Data da transferência bancária"
+            label={translate('Data da transferência bancária')}
             value={paidAt}
             onChange={(event) => setPaidAt(event.target.value)}
             slotProps={{ inputLabel: { shrink: true } }}
@@ -458,36 +490,45 @@ function ReimbursementDetail({
             disabled={action.isPending || !paidAt}
             onClick={() => action.mutate({ path: 'payment', body: { paidAt } })}
           >
-            Registar como pago
+            {translate('Registar como pago')}
           </Button>
         </Stack>
       )}
-      {row.paidAt && <Typography>Pago em {formatDate(row.paidAt)}</Typography>}
+      {row.paidAt && (
+        <Typography>
+          {translate('Pago em ')}
+          {formatDate(row.paidAt)}
+        </Typography>
+      )}
       {management && row.status === 'PAID' && (
         <Button
           disabled={action.isPending}
           onClick={() => action.mutate({ path: 'payment', method: 'DELETE' })}
         >
-          Corrigir registo de pagamento
+          {translate('Corrigir registo de pagamento')}
         </Button>
       )}
       {canLink && row.status === 'PAID' && (
         <>
-          <Typography variant="h6">Associar movimento bancário</Typography>
+          <Typography variant="h6">
+            {translate('Associar movimento bancário')}
+          </Typography>
           <Typography variant="body2">
-            Saídas em EUR com o mesmo valor, entre 7 dias antes e 30 dias depois
-            do pagamento. Confirme o destinatário antes de associar.
+            {translate(
+              'Saídas em EUR com o mesmo valor, entre 7 dias antes e 30 dias depois do pagamento. Confirme o destinatário antes de associar.',
+            )}
           </Typography>
           {suggestions.isPending && (
-            <Typography>A procurar movimentos…</Typography>
+            <Typography>{translate('A procurar movimentos…')}</Typography>
           )}
           {suggestions.error && (
             <Alert severity="error">{suggestions.error.message}</Alert>
           )}
           {suggestions.data?.length === 0 && (
             <Alert severity="info">
-              Nenhum movimento compatível encontrado. Importe o extrato bancário
-              e volte a este pedido.
+              {translate(
+                'Nenhum movimento compatível encontrado. Importe o extrato bancário e volte a este pedido.',
+              )}
             </Alert>
           )}
           {suggestions.data?.map((item) => (
@@ -510,7 +551,7 @@ function ReimbursementDetail({
                   })
                 }
               >
-                Confirmar associação
+                {translate('Confirmar associação')}
               </Button>
             </Stack>
           ))}
@@ -522,14 +563,14 @@ function ReimbursementDetail({
             component={Link}
             to={`/finance/banking?transactionId=${row.bankTransactionId}`}
           >
-            Ver movimento bancário
+            {translate('Ver movimento bancário')}
           </Button>
           {canLink && (
             <Button
               disabled={action.isPending}
               onClick={() => action.mutate({ path: 'link', method: 'DELETE' })}
             >
-              Desfazer associação
+              {translate('Desfazer associação')}
             </Button>
           )}
         </Stack>
@@ -537,7 +578,7 @@ function ReimbursementDetail({
       {action.error && <Alert severity="error">{action.error.message}</Alert>}
       {onDelete && (
         <Button color="error" onClick={onDelete}>
-          Excluir pedido
+          {translate('Excluir pedido')}
         </Button>
       )}
     </Stack>

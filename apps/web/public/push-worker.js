@@ -1,4 +1,21 @@
-/* global self, URL */
+/* global self, URL, caches */
+async function defaultNotificationBody() {
+  let locale = 'pt-PT';
+  try {
+    const cache = await caches.open('ponte-preferences-v1');
+    const preference = await cache.match('/__ponte_locale__');
+    locale = (await preference?.text()) ?? locale;
+  } catch {
+    /* Use Portugal's Portuguese when browser storage is unavailable. */
+  }
+  return (
+    {
+      'pt-PT': 'Tem uma nova mensagem. Abra a caixa de notificações.',
+      'pt-BR': 'Você tem uma nova mensagem. Abra a caixa de notificações.',
+      en: 'You have a new message. Open your notifications inbox.',
+    }[locale] ?? 'Tem uma nova mensagem. Abra a caixa de notificações.'
+  );
+}
 function notificationUrl(value) {
   try {
     if (typeof value !== 'string') return '/inbox';
@@ -18,7 +35,7 @@ self.addEventListener('push', (event) => {
   let tag = 'ponte-message';
   let title = 'A Ponte';
   let url = '/inbox';
-  let body = 'Você tem uma nova mensagem. Abra a caixa de notificações.';
+  let body;
   try {
     const payload = event.data?.json();
     url = notificationUrl(payload?.url);
@@ -33,7 +50,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     (async () => {
       await self.registration.showNotification(title, {
-        body,
+        body: body ?? (await defaultNotificationBody()),
         icon: '/icons/icon-192.png',
         badge: '/icons/icon-192.png',
         tag,

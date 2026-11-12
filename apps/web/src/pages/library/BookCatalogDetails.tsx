@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -24,12 +25,13 @@ export function BookCover({
   title: string;
   cover?: string | null;
 }) {
+  useLocale();
   const [failed, setFailed] = useState(false);
   return cover && !failed ? (
     <Box
       component="img"
       src={cover}
-      alt={`Capa de ${title}`}
+      alt={translate('Capa de {0}', [title])}
       loading="lazy"
       referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
@@ -48,7 +50,7 @@ export function BookCover({
       }}
     >
       <Typography variant="caption" color="text.secondary" textAlign="center">
-        Sem capa
+        {translate('Sem capa')}
       </Typography>
     </Box>
   );
@@ -63,6 +65,7 @@ export function BookCatalogDetails({
   historyOnly?: boolean;
   close: () => void;
 }) {
+  useLocale();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const book = useQuery({
@@ -82,12 +85,16 @@ export function BookCatalogDetails({
       aria-labelledby="catalog-book-title"
     >
       <DialogTitle id="catalog-book-title">
-        {historyOnly ? 'Histórico de empréstimos' : 'Detalhes do livro'}
+        {historyOnly
+          ? translate('Histórico de empréstimos')
+          : translate('Detalhes do livro')}
       </DialogTitle>
       <DialogContent>
         <Stack spacing={2}>
           {book.isPending && (
-            <Typography role="status">Carregando livro...</Typography>
+            <Typography role="status">
+              {translate('Carregando livro...')}
+            </Typography>
           )}
           {book.isError && (
             <QueryError
@@ -107,7 +114,7 @@ export function BookCatalogDetails({
                   <Typography variant="h6">{book.data.title}</Typography>
                   <Typography>{book.data.subtitle}</Typography>
                   <Typography>
-                    {book.data.author ?? 'Autor não informado'}
+                    {book.data.author ?? translate('Autor não informado')}
                   </Typography>
                 </Box>
               </Stack>
@@ -116,7 +123,9 @@ export function BookCatalogDetails({
                   {book.data.categories.map((item) => (
                     <Typography key={item.categoryCode} variant="body2">
                       {item.categoryCode} — {item.category.name} ·{' '}
-                      {item.isPrimary ? 'Tema principal' : 'Outro tema'}
+                      {item.isPrimary
+                        ? translate('Tema principal')
+                        : translate('Outro tema')}
                       {item.reviewedAt ? ' · Revisto' : ' · Proposta por rever'}
                     </Typography>
                   ))}
@@ -124,7 +133,8 @@ export function BookCatalogDetails({
               ) : null}
               {Boolean(book.data.pendingInventory) && (
                 <Typography>
-                  Exemplares por conferir: {book.data.pendingInventory}
+                  {translate('Exemplares por conferir: ')}
+                  {book.data.pendingInventory}
                 </Typography>
               )}
               {!historyOnly && (
@@ -132,7 +142,7 @@ export function BookCatalogDetails({
                   <Typography
                     sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}
                   >
-                    {book.data.description || 'Sem descrição.'}
+                    {book.data.description || translate('Sem descrição.')}
                   </Typography>
                   <Box
                     component="dl"
@@ -145,28 +155,34 @@ export function BookCatalogDetails({
                     }}
                   >
                     {[
-                      ['Número de registo', book.data.registrationNumber],
-                      ['Coleção', book.data.collection],
-                      ['Cotas', book.data.shelfmarks?.join(', ')],
-                      ['ISBN', book.data.isbn],
-                      ['Editora', book.data.publisher],
-                      ['Edição', book.data.edition],
-                      ['Ano', book.data.year],
                       [
-                        'Idioma',
+                        translate('Número de registo'),
+                        book.data.registrationNumber,
+                      ],
+                      [translate('Coleção'), book.data.collection],
+                      [translate('Cotas'), book.data.shelfmarks?.join(', ')],
+                      ['ISBN', book.data.isbn],
+                      [translate('Editora'), book.data.publisher],
+                      [translate('Edição'), book.data.edition],
+                      [translate('Ano'), book.data.year],
+                      [
+                        translate('Idioma'),
                         book.data.language === 'und'
-                          ? 'Não informado'
+                          ? translate('Não informado')
                           : book.data.language,
                       ],
-                      ['Páginas', book.data.pages],
-                      ['Categoria', book.data.category],
-                      ['Palavras-chave', book.data.keywords?.join(', ')],
+                      [translate('Páginas'), book.data.pages],
+                      [translate('Categoria'), book.data.category],
+                      [
+                        translate('Palavras-chave'),
+                        book.data.keywords?.join(', '),
+                      ],
                     ].map(([label, value]) => (
                       <Box key={label} sx={{ display: 'contents' }}>
                         <Typography component="dt">{label}</Typography>
                         <Typography component="dd">
                           {value === '' || value == null
-                            ? 'Não informado'
+                            ? translate('Não informado')
                             : value}
                         </Typography>
                       </Box>
@@ -177,10 +193,12 @@ export function BookCatalogDetails({
             </>
           )}
           <Typography variant="h6">
-            Histórico de empréstimos do livro
+            {translate('Histórico de empréstimos do livro')}
           </Typography>
           {history.isPending && (
-            <Typography role="status">Carregando histórico...</Typography>
+            <Typography role="status">
+              {translate('Carregando histórico...')}
+            </Typography>
           )}
           {history.isError && (
             <QueryError
@@ -192,12 +210,12 @@ export function BookCatalogDetails({
             <>
               {history.data.total === 0 ? (
                 <Typography>
-                  Este livro ainda não possui empréstimos.
+                  {translate('Este livro ainda não possui empréstimos.')}
                 </Typography>
               ) : (
                 <RecordTable
-                  label="Histórico de empréstimos do livro"
-                  primaryLabel="Empréstimo"
+                  label={translate('Histórico de empréstimos do livro')}
+                  primaryLabel={translate('Empréstimo')}
                   hasActions={false}
                 >
                   {history.data.items.map((loan) => (
@@ -210,15 +228,19 @@ export function BookCatalogDetails({
                     >
                       <StatusChip status={loan.status} />
                       <Typography>
-                        Prazo de devolução: {formatDate(loan.dueAt)}
+                        {translate('Prazo de devolução: ')}
+                        {formatDate(loan.dueAt)}
                       </Typography>
                       <Typography>
-                        Devolução:{' '}
+                        {translate('Devolução:')}{' '}
                         {loan.returnedAt
                           ? formatDate(loan.returnedAt)
-                          : 'Não devolvido'}
+                          : translate('Não devolvido')}
                       </Typography>
-                      <Typography>Renovações: {loan.renewedCount}</Typography>
+                      <Typography>
+                        {translate('Renovações: ')}
+                        {loan.renewedCount}
+                      </Typography>
                     </RecordRow>
                   ))}
                 </RecordTable>
@@ -233,12 +255,12 @@ export function BookCatalogDetails({
                   setPageSize(Number(event.target.value));
                   setPage(0);
                 }}
-                labelRowsPerPage="Por página"
+                labelRowsPerPage={translate('Por página')}
                 onPageChange={(_, next) => setPage(next)}
                 getItemAriaLabel={(type) =>
                   type === 'next'
-                    ? 'Próxima página do histórico'
-                    : 'Página anterior do histórico'
+                    ? translate('Próxima página do histórico')
+                    : translate('Página anterior do histórico')
                 }
               />
             </>
@@ -246,7 +268,7 @@ export function BookCatalogDetails({
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={close}>Fechar</Button>
+        <Button onClick={close}>{translate('Fechar')}</Button>
       </DialogActions>
     </Dialog>
   );

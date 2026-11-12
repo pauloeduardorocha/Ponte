@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
 import { EntitySelect } from '../components/EntitySelect';
@@ -100,16 +101,36 @@ const uncategorizedIds = [
   '00000000-0000-4000-8000-000000000002',
 ];
 const statusNames: Record<string, string> = {
-  UPLOADED: 'Enviado',
-  PROCESSING: 'Processando',
-  READY_FOR_REVIEW: 'Pronto para revisão',
-  CONFIRMED: 'Importado',
-  FAILED: 'Falhou',
-  PENDING_REVIEW: 'Pendente de revisão',
-  CLASSIFIED: 'Classificado',
-  RECONCILED: 'Cadastrado',
-  REJECTED: 'Ignorado',
-  POSSIBLE_DUPLICATE: 'Possível duplicidade',
+  get UPLOADED() {
+    return translate('Enviado');
+  },
+  get PROCESSING() {
+    return translate('Processando');
+  },
+  get READY_FOR_REVIEW() {
+    return translate('Pronto para revisão');
+  },
+  get CONFIRMED() {
+    return translate('Importado');
+  },
+  get FAILED() {
+    return translate('Falhou');
+  },
+  get PENDING_REVIEW() {
+    return translate('Pendente de revisão');
+  },
+  get CLASSIFIED() {
+    return translate('Classificado');
+  },
+  get RECONCILED() {
+    return translate('Cadastrado');
+  },
+  get REJECTED() {
+    return translate('Ignorado');
+  },
+  get POSSIBLE_DUPLICATE() {
+    return translate('Possível duplicidade');
+  },
 };
 async function bankFile(path: string, options?: RequestInit) {
   const response = await fetch(
@@ -117,7 +138,9 @@ async function bankFile(path: string, options?: RequestInit) {
     { ...options, headers: { Authorization: `Bearer ${getAccessToken()}` } },
   );
   if (!response.ok) {
-    let message = 'Não foi possível processar o arquivo. Verifique sua sessão.';
+    let message = translate(
+      'Não foi possível processar o arquivo. Verifique sua sessão.',
+    );
     try {
       const data = (await response.json()) as {
         message: string | string[];
@@ -127,7 +150,7 @@ async function bankFile(path: string, options?: RequestInit) {
         ? data.message.join(', ')
         : data.message;
       if (data.requestId && /^[0-9a-f-]{36}$/i.test(data.requestId))
-        message += ` Referência: ${data.requestId}`;
+        message += translate(' Referência: {0}', [data.requestId]);
     } catch {
       /* response may not be JSON */
     }
@@ -140,6 +163,7 @@ export function BankingPage({
 }: {
   pendingOnly?: boolean;
 }) {
+  useLocale();
   const [params, setParams] = useSearchParams();
   const viewedTransactionId = params.get('transactionId');
   const { hasPermission } = useAuth();
@@ -279,7 +303,8 @@ export function BankingPage({
   };
   const upload = useMutation({
     mutationFn: async () => {
-      if (!file || !accountId) throw new Error('Escolha a conta e o arquivo');
+      if (!file || !accountId)
+        throw new Error(translate('Escolha a conta e o arquivo'));
       const form = new FormData();
       form.append('accountId', accountId);
       form.append('file', file);
@@ -303,10 +328,15 @@ export function BankingPage({
       invalidate();
       setNotice(
         i.status === 'FAILED'
-          ? 'Importação falhou. Consulte o motivo abaixo.'
+          ? translate('Importação falhou. Consulte o motivo abaixo.')
           : i.summary
-            ? `${i.summary.registered} registros cadastrados; ${i.summary.ignored} ignorados; ${i.summary.pending} aguardando revisão. Você pode categorizar agora ou depois.`
-            : 'Receitas e despesas cadastradas. Você pode categorizá-las agora ou depois. Possíveis duplicados aguardam revisão.',
+            ? translate(
+                '{0} registros cadastrados; {1} ignorados; {2} aguardando revisão. Você pode categorizar agora ou depois.',
+                [i.summary.registered, i.summary.ignored, i.summary.pending],
+              )
+            : translate(
+                'Receitas e despesas cadastradas. Você pode categorizá-las agora ou depois. Possíveis duplicados aguardam revisão.',
+              ),
       );
     },
   });
@@ -389,14 +419,17 @@ export function BankingPage({
       if (rows.length) {
         prepareMovement(rows[0]!);
         setClassificationOpen(true);
-      } else setNotice('Todos os movimentos já foram categorizados.');
+      } else
+        setNotice(translate('Todos os movimentos já foram categorizados.'));
     },
   });
   function stopReview() {
     if (classify.isPending || sliding) return;
     setClassificationOpen(false);
     setNotice(
-      'Progresso salvo. Continue pelo menu Receitas ou Despesas, editando os itens normalmente.',
+      translate(
+        'Progresso salvo. Continue pelo menu Receitas ou Despesas, editando os itens normalmente.',
+      ),
     );
   }
   function advanceReview() {
@@ -407,7 +440,9 @@ export function BankingPage({
     } else {
       setClassificationOpen(false);
       setNotice(
-        'Revisão concluída. Todas as movimentações foram percorridas. Os movimentos pulados continuam pendentes de categorização.',
+        translate(
+          'Revisão concluída. Todas as movimentações foram percorridas. Os movimentos pulados continuam pendentes de categorização.',
+        ),
       );
     }
     setSliding(false);
@@ -419,7 +454,7 @@ export function BankingPage({
       )}
       <TextField
         select
-        label="Tipo de registro"
+        label={translate('Tipo de registro')}
         value={classification}
         onChange={(e) => {
           setClassification(e.target.value);
@@ -432,9 +467,9 @@ export function BankingPage({
         }}
       >
         {[
-          ['INCOME', 'Receita'],
-          ['EXPENSE', 'Despesa'],
-          ['IGNORE', 'Ignorada'],
+          ['INCOME', translate('Receita')],
+          ['EXPENSE', translate('Despesa')],
+          ['IGNORE', translate('Ignorada')],
         ].map(([v, l]) => (
           <MenuItem
             key={v}
@@ -449,13 +484,15 @@ export function BankingPage({
         ))}
       </TextField>
       <TextField
-        label="Descrição"
+        label={translate('Descrição')}
         multiline
         minRows={2}
         value={movementDescription}
         onChange={(e) => setMovementDescription(e.target.value)}
         slotProps={{ htmlInput: { maxLength: 2000 } }}
-        helperText="Descrição usada na receita ou despesa. A descrição original do extrato é preservada."
+        helperText={translate(
+          'Descrição usada na receita ou despesa. A descrição original do extrato é preservada.',
+        )}
       />
       {currentMovement && (
         <MovementReimbursement
@@ -472,25 +509,32 @@ export function BankingPage({
           {classificationSuggestions.isPending &&
             classificationSuggestions.fetchStatus === 'fetching' && (
               <Typography variant="body2">
-                Consultando histórico de categorização…
+                {translate('Consultando histórico de categorização…')}
               </Typography>
             )}
           {classificationSuggestions.isError && (
             <Alert severity="info">
-              Não foi possível consultar as sugestões. Você pode categorizar
-              manualmente.
+              {translate(
+                'Não foi possível consultar as sugestões. Você pode categorizar manualmente.',
+              )}
             </Alert>
           )}
           {suggested && !suggested.category && !suggested.costCenter && (
             <Typography variant="body2" color="text.secondary">
-              Histórico insuficiente ou sem concordância para sugerir categoria
-              e centro de custo.
+              {translate(
+                'Histórico insuficiente ou sem concordância para sugerir categoria e centro de custo.',
+              )}
             </Typography>
           )}
           {(
             [
-              ['category', 'categoria', categoryId, setCategoryId],
-              ['costCenter', 'centro de custo', costCenterId, setCostCenterId],
+              ['category', translate('categoria'), categoryId, setCategoryId],
+              [
+                'costCenter',
+                translate('centro de custo'),
+                costCenterId,
+                setCostCenterId,
+              ],
             ] as const
           ).map(([field, label, selected, apply]) => {
             const suggestion = suggested?.[field];
@@ -504,14 +548,17 @@ export function BankingPage({
                     disabled={selected === suggestion.id}
                     onClick={() => apply(suggestion.id)}
                   >
-                    Usar {label}
+                    {translate('Usar ')}
+                    {label}
                   </Button>
                 }
               >
-                Sugestão de {label}: <strong>{suggestion.name}</strong>.{' '}
-                {suggestion.agreement}% de concordância no histórico (
-                {suggestion.support} de {suggestion.sampleSize} movimentos
-                semelhantes).
+                {translate('Sugestão de ')}
+                {label}: <strong>{suggestion.name}</strong>.{' '}
+                {suggestion.agreement}
+                {translate('% de concordância no histórico (')}
+                {suggestion.support} {translate(' de ')}
+                {suggestion.sampleSize} {translate(' movimentos semelhantes).')}
               </Alert>
             ) : null;
           })}
@@ -520,12 +567,12 @@ export function BankingPage({
       {classification !== 'IGNORE' && (
         <TextField
           select
-          label="Categoria"
+          label={translate('Categoria')}
           required
           value={categoryId}
           onChange={(e) => setCategoryId(e.target.value)}
         >
-          <MenuItem value="">Sem categoria</MenuItem>
+          <MenuItem value="">{translate('Sem categoria')}</MenuItem>
           {suggested?.category &&
             !categories.data?.items.some(
               (c) => c.id === suggested.category!.id,
@@ -549,7 +596,7 @@ export function BankingPage({
       {classification !== 'IGNORE' && (
         <EntitySelect
           endpoint="/finance/cost-centers"
-          label="Centro de custo"
+          label={translate('Centro de custo')}
           required
           value={costCenterId}
           onChange={(e) => setCostCenterId(e.target.value)}
@@ -561,7 +608,8 @@ export function BankingPage({
             suggestions.data?.map((s) => (
               <Stack key={s.id} direction="row" alignItems="center">
                 <Typography>
-                  {s.name} · {s.confidence}% de correspondência
+                  {s.name} · {s.confidence}
+                  {translate('% de correspondência')}
                 </Typography>
                 <Button
                   disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
@@ -571,7 +619,7 @@ export function BankingPage({
                     setMemberSearch('');
                   }}
                 >
-                  Associar
+                  {translate('Associar')}
                 </Button>
               </Stack>
             ))}
@@ -585,7 +633,7 @@ export function BankingPage({
                   ) ??
                   suggestions.data?.find(
                     (member) => member.id === memberId,
-                  ) ?? { id: memberId, name: 'Membro associado' })
+                  ) ?? { id: memberId, name: translate('Membro associado') })
                 : null
             }
             getOptionLabel={(member) => member.name}
@@ -604,19 +652,21 @@ export function BankingPage({
             }}
             disabled={!hasPermission('FINANCE_CONTRIBUTION_WRITE')}
             loading={members.isFetching}
-            loadingText="Buscando membros..."
-            noOptionsText="Nenhum membro encontrado"
-            clearText="Ignorar associação"
-            openText="Mostrar membros"
-            closeText="Fechar lista"
+            loadingText={translate('Buscando membros...')}
+            noOptionsText={translate('Nenhum membro encontrado')}
+            clearText={translate('Ignorar associação')}
+            openText={translate('Mostrar membros')}
+            closeText={translate('Fechar lista')}
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Membro"
-                placeholder="Digite para buscar um membro"
+                label={translate('Membro')}
+                placeholder={translate('Digite para buscar um membro')}
                 helperText={
                   members.error?.message ??
-                  'Opcional. Limpe o campo para ignorar a associação.'
+                  translate(
+                    'Opcional. Limpe o campo para ignorar a associação.',
+                  )
                 }
                 error={Boolean(members.error)}
               />
@@ -625,16 +675,18 @@ export function BankingPage({
           {memberId && (
             <TextField
               select
-              label="Tipo da contribuição"
+              label={translate('Tipo da contribuição')}
               value={contributionType}
               onChange={(e) => setContributionType(e.target.value)}
             >
-              <MenuItem value="">Receita sem contribuição</MenuItem>
+              <MenuItem value="">
+                {translate('Receita sem contribuição')}
+              </MenuItem>
               {[
-                ['TITHE', 'Dízimo'],
-                ['OFFERING', 'Oferta'],
-                ['DONATION', 'Doação'],
-                ['OTHER', 'Outra'],
+                ['TITHE', translate('Dízimo')],
+                ['OFFERING', translate('Oferta')],
+                ['DONATION', translate('Doação')],
+                ['OTHER', translate('Outra')],
               ].map(([v, l]) => (
                 <MenuItem key={v} value={v}>
                   {l}
@@ -647,11 +699,11 @@ export function BankingPage({
       {classification === 'EXPENSE' && (
         <TextField
           select
-          label="Fornecedor (opcional)"
+          label={translate('Fornecedor (opcional)')}
           value={supplierId}
           onChange={(e) => setSupplierId(e.target.value)}
         >
-          <MenuItem value="">Sem fornecedor</MenuItem>
+          <MenuItem value="">{translate('Sem fornecedor')}</MenuItem>
           {suppliers.data?.items.map((s) => (
             <MenuItem key={s.id} value={s.id}>
               {s.name}
@@ -661,7 +713,9 @@ export function BankingPage({
       )}
       {currentMovement?.status === 'POSSIBLE_DUPLICATE' && (
         <FormControlLabel
-          label="Revisei e aceito importar as possíveis duplicidades selecionadas"
+          label={translate(
+            'Revisei e aceito importar as possíveis duplicidades selecionadas',
+          )}
           control={
             <Checkbox
               checked={acceptDuplicate}
@@ -681,23 +735,26 @@ export function BankingPage({
       aria-labelledby="movement-review-title"
     >
       <DialogTitle id="movement-review-title">
-        Categorizar movimentação
+        {translate('Categorizar movimentação')}
       </DialogTitle>
       <DialogContent sx={{ overflowX: 'hidden' }}>
         <Stack spacing={2}>
           <Typography aria-live="polite">
-            Movimento {reviewIndex + 1} de {reviewRows.length}
+            {translate('Movimento ')}
+            {reviewIndex + 1} {translate(' de ')}
+            {reviewRows.length}
           </Typography>
           <LinearProgress
             variant="determinate"
             value={
               reviewRows.length ? (reviewIndex / reviewRows.length) * 100 : 0
             }
-            aria-label="Progresso da classificação"
+            aria-label={translate('Progresso da classificação')}
           />
           <Typography variant="body2" color="text.secondary">
-            Cada etapa é salva. Você pode parar e continuar depois em Receitas
-            ou Despesas.
+            {translate(
+              'Cada etapa é salva. Você pode parar e continuar depois em Receitas ou Despesas.',
+            )}
           </Typography>
           {currentMovement && (
             <Slide
@@ -714,8 +771,8 @@ export function BankingPage({
                   <Chip
                     label={
                       currentMovement.direction === 'CREDIT'
-                        ? 'Receita'
-                        : 'Despesa'
+                        ? translate('Receita')
+                        : translate('Despesa')
                     }
                     color={
                       currentMovement.direction === 'CREDIT'
@@ -733,16 +790,18 @@ export function BankingPage({
                     {currentMovement.import.account.currency}
                   </Typography>
                   <Typography variant="body2">
-                    {formatDateOnly(currentMovement.date)} · Referência:{' '}
-                    {currentMovement.reference || 'Não informada'}
+                    {formatDateOnly(currentMovement.date)}{' '}
+                    {translate(' · Referência:')}{' '}
+                    {currentMovement.reference || translate('Não informada')}
                   </Typography>
                   {currentMovement.status === 'POSSIBLE_DUPLICATE' && (
                     <Alert severity="warning">
                       <Typography sx={{ fontWeight: 600 }}>
-                        Possível réplica
+                        {translate('Possível réplica')}
                       </Typography>
-                      Este movimento pode já ter sido importado. Confira os
-                      dados e descarte-o se for duplicado.
+                      {translate(
+                        'Este movimento pode já ter sido importado. Confira os dados e descarte-o se for duplicado.',
+                      )}
                       {currentMovement.duplicateReason && (
                         <Typography variant="body2">
                           {currentMovement.duplicateReason}
@@ -789,17 +848,17 @@ export function BankingPage({
             disabled={classify.isPending || sliding}
             onClick={() => classify.mutate('IGNORE')}
           >
-            Descartar movimento
+            {translate('Descartar movimento')}
           </Button>
         )}
         <Button disabled={classify.isPending || sliding} onClick={stopReview}>
-          Continuar depois
+          {translate('Continuar depois')}
         </Button>
         <Button
           disabled={!currentMovement || classify.isPending || sliding}
           onClick={() => setSliding(true)}
         >
-          Pular
+          {translate('Pular')}
         </Button>
         <Button
           variant="contained"
@@ -814,7 +873,7 @@ export function BankingPage({
           }
           onClick={() => classify.mutate()}
         >
-          {classify.isPending ? 'Salvando…' : 'Próxima'}
+          {classify.isPending ? translate('Salvando…') : translate('Próxima')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -830,7 +889,7 @@ export function BankingPage({
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Anexos do movimento bancário</DialogTitle>
+      <DialogTitle>{translate('Anexos do movimento bancário')}</DialogTitle>
       <DialogContent>
         {viewedTransactionId && (
           <MovementAttachments
@@ -856,18 +915,19 @@ export function BankingPage({
                 onClick={() => startReview.mutate()}
               >
                 {startReview.isPending
-                  ? 'Carregando…'
-                  : 'Categorizar movimentos'}
+                  ? translate('Carregando…')
+                  : translate('Categorizar movimentos')}
               </Button>
             }
           >
             <Typography sx={{ fontWeight: 600 }}>
               {total === 1
-                ? '1 movimento aguarda categorização'
-                : `${total} movimentos aguardam categorização`}
+                ? translate('1 movimento aguarda categorização')
+                : translate('{0} movimentos aguardam categorização', [total])}
             </Typography>
-            Defina a categoria e o centro de custo. Possíveis réplicas também
-            precisam de revisão.
+            {translate(
+              'Defina a categoria e o centro de custo. Possíveis réplicas também precisam de revisão.',
+            )}
           </Alert>
         )}
         {pendingSummary.error && (
@@ -875,11 +935,11 @@ export function BankingPage({
             severity="error"
             action={
               <Button onClick={() => void pendingSummary.refetch()}>
-                Tentar novamente
+                {translate('Tentar novamente')}
               </Button>
             }
           >
-            Não foi possível consultar os movimentos pendentes.
+            {translate('Não foi possível consultar os movimentos pendentes.')}
           </Alert>
         )}
         {startReview.error && (
@@ -887,11 +947,11 @@ export function BankingPage({
         )}
         {notice && (
           <Alert severity="info" onClose={() => setNotice('')}>
-            {notice}
+            {translate(notice ?? '')}
           </Alert>
         )}
         {startReview.isPending && (
-          <LinearProgress aria-label="Carregando movimentos" />
+          <LinearProgress aria-label={translate('Carregando movimentos')} />
         )}
         {reviewDialog}
       </>
@@ -902,33 +962,37 @@ export function BankingPage({
   if (!authorized)
     return (
       <Alert severity="warning">
-        Importação bancária exige acesso financeiro e permissão para visualizar
-        contribuições.
+        {translate(
+          'Importação bancária exige acesso financeiro e permissão para visualizar contribuições.',
+        )}
       </Alert>
     );
   return (
     <Stack spacing={2}>
       <Typography variant="h5" component="h1">
-        Importação bancária
+        {translate('Importação bancária')}
       </Typography>
       <Typography>
-        Importe o extrato para cadastrar receitas e despesas automaticamente.
-        Categorize aqui ou depois nas listas de Receitas e Despesas.
+        {translate(
+          'Importe o extrato para cadastrar receitas e despesas automaticamente. Categorize aqui ou depois nas listas de Receitas e Despesas.',
+        )}
       </Typography>
-      {notice && <Alert severity="info">{notice}</Alert>}
+      {notice && <Alert severity="info">{translate(notice ?? '')}</Alert>}
       {error && <Alert severity="error">{error.message}</Alert>}
       {fileError && <Alert severity="error">{fileError}</Alert>}
       <Card>
         <CardContent>
           <Stack spacing={2}>
-            <Typography variant="h6">Enviar CSV, XLSX ou OFX</Typography>
+            <Typography variant="h6">
+              {translate('Enviar CSV, XLSX ou OFX')}
+            </Typography>
             <TextField
               select
-              label="Conta bancária"
+              label={translate('Conta bancária')}
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
             >
-              <MenuItem value="">Escolha a conta</MenuItem>
+              <MenuItem value="">{translate('Escolha a conta')}</MenuItem>
               {accounts.data?.items.map((a) => (
                 <MenuItem value={a.id} key={a.id}>
                   {a.name} ({a.currency})
@@ -940,51 +1004,54 @@ export function BankingPage({
             )}
             <Alert severity="info">
               <Typography sx={{ fontWeight: 600 }}>
-                Período sugerido para importar
+                {translate('Período sugerido para importar')}
               </Typography>
               {!accountId &&
-                'Selecione a conta bancária para consultar os períodos em falta.'}
+                translate(
+                  'Selecione a conta bancária para consultar os períodos em falta.',
+                )}
               {accountId &&
                 guidance.isPending &&
-                'Consultando os períodos já importados…'}
+                translate('Consultando os períodos já importados…')}
               {accountId && guidance.data && (
                 <Stack spacing={1}>
                   {!guidance.data.bankDataThrough ? (
                     <Typography>
-                      Ainda não há movimentos importados nesta conta. Exporte
-                      desde a data inicial do histórico que pretende registar
-                      até hoje.
+                      {translate(
+                        'Ainda não há movimentos importados nesta conta. Exporte desde a data inicial do histórico que pretende registar até hoje.',
+                      )}
                     </Typography>
                   ) : (
                     <>
                       <Typography>
-                        Movimentos importados até{' '}
+                        {translate('Movimentos importados até')}{' '}
                         {formatDateOnly(guidance.data.bankDataThrough)}.
                       </Typography>
                       {guidance.data.gaps.map((gap) => (
                         <Typography key={gap.start}>
-                          Intervalo a verificar: {formatDateOnly(gap.start)} a{' '}
+                          {translate('Intervalo a verificar: ')}
+                          {formatDateOnly(gap.start)} {translate(' a')}{' '}
                           {formatDateOnly(gap.end)}.
                         </Typography>
                       ))}
                       {guidance.data.suggestedPeriod ? (
                         <Typography>
-                          Para atualizar: exporte de{' '}
+                          {translate('Para atualizar: exporte de')}{' '}
                           {formatDateOnly(guidance.data.suggestedPeriod.start)}{' '}
-                          a {formatDateOnly(guidance.data.suggestedPeriod.end)}.
+                          {translate('a ')}
+                          {formatDateOnly(guidance.data.suggestedPeriod.end)}.
                         </Typography>
                       ) : (
                         <Typography>
-                          Não há período adicional a sugerir até ontem.
+                          {translate(
+                            'Não há período adicional a sugerir até ontem.',
+                          )}
                         </Typography>
                       )}
                       <Typography variant="body2">
-                        Os intervalos são estimados pelas datas dos movimentos
-                        de cada ficheiro; podem incluir dias sem atividade
-                        bancária. Confirme o período no banco. A sugestão de
-                        atualização termina ontem e inclui o último dia
-                        importado para cobrir exportações parciais; possíveis
-                        duplicados ficam para revisão.
+                        {translate(
+                          'Os intervalos são estimados pelas datas dos movimentos de cada ficheiro; podem incluir dias sem atividade bancária. Confirme o período no banco. A sugestão de atualização termina ontem e inclui o último dia importado para cobrir exportações parciais; possíveis duplicados ficam para revisão.',
+                        )}
                       </Typography>
                     </>
                   )}
@@ -996,17 +1063,19 @@ export function BankingPage({
                 severity="error"
                 action={
                   <Button onClick={() => void guidance.refetch()}>
-                    Tentar novamente
+                    {translate('Tentar novamente')}
                   </Button>
                 }
               >
-                Não foi possível consultar o período sugerido para esta conta.
+                {translate(
+                  'Não foi possível consultar o período sugerido para esta conta.',
+                )}
               </Alert>
             )}
             <Button component="label">
-              Escolher arquivo (até 10 MB)
+              {translate('Escolher arquivo (até 10 MB)')}
               <input
-                aria-label="Extrato bancário"
+                aria-label={translate('Extrato bancário')}
                 type="file"
                 hidden
                 accept=".csv,.xlsx,.ofx"
@@ -1022,14 +1091,16 @@ export function BankingPage({
               disabled={!file || !accountId || upload.isPending}
               onClick={() => upload.mutate()}
             >
-              {upload.isPending ? 'Processando…' : 'Importar extrato'}
+              {upload.isPending
+                ? translate('Processando…')
+                : translate('Importar extrato')}
             </Button>
           </Stack>
         </CardContent>
       </Card>
       <Stack direction="row" gap={1}>
         <Button onClick={() => setHistoryOpen(true)}>
-          Histórico de importações
+          {translate('Histórico de importações')}
         </Button>
       </Stack>
       <Dialog
@@ -1037,18 +1108,18 @@ export function BankingPage({
         onClose={() => setHistoryOpen(false)}
         fullWidth
       >
-        <DialogTitle>Histórico de importações</DialogTitle>
+        <DialogTitle>{translate('Histórico de importações')}</DialogTitle>
         <DialogContent>
           <Stack spacing={1}>
             {imports.isFetching && (
-              <Typography>Carregando histórico…</Typography>
+              <Typography>{translate('Carregando histórico…')}</Typography>
             )}
             {imports.data?.items.length === 0 && (
-              <Typography>Nenhum arquivo importado.</Typography>
+              <Typography>{translate('Nenhum arquivo importado.')}</Typography>
             )}
             <RecordTable
-              label="Histórico de importações"
-              primaryLabel="Arquivo"
+              label={translate('Histórico de importações')}
+              primaryLabel={translate('Arquivo')}
             >
               {imports.data?.items.map((i) => (
                 <RecordRow
@@ -1061,13 +1132,14 @@ export function BankingPage({
                         setHistoryOpen(false);
                       }}
                     >
-                      Abrir importação
+                      {translate('Abrir importação')}
                     </Button>
                   }
                 >
                   <Typography>
                     {i.account?.name} · {formatDateOnly(i.createdAt ?? null)} ·{' '}
-                    {statusNames[i.status]} · {i._count.transactions} movimentos
+                    {statusNames[i.status]} · {i._count.transactions}{' '}
+                    {translate(' movimentos')}
                   </Typography>
                 </RecordRow>
               ))}
@@ -1075,7 +1147,9 @@ export function BankingPage({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setHistoryOpen(false)}>Fechar</Button>
+          <Button onClick={() => setHistoryOpen(false)}>
+            {translate('Fechar')}
+          </Button>
         </DialogActions>
       </Dialog>
       {importId && (
@@ -1107,8 +1181,8 @@ export function BankingPage({
                     onClick={() => startReview.mutate(importId)}
                   >
                     {startReview.isPending
-                      ? 'Carregando…'
-                      : 'Categorizar movimentos'}
+                      ? translate('Carregando…')
+                      : translate('Categorizar movimentos')}
                   </Button>
                 )}
                 <Button
@@ -1128,7 +1202,7 @@ export function BankingPage({
                     }
                   }}
                 >
-                  Baixar arquivo original
+                  {translate('Baixar arquivo original')}
                 </Button>
               </Stack>
             </Stack>
@@ -1137,14 +1211,14 @@ export function BankingPage({
       )}
       <Stack direction="row" gap={1}>
         <Button component={Link} to="/finance?tab=incomes">
-          Ir para Receitas
+          {translate('Ir para Receitas')}
         </Button>
         <Button component={Link} to="/finance?tab=expenses">
-          Ir para Despesas
+          {translate('Ir para Despesas')}
         </Button>
       </Stack>
       {startReview.isPending && (
-        <LinearProgress aria-label="Carregando movimentos" />
+        <LinearProgress aria-label={translate('Carregando movimentos')} />
       )}
       {reviewDialog}
       {attachmentDialog}

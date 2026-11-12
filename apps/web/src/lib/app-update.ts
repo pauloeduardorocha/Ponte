@@ -1,7 +1,9 @@
+import { t as translate } from '../i18n';
 import { APP_VERSION } from './app-version';
 
-export const UPDATE_MESSAGE =
-  'Há uma atualização disponível. Guarde as alterações e atualize para continuar. Confira se o pedido foi guardado antes de tentar novamente.';
+export const UPDATE_MESSAGE = translate(
+  'Há uma atualização disponível. Guarde as alterações e atualize para continuar. Confira se o pedido foi guardado antes de tentar novamente.',
+);
 
 let availableVersion: string | null = null;
 let pending: Promise<string | null> | null = null;
@@ -83,5 +85,5 @@ export function checkForAppUpdate(): Promise<string | null> {
 export async function messageAfterUpdateCheck(
   original: string,
 ): Promise<string> {
-  return (await checkForAppUpdate()) ? UPDATE_MESSAGE : original;
+  return (await checkForAppUpdate()) ? translate(UPDATE_MESSAGE) : original;
 }

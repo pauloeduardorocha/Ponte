@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { Button, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import RefreshRounded from '@mui/icons-material/RefreshRounded';
 import { formatDateTime } from '../lib/format';
@@ -12,11 +13,12 @@ export function CachedQueryRefreshButton({
   onRefresh: () => void;
   label: string;
 }) {
+  useLocale();
   return (
-    <Tooltip title={`Atualizar ${label}`}>
+    <Tooltip title={translate('Atualizar {0}', [label])}>
       <span>
         <IconButton
-          aria-label={`Atualizar ${label}`}
+          aria-label={translate('Atualizar {0}', [label])}
           disabled={refreshing}
           onClick={() => {
             void invalidateResponseCache().then(onRefresh);
@@ -42,6 +44,7 @@ export function CachedQueryStatus({
   label: string;
   refreshButton?: 'text' | 'icon' | 'hidden';
 }) {
+  useLocale();
   if (!updatedAt) return null;
   return (
     <Stack
@@ -52,8 +55,10 @@ export function CachedQueryStatus({
     >
       <Typography variant="caption" color="text.secondary" aria-live="polite">
         {refreshing
-          ? 'Atualizando dados…'
-          : `Dados carregados em ${formatDateTime(new Date(updatedAt).toISOString())}`}
+          ? translate('Atualizando dados…')
+          : translate('Dados carregados em {0}', [
+              formatDateTime(new Date(updatedAt).toISOString()),
+            ])}
       </Typography>
       {refreshButton === 'icon' && (
         <CachedQueryRefreshButton
@@ -66,12 +71,12 @@ export function CachedQueryStatus({
         <Button
           size="small"
           disabled={refreshing}
-          aria-label={`Atualizar ${label}`}
+          aria-label={translate('Atualizar {0}', [label])}
           onClick={() => {
             void invalidateResponseCache().then(onRefresh);
           }}
         >
-          Atualizar
+          {translate('Atualizar')}
         </Button>
       )}
     </Stack>

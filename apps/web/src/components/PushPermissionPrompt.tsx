@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import {
   Alert,
@@ -26,6 +27,7 @@ export function PushPermissionPrompt({
   userId: string;
   blocked: boolean;
 }) {
+  useLocale();
   const [dismissed, setDismissed] = useState(() => invitationSeen(userId));
   const push = usePushNotifications();
   function rememberDismissal() {
@@ -56,13 +58,13 @@ export function PushPermissionPrompt({
       maxWidth="xs"
     >
       <DialogTitle id="push-invitation-title">
-        Fique por dentro das novidades da igreja
+        {translate('Fique por dentro das novidades da igreja')}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          As notificações são importantes para acompanhar os avisos, eventos e
-          novidades de A Ponte, mesmo com a aplicação fechada. Ative os alertas
-          neste dispositivo para não perder as próximas novidades.
+          {translate(
+            'As notificações são importantes para acompanhar os avisos, eventos e novidades de A Ponte, mesmo com a aplicação fechada. Ative os alertas neste dispositivo para não perder as próximas novidades.',
+          )}
         </DialogContentText>
         {push.action.isError && (
           <Alert severity="error" sx={{ mt: 2 }}>
@@ -78,7 +80,7 @@ export function PushPermissionPrompt({
         }}
       >
         <Button disabled={push.action.isPending} onClick={dismiss}>
-          Agora não
+          {translate('Agora não')}
         </Button>
         <Button
           variant="contained"
@@ -89,7 +91,9 @@ export function PushPermissionPrompt({
             })
           }
         >
-          {push.action.isPending ? 'A ativar…' : 'Ativar notificações'}
+          {push.action.isPending
+            ? translate('A ativar…')
+            : translate('Ativar notificações')}
         </Button>
       </DialogActions>
     </Dialog>

@@ -25,7 +25,7 @@ describe('Authentication', () => {
     renderApp('/members');
 
     expect(
-      await screen.findByRole('heading', { name: 'Acesse sua conta' }),
+      await screen.findByRole('heading', { name: 'Aceda à sua conta' }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();
     expect(screen.getByRole('contentinfo')).toHaveTextContent(
@@ -80,7 +80,7 @@ describe('Authentication', () => {
     renderApp('/login');
 
     await change(/E-mail/, 'ana@igreja.org');
-    await change(/^Senha/, 'segredo123');
+    await change(/^Palavra-passe/, 'segredo123');
     fireEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
 
     expect(
@@ -101,7 +101,7 @@ describe('Authentication', () => {
 
     const nav = screen.getByRole('navigation', { name: 'Navegação principal' });
     expect(within(nav).getByText('Membros')).toBeInTheDocument();
-    expect(within(nav).queryByText('Usuários')).not.toBeInTheDocument();
+    expect(within(nav).queryByText('Utilizadores')).not.toBeInTheDocument();
   });
 
   it('shows a friendly error for invalid credentials', async () => {
@@ -112,11 +112,11 @@ describe('Authentication', () => {
     renderApp('/login');
 
     await change(/E-mail/, 'ana@igreja.org');
-    await change(/^Senha/, 'errada123');
+    await change(/^Palavra-passe/, 'errada123');
     fireEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
 
     expect(
-      await screen.findByText('E-mail ou senha inválidos.'),
+      await screen.findByText('E-mail ou palavra-passe inválidos.'),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBeNull();
   });
@@ -145,7 +145,7 @@ describe('Authentication', () => {
     fireEvent.click(await screen.findByRole('menuitem', { name: /Sair/ }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Acesse sua conta' }),
+      await screen.findByRole('heading', { name: 'Aceda à sua conta' }),
     ).toBeInTheDocument();
     expect(
       requests.some((r) => r.method === 'POST' && r.path === '/auth/logout'),
@@ -172,8 +172,8 @@ describe('Authentication', () => {
     await change(/E-mail/, 'novo@igreja.org');
     await change(/Telefone/, '+351 912 345 678');
     await change(/Data de nascimento/, '1990-05-20');
-    await change(/^Senha/, 'segredo123456');
-    await change(/Confirmar senha/, 'segredo123456');
+    await change(/^Palavra-passe/, 'segredo123456');
+    await change(/Confirmar palavra-passe/, 'segredo123456');
     fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));
 
     expect(
@@ -198,8 +198,8 @@ describe('Authentication', () => {
     renderApp('/register');
     await change(/^Nome/, 'Novo');
     await change(/E-mail/, 'novo@igreja.org');
-    await change(/^Senha/, 'segredo123456');
-    await change(/Confirmar senha/, 'segredo123456');
+    await change(/^Palavra-passe/, 'segredo123456');
+    await change(/Confirmar palavra-passe/, 'segredo123456');
     fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));
     await waitFor(() =>
       expect(screen.getByLabelText(/Telefone/)).toHaveAttribute(
@@ -222,11 +222,13 @@ describe('Authentication', () => {
     await change(/E-mail/, 'novo@igreja.org');
     await change(/Telefone/, '+351 912 345 678');
     await change(/Data de nascimento/, '1990-05-20');
-    await change(/^Senha/, 'segredo123456');
-    await change(/Confirmar senha/, 'outra12345678');
+    await change(/^Palavra-passe/, 'segredo123456');
+    await change(/Confirmar palavra-passe/, 'outra12345678');
     fireEvent.click(await screen.findByRole('button', { name: /Criar conta/ }));
 
-    expect(await screen.findByText(/senhas não conferem/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/palavras-passe não conferem/i),
+    ).toBeInTheDocument();
     expect(requests.some((r) => r.path === '/auth/register')).toBe(false);
   });
 
@@ -261,12 +263,14 @@ describe('Authentication', () => {
     });
     renderApp('/reset-password?token=abc123');
 
-    await change(/^Nova senha/, 'novaSenha1234');
-    await change(/Confirmar nova senha/, 'novaSenha1234');
+    await change(/^Nova palavra-passe/, 'novaSenha1234');
+    await change(/Confirmar nova palavra-passe/, 'novaSenha1234');
     fireEvent.click(await screen.findByRole('button', { name: /Redefinir/ }));
 
     expect(
-      await screen.findByText('Senha redefinida. Entre com a nova senha.'),
+      await screen.findByText(
+        'Palavra-passe redefinida. Entre com a nova palavra-passe.',
+      ),
     ).toBeInTheDocument();
     expect(
       requests.find((r) => r.path === '/auth/reset-password')?.body,
@@ -283,16 +287,16 @@ describe('Authentication', () => {
     });
     renderApp('/account');
 
-    await change(/Senha atual/, 'antiga123');
-    await change(/^Nova senha/, 'novaSenha1234');
-    await change(/Confirmar nova senha/, 'novaSenha1234');
+    await change(/Palavra-passe atual/, 'antiga123');
+    await change(/^Nova palavra-passe/, 'novaSenha1234');
+    await change(/Confirmar nova palavra-passe/, 'novaSenha1234');
     fireEvent.click(
-      await screen.findByRole('button', { name: /Alterar senha/ }),
+      await screen.findByRole('button', { name: /Alterar palavra-passe/ }),
     );
 
     expect(
       await screen.findByText(
-        'Senha alterada. Entre novamente com a nova senha.',
+        'Palavra-passe alterada. Entre novamente com a nova palavra-passe.',
       ),
     ).toBeInTheDocument();
     expect(requests.find((r) => r.path === '/auth/password')?.body).toEqual({
@@ -315,7 +319,7 @@ describe('Permissions', () => {
     });
     expect(within(nav).getByText('Visão geral')).toBeInTheDocument();
     expect(within(nav).queryByText('Membros')).not.toBeInTheDocument();
-    expect(within(nav).queryByText('Usuários')).not.toBeInTheDocument();
+    expect(within(nav).queryByText('Utilizadores')).not.toBeInTheDocument();
   });
 
   it('shows all management navigation for ADMIN', async () => {
@@ -331,13 +335,13 @@ describe('Permissions', () => {
       name: 'Navegação principal',
     });
     expect(within(nav).getByText('Membros')).toBeInTheDocument();
-    expect(within(nav).queryByText('Usuários')).not.toBeInTheDocument();
-    fireEvent.click(within(nav).getByRole('button', { name: 'Financeiro' }));
+    expect(within(nav).queryByText('Utilizadores')).not.toBeInTheDocument();
+    fireEvent.click(within(nav).getByRole('button', { name: 'Finanças' }));
     expect(
       within(nav).getByRole('link', { name: 'Tesouraria' }),
     ).toHaveAttribute('href', '/finance');
     expect(
-      within(nav).getByRole('link', { name: 'Meus reembolsos' }),
+      within(nav).getByRole('link', { name: 'Os meus reembolsos' }),
     ).toHaveAttribute('href', '/reimbursements');
   });
 
@@ -371,7 +375,7 @@ describe('Permissions', () => {
       'Pessoas',
       'Grupos e ministérios',
       'Operação',
-      'Financeiro',
+      'Finanças',
       'Vídeos',
       'Comunicação',
     ]);
@@ -459,11 +463,11 @@ describe('Permissions', () => {
     expect(
       within(nav).getByRole('button', { name: 'Vídeos' }),
     ).toBeInTheDocument();
-    const finance = within(nav).getByRole('button', { name: 'Financeiro' });
+    const finance = within(nav).getByRole('button', { name: 'Finanças' });
     expect(finance).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(finance);
     expect(
-      await within(nav).findByRole('link', { name: 'Meus reembolsos' }),
+      await within(nav).findByRole('link', { name: 'Os meus reembolsos' }),
     ).toBeInTheDocument();
     expect(
       within(nav).queryByRole('link', { name: 'Tesouraria' }),

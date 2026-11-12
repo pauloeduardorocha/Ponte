@@ -98,7 +98,7 @@ describe('Public event signup', () => {
     });
     renderApp('/events/e1/register');
     expect(
-      await screen.findByRole('button', { name: 'Comprar ingresso' }),
+      await screen.findByRole('button', { name: 'Comprar bilhete' }),
     ).toBeDisabled();
   });
 });

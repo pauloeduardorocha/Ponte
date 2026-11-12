@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import { apiRequest } from './api';
 
 export function supportsPush() {
@@ -20,12 +21,16 @@ export async function enablePush(publicKey: string) {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted')
     throw new Error(
-      'Permita notificações nas definições deste navegador para receber alertas.',
+      translate(
+        'Permita notificações nas definições deste navegador para receber alertas.',
+      ),
     );
   const registration = await navigator.serviceWorker.getRegistration();
   if (!registration?.active)
     throw new Error(
-      'Atualize a aplicação e tente novamente para ativar as notificações.',
+      translate(
+        'Atualize a aplicação e tente novamente para ativar as notificações.',
+      ),
     );
   const bytes = Uint8Array.from(
     atob(publicKey.replace(/-/g, '+').replace(/_/g, '/')),
@@ -69,7 +74,7 @@ export async function disablePush() {
   });
   if (!(await subscription.unsubscribe()))
     throw new Error(
-      'Não foi possível desativar as notificações. Tente novamente.',
+      translate('Não foi possível desativar as notificações. Tente novamente.'),
     );
 }
 export async function stopBrowserPush() {

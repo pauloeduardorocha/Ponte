@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { useState } from 'react';
 import { useForm, Controller, type Control } from 'react-hook-form';
@@ -36,6 +37,7 @@ export function LookupField({
   control: Control<Values>;
   initial?: Entry;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Entry[]>([]);
@@ -76,7 +78,9 @@ export function LookupField({
     <Controller
       name={field.key}
       control={control}
-      rules={{ required: field.required ? 'Selecione uma opção' : false }}
+      rules={{
+        required: field.required ? translate('Selecione uma opção') : false,
+      }}
       render={({ field: input, fieldState }) => (
         <Autocomplete
           multiple={field.multiple}
@@ -89,14 +93,14 @@ export function LookupField({
                     options.find((o) => o.id === id) ??
                     selected.find((o) => o.id === id) ?? {
                       id,
-                      name: 'Seleção atual',
+                      name: translate('Seleção atual'),
                     },
                 )
               : (options.find((o) => o.id === input.value) ??
                 (input.value
                   ? {
                       id: String(input.value),
-                      name: initialEntry?.name ?? 'Seleção atual',
+                      name: initialEntry?.name ?? translate('Seleção atual'),
                     }
                   : null))
           }
@@ -135,8 +139,8 @@ export function LookupField({
           disabled={!permitted}
           noOptionsText={
             permitted
-              ? 'Nenhum resultado. Pesquise por nome.'
-              : 'Sem permissão para consultar opções'
+              ? translate('Nenhum resultado. Pesquise por nome.')
+              : translate('Sem permissão para consultar opções')
           }
           renderInput={(p) => (
             <TextField
@@ -151,8 +155,12 @@ export function LookupField({
               error={!!fieldState.error || data.isError}
               helperText={
                 fieldState.error?.message ??
-                (data.isError ? 'Falha ao carregar opções' : undefined) ??
-                (field.multiple ? 'Selecione uma ou mais opções.' : undefined)
+                (data.isError
+                  ? translate('Falha ao carregar opções')
+                  : undefined) ??
+                (field.multiple
+                  ? translate('Selecione uma ou mais opções.')
+                  : undefined)
               }
             />
           )}
@@ -178,6 +186,7 @@ export function OperationForm({
   onClose: () => void;
   onSaved: (result?: unknown) => void;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const defaults: Values = {};
   for (const f of fields) {
@@ -280,12 +289,14 @@ export function OperationForm({
               {fields.some((f) => f.key === 'visitorId') &&
                 fields.some((f) => f.key === 'memberId') && (
                   <Alert severity="info">
-                    Selecione um membro ou um visitante.
+                    {translate('Selecione um membro ou um visitante.')}
                   </Alert>
                 )}
               {audience === 'ALL' && (
                 <Alert severity="info">
-                  A mensagem será enviada a todos os membros ativos.
+                  {translate(
+                    'A mensagem será enviada a todos os membros ativos.',
+                  )}
                 </Alert>
               )}
               {visibleFields.map((f) =>
@@ -323,7 +334,9 @@ export function OperationForm({
                     name={f.key}
                     control={form.control}
                     rules={{
-                      required: f.required ? 'Preencha este campo' : false,
+                      required: f.required
+                        ? translate('Preencha este campo')
+                        : false,
                     }}
                     render={({ field, fieldState }) => (
                       <TextField
@@ -340,11 +353,13 @@ export function OperationForm({
                         onBlur={field.onBlur}
                         inputRef={field.ref}
                         error={!!fieldState.error}
-                        helperText={fieldState.error?.message}
+                        helperText={translate(fieldState.error?.message ?? '')}
                         slotProps={{ inputLabel: { shrink: true } }}
                       >
                         {!f.required && (
-                          <MenuItem value="">Não informado</MenuItem>
+                          <MenuItem value="">
+                            {translate('Não informado')}
+                          </MenuItem>
                         )}
                         {f.options
                           ?.filter(
@@ -387,18 +402,22 @@ export function OperationForm({
                       },
                     }}
                     {...form.register(f.key, {
-                      required: f.required ? 'Preencha este campo' : false,
+                      required: f.required
+                        ? translate('Preencha este campo')
+                        : false,
                       validate: (v) =>
                         !f.required ||
                         typeof v !== 'string' ||
                         !!v.trim() ||
-                        'Preencha este campo',
+                        translate('Preencha este campo'),
                     })}
                     error={!!form.formState.errors[f.key]}
                     helperText={
                       form.formState.errors[f.key]?.message ??
                       (f.key === 'scheduledAt'
-                        ? 'Sem agendamento, a notificação será enviada imediatamente. Com agendamento, o envio será automático a partir da data, na próxima execução do processamento (a cada cinco minutos, sujeito a atrasos). Horário deste dispositivo.'
+                        ? translate(
+                            'Sem agendamento, a notificação será enviada imediatamente. Com agendamento, o envio será automático a partir da data, na próxima execução do processamento (a cada cinco minutos, sujeito a atrasos). Horário deste dispositivo.',
+                          )
                         : undefined)
                     }
                   />
@@ -408,19 +427,25 @@ export function OperationForm({
           </DialogContent>
           <DialogActions>
             <Button disabled={save.isPending} onClick={onClose}>
-              Cancelar
+              {translate('Cancelar')}
             </Button>
             <Button type="submit" variant="contained" disabled={save.isPending}>
-              {save.isPending ? 'Salvando…' : 'Salvar'}
+              {save.isPending ? translate('Salvando…') : translate('Salvar')}
             </Button>
           </DialogActions>
         </form>
       </Dialog>
       <Dialog open={!!confirmation} onClose={() => setConfirmation(undefined)}>
-        <DialogTitle>Confirmar cancelamento ou inativação?</DialogTitle>
-        <DialogContent>O histórico será preservado.</DialogContent>
+        <DialogTitle>
+          {translate('Confirmar cancelamento ou inativação?')}
+        </DialogTitle>
+        <DialogContent>
+          {translate('O histórico será preservado.')}
+        </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmation(undefined)}>Voltar</Button>
+          <Button onClick={() => setConfirmation(undefined)}>
+            {translate('Voltar')}
+          </Button>
           <Button
             color="error"
             onClick={() => {
@@ -428,7 +453,7 @@ export function OperationForm({
               setConfirmation(undefined);
             }}
           >
-            Confirmar
+            {translate('Confirmar')}
           </Button>
         </DialogActions>
       </Dialog>

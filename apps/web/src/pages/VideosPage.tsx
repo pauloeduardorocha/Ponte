@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import {
   Alert,
   Box,
@@ -15,6 +16,7 @@ import { videoPlaylists } from '../lib/video-playlists';
 import { PlaylistPlayer } from '../components/PlaylistPlayer';
 
 export function VideosPage() {
+  useLocale();
   const { playlistId } = useParams();
   const playlist = videoPlaylists.find((item) => item.id === playlistId);
 
@@ -22,11 +24,13 @@ export function VideosPage() {
     return (
       <Stack spacing={2}>
         <Typography component="h1" variant="h4">
-          Playlist não encontrada
+          {translate('Playlist não encontrada')}
         </Typography>
-        <Alert severity="info">Escolha uma das playlists disponíveis.</Alert>
+        <Alert severity="info">
+          {translate('Escolha uma das playlists disponíveis.')}
+        </Alert>
         <Button component={Link} to="/videos">
-          Ver playlists
+          {translate('Ver playlists')}
         </Button>
       </Stack>
     );
@@ -43,12 +47,16 @@ export function VideosPage() {
       >
         <Box>
           <Typography component="h1" variant="h4">
-            {playlist?.title ?? 'Vídeos'}
+            {playlist?.title ?? translate('Vídeos')}
           </Typography>
           <Typography color="text.secondary">
             {playlist
-              ? 'Escolha um vídeo na lista para assistir às mensagens desta playlist.'
-              : 'Mensagens, louvores e séries da Igreja Ponte. Escolha uma playlist para assistir.'}
+              ? translate(
+                  'Escolha um vídeo na lista para assistir às mensagens desta playlist.',
+                )
+              : translate(
+                  'Mensagens, louvores e séries da Igreja Ponte. Escolha uma playlist para assistir.',
+                )}
           </Typography>
         </Box>
         <Button
@@ -61,7 +69,7 @@ export function VideosPage() {
           rel="noopener noreferrer"
           startIcon={<YouTube />}
         >
-          {playlist ? 'Abrir no YouTube' : 'Ver canal'}
+          {playlist ? translate('Abrir no YouTube') : translate('Ver canal')}
         </Button>
       </Stack>
       {playlist ? (
@@ -72,11 +80,13 @@ export function VideosPage() {
             startIcon={<ArrowBackRounded />}
             sx={{ alignSelf: 'flex-start' }}
           >
-            Todas as playlists
+            {translate('Todas as playlists')}
           </Button>
           <PlaylistPlayer key={playlist.id} playlist={playlist} />
           <Typography variant="body2" color="text.secondary">
-            Se um vídeo não estiver disponível aqui, use “Abrir no YouTube”.
+            {translate(
+              'Se um vídeo não estiver disponível aqui, use “Abrir no YouTube”.',
+            )}
           </Typography>
         </>
       ) : (
@@ -115,7 +125,7 @@ export function VideosPage() {
                     {item.title}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Ver vídeos da playlist
+                    {translate('Ver vídeos da playlist')}
                   </Typography>
                 </CardContent>
               </CardActionArea>

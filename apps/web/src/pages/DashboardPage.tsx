@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDate, formatDateTime } from '../lib/format';
 import { ConversationsCarousel } from '../components/Conversations';
 import { retryQuery } from '../lib/query-retry';
@@ -37,17 +38,19 @@ type Community = {
   }[];
 };
 export function DashboardPage() {
+  useLocale();
   const { user } = useAuth();
   if (user?.status === 'PENDING_APPROVAL')
     return (
       <Stack spacing={3}>
         <Typography variant="h4" component="h1">
-          Olá, {user.name}
+          {translate('Olá, ')}
+          {user.name}
         </Typography>
         <Alert severity="info">
-          Sua conta está aguardando aprovação de um administrador ou pastor.
-          Enquanto isso, você pode assistir aos vídeos da igreja e ver os
-          aniversariantes.
+          {translate(
+            'Sua conta está aguardando aprovação de um administrador ou pastor. Enquanto isso, você pode assistir aos vídeos da igreja e ver os aniversariantes.',
+          )}
         </Alert>
         <YouTubeCarousel />
         <BirthdaysCard />
@@ -57,6 +60,7 @@ export function DashboardPage() {
 }
 
 function ApprovedDashboard() {
+  useLocale();
   const { hasPermission, user } = useAuth();
   const canCommunity = ['MEMBER_READ', 'VISITOR_READ', 'EVENT_READ'].some((p) =>
     user?.permissions.some((code) => code === p),
@@ -80,11 +84,14 @@ function ApprovedDashboard() {
           {formatDate(new Date().toISOString())}
         </Typography>
         <Typography variant="h4" component="h1">
-          Bom dia, A Ponte
+          {translate('Bom dia, A Ponte')}
         </Typography>
         <Typography color="text.secondary">
-          Olá, {user?.name}. Acompanhe os dados e acesse as listas pelo seu
-          painel.
+          {translate('Olá, ')}
+          {user?.name}
+          {translate(
+            '. Acompanhe os dados e acesse as listas pelo seu painel.',
+          )}
         </Typography>
       </Box>
       <ConversationsCarousel />
@@ -107,14 +114,16 @@ function ApprovedDashboard() {
       <OperationalDashboard />
       {health.isError && (
         <Alert severity="warning">
-          Não foi possível conectar à API. Tente novamente em instantes.
+          {translate(
+            'Não foi possível conectar à API. Tente novamente em instantes.',
+          )}
         </Alert>
       )}
       {canCommunity && community.isPending && (
         <Skeleton
           variant="rounded"
           height={140}
-          aria-label="Carregando indicadores de A Ponte"
+          aria-label={translate('Carregando indicadores de A Ponte')}
         />
       )}
       {community.isError && (
@@ -122,11 +131,11 @@ function ApprovedDashboard() {
           severity="error"
           action={
             <Button onClick={() => void community.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar os indicadores de A Ponte.
+          {translate('Não foi possível carregar os indicadores de A Ponte.')}
         </Alert>
       )}
       {d && (
@@ -134,28 +143,30 @@ function ApprovedDashboard() {
           <Box className="metric-grid">
             {d.members && (
               <MetricCard
-                label="Membros ativos"
+                label={translate('Membros ativos')}
                 value={
                   d.members.find((m) => m.status === 'ACTIVE')?._count._all ?? 0
                 }
-                detail={`${d.members.reduce((v, m) => v + m._count._all, 0)} membros cadastrados`}
+                detail={translate('{0} membros cadastrados', [
+                  d.members.reduce((v, m) => v + m._count._all, 0),
+                ])}
                 href="/members?status=ACTIVE"
               />
             )}
             {d.visitors && (
               <MetricCard
-                label="Visitantes"
+                label={translate('Visitantes')}
                 value={d.visitors.reduce((v, m) => v + m._count._all, 0)}
-                detail="Acolhimento e acompanhamento"
+                detail={translate('Acolhimento e acompanhamento')}
                 color="info.main"
                 href="/visitors"
               />
             )}
             {d.events !== undefined && (
               <MetricCard
-                label="Próximos eventos"
+                label={translate('Próximos eventos')}
                 value={d.events}
-                detail="Agenda de A Ponte"
+                detail={translate('Agenda de A Ponte')}
                 color="secondary.main"
                 href="/events?status=SCHEDULED"
               />
@@ -164,17 +175,17 @@ function ApprovedDashboard() {
           <Box className="dashboard-panels">
             {d.members && (
               <BreakdownChart
-                title="Situação dos membros"
+                title={translate('Situação dos membros')}
                 items={[
                   {
-                    label: 'Ativos',
+                    label: translate('Ativos'),
                     value:
                       d.members.find((m) => m.status === 'ACTIVE')?._count
                         ._all ?? 0,
                     color: 'success.main',
                   },
                   {
-                    label: 'Inativos',
+                    label: translate('Inativos'),
                     value:
                       d.members.find((m) => m.status === 'INACTIVE')?._count
                         ._all ?? 0,
@@ -185,24 +196,24 @@ function ApprovedDashboard() {
             )}{' '}
             {d.visitors && (
               <BreakdownChart
-                title="Acompanhamento de visitantes"
+                title={translate('Acompanhamento de visitantes')}
                 items={[
                   {
-                    label: 'Novos',
+                    label: translate('Novos'),
                     value:
                       d.visitors.find((v) => v.status === 'NEW')?._count._all ??
                       0,
                     color: 'warning.main',
                   },
                   {
-                    label: 'Contactados',
+                    label: translate('Contactados'),
                     value:
                       d.visitors.find((v) => v.status === 'CONTACTED')?._count
                         ._all ?? 0,
                     color: 'success.main',
                   },
                   {
-                    label: 'Arquivados',
+                    label: translate('Arquivados'),
                     value:
                       d.visitors.find((v) => v.status === 'ARCHIVED')?._count
                         ._all ?? 0,
@@ -215,12 +226,14 @@ function ApprovedDashboard() {
           {d.upcomingEvents && (
             <Card variant="outlined">
               <CardContent>
-                <Typography variant="h6">Agenda próxima</Typography>
+                <Typography variant="h6">
+                  {translate('Agenda próxima')}
+                </Typography>
                 {!d.upcomingEvents.length && (
                   <Typography color="text.secondary" sx={{ mt: 2 }}>
-                    Nenhum evento agendado.{' '}
+                    {translate('Nenhum evento agendado.')}{' '}
                     <Button component={Link} to="/events">
-                      Abrir agenda
+                      {translate('Abrir agenda')}
                     </Button>
                   </Typography>
                 )}
@@ -236,7 +249,7 @@ function ApprovedDashboard() {
                       actions={
                         <>
                           <Button component={Link} to="/events">
-                            Ver agenda
+                            {translate('Ver agenda')}
                           </Button>
                         </>
                       }
@@ -255,16 +268,16 @@ function ApprovedDashboard() {
       {hasPermission('COMMUNITY_READ') && (
         <Stack direction="row" gap={1} flexWrap="wrap">
           <Button component={Link} to="/events?view=community">
-            Eventos e inscrições
+            {translate('Eventos e inscrições')}
           </Button>
           <Button component={Link} to="/library">
-            Livros e reservas
+            {translate('Livros e reservas')}
           </Button>
           <Button component={Link} to="/small-groups?view=community">
-            Grupos familiares
+            {translate('Grupos familiares')}
           </Button>
           <Button component={Link} to="/ministries?view=community">
-            Ministérios
+            {translate('Ministérios')}
           </Button>
         </Stack>
       )}
@@ -276,9 +289,11 @@ function ApprovedDashboard() {
         !hasPermission('FINANCE_DASHBOARD_READ') &&
         !hasPermission('COMMUNITY_READ') && (
           <Alert severity="info">
-            Seu perfil não possui acesso aos painéis administrativos.{' '}
+            {translate(
+              'Seu perfil não possui acesso aos painéis administrativos.',
+            )}{' '}
             <Button component={Link} to="/account">
-              Minha conta
+              {translate('Minha conta')}
             </Button>
           </Alert>
         )}

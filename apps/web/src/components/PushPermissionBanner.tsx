@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { Alert, Button, IconButton, Stack } from '@mui/material';
 import CloseRounded from '@mui/icons-material/CloseRounded';
@@ -6,6 +7,7 @@ import { usePushNotifications } from '../lib/use-push-notifications';
 
 const PREFIX = 'ponte:push-banner:v1:';
 export function PushPermissionBanner({ userId }: { userId: string }) {
+  useLocale();
   const [dismissed, setDismissed] = useState(() => {
     try {
       return localStorage.getItem(PREFIX + userId) === 'dismissed';
@@ -33,7 +35,7 @@ export function PushPermissionBanner({ userId }: { userId: string }) {
   return (
     <Alert
       severity="warning"
-      aria-label="Aviso de notificações"
+      aria-label={translate('Aviso de notificações')}
       sx={{
         mx: { xs: 2, sm: 3 },
         mt: 2,
@@ -45,7 +47,7 @@ export function PushPermissionBanner({ userId }: { userId: string }) {
         <Stack direction="row" alignItems="center" spacing={1}>
           {push.permission === 'denied' ? (
             <Button component={Link} to="/inbox" color="inherit" size="small">
-              Como ativar
+              {translate('Como ativar')}
             </Button>
           ) : (
             <Button
@@ -54,13 +56,15 @@ export function PushPermissionBanner({ userId }: { userId: string }) {
               disabled={!push.canEnable}
               onClick={() => push.action.mutate('enable')}
             >
-              {push.action.isPending ? 'A ativar…' : 'Ativar notificações'}
+              {push.action.isPending
+                ? translate('A ativar…')
+                : translate('Ativar notificações')}
             </Button>
           )}
           <IconButton
             color="inherit"
             size="small"
-            aria-label="Dispensar aviso de notificações"
+            aria-label={translate('Dispensar aviso de notificações')}
             onClick={dismiss}
           >
             <CloseRounded fontSize="small" />
@@ -68,10 +72,11 @@ export function PushPermissionBanner({ userId }: { userId: string }) {
         </Stack>
       }
     >
-      As notificações são importantes para acompanhar as novidades da igreja.
-      Ative os alertas neste dispositivo.
+      {translate(
+        'As notificações são importantes para acompanhar as novidades da igreja. Ative os alertas neste dispositivo.',
+      )}
       {push.permission === 'denied' &&
-        ' A permissão está bloqueada nas definições do navegador.'}
+        translate(' A permissão está bloqueada nas definições do navegador.')}
       {push.action.isError && <span> {push.action.error.message}</span>}
     </Alert>
   );

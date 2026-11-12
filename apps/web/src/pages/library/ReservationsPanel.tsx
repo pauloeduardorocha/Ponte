@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { StatusChip } from '../../components/DataPresentation';
 import { Button, Typography } from '@mui/material';
@@ -22,6 +23,7 @@ export function ReservationsPanel({
   setPageSize: (size: number) => void;
   open: OpenLibraryAction;
 }) {
+  useLocale();
   return (
     <Paged
       total={reservations.total}
@@ -31,9 +33,9 @@ export function ReservationsPanel({
       setPageSize={setPageSize}
     >
       <RecordTable
-        primaryLabel="Livro / Membro"
-        label={'Reservas'}
-        summaryLabel="Prazos"
+        primaryLabel={translate('Livro / Membro')}
+        label={translate('Reservas')}
+        summaryLabel={translate('Prazos')}
       >
         {reservations.items.map((r) => (
           <RecordRow
@@ -52,12 +54,15 @@ export function ReservationsPanel({
                   <Can permission="LIBRARY_RESERVATION_CANCEL">
                     <Button
                       onClick={() =>
-                        open('Cancelar reserva e promover próximo membro', () =>
-                          api.cancelReservation(r.id),
+                        open(
+                          translate(
+                            'Cancelar reserva e promover próximo membro',
+                          ),
+                          () => api.cancelReservation(r.id),
                         )
                       }
                     >
-                      Cancelar reserva
+                      {translate('Cancelar reserva')}
                     </Button>
                   </Can>
                 )}
@@ -65,7 +70,7 @@ export function ReservationsPanel({
                   <Can permission="LIBRARY_LOAN_CREATE">
                     <Button
                       onClick={() =>
-                        open('Emprestar exemplar reservado', () =>
+                        open(translate('Emprestar exemplar reservado'), () =>
                           api.borrow({
                             memberId: r.memberId,
                             bookCopyId: r.bookCopyId!,
@@ -73,7 +78,7 @@ export function ReservationsPanel({
                         )
                       }
                     >
-                      Emprestar reserva
+                      {translate('Emprestar reserva')}
                     </Button>
                   </Can>
                 )}
@@ -82,9 +87,11 @@ export function ReservationsPanel({
             summary={
               <>
                 <Typography>
-                  Fila criada {formatDate(r.createdAt)} · Expira{' '}
-                  {formatDate(r.holdUntil ?? r.expiresAt)} · Exemplar{' '}
-                  {r.bookCopy?.assetCode ?? 'aguardando'}
+                  {translate('Fila criada ')}
+                  {formatDate(r.createdAt)} {translate(' · Expira')}{' '}
+                  {formatDate(r.holdUntil ?? r.expiresAt)}{' '}
+                  {translate(' · Exemplar')}{' '}
+                  {r.bookCopy?.assetCode ?? translate('aguardando')}
                 </Typography>
               </>
             }

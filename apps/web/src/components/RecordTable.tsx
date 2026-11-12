@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { SortableTable } from './SortableTable';
 import type { ReactNode } from 'react';
 import {
@@ -12,9 +13,9 @@ import {
 
 export function RecordTable({
   children,
-  label = 'Registos',
-  primaryLabel = 'Registo',
-  detailsLabel = 'Detalhes',
+  label = translate('Registos'),
+  primaryLabel = translate('Registo'),
+  detailsLabel = translate('Detalhes'),
   summaryLabel,
   hasActions = true,
   imageLabel,
@@ -27,6 +28,7 @@ export function RecordTable({
   hasActions?: boolean;
   imageLabel?: string;
 }) {
+  useLocale();
   return (
     <TableContainer
       component={Paper}
@@ -56,7 +58,9 @@ export function RecordTable({
             <TableCell>{primaryLabel}</TableCell>
             {summaryLabel && <TableCell>{summaryLabel}</TableCell>}
             <TableCell>{detailsLabel}</TableCell>
-            {hasActions && <TableCell align="right">Ações</TableCell>}
+            {hasActions && (
+              <TableCell align="right">{translate('Ações')}</TableCell>
+            )}
           </TableRow>
         </TableHead>
         <TableBody>{children}</TableBody>
@@ -80,6 +84,7 @@ export function RecordRow({
   hasActions?: boolean;
   image?: ReactNode;
 }) {
+  useLocale();
   return (
     <TableRow hover>
       {image !== undefined && (

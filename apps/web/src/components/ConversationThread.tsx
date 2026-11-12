@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { errorMessage, personInitials } from './conversation-utils';
 import { useState } from 'react';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ export function ConversationThread({
   onChanged: () => void;
   depth?: number;
 }) {
+  useLocale();
   const [replying, setReplying] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const replies = useInfiniteQuery({
@@ -51,7 +53,7 @@ export function ConversationThread({
   return (
     <Stack
       component="article"
-      aria-label={`Comentário de ${post.author.name}`}
+      aria-label={translate('Comentário de {0}', [post.author.name])}
       spacing={1}
       sx={{ minWidth: 0 }}
     >
@@ -84,7 +86,7 @@ export function ConversationThread({
                 color="text.secondary"
                 fontStyle="italic"
               >
-                mensagem excluída
+                {translate('mensagem excluída')}
               </Typography>
             ) : (
               <MessageText post={post} />
@@ -114,10 +116,10 @@ export function ConversationThread({
               <Button
                 size="small"
                 color="inherit"
-                aria-label={`Responder a ${post.author.name}`}
+                aria-label={translate('Responder a {0}', [post.author.name])}
                 onClick={() => setReplying((value) => !value)}
               >
-                Responder
+                {translate('Responder')}
               </Button>
             )}
             <ConversationPostActions post={post} onDeleted={onChanged} />
@@ -133,7 +135,8 @@ export function ConversationThread({
               }}
             >
               <Typography variant="caption" color="text.secondary">
-                Respondendo a {post.author.name}
+                {translate('Respondendo a ')}
+                {post.author.name}
               </Typography>
               <ConversationComposer
                 topicId={topicId}
@@ -145,14 +148,17 @@ export function ConversationThread({
                 }}
               />
               <Button size="small" onClick={() => setReplying(false)}>
-                Cancelar resposta
+                {translate('Cancelar resposta')}
               </Button>
             </Box>
           )}
           {!expanded && !!post._count?.children && (
             <Button size="small" onClick={() => setExpanded(true)}>
-              Ver {post._count.children}{' '}
-              {post._count.children === 1 ? 'resposta' : 'respostas'}
+              {translate('Ver ')}
+              {post._count.children}{' '}
+              {post._count.children === 1
+                ? translate('resposta')
+                : translate('respostas')}
             </Button>
           )}
         </Box>
@@ -169,7 +175,7 @@ export function ConversationThread({
         >
           {replies.isPending && (
             <Typography role="status" variant="caption">
-              Carregando respostas…
+              {translate('Carregando respostas…')}
             </Typography>
           )}
           {replies.isError && (
@@ -177,7 +183,7 @@ export function ConversationThread({
               severity="error"
               action={
                 <Button onClick={() => void replies.refetch()}>
-                  Tentar novamente
+                  {translate('Tentar novamente')}
                 </Button>
               }
             >
@@ -199,7 +205,7 @@ export function ConversationThread({
               disabled={replies.isFetchingNextPage}
               onClick={() => void replies.fetchNextPage()}
             >
-              Mostrar mais respostas
+              {translate('Mostrar mais respostas')}
             </Button>
           )}
         </Stack>

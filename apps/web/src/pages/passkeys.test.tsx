@@ -60,7 +60,7 @@ describe('Passkeys in login and account', () => {
       }),
     );
     expect(
-      await screen.findByRole('heading', { name: 'Minha conta' }),
+      await screen.findByRole('heading', { name: 'A minha conta' }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBe('passkey-session');
     expect(
@@ -101,7 +101,7 @@ describe('Passkeys in login and account', () => {
     renderApp('/account');
 
     expect(
-      await screen.findByRole('heading', { name: 'Minha conta' }),
+      await screen.findByRole('heading', { name: 'A minha conta' }),
     ).toBeInTheDocument();
     expect(startAuthentication).toHaveBeenCalledTimes(1);
     expect(getAccessToken()).toBe('mobile-session');
@@ -135,13 +135,13 @@ describe('Passkeys in login and account', () => {
     fireEvent.change(screen.getByLabelText('E-mail'), {
       target: { value: user.email },
     });
-    fireEvent.change(screen.getByLabelText('Senha'), {
+    fireEvent.change(screen.getByLabelText('Palavra-passe'), {
       target: { value: 'current-password' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Minha conta' }),
+      await screen.findByRole('heading', { name: 'A minha conta' }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBe('password-session');
     expect(startAuthentication).toHaveBeenCalledTimes(1);
@@ -213,7 +213,9 @@ describe('Passkeys in login and account', () => {
     renderApp('/account');
     await screen.findByText('Nenhuma passkey registada.');
     fireEvent.change(
-      screen.getByLabelText('Senha atual para ativar', { exact: false }),
+      screen.getByLabelText('Palavra-passe atual para ativar', {
+        exact: false,
+      }),
       { target: { value: 'current-password' } },
     );
     fireEvent.click(
@@ -223,7 +225,9 @@ describe('Passkeys in login and account', () => {
     expect(shouldStartPasskeyLogin()).toBe(true);
     await waitFor(() =>
       expect(
-        screen.getByLabelText('Senha atual para ativar', { exact: false }),
+        screen.getByLabelText('Palavra-passe atual para ativar', {
+          exact: false,
+        }),
       ).toHaveValue(''),
     );
     expect(

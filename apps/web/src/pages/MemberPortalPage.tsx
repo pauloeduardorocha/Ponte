@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { BookCatalogDetails, BookCover } from './library/BookCatalogDetails';
 import { formatDateTime } from '../lib/format';
 import { useAuth } from '../auth/auth-context';
@@ -58,13 +59,22 @@ type Entry = {
 };
 
 const titles = {
-  events: 'Agenda de eventos',
-  'small-groups': 'Grupos familiares',
-  ministries: 'Ministérios',
-  books: 'Biblioteca',
+  get events() {
+    return translate('Agenda de eventos');
+  },
+  get 'small-groups'() {
+    return translate('Grupos familiares');
+  },
+  get ministries() {
+    return translate('Ministérios');
+  },
+  get books() {
+    return translate('Biblioteca');
+  },
 };
 
 export function MemberPortalPage({ resource }: { resource: Resource }) {
+  useLocale();
   const client = useQueryClient();
   const { hasPermission } = useAuth();
   const managePermission = {
@@ -128,14 +138,14 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
           (resource === 'ministries' ||
             hasPermission(managePermission[resource])) ? (
             <Button component={Link} to={`/${resource}`}>
-              Gerenciar
+              {translate('Gerenciar')}
             </Button>
           ) : undefined
         }
       />
 
       <TextField
-        label="Pesquisar por nome"
+        label={translate('Pesquisar por nome')}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -143,7 +153,9 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
         }}
       />
 
-      {data.isPending && <Typography role="status">Carregando...</Typography>}
+      {data.isPending && (
+        <Typography role="status">{translate('Carregando...')}</Typography>
+      )}
 
       {data.isError && (
         <QueryError error={data.error} onRetry={() => void data.refetch()} />
@@ -154,16 +166,18 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
       )}
 
       {reserve.isSuccess && (
-        <Alert severity="success">Reserva realizada.</Alert>
+        <Alert severity="success">{translate('Reserva realizada.')}</Alert>
       )}
 
       {data.data && (
         <>
           {data.data.items.length === 0 && (
-            <Typography>Nenhum registro encontrado.</Typography>
+            <Typography>{translate('Nenhum registro encontrado.')}</Typography>
           )}
 
-          <RecordTable imageLabel={resource === 'books' ? 'Capa' : undefined}>
+          <RecordTable
+            imageLabel={resource === 'books' ? translate('Capa') : undefined}
+          >
             {data.data.items.map((entry) => (
               <RecordRow
                 key={entry.id}
@@ -188,7 +202,7 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                         component={Link}
                         to={`/schedules?ministryId=${entry.id}`}
                       >
-                        Ver escalas
+                        {translate('Ver escalas')}
                       </Button>
                     )}
                     {resource === 'events' && (
@@ -196,7 +210,7 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                         component={Link}
                         to={`/events/${entry.id}/register`}
                       >
-                        Ver evento e inscrever-se
+                        {translate('Ver evento e inscrever-se')}
                       </Button>
                     )}
 
@@ -210,14 +224,14 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                             })
                           }
                         >
-                          Ver detalhes
+                          {translate('Ver detalhes')}
                         </Button>
                         <Button
                           onClick={() =>
                             setSelectedBook({ id: entry.id, historyOnly: true })
                           }
                         >
-                          Histórico de empréstimos
+                          {translate('Histórico de empréstimos')}
                         </Button>
                       </>
                     )}
@@ -227,13 +241,13 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                           disabled={reserve.isPending}
                           onClick={() => reserve.mutate(entry.id)}
                         >
-                          Reservar
+                          {translate('Reservar')}
                         </Button>
                       )}
 
                     {entry.canViewDetails && (
                       <Button onClick={() => setGroupId(entry.id)}>
-                        Detalhes do meu grupo
+                        {translate('Detalhes do meu grupo')}
                       </Button>
                     )}
                   </>
@@ -241,24 +255,24 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
               >
                 {resource === 'books' && (
                   <Typography>
-                    Exemplares:{' '}
+                    {translate('Exemplares:')}{' '}
                     {availability.isError
                       ? '—'
                       : (availability.values.get(entry.id)?.quantity ??
                         '—')}{' '}
-                    · Disponíveis:{' '}
+                    {translate('· Disponíveis:')}{' '}
                     {availability.isFetching
-                      ? 'Verificando…'
+                      ? translate('Verificando…')
                       : availability.isError
-                        ? 'Indisponível para consulta'
+                        ? translate('Indisponível para consulta')
                         : (availability.values.get(entry.id)?.available ??
-                          'Não informado')}
+                          translate('Não informado'))}
                   </Typography>
                 )}
                 {resource === 'books' && (
                   <>
                     <Typography>
-                      {entry.author ?? 'Autor não informado'}
+                      {entry.author ?? translate('Autor não informado')}
                     </Typography>
                     {entry.category && (
                       <Typography>
@@ -271,15 +285,20 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                     )}
                     {entry.registrationNumber && (
                       <Typography>
-                        Registo: {entry.registrationNumber}
+                        {translate('Registo: ')}
+                        {entry.registrationNumber}
                       </Typography>
                     )}
                     {entry.collection && (
-                      <Typography>Coleção: {entry.collection}</Typography>
+                      <Typography>
+                        {translate('Coleção: ')}
+                        {entry.collection}
+                      </Typography>
                     )}
                     {Boolean(entry.pendingInventory) && (
                       <Typography>
-                        Por conferir: {entry.pendingInventory}
+                        {translate('Por conferir: ')}
+                        {entry.pendingInventory}
                       </Typography>
                     )}
                   </>
@@ -299,14 +318,17 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
                 )}
 
                 {entry.leader && (
-                  <Typography>Líder: {entry.leader.name}</Typography>
+                  <Typography>
+                    {translate('Líder: ')}
+                    {entry.leader.name}
+                  </Typography>
                 )}
 
                 {entry.members && (
                   <Typography>
-                    Integrantes:{' '}
+                    {translate('Integrantes:')}{' '}
                     {entry.members.map((m) => m.member.name).join(', ') ||
-                      'Nenhum integrante'}
+                      translate('Nenhum integrante')}
                   </Typography>
                 )}
               </RecordRow>
@@ -324,7 +346,7 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
               setPage(0);
             }}
             onPageChange={(_, next) => setPage(next)}
-            labelRowsPerPage="Por página"
+            labelRowsPerPage={translate('Por página')}
           />
         </>
       )}
@@ -337,12 +359,16 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
         />
       )}
       <Dialog open={!!groupId} onClose={() => setGroupId(undefined)} fullWidth>
-        <DialogTitle>{detail.data?.name ?? 'Meu grupo familiar'}</DialogTitle>
+        <DialogTitle>
+          {detail.data?.name ?? translate('Meu grupo familiar')}
+        </DialogTitle>
 
         <DialogContent>
           <Stack spacing={2}>
             {detail.isPending && (
-              <Typography role="status">Carregando...</Typography>
+              <Typography role="status">
+                {translate('Carregando...')}
+              </Typography>
             )}
 
             {detail.isError && (
@@ -355,30 +381,36 @@ export function MemberPortalPage({ resource }: { resource: Resource }) {
             {detail.data && (
               <>
                 <Typography>{detail.data.description}</Typography>
-                <Typography>Endereço: {detail.data.address}</Typography>
                 <Typography>
-                  Encontro:{' '}
-                  {
-                    [
-                      'Domingo',
-                      'Segunda-feira',
-                      'Terça-feira',
-                      'Quarta-feira',
-                      'Quinta-feira',
-                      'Sexta-feira',
-                      'Sábado',
-                    ][detail.data.meetingDay ?? 0]
-                  }{' '}
-                  às {detail.data.meetingTime}
+                  {translate('Endereço: ')}
+                  {detail.data.address}
                 </Typography>
                 <Typography>
-                  Integrantes:{' '}
+                  {translate('Encontro:')}{' '}
+                  {
+                    [
+                      translate('Domingo'),
+                      translate('Segunda-feira'),
+                      translate('Terça-feira'),
+                      translate('Quarta-feira'),
+                      translate('Quinta-feira'),
+                      translate('Sexta-feira'),
+                      translate('Sábado'),
+                    ][detail.data.meetingDay ?? 0]
+                  }{' '}
+                  {translate('às ')}
+                  {detail.data.meetingTime}
+                </Typography>
+                <Typography>
+                  {translate('Integrantes:')}{' '}
                   {detail.data.members?.map((m) => m.member.name).join(', ')}
                 </Typography>
               </>
             )}
 
-            <Button onClick={() => setGroupId(undefined)}>Fechar</Button>
+            <Button onClick={() => setGroupId(undefined)}>
+              {translate('Fechar')}
+            </Button>
           </Stack>
         </DialogContent>
       </Dialog>

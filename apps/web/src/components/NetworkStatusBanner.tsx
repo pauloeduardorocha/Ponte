@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useSyncExternalStore } from 'react';
 import { Alert } from '@mui/material';
 
@@ -11,6 +12,7 @@ function subscribe(notify: () => void) {
 }
 
 export function NetworkStatusBanner() {
+  useLocale();
   const online = useSyncExternalStore(
     subscribe,
     () => navigator.onLine,
@@ -25,8 +27,9 @@ export function NetworkStatusBanner() {
         zIndex: (theme) => theme.zIndex.appBar + 1,
       }}
     >
-      Sem conexão. Mantenha esta página aberta para preservar suas alterações.
-      As consultas serão retomadas quando a rede voltar.
+      {translate(
+        'Sem conexão. Mantenha esta página aberta para preservar suas alterações. As consultas serão retomadas quando a rede voltar.',
+      )}
     </Alert>
   );
 }

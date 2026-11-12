@@ -141,16 +141,16 @@ describe('Conversation panels', () => {
     });
     renderApp(`/conversations/${id}`);
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Excluir conversa' }),
+      await screen.findByRole('button', { name: 'Eliminar conversa' }),
     );
     expect(requests.some((r) => r.method === 'DELETE')).toBe(false);
     fireEvent.click(
       within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Excluir',
+        name: 'Eliminar',
       }),
     );
     expect(
-      await screen.findByRole('heading', { name: 'conversa excluída' }),
+      await screen.findByRole('heading', { name: 'conversa eliminada' }),
     ).toBeInTheDocument();
     expect(screen.queryByText('@Maria')).not.toBeInTheDocument();
     expect(
@@ -180,9 +180,9 @@ describe('Conversation panels', () => {
       },
     });
     renderApp(`/conversations/${id}`);
-    expect(await screen.findByText('mensagem excluída')).toBeInTheDocument();
+    expect(await screen.findByText('mensagem eliminada')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Excluir/ }),
+      screen.queryByRole('button', { name: /Eliminar/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -199,7 +199,7 @@ describe('Conversation panels', () => {
     });
     renderApp(`/conversations/${id}`);
     expect(
-      await screen.findByRole('button', { name: 'Excluir conversa' }),
+      await screen.findByRole('button', { name: 'Eliminar conversa' }),
     ).toBeInTheDocument();
   });
 

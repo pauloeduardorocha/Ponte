@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { SortableTable } from '../components/SortableTable';
 import { useState } from 'react';
@@ -32,6 +33,7 @@ type BankImport = {
 };
 
 export function InvoicesPage() {
+  useLocale();
   const { hasPermission } = useAuth();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -76,27 +78,29 @@ export function InvoicesPage() {
   });
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Faturas</Typography>
+      <Typography variant="h5">{translate('Faturas')}</Typography>
       <Typography color="text.secondary">
-        Consulte as faturas recuperadas do e-Fatura.
+        {translate('Consulte as faturas recuperadas do e-Fatura.')}
       </Typography>
       {canFetch && (
         <>
           <TextField
             select
-            label="Extrato para consulta do e-Fatura"
+            label={translate('Extrato para consulta do e-Fatura')}
             value={importId}
             disabled={imports.isPending || open}
             onChange={(event) => setImportId(event.target.value)}
             slotProps={{ select: { native: true } }}
-            helperText="O scraper consulta o período dos movimentos do extrato selecionado."
+            helperText={translate(
+              'O scraper consulta o período dos movimentos do extrato selecionado.',
+            )}
           >
-            <option value="">Selecione um extrato</option>
+            <option value="">{translate('Selecione um extrato')}</option>
             {imports.data?.map((item) => (
               <option key={item.id} value={item.id}>
                 {item.period?.start && item.period.end
                   ? `${formatDateOnly(item.period.start)} a ${formatDateOnly(item.period.end)}`
-                  : 'Período indisponível'}{' '}
+                  : translate('Período indisponível')}{' '}
                 · {item.filename}
               </option>
             ))}
@@ -106,7 +110,7 @@ export function InvoicesPage() {
               severity="error"
               action={
                 <Button onClick={() => void imports.refetch()}>
-                  Tentar novamente
+                  {translate('Tentar novamente')}
                 </Button>
               }
             >
@@ -115,7 +119,9 @@ export function InvoicesPage() {
           )}
           {imports.data?.length === 0 && (
             <Alert severity="info">
-              Importe e processe um extrato bancário para executar o scraper.
+              {translate(
+                'Importe e processe um extrato bancário para executar o scraper.',
+              )}
             </Alert>
           )}
           <EfaturaFetch
@@ -128,7 +134,7 @@ export function InvoicesPage() {
         </>
       )}
       <TextField
-        label="Pesquisar emitente, NIF ou número"
+        label={translate('Pesquisar emitente, NIF ou número')}
         value={search}
         onChange={(event) => {
           setSearch(event.target.value);
@@ -136,14 +142,16 @@ export function InvoicesPage() {
         }}
       />
       {invoices.isFetching && (
-        <Typography role="status">Carregando faturas…</Typography>
+        <Typography role="status">
+          {translate('Carregando faturas…')}
+        </Typography>
       )}
       {invoices.error && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void invoices.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -151,23 +159,23 @@ export function InvoicesPage() {
         </Alert>
       )}
       {invoices.data?.total === 0 && (
-        <Alert severity="info">Nenhuma fatura encontrada.</Alert>
+        <Alert severity="info">{translate('Nenhuma fatura encontrada.')}</Alert>
       )}
       <TableContainer>
         <SortableTable
           nonSortableColumns={[6]}
-          aria-label="Faturas recuperadas do e-Fatura"
+          aria-label={translate('Faturas recuperadas do e-Fatura')}
         >
           <TableHead>
             <TableRow>
               {[
-                'Data',
-                'Emitente',
+                translate('Data'),
+                translate('Emitente'),
                 'NIF',
-                'Número',
-                'Valor',
-                'Associação',
-                'Documentos',
+                translate('Número'),
+                translate('Valor'),
+                translate('Associação'),
+                translate('Documentos'),
               ].map((label) => (
                 <TableCell key={label}>{label}</TableCell>
               ))}
@@ -187,7 +195,11 @@ export function InvoicesPage() {
                   <Chip
                     size="small"
                     color={invoice.expenseId ? 'success' : 'default'}
-                    label={invoice.expenseId ? 'Associada' : 'Não associada'}
+                    label={
+                      invoice.expenseId
+                        ? translate('Associada')
+                        : translate('Não associada')
+                    }
                   />
                   {invoice.expenseId &&
                     hasPermission('FINANCE_TRANSACTION_READ') && (
@@ -195,7 +207,7 @@ export function InvoicesPage() {
                         component={Link}
                         to={`/finance?tab=expenses&record=${encodeURIComponent(invoice.expenseId)}`}
                       >
-                        Ver movimento
+                        {translate('Ver movimento')}
                       </Button>
                     )}
                 </TableCell>
@@ -212,10 +224,11 @@ export function InvoicesPage() {
           disabled={page === 1 || invoices.isFetching}
           onClick={() => setPage(page - 1)}
         >
-          Anterior
+          {translate('Anterior')}
         </Button>
         <Typography>
-          Página {page} · {invoices.data?.total ?? 0} faturas
+          {translate('Página ')}
+          {page} · {invoices.data?.total ?? 0} {translate(' faturas')}
         </Typography>
         <Button
           disabled={
@@ -223,7 +236,7 @@ export function InvoicesPage() {
           }
           onClick={() => setPage(page + 1)}
         >
-          Seguinte
+          {translate('Seguinte')}
         </Button>
       </Stack>
     </Stack>

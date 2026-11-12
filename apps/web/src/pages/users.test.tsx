@@ -52,9 +52,7 @@ describe('Unified member accounts', () => {
       'PATCH /users/u2/roles': { body: {} },
     });
     renderApp('/members/m2');
-    fireEvent.click(
-      await screen.findByRole('button', { name: 'Gerenciar roles' }),
-    );
+    fireEvent.click(await screen.findByRole('button', { name: 'Gerir roles' }));
     const dialog = within(await screen.findByRole('dialog'));
     expect(
       await dialog.findByRole('checkbox', { name: 'MEMBER' }),
@@ -63,7 +61,7 @@ describe('Unified member accounts', () => {
       dialog.getByRole('checkbox', { name: 'SUPER_ADMIN' }),
     ).toBeDisabled();
     fireEvent.click(dialog.getByRole('checkbox', { name: 'SECRETARY' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Salvar roles' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Guardar roles' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         roleIds: ['r1', 'r2'],
@@ -86,11 +84,15 @@ describe('Unified member accounts', () => {
         status: 'DISABLED',
       }),
     );
-    fireEvent.change(screen.getByLabelText('Nova senha de acesso'), {
+    fireEvent.change(screen.getByLabelText('Nova palavra-passe de acesso'), {
       target: { value: 'new-password-2026' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Definir senha' }));
-    expect(await screen.findByText('Senha definida.')).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Definir palavra-passe' }),
+    );
+    expect(
+      await screen.findByText('Palavra-passe definida.'),
+    ).toBeInTheDocument();
     expect(requests.find((r) => r.path === '/users/u2/password')?.body).toEqual(
       { password: 'new-password-2026' },
     );
@@ -103,13 +105,13 @@ describe('Unified member accounts', () => {
     renderApp('/members/m2');
     expect(await screen.findByText('Acesso à plataforma')).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: 'Gerenciar roles' }),
+      screen.queryByRole('button', { name: 'Gerir roles' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Desativar acesso' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByLabelText('Nova senha de acesso'),
+      screen.queryByLabelText('Nova palavra-passe de acesso'),
     ).not.toBeInTheDocument();
   });
 });

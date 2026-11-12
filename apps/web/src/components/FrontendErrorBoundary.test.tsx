@@ -36,11 +36,11 @@ describe('Frontend render failure recovery', () => {
           <Broken />
         </FrontendErrorBoundary>,
       );
-      expect(screen.getByRole('status')).toHaveTextContent('Verificando');
+      expect(screen.getByRole('status')).toHaveTextContent('A verificar');
       expect(screen.queryByText('Internal details')).not.toBeInTheDocument();
       finish(version);
       expect(await screen.findByRole('alert')).toHaveTextContent(
-        version ? UPDATE_MESSAGE : 'Não foi possível carregar esta tela',
+        version ? UPDATE_MESSAGE : 'Não foi possível carregar este ecrã',
       );
       expect(reportFrontendError).toHaveBeenCalledWith(
         'runtime',

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { Can } from '../../auth/guards';
 import * as api from '../../lib/library-api';
@@ -9,28 +10,33 @@ export function SettingsPanel({
   settings: api.LibrarySettings;
   open: OpenLibraryAction;
 }) {
+  useLocale();
   return (
     <Card variant="outlined">
       <CardContent>
         <Stack spacing={1}>
           <Typography>
-            Prazo: {settings.defaultLoanDays} dias · Limite: {settings.maxBooks}{' '}
-            livros · Renovações: {settings.maxRenewals}
+            {translate('Prazo: ')}
+            {settings.defaultLoanDays} {translate(' dias · Limite: ')}
+            {settings.maxBooks} {translate('livros · Renovações: ')}
+            {settings.maxRenewals}
           </Typography>
           <Typography>
-            Carência: {settings.graceDays} dias · Multa diária:{' '}
-            {settings.dailyFine} · Bloquear atrasados:{' '}
-            {settings.blockOverdue ? 'Sim' : 'Não'}
+            {translate('Carência: ')}
+            {settings.graceDays} {translate(' dias · Multa diária:')}{' '}
+            {settings.dailyFine} {translate(' · Bloquear atrasados:')}{' '}
+            {settings.blockOverdue ? translate('Sim') : translate('Não')}
           </Typography>
           <Typography>
-            Retirada reservada: {settings.holdDays} dias · Validade da fila:{' '}
-            {settings.reservationDays} dias · Calendário UTC
+            {translate('Retirada reservada: ')}
+            {settings.holdDays} {translate(' dias · Validade da fila:')}{' '}
+            {settings.reservationDays} {translate(' dias · Calendário UTC')}
           </Typography>
           <Can permission="LIBRARY_SETTINGS_UPDATE">
             <Button
               onClick={() =>
                 open(
-                  'Configurações da biblioteca',
+                  translate('Configurações da biblioteca'),
                   (v) =>
                     api.updateLibrarySettings({
                       defaultLoanDays: Number(v.defaultLoanDays),
@@ -45,48 +51,48 @@ export function SettingsPanel({
                   [
                     {
                       name: 'defaultLoanDays',
-                      label: 'Prazo de empréstimo (dias)',
+                      label: translate('Prazo de empréstimo (dias)'),
                       type: 'number',
                       required: true,
                     },
                     {
                       name: 'maxBooks',
-                      label: 'Limite de livros por membro',
+                      label: translate('Limite de livros por membro'),
                       type: 'number',
                       required: true,
                     },
                     {
                       name: 'maxRenewals',
-                      label: 'Limite de renovações',
+                      label: translate('Limite de renovações'),
                       type: 'number',
                       required: true,
                     },
                     {
                       name: 'graceDays',
-                      label: 'Carência (dias)',
+                      label: translate('Carência (dias)'),
                       type: 'number',
                       required: true,
                     },
                     {
                       name: 'dailyFine',
-                      label: 'Multa diária decimal',
+                      label: translate('Multa diária decimal'),
                       required: true,
                     },
                     {
                       name: 'blockOverdue',
-                      label: 'Bloquear atrasados',
+                      label: translate('Bloquear atrasados'),
                       options: ['true', 'false'],
                       required: true,
                     },
                     {
                       name: 'holdDays',
-                      label: 'Prazo de retirada (dias)',
+                      label: translate('Prazo de retirada (dias)'),
                       type: 'number',
                       required: true,
                     },
                     {
                       name: 'reservationDays',
-                      label: 'Validade da fila (dias)',
+                      label: translate('Validade da fila (dias)'),
                       type: 'number',
                       required: true,
                     },
@@ -95,7 +101,7 @@ export function SettingsPanel({
                 )
               }
             >
-              Editar configurações
+              {translate('Editar configurações')}
             </Button>
           </Can>
         </Stack>

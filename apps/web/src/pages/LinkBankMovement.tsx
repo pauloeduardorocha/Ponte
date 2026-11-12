@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -30,6 +31,7 @@ export function LinkBankMovement({
   amount: string;
   onLinked?: () => void;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -61,19 +63,26 @@ export function LinkBankMovement({
           setOpen(true);
         }}
       >
-        Vincular a {income ? 'receita' : 'despesa'} existente
+        {translate('Vincular a ')}
+        {income ? 'receita' : 'despesa'} {translate(' existente')}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth>
         <DialogTitle>
-          Vincular a {income ? 'receita' : 'despesa'} existente
+          {translate('Vincular a ')}
+          {income ? 'receita' : 'despesa'} {translate(' existente')}
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Typography>
-              Escolha um registro concluído com a mesma conta, data (
-              {formatDateOnly(date)}) e valor ({amount}). O vínculo preserva a
-              categoria e as associações existentes, sem cadastrar outro
-              registro financeiro.
+              {translate(
+                'Escolha um registro concluído com a mesma conta, data (',
+              )}
+              {formatDateOnly(date)}
+              {translate(') e valor (')}
+              {amount}
+              {translate(
+                '). O vínculo preserva a categoria e as associações existentes, sem cadastrar outro registro financeiro.',
+              )}
             </Typography>
             <EntitySelect
               endpoint={`/finance/${income ? 'incomes' : 'expenses'}`}
@@ -83,7 +92,11 @@ export function LinkBankMovement({
                 end: date.slice(0, 10),
                 ...(accountId ? { accountId } : {}),
               }}
-              label={income ? 'Receita existente' : 'Despesa existente'}
+              label={
+                income
+                  ? translate('Receita existente')
+                  : translate('Despesa existente')
+              }
               value={ledgerId}
               onChange={(event) => setLedgerId(event.target.value)}
             />
@@ -91,13 +104,15 @@ export function LinkBankMovement({
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setOpen(false)}>
+            {translate('Cancelar')}
+          </Button>
           <Button
             variant="contained"
             disabled={!ledgerId || link.isPending}
             onClick={() => link.mutate()}
           >
-            Vincular registro
+            {translate('Vincular registro')}
           </Button>
         </DialogActions>
       </Dialog>

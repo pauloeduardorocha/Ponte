@@ -37,8 +37,8 @@ function show(canManage = true) {
 it('hides upload and deletion from ordinary members', async () => {
   show(false);
   await screen.findByText('Nenhum anexo nesta escala.');
-  expect(screen.queryByText('Anexar arquivo')).not.toBeInTheDocument();
-  expect(screen.queryByText('Excluir escala')).not.toBeInTheDocument();
+  expect(screen.queryByText('Anexar ficheiro')).not.toBeInTheDocument();
+  expect(screen.queryByText('Eliminar escala')).not.toBeInTheDocument();
 });
 it('rejects an oversized file before sending it', async () => {
   const { container } = show();
@@ -71,13 +71,13 @@ it('uploads the original binary through multipart form data', async () => {
 });
 it('requires confirmation before deleting a schedule', async () => {
   const { onDeleted } = show();
-  fireEvent.click(screen.getByRole('button', { name: 'Excluir escala' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Eliminar escala' }));
   expect(
     vi
       .mocked(apiRequest)
       .mock.calls.some(([, options]) => options?.method === 'DELETE'),
   ).toBe(false);
-  fireEvent.click(await screen.findByRole('button', { name: /^Excluir$/ }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Eliminar$/ }));
   await waitFor(() => expect(onDeleted).toHaveBeenCalled());
   expect(apiRequest).toHaveBeenCalledWith('/operations/schedules/schedule', {
     method: 'DELETE',

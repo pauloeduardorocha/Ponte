@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { formatDateTime, last30Days } from '../../lib/format';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
@@ -38,6 +39,7 @@ type Dashboard = {
   upcomingSchedules?: Entry[];
 };
 export function OperationalDashboard() {
+  useLocale();
   const { user } = useAuth(),
     [period, setPeriod] = useState(last30Days);
   const { start, end } = period;
@@ -65,13 +67,13 @@ export function OperationalDashboard() {
   const metrics = [
     {
       key: 'activeMembers',
-      label: 'Membros ativos',
+      label: translate('Membros ativos'),
       value: d?.activeMembers,
       to: '/members?status=ACTIVE',
     },
     {
       key: 'followedVisitors',
-      label: 'Visitantes acompanhados/visitantes no período',
+      label: translate('Visitantes acompanhados/visitantes no período'),
       value:
         typeof d?.followedVisitors === 'number' &&
         typeof d.visitors === 'number'
@@ -81,40 +83,43 @@ export function OperationalDashboard() {
     },
     {
       key: 'activeMembersWithoutGroup',
-      label: 'Membros ativos sem grupo familiar',
+      label: translate('Membros ativos sem grupo familiar'),
       value: d?.activeMembersWithoutGroup,
     },
     {
       key: 'activeVolunteers',
-      label: 'Voluntários/membros',
+      label: translate('Voluntários/membros'),
       value:
         typeof d?.activeVolunteers === 'number' &&
         typeof d.activeMembers === 'number'
           ? `${d.activeVolunteers}/${d.activeMembers}`
           : undefined,
-      detail: `${d?.activeVolunteers} voluntários de ${d?.activeMembers} membros ativos`,
+      detail: translate('{0} voluntários de {1} membros ativos', [
+        d?.activeVolunteers,
+        d?.activeMembers,
+      ]),
       to: '/ministries',
     },
     {
       key: 'integrating',
-      label: 'Pessoas em integração',
+      label: translate('Pessoas em integração'),
       value: d?.integrating,
       to: '/visitors?status=INTEGRATING',
     },
   ];
   return (
     <Stack spacing={2}>
-      <Typography variant="h5">Vida da igreja</Typography>
+      <Typography variant="h5">{translate('Vida da igreja')}</Typography>
       <Stack direction="row" gap={2} flexWrap="wrap">
         <TextField
-          label="Período: de"
+          label={translate('Período: de')}
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={start}
           onChange={(e) => setPeriod((p) => ({ ...p, start: e.target.value }))}
         />
         <TextField
-          label="Período: até"
+          label={translate('Período: até')}
           type="date"
           slotProps={{ inputLabel: { shrink: true } }}
           value={end}
@@ -125,7 +130,7 @@ export function OperationalDashboard() {
             setPeriod(last30Days());
           }}
         >
-          Últimos 30 dias
+          {translate('Últimos 30 dias')}
         </Button>
       </Stack>
       {data.isPending && <Skeleton height={180} />}
@@ -134,7 +139,7 @@ export function OperationalDashboard() {
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -167,9 +172,9 @@ export function OperationalDashboard() {
                       <Typography variant="h6">
                         {
                           {
-                            nextContacts: 'Próximos contatos',
-                            upcomingEvents: 'Próximos eventos',
-                            upcomingSchedules: 'Próximas escalas',
+                            nextContacts: translate('Próximos contatos'),
+                            upcomingEvents: translate('Próximos eventos'),
+                            upcomingSchedules: translate('Próximas escalas'),
                           }[k]
                         }
                       </Typography>
@@ -187,7 +192,7 @@ export function OperationalDashboard() {
                                     e.nextContactAt ??
                                       e.startsAt ??
                                       e.date ??
-                                      'Sem data',
+                                      translate('Sem data'),
                                   ),
                                 )}
                               </Typography>
@@ -196,7 +201,7 @@ export function OperationalDashboard() {
                         </RecordTable>
                       ) : (
                         <Typography color="text.secondary">
-                          Nenhum registro.
+                          {translate('Nenhum registro.')}
                         </Typography>
                       )}
                       <Button
@@ -209,7 +214,7 @@ export function OperationalDashboard() {
                           }[k]
                         }
                       >
-                        Ver lista
+                        {translate('Ver lista')}
                       </Button>
                     </Stack>
                   </CardContent>

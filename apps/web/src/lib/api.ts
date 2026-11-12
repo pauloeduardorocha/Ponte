@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import type { AuthSession } from './types';
 import {
   recordApiRecovery,
@@ -17,18 +18,48 @@ import {
 const API_URL: string = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 const DEFAULT_ERROR_MESSAGES: Record<number, string> = {
-  0: 'Não foi possível conectar ao servidor.',
-  400: 'Os dados enviados são inválidos.',
-  401: 'Sua sessão expirou. Entre novamente.',
-  403: 'Você não tem permissão para realizar esta ação.',
-  404: 'Registro não encontrado.',
-  409: 'Já existe um registro com estes dados.',
-  413: 'Os documentos excedem o tamanho permitido. Reduza o tamanho dos ficheiros.',
-  502: 'O servidor está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
-  503: 'O serviço está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
-  504: 'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.',
+  get 0() {
+    return translate('Não foi possível conectar ao servidor.');
+  },
+  get 400() {
+    return translate('Os dados enviados são inválidos.');
+  },
+  get 401() {
+    return translate('Sua sessão expirou. Entre novamente.');
+  },
+  get 403() {
+    return translate('Você não tem permissão para realizar esta ação.');
+  },
+  get 404() {
+    return translate('Registro não encontrado.');
+  },
+  get 409() {
+    return translate('Já existe um registro com estes dados.');
+  },
+  get 413() {
+    return translate(
+      'Os documentos excedem o tamanho permitido. Reduza o tamanho dos ficheiros.',
+    );
+  },
+  get 502() {
+    return translate(
+      'O servidor está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
+    );
+  },
+  get 503() {
+    return translate(
+      'O serviço está temporariamente indisponível. Confira se o pedido foi guardado antes de tentar novamente.',
+    );
+  },
+  get 504() {
+    return translate(
+      'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.',
+    );
+  },
 };
-const GENERIC_ERROR_MESSAGE = 'Ocorreu um erro inesperado. Tente novamente.';
+const GENERIC_ERROR_MESSAGE = translate(
+  'Ocorreu um erro inesperado. Tente novamente.',
+);
 
 export function withErrorReference(message: string, data: unknown): string {
   const id =
@@ -36,7 +67,7 @@ export function withErrorReference(message: string, data: unknown): string {
       ? data.requestId
       : undefined;
   return typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id)
-    ? `${message} Referência: ${id}`
+    ? translate('{0} Referência: {1}', [message, id])
     : message;
 }
 
@@ -115,13 +146,13 @@ function extractMessage(data: unknown, status: number): string {
   if (data && typeof data === 'object' && 'message' in data) {
     const { message } = data as { message: unknown };
     if (typeof message === 'string' && message.trim()) {
-      return message;
+      return translate(message);
     }
     if (Array.isArray(message) && message.length > 0) {
-      return message.map(String).join(' ');
+      return message.map((entry) => translate(String(entry))).join(' ');
     }
   }
-  return DEFAULT_ERROR_MESSAGES[status] ?? GENERIC_ERROR_MESSAGE;
+  return translate(DEFAULT_ERROR_MESSAGES[status] ?? GENERIC_ERROR_MESSAGE);
 }
 
 async function send(
@@ -210,23 +241,41 @@ async function sendRequest(
     const uncertainWrite =
       options.method && options.method !== 'GET' && !path.startsWith('/auth/');
     if (diagnostics.kind === 'cancelled')
-      throw new ApiError(0, 'A sessão mudou durante a consulta.', diagnostics);
+      throw new ApiError(
+        0,
+        translate('A sessão mudou durante a consulta.'),
+        diagnostics,
+      );
     reportApiFailure({
       path,
       method: options.method ?? 'GET',
-      message: `Falha de comunicação ao chamar API; tipo=${diagnostics.kind}; exceção=${diagnostics.exception}; duração=${diagnostics.durationMs}ms; tentativas=${diagnostics.attempts}; online=${diagnostics.online}; visibilidade=${diagnostics.visibility}.`,
+      message: translate(
+        'Falha de comunicação ao chamar API; tipo={0}; exceção={1}; duração={2}ms; tentativas={3}; online={4}; visibilidade={5}.',
+        [
+          diagnostics.kind,
+          diagnostics.exception,
+          diagnostics.durationMs,
+          diagnostics.attempts,
+          diagnostics.online,
+          diagnostics.visibility,
+        ],
+      ),
     });
     throw new ApiError(
       0,
       await messageAfterUpdateCheck(
         diagnostics.kind === 'timeout'
           ? uncertainWrite
-            ? 'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.'
-            : 'O servidor demorou a responder. Tente novamente.'
+            ? translate(
+                'O servidor demorou a responder. Confira se o pedido foi guardado antes de tentar novamente.',
+              )
+            : translate('O servidor demorou a responder. Tente novamente.')
           : diagnostics.kind === 'offline'
-            ? 'Sem conexão. Tente novamente quando a rede voltar.'
+            ? translate('Sem conexão. Tente novamente quando a rede voltar.')
             : uncertainWrite
-              ? 'Falha de comunicação. Confira se o pedido foi guardado antes de tentar novamente.'
+              ? translate(
+                  'Falha de comunicação. Confira se o pedido foi guardado antes de tentar novamente.',
+                )
               : (DEFAULT_ERROR_MESSAGES[0] ?? GENERIC_ERROR_MESSAGE),
       ),
       diagnostics,
@@ -252,7 +301,16 @@ async function sendRequest(
       method: options.method ?? 'GET',
       status: response.status,
       requestId,
-      message: `A API respondeu com HTTP ${response.status}; duração=${Math.round(performance.now() - startedAt)}ms; redirecionado=${response.redirected}; anexosBytes=${uploadBytes ?? 0}; edgeCode=${safeEdgeCode}.`,
+      message: translate(
+        'A API respondeu com HTTP {0}; duração={1}ms; redirecionado={2}; anexosBytes={3}; edgeCode={4}.',
+        [
+          response.status,
+          Math.round(performance.now() - startedAt),
+          response.redirected,
+          uploadBytes ?? 0,
+          safeEdgeCode,
+        ],
+      ),
     });
     throw new ApiError(
       response.status,

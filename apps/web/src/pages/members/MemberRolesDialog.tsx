@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -26,6 +27,7 @@ export function RolesDialog({
   onClose: () => void;
   onSaved: () => void;
 }) {
+  useLocale();
   const [selection, setSelection] = useState<string[] | null>(null);
   const roles = useQuery({ queryKey: ['available-roles'], queryFn: listRoles });
   const current = useQuery({
@@ -49,15 +51,22 @@ export function RolesDialog({
       fullWidth
       maxWidth="sm"
     >
-      <DialogTitle>Roles de {user.name}</DialogTitle>
+      <DialogTitle>
+        {translate('Roles de ')}
+        {user.name}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={1} sx={{ pt: 1 }}>
           <Typography>
-            Selecione os perfis de acesso. As permissões dos perfis selecionados
-            acumulam-se.
+            {translate(
+              'Selecione os perfis de acesso. As permissões dos perfis selecionados acumulam-se.',
+            )}
           </Typography>
           {(roles.isPending || current.isPending) && (
-            <CircularProgress size={24} aria-label="Carregando roles" />
+            <CircularProgress
+              size={24}
+              aria-label={translate('Carregando roles')}
+            />
           )}
           {roles.isError && (
             <QueryError
@@ -76,8 +85,9 @@ export function RolesDialog({
           )}
           {hasRestrictedRoles && loaded && (
             <Alert severity="warning">
-              Este usuário tem perfis com permissões superiores às suas. Outro
-              administrador com essas permissões deve alterar os perfis.
+              {translate(
+                'Este usuário tem perfis com permissões superiores às suas. Outro administrador com essas permissões deve alterar os perfis.',
+              )}
             </Alert>
           )}
           {loaded &&
@@ -86,7 +96,7 @@ export function RolesDialog({
                 key={role.id}
                 label={
                   role.name === 'EVENT_MANAGER'
-                    ? 'Gestor de Eventos'
+                    ? translate('Gestor de Eventos')
                     : role.name
                 }
                 control={
@@ -110,14 +120,16 @@ export function RolesDialog({
             ))}
           {loaded && selected.length === 0 && (
             <Alert severity="info">
-              Sem roles, o usuário fica sem permissões administrativas.
+              {translate(
+                'Sem roles, o usuário fica sem permissões administrativas.',
+              )}
             </Alert>
           )}
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={mutation.isPending}>
-          Cancelar
+          {translate('Cancelar')}
         </Button>
         <Button
           variant="contained"
@@ -129,7 +141,7 @@ export function RolesDialog({
           }
           onClick={() => mutation.mutate()}
         >
-          Salvar roles
+          {translate('Salvar roles')}
         </Button>
       </DialogActions>
     </Dialog>

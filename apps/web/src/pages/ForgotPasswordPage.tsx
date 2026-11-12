@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,10 +13,12 @@ import { emailSchema } from '../lib/validation';
 const forgotSchema = z.object({ email: emailSchema });
 type ForgotFields = z.infer<typeof forgotSchema>;
 
-const DEFAULT_NOTICE =
-  'Se o e-mail estiver cadastrado, você receberá as instruções para redefinir a senha.';
+const DEFAULT_NOTICE = translate(
+  'Se o e-mail estiver cadastrado, você receberá as instruções para redefinir a senha.',
+);
 
 export function ForgotPasswordPage() {
+  useLocale();
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, formState } = useForm<ForgotFields>({
@@ -36,25 +39,27 @@ export function ForgotPasswordPage() {
 
   return (
     <AuthCard
-      title="Recuperar senha"
-      subtitle="Informe seu e-mail para receber o link de redefinição."
-      notice={notice}
-      error={error}
+      title={translate('Recuperar senha')}
+      subtitle={translate(
+        'Informe seu e-mail para receber o link de redefinição.',
+      )}
+      notice={translate(notice ?? '')}
+      error={translate(error ?? '')}
       footer={
         <Link component={RouterLink} to="/login">
-          Voltar para o login
+          {translate('Voltar para o login')}
         </Link>
       }
     >
       <Box component="form" onSubmit={onSubmit} noValidate>
         <Stack spacing={2}>
           <TextField
-            label="E-mail"
+            label={translate('E-mail')}
             type="email"
             autoComplete="email"
             fullWidth
             error={Boolean(formState.errors.email)}
-            helperText={formState.errors.email?.message}
+            helperText={translate(formState.errors.email?.message ?? '')}
             {...register('email')}
           />
           <Button
@@ -63,7 +68,7 @@ export function ForgotPasswordPage() {
             size="large"
             disabled={formState.isSubmitting}
           >
-            Enviar instruções
+            {translate('Enviar instruções')}
           </Button>
         </Stack>
       </Box>

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { errorMessage, personInitials } from './conversation-utils';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -25,6 +26,7 @@ import { ConversationPostActions } from './ConversationPostActions';
 import { ConversationThread } from './ConversationThread';
 
 export function ConversationPage() {
+  useLocale();
   const { id } = useParams();
   const client = useQueryClient();
   const detail = useInfiniteQuery({
@@ -54,29 +56,25 @@ export function ConversationPage() {
       spacing={2}
       sx={{ maxWidth: 780, mx: 'auto', width: '100%', minWidth: 0 }}
     >
-      <Button
-        component={Link}
-        to="/mural"
-        sx={{ alignSelf: 'flex-start' }}
-      >
-        Voltar para o mural
+      <Button component={Link} to="/mural" sx={{ alignSelf: 'flex-start' }}>
+        {translate('Voltar para o mural')}
       </Button>
       <CachedQueryStatus
         updatedAt={detail.dataUpdatedAt}
         refreshing={detail.isFetching}
         onRefresh={refresh}
-        label="conversa"
+        label={translate('conversa')}
         refreshButton="icon"
       />
       {detail.isPending && (
-        <CircularProgress aria-label="Carregando conversa" />
+        <CircularProgress aria-label={translate('Carregando conversa')} />
       )}
       {detail.isError && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void detail.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -121,7 +119,7 @@ export function ConversationPage() {
               fontWeight={700}
               sx={{ overflowWrap: 'anywhere' }}
             >
-              {topic.deletedAt ? 'conversa excluída' : topic.title}
+              {topic.deletedAt ? translate('conversa excluída') : topic.title}
             </Typography>
             {!topic.deletedAt && <MessageText post={topic} />}
           </Stack>
@@ -143,10 +141,11 @@ export function ConversationPage() {
             sx={{ px: { xs: 2, sm: 3 }, py: 1.5 }}
           >
             <Typography variant="body2" color="text.secondary">
-              {topic._count?.replies ?? comments.length} comentários
+              {topic._count?.replies ?? comments.length}{' '}
+              {translate(' comentários')}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Comunidade A Ponte
+              {translate('Comunidade A Ponte')}
             </Typography>
           </Stack>
           <Divider />
@@ -157,10 +156,10 @@ export function ConversationPage() {
               alignItems="center"
             >
               <Typography component="h2" variant="subtitle1" fontWeight={700}>
-                Comentários
+                {translate('Comentários')}
               </Typography>
               <Typography variant="caption" color="text.secondary">
-                Mais recentes primeiro
+                {translate('Mais recentes primeiro')}
               </Typography>
             </Stack>
             {!topic.deletedAt && (
@@ -170,7 +169,7 @@ export function ConversationPage() {
             )}
             {comments.length === 0 && (
               <Typography variant="body2" color="text.secondary">
-                Ainda não há comentários. Comece a conversa!
+                {translate('Ainda não há comentários. Comece a conversa!')}
               </Typography>
             )}
             {comments.map((post) => (
@@ -189,8 +188,8 @@ export function ConversationPage() {
                 onClick={() => void detail.fetchNextPage()}
               >
                 {detail.isFetchingNextPage
-                  ? 'Carregando comentários…'
-                  : 'Mostrar mais comentários'}
+                  ? translate('Carregando comentários…')
+                  : translate('Mostrar mais comentários')}
               </Button>
             )}
           </Stack>

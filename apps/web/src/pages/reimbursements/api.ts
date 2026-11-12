@@ -1,3 +1,4 @@
+import { t as translate, getLocale } from '../../i18n';
 import { apiResponse } from '../../lib/api';
 
 export const PHOTO_LIMIT = 10 * 1024 * 1024;
@@ -13,10 +14,12 @@ export async function prepareReimbursementFile(
 ): Promise<File> {
   const image = ['image/jpeg', 'image/png'].includes(file.type);
   if ((!image && file.type !== 'application/pdf') || file.size < 1) {
-    throw new Error('Selecione um PDF ou uma imagem JPEG/PNG.');
+    throw new Error(translate('Selecione um PDF ou uma imagem JPEG/PNG.'));
   }
   if (file.size > (image ? PHOTO_LIMIT : PDF_LIMIT)) {
-    throw new Error('Cada foto pode ter até 10 MB; cada PDF, até 1 MB.');
+    throw new Error(
+      translate('Cada foto pode ter até 10 MB; cada PDF, até 1 MB.'),
+    );
   }
   if (!image || (!normalizeCameraPhoto && file.size <= targetBytes)) {
     // Camera/content-provider files can be temporary. Read their bytes now,
@@ -26,7 +29,9 @@ export async function prepareReimbursementFile(
       const failed = () =>
         reject(
           new Error(
-            'Não foi possível ler o documento. Selecione o ficheiro novamente ou guarde a foto na galeria.',
+            translate(
+              'Não foi possível ler o documento. Selecione o ficheiro novamente ou guarde a foto na galeria.',
+            ),
           ),
         );
       reader.onerror = failed;
@@ -53,7 +58,9 @@ export async function prepareReimbursementFile(
     bitmap = await createImageBitmap(file);
   } catch {
     throw new Error(
-      'Não foi possível ler esta foto. Experimente guardar como JPEG.',
+      translate(
+        'Não foi possível ler esta foto. Experimente guardar como JPEG.',
+      ),
     );
   }
   try {
@@ -67,7 +74,9 @@ export async function prepareReimbursementFile(
     canvas.height = Math.max(1, Math.round(bitmap.height * ratio));
     const context = canvas.getContext('2d');
     if (!context)
-      throw new Error('Não foi possível preparar a foto neste navegador.');
+      throw new Error(
+        translate('Não foi possível preparar a foto neste navegador.'),
+      );
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
@@ -84,7 +93,9 @@ export async function prepareReimbursementFile(
       }
     }
     throw new Error(
-      'Esta foto continua demasiado grande após a otimização. Fotografe apenas o documento.',
+      translate(
+        'Esta foto continua demasiado grande após a otimização. Fotografe apenas o documento.',
+      ),
     );
   } finally {
     bitmap.close();
@@ -143,17 +154,26 @@ export type Reimbursement = {
   attachments: ReimbursementFile[];
 };
 export const statuses = {
-  INCOMPLETE: 'Por completar',
-  READY: 'Pronto para pagamento',
-  PAID: 'Pago · a aguardar movimento',
-  LINKED: 'Associado ao banco',
+  get INCOMPLETE() {
+    return translate('Por completar');
+  },
+  get READY() {
+    return translate('Pronto para pagamento');
+  },
+  get PAID() {
+    return translate('Pago · a aguardar movimento');
+  },
+  get LINKED() {
+    return translate('Associado ao banco');
+  },
 };
 export const money = (amount: string | null, currency = 'EUR') =>
   amount
-    ? new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(
-        Number(amount),
-      )
-    : 'Valor por preencher';
+    ? new Intl.NumberFormat(getLocale(), {
+        style: 'currency',
+        currency,
+      }).format(Number(amount))
+    : translate('Valor por preencher');
 export async function reimbursementFileRequest(path: string, body?: FormData) {
   return apiResponse(`/reimbursements${path}`, {
     method: body ? 'POST' : 'GET',

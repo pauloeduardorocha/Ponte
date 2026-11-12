@@ -1,3 +1,4 @@
+import { t as translate, getLocale, localized, useLocale } from '../i18n';
 import { formatDateTime } from '../lib/format';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -57,7 +58,7 @@ type Dashboard = {
   }[];
 };
 const date = (value: string) => formatDateTime(value);
-const days = [
+const days = localized([
   'Domingo',
   'Segunda-feira',
   'Terça-feira',
@@ -65,7 +66,7 @@ const days = [
   'Quinta-feira',
   'Sexta-feira',
   'Sábado',
-];
+]);
 
 function Section({
   title,
@@ -74,6 +75,7 @@ function Section({
   title: string;
   children: React.ReactNode;
 }) {
+  useLocale();
   return (
     <Card variant="outlined">
       <CardContent>
@@ -89,6 +91,7 @@ function Section({
 }
 
 export function MemberDashboard() {
+  useLocale();
   const { user } = useAuth();
   const query = useQuery({
     queryKey: ['member-portal', 'dashboard', user?.id],
@@ -99,7 +102,7 @@ export function MemberDashboard() {
       <Skeleton
         variant="rounded"
         height={240}
-        aria-label="Carregando seu painel"
+        aria-label={translate('Carregando seu painel')}
       />
     );
   if (query.isError)
@@ -109,7 +112,7 @@ export function MemberDashboard() {
   const d = query.data;
   return (
     <>
-      <Section title="Próximas escalas">
+      <Section title={translate('Próximas escalas')}>
         {d.upcomingSchedules.length ? (
           d.upcomingSchedules.map((s) => (
             <Stack key={s.id}>
@@ -122,60 +125,65 @@ export function MemberDashboard() {
           ))
         ) : (
           <Typography color="text.secondary">
-            Você não tem próximas escalas.
+            {translate('Você não tem próximas escalas.')}
           </Typography>
         )}
         <Button component={Link} to="/schedules">
-          Ver escalas
+          {translate('Ver escalas')}
         </Button>
       </Section>
-      <Section title="Meu grupo familiar">
+      <Section title={translate('Meu grupo familiar')}>
         {d.groups.length ? (
           d.groups.map((g) => (
             <Stack key={g.id}>
               <Typography fontWeight={600}>{g.name}</Typography>
-              {g.leader && <Typography>Líder: {g.leader.name}</Typography>}
+              {g.leader && (
+                <Typography>
+                  {translate('Líder: ')}
+                  {g.leader.name}
+                </Typography>
+              )}
               {g.address && <Typography>{g.address}</Typography>}
               {(g.meetingDay !== null || g.meetingTime) && (
                 <Typography>
                   {g.meetingDay !== null ? days[g.meetingDay] : ''}
-                  {g.meetingTime ? ` às ${g.meetingTime}` : ''}
+                  {g.meetingTime ? translate(' às {0}', [g.meetingTime]) : ''}
                 </Typography>
               )}
             </Stack>
           ))
         ) : (
           <Typography color="text.secondary">
-            Você ainda não faz parte de um grupo familiar.
+            {translate('Você ainda não faz parte de um grupo familiar.')}
           </Typography>
         )}
         <Button component={Link} to="/small-groups?view=community">
-          Ver grupos familiares
+          {translate('Ver grupos familiares')}
         </Button>
       </Section>
       {d.reimbursements.length > 0 && (
-        <Section title="Reembolsos pendentes">
+        <Section title={translate('Reembolsos pendentes')}>
           {d.reimbursements.map((r) => (
             <Stack key={r.id}>
               <Typography>
-                {r.purpose || 'Reembolso em preenchimento'}
+                {r.purpose || translate('Reembolso em preenchimento')}
               </Typography>
               <Typography>
                 {r.amount !== null
-                  ? new Intl.NumberFormat('pt-PT', {
+                  ? new Intl.NumberFormat(getLocale(), {
                       style: 'currency',
                       currency: r.currency,
                     }).format(Number(r.amount))
-                  : 'Valor por informar'}
+                  : translate('Valor por informar')}
               </Typography>
               <Button component={Link} to={`/reimbursements?request=${r.id}`}>
-                Ver reembolso
+                {translate('Ver reembolso')}
               </Button>
             </Stack>
           ))}
         </Section>
       )}
-      <Section title="Próximos eventos">
+      <Section title={translate('Próximos eventos')}>
         {d.upcomingEvents.length ? (
           d.upcomingEvents.map((e) => (
             <Stack key={e.id}>
@@ -184,30 +192,36 @@ export function MemberDashboard() {
                 {date(e.startsAt)} · {e.location}
               </Typography>
               <Button component={Link} to={`/events/${e.id}/register`}>
-                Ver evento e inscrever-se
+                {translate('Ver evento e inscrever-se')}
               </Button>
             </Stack>
           ))
         ) : (
           <Typography color="text.secondary">
-            Nenhum evento agendado.
+            {translate('Nenhum evento agendado.')}
           </Typography>
         )}
       </Section>
       {(d.reservations.length > 0 ||
         d.loans.length > 0 ||
         d.fines.length > 0) && (
-        <Section title="Minha biblioteca">
+        <Section title={translate('Minha biblioteca')}>
           {d.reservations.map((r) => (
             <Typography key={r.id}>
-              Reserva: {r.book.title} ·{' '}
-              {r.status === 'READY' ? 'Disponível para retirada' : 'Em espera'}{' '}
-              · Até {date(r.expiresAt)}
+              {translate('Reserva: ')}
+              {r.book.title} ·{' '}
+              {r.status === 'READY'
+                ? translate('Disponível para retirada')
+                : translate('Em espera')}{' '}
+              {translate('· Até ')}
+              {date(r.expiresAt)}
             </Typography>
           ))}
           {d.loans.map((l) => (
             <Typography key={l.id}>
-              Empréstimo: {l.bookCopy.book.title} · Devolução: {date(l.dueAt)}
+              {translate('Empréstimo: ')}
+              {l.bookCopy.book.title} {translate(' · Devolução: ')}
+              {date(l.dueAt)}
               {l.status === 'LOST'
                 ? ' · Perdido'
                 : l.status === 'OVERDUE' || new Date(l.dueAt) < new Date()
@@ -217,18 +231,19 @@ export function MemberDashboard() {
           ))}
           {d.fines.map((f) => (
             <Typography key={f.id}>
-              Multa: {f.loan.bookCopy.book.title} · Saldo pendente:{' '}
+              {translate('Multa: ')}
+              {f.loan.bookCopy.book.title} {translate(' · Saldo pendente:')}{' '}
               {Math.max(
                 0,
                 Number(f.amount) - Number(f.paidAmount) - Number(f.discount),
-              ).toLocaleString('pt-PT', {
+              ).toLocaleString(getLocale(), {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
             </Typography>
           ))}
           <Button component={Link} to="/library">
-            Ver biblioteca
+            {translate('Ver biblioteca')}
           </Button>
         </Section>
       )}

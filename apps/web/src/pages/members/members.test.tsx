@@ -57,7 +57,7 @@ describe('Members', () => {
       'page=1&pageSize=10&sortBy=name&sortOrder=asc',
     );
 
-    fireEvent.change(screen.getByLabelText('Buscar'), {
+    fireEvent.change(screen.getByLabelText('Procurar'), {
       target: { value: 'mar' },
     });
     await waitFor(() =>
@@ -117,7 +117,7 @@ describe('Members', () => {
       screen.queryByRole('link', { name: /Editar/ }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Excluir/ }),
+      screen.queryByRole('button', { name: /Eliminar/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -136,7 +136,7 @@ describe('Members', () => {
     expect(screen.getByText('Ministério de louvor')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Editar/ })).toBeInTheDocument();
     expect(
-      screen.queryByRole('button', { name: /Excluir/ }),
+      screen.queryByRole('button', { name: /Eliminar/ }),
     ).not.toBeInTheDocument();
   });
 
@@ -172,9 +172,9 @@ describe('Members', () => {
     renderApp('/members/new');
 
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Cadastrar membro' }),
+      await screen.findByRole('button', { name: 'Registar membro' }),
     );
-    expect(await screen.findByText('Informe o nome.')).toBeInTheDocument();
+    expect(await screen.findByText('Introduza o nome.')).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/^Nome/), {
       target: { value: 'João Alves' },
@@ -182,18 +182,18 @@ describe('Members', () => {
     fireEvent.change(screen.getByLabelText(/^E-mail/), {
       target: { value: 'invalido' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar membro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar membro' }));
     expect(
-      await screen.findByText('Informe um e-mail válido.'),
+      await screen.findByText('Introduza um e-mail válido.'),
     ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/^E-mail/), {
       target: { value: 'joao@aponte.pt' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Cadastrar membro' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Registar membro' }));
 
     expect(
-      await screen.findByText('Membro cadastrado com sucesso.'),
+      await screen.findByText('Membro registado com sucesso.'),
     ).toBeInTheDocument();
     expect(
       requests.find((r) => r.method === 'POST' && r.path === '/members')?.body,
@@ -218,7 +218,7 @@ describe('Members', () => {
     fireEvent.change(screen.getByLabelText(/^Nome/), {
       target: { value: 'Maria atualizada' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar alterações' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toMatchObject({
         name: 'Maria atualizada',
@@ -245,7 +245,7 @@ describe('Members', () => {
     });
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Status' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Inativo' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar alterações' }));
 
     expect(
       await screen.findByText('Membro atualizado com sucesso.'),
@@ -270,14 +270,14 @@ describe('Members', () => {
     });
     renderApp('/members/m1');
 
-    fireEvent.click(await screen.findByRole('button', { name: /Excluir/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /Eliminar/ }));
     const dialog = await screen.findByRole('dialog');
     fireEvent.click(
-      within(dialog).getByRole('button', { name: 'Confirmar exclusão' }),
+      within(dialog).getByRole('button', { name: 'Confirmar eliminação' }),
     );
 
     expect(
-      await screen.findByText('Membro excluído com sucesso.'),
+      await screen.findByText('Membro eliminado com sucesso.'),
     ).toBeInTheDocument();
     expect(
       requests.some((r) => r.method === 'DELETE' && r.path === '/members/m1'),

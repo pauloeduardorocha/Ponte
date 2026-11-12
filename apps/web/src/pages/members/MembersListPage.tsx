@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import {
@@ -75,6 +76,7 @@ function readParams(params: URLSearchParams): MemberListParams {
 }
 
 export function MembersListPage() {
+  useLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const notice = (location.state as { notice?: string } | null)?.notice;
@@ -146,8 +148,10 @@ export function MembersListPage() {
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Membros"
-        subtitle="Consulte e mantenha o cadastro de membros da igreja."
+        title={translate('Membros')}
+        subtitle={translate(
+          'Consulte e mantenha o cadastro de membros da igreja.',
+        )}
         actions={
           <Can permission="MEMBER_CREATE">
             <Button
@@ -156,18 +160,18 @@ export function MembersListPage() {
               variant="contained"
               startIcon={<AddRounded />}
             >
-              Novo membro
+              {translate('Novo membro')}
             </Button>
           </Can>
         }
       />
 
-      {notice && <Alert severity="success">{notice}</Alert>}
+      {notice && <Alert severity="success">{translate(notice ?? '')}</Alert>}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <TextField
-          label="Buscar"
-          placeholder="Nome, e-mail ou telefone"
+          label={translate('Buscar')}
+          placeholder={translate('Nome, e-mail ou telefone')}
           value={searchInput}
           onChange={(event) => setSearchInput(event.target.value)}
           sx={{ flexGrow: 1 }}
@@ -183,16 +187,16 @@ export function MembersListPage() {
         />
         <TextField
           select
-          label="Status"
+          label={translate('Status')}
           value={query.status ?? ''}
           onChange={(event) =>
             updateParams({ status: event.target.value, page: undefined })
           }
           sx={{ minWidth: 180 }}
         >
-          <MenuItem value="">Todos</MenuItem>
-          <MenuItem value="ACTIVE">Ativos</MenuItem>
-          <MenuItem value="INACTIVE">Inativos</MenuItem>
+          <MenuItem value="">{translate('Todos')}</MenuItem>
+          <MenuItem value="ACTIVE">{translate('Ativos')}</MenuItem>
+          <MenuItem value="INACTIVE">{translate('Inativos')}</MenuItem>
         </TextField>
       </Stack>
 
@@ -205,22 +209,25 @@ export function MembersListPage() {
 
       <Card variant="outlined">
         <TableContainer>
-          <Table aria-label="Lista de membros">
+          <Table aria-label={translate('Lista de membros')}>
             <TableHead>
               <TableRow>
-                {sortableHeader('name', 'Nome')}
+                {sortableHeader('name', translate('Nome'))}
                 {sortableHeader('email', 'E-mail')}
-                {sortableHeader('phone', 'Telefone')}
-                {sortableHeader('status', 'Status')}
-                {sortableHeader('createdAt', 'Cadastrado em')}
-                <TableCell align="right">Ações</TableCell>
+                {sortableHeader('phone', translate('Telefone'))}
+                {sortableHeader('status', translate('Status'))}
+                {sortableHeader('createdAt', translate('Cadastrado em'))}
+                <TableCell align="right">{translate('Ações')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {members.isPending && (
                 <TableRow>
                   <TableCell colSpan={6} align="center">
-                    <CircularProgress size={24} aria-label="Carregando" />
+                    <CircularProgress
+                      size={24}
+                      aria-label={translate('Carregando')}
+                    />
                   </TableCell>
                 </TableRow>
               )}
@@ -229,10 +236,12 @@ export function MembersListPage() {
                   <TableCell colSpan={6}>
                     <Box className="empty-state">
                       <Typography fontWeight={600}>
-                        Nenhum membro encontrado
+                        {translate('Nenhum membro encontrado')}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        Ajuste os filtros ou cadastre um novo membro.
+                        {translate(
+                          'Ajuste os filtros ou cadastre um novo membro.',
+                        )}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -256,22 +265,22 @@ export function MembersListPage() {
                     align="right"
                     onClick={(event) => event.stopPropagation()}
                   >
-                    <Tooltip title="Ver detalhes">
+                    <Tooltip title={translate('Ver detalhes')}>
                       <IconButton
                         component={RouterLink}
                         to={`/members/${member.id}`}
-                        aria-label={`Ver ${member.name}`}
+                        aria-label={translate('Ver {0}', [member.name])}
                         size="small"
                       >
                         <VisibilityRounded fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Can permission="MEMBER_UPDATE">
-                      <Tooltip title="Editar">
+                      <Tooltip title={translate('Editar')}>
                         <IconButton
                           component={RouterLink}
                           to={`/members/${member.id}/edit`}
-                          aria-label={`Editar ${member.name}`}
+                          aria-label={translate('Editar {0}', [member.name])}
                           size="small"
                         >
                           <EditRounded fontSize="small" />
@@ -294,7 +303,7 @@ export function MembersListPage() {
           onRowsPerPageChange={(event) =>
             updateParams({ pageSize: event.target.value, page: undefined })
           }
-          labelRowsPerPage="Itens por página"
+          labelRowsPerPage={translate('Itens por página')}
           labelDisplayedRows={({ from, to, count }) =>
             `${from}–${to} de ${count}`
           }

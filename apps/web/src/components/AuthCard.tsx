@@ -1,3 +1,5 @@
+import { t as translate, useLocale } from '../i18n';
+import { LanguageSelect } from './LanguageSelect';
 import type { ReactNode } from 'react';
 import {
   Alert,
@@ -23,6 +25,7 @@ export function AuthCard({
   children: ReactNode;
   footer?: ReactNode;
 }) {
+  useLocale();
   return (
     <Box className="login-page">
       <Card variant="outlined" className="login-card">
@@ -32,14 +35,21 @@ export function AuthCard({
               <Box
                 component="img"
                 src="/logo.png"
-                alt="Logo de A Ponte"
+                alt={translate('Logo de A Ponte')}
                 width={64}
                 height={64}
                 className="auth-brand-logo"
               />
-              <Typography variant="overline" color="primary" fontWeight={700}>
-                A Ponte
-              </Typography>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Typography variant="overline" color="primary" fontWeight={700}>
+                  A Ponte
+                </Typography>
+                <LanguageSelect />
+              </Stack>
               <Typography variant="h4" component="h1" fontWeight={700}>
                 {title}
               </Typography>
@@ -47,8 +57,10 @@ export function AuthCard({
                 {subtitle}
               </Typography>
             </Box>
-            {notice && <Alert severity="success">{notice}</Alert>}
-            {error && <Alert severity="error">{error}</Alert>}
+            {notice && (
+              <Alert severity="success">{translate(notice ?? '')}</Alert>
+            )}
+            {error && <Alert severity="error">{translate(error ?? '')}</Alert>}
             {children}
             {footer && (
               <Stack spacing={1} alignItems="center">

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Alert,
@@ -32,6 +33,7 @@ interface RelatedApp {
 }
 
 export function PwaControls({ children }: { children?: ReactNode }) {
+  useLocale();
   const availableVersion = useSyncExternalStore(
     subscribeToAppUpdate,
     getAvailableVersion,
@@ -77,7 +79,7 @@ export function PwaControls({ children }: { children?: ReactNode }) {
       setUpdateError(
         error instanceof Error
           ? error.message
-          : 'Não foi possível atualizar. Tente novamente.',
+          : translate('Não foi possível atualizar. Tente novamente.'),
       );
     } finally {
       updateInProgress.current = false;
@@ -162,7 +164,7 @@ export function PwaControls({ children }: { children?: ReactNode }) {
           '&:hover': { bgcolor: '#ad0d13' },
         }}
       >
-        Instalar aplicação
+        {translate('Instalar aplicação')}
       </Button>
     ) : null;
 
@@ -170,17 +172,19 @@ export function PwaControls({ children }: { children?: ReactNode }) {
     <PwaInstallContext.Provider value={installButton}>
       {children}
       <Dialog open={instructions} onClose={() => setInstructions(false)}>
-        <DialogTitle>Instalar no iPhone ou iPad</DialogTitle>
+        <DialogTitle>{translate('Instalar no iPhone ou iPad')}</DialogTitle>
         <DialogContent>
-          Abra esta página no Safari, toque em Partilhar e escolha “Adicionar ao
-          ecrã principal”. Se aparecer a opção “Abrir como aplicação”,
-          mantenha-a ativada e toque em Adicionar.
+          {translate(
+            'Abra esta página no Safari, toque em Partilhar e escolha “Adicionar ao ecrã principal”. Se aparecer a opção “Abrir como aplicação”, mantenha-a ativada e toque em Adicionar.',
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={dismissInstallation}>
-            Já instalei / Não mostrar novamente
+            {translate('Já instalei / Não mostrar novamente')}
           </Button>
-          <Button onClick={() => setInstructions(false)}>Entendido</Button>
+          <Button onClick={() => setInstructions(false)}>
+            {translate('Entendido')}
+          </Button>
         </DialogActions>
       </Dialog>
       <Snackbar
@@ -207,19 +211,21 @@ export function PwaControls({ children }: { children?: ReactNode }) {
               onClick={() => void update()}
             >
               {updating
-                ? 'A atualizar…'
+                ? translate('A atualizar…')
                 : updateError
-                  ? 'Tentar novamente'
-                  : 'Atualizar'}
+                  ? translate('Tentar novamente')
+                  : translate('Atualizar')}
             </Button>
           }
         >
           {updateError ??
             (updating
-              ? 'A aplicar a nova versão…'
+              ? translate('A aplicar a nova versão…')
               : availableVersion
-                ? UPDATE_MESSAGE
-                : 'Nova versão disponível. Guarde as alterações antes de atualizar.')}
+                ? translate(UPDATE_MESSAGE)
+                : translate(
+                    'Nova versão disponível. Guarde as alterações antes de atualizar.',
+                  ))}
         </Alert>
       </Snackbar>
     </PwaInstallContext.Provider>

@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import { APP_VERSION } from './app-version';
 import { checkForAppUpdate } from './app-update';
 
@@ -31,7 +32,12 @@ const redactions = [
 ];
 
 function safeText(value: unknown, max = 2000): string {
-  let text = typeof value === 'string' ? value : value instanceof Error ? `${value.name}: ${value.message}` : String(value);
+  let text =
+    typeof value === 'string'
+      ? value
+      : value instanceof Error
+        ? `${value.name}: ${value.message}`
+        : String(value);
   // Remove control bytes that can corrupt structured log output.
   // eslint-disable-next-line no-control-regex
   text = text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ');
@@ -41,24 +47,57 @@ function safeText(value: unknown, max = 2000): string {
 
 function deviceInfo() {
   const ua = navigator.userAgent;
-  const os = /Android/i.test(ua) ? 'Android' : /iPhone|iPad|iPod/i.test(ua) ? 'iOS' : /Windows/i.test(ua) ? 'Windows' : /Mac OS/i.test(ua) ? 'macOS' : /Linux/i.test(ua) ? 'Linux' : 'unknown';
-  const browser = /Edg\//i.test(ua) ? 'Edge' : /Firefox\//i.test(ua) ? 'Firefox' : /CriOS|Chrome\//i.test(ua) ? 'Chrome' : /Safari\//i.test(ua) ? 'Safari' : 'unknown';
+  const os = /Android/i.test(ua)
+    ? 'Android'
+    : /iPhone|iPad|iPod/i.test(ua)
+      ? 'iOS'
+      : /Windows/i.test(ua)
+        ? 'Windows'
+        : /Mac OS/i.test(ua)
+          ? 'macOS'
+          : /Linux/i.test(ua)
+            ? 'Linux'
+            : 'unknown';
+  const browser = /Edg\//i.test(ua)
+    ? 'Edge'
+    : /Firefox\//i.test(ua)
+      ? 'Firefox'
+      : /CriOS|Chrome\//i.test(ua)
+        ? 'Chrome'
+        : /Safari\//i.test(ua)
+          ? 'Safari'
+          : 'unknown';
   return {
     appVersion: APP_VERSION,
-    os, browser, platform: safeText(navigator.platform, 40), language: safeText(navigator.language, 80),
+    os,
+    browser,
+    platform: safeText(navigator.platform, 40),
+    language: safeText(navigator.language, 80),
     timezone: safeText(Intl.DateTimeFormat().resolvedOptions().timeZone, 80),
-    viewportWidth: window.innerWidth, viewportHeight: window.innerHeight,
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
     online: navigator.onLine,
-    standalone: (typeof window.matchMedia === 'function' && window.matchMedia('(display-mode: standalone)').matches) || Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
+    standalone:
+      (typeof window.matchMedia === 'function' &&
+        window.matchMedia('(display-mode: standalone)').matches) ||
+      Boolean((navigator as Navigator & { standalone?: boolean }).standalone),
   };
 }
 
-function baseReport(eventType: EventType, message: unknown, extra: Partial<Report> = {}): Report {
+function baseReport(
+  eventType: EventType,
+  message: unknown,
+  extra: Partial<Report> = {},
+): Report {
   return {
-    occurredAt: new Date().toISOString(), eventType, message: safeText(message),
+    occurredAt: new Date().toISOString(),
+    eventType,
+    message: safeText(message),
     route: `${location.pathname}${location.hash ? '#[redacted]' : ''}`,
-    userAgent: safeText(navigator.userAgent, 1024), device: deviceInfo(),
-    logs: breadcrumbs.slice(-20).map((entry) => ({ ...entry })), ...extra,
+    userAgent: safeText(navigator.userAgent, 1024),
+    device: deviceInfo(),
+    logs: breadcrumbs.slice(-20).map((entry) => ({ ...entry })),
+    ...extra,
   };
 }
 
@@ -71,18 +110,31 @@ async function flush() {
       try {
         const token = tokenReader?.();
         const response = await fetch(`${API_URL}/client-errors`, {
-          method: 'POST', keepalive: true, credentials: 'include',
-          headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+          method: 'POST',
+          keepalive: true,
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify(report),
         });
         if (!response.ok) break;
         pending.shift();
-      } catch { break; }
+      } catch {
+        break;
+      }
     }
-  } finally { sending = false; }
+  } finally {
+    sending = false;
+  }
 }
 
-export function reportFrontendError(eventType: EventType, message: unknown, extra: Partial<Report> = {}) {
+export function reportFrontendError(
+  eventType: EventType,
+  message: unknown,
+  extra: Partial<Report> = {},
+) {
   if (extra.apiStatus === 401 || extra.apiStatus === 403) return;
   if (!initialized) return;
   if (pending.length >= 20) pending.shift();
@@ -91,12 +143,19 @@ export function reportFrontendError(eventType: EventType, message: unknown, extr
   if (eventType !== 'api') void checkForAppUpdate();
 }
 
-export function reportApiFailure(details: { path: string; method: string; status?: number; requestId?: string; message: string }) {
+export function reportApiFailure(details: {
+  path: string;
+  method: string;
+  status?: number;
+  requestId?: string;
+  message: string;
+}) {
   if (/\/client-errors(?:\?|$)/.test(details.path)) return;
   reportFrontendError('api', details.message, {
     apiPath: (details.path.split(/[?#]/, 1)[0] ?? '').slice(0, 512),
     apiMethod: details.method.toUpperCase().slice(0, 10),
-    apiStatus: details.status, clientRequestId: details.requestId,
+    apiStatus: details.status,
+    clientRequestId: details.requestId,
   });
 }
 
@@ -110,7 +169,14 @@ export function recordApiRecovery(details: {
     level: 'warn',
     at: new Date().toISOString(),
     message: safeText(
-      `Consulta GET recuperada: ${details.path.split(/[?#]/, 1)[0]}; tentativas=${details.attempts}; duração=${details.durationMs}ms.`,
+      translate(
+        'Consulta GET recuperada: {0}; tentativas={1}; duração={2}ms.',
+        [
+          details.path.split(/[?#]/, 1)[0],
+          details.attempts,
+          details.durationMs,
+        ],
+      ),
       500,
     ),
   });
@@ -122,17 +188,31 @@ export function initFrontendErrorReporting(getToken: () => string | null) {
   initialized = true;
   tokenReader = getToken;
   window.addEventListener('error', (event) => {
-    reportFrontendError('runtime', event.message || event.error, { stack: event.error instanceof Error ? safeText(event.error.stack, 8000) : undefined });
+    reportFrontendError('runtime', event.message || event.error, {
+      stack:
+        event.error instanceof Error
+          ? safeText(event.error.stack, 8000)
+          : undefined,
+    });
   });
   window.addEventListener('unhandledrejection', (event) => {
     const reason = event.reason;
-    reportFrontendError('unhandled_rejection', safeText(reason), { stack: reason instanceof Error ? safeText(reason.stack, 8000) : undefined });
+    reportFrontendError('unhandled_rejection', safeText(reason), {
+      stack: reason instanceof Error ? safeText(reason.stack, 8000) : undefined,
+    });
   });
   window.addEventListener('online', () => void flush());
-  const original = { warn: console.warn.bind(console), error: console.error.bind(console) };
+  const original = {
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  };
   for (const level of ['warn', 'error'] as const) {
     console[level] = (...args: unknown[]) => {
-      const message = args.filter((entry) => typeof entry === 'string' || entry instanceof Error).map((entry) => safeText(entry, 500)).join(' ').slice(0, 500);
+      const message = args
+        .filter((entry) => typeof entry === 'string' || entry instanceof Error)
+        .map((entry) => safeText(entry, 500))
+        .join(' ')
+        .slice(0, 500);
       if (message) {
         breadcrumbs.push({ level, at: new Date().toISOString(), message });
         if (breadcrumbs.length > 20) breadcrumbs.shift();

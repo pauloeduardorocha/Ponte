@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -33,7 +34,7 @@ export type FinanceCharts = {
   }[];
 };
 const money = (amount: number, currency: string) =>
-  new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(
+  new Intl.NumberFormat(getLocale(), { style: 'currency', currency }).format(
     amount,
   );
 
@@ -46,6 +47,7 @@ function FilteredTimeline({
   end: string;
   currency: string;
 }) {
+  useLocale();
   const [lineEnd, setLineEnd] = useState(end);
   const today = new Date().toISOString().slice(0, 10);
   const valid = Boolean(
@@ -65,7 +67,7 @@ function FilteredTimeline({
   return (
     <Stack spacing={2}>
       <TextField
-        label={`Data fim do gráfico de linha (${currency})`}
+        label={translate('Data fim do gráfico de linha ({0})', [currency])}
         type="date"
         value={lineEnd}
         onChange={(e) => setLineEnd(e.target.value)}
@@ -74,22 +76,24 @@ function FilteredTimeline({
       />
       {!valid ? (
         <Alert severity="warning">
-          Selecione fim após o início e intervalo de até 1095 dias.
+          {translate(
+            'Selecione fim após o início e intervalo de até 1095 dias.',
+          )}
         </Alert>
       ) : null}
       {valid && chart.isFetching ? (
-        <LinearProgress aria-label="Carregando projeção" />
+        <LinearProgress aria-label={translate('Carregando projeção')} />
       ) : null}
       {valid && chart.isError ? (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void chart.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar a evolução do saldo.
+          {translate('Não foi possível carregar a evolução do saldo.')}
         </Alert>
       ) : null}
       {valid && data ? (
@@ -97,10 +101,12 @@ function FilteredTimeline({
           <Timeline points={data.points} currency={currency} />
           {lineEnd > today ? (
             <Typography variant="body2">
-              Base da projeção: {data.historicalDays} dias. Média diária:
-              receitas {money(data.averageIncome, currency)} e despesas{' '}
-              {money(data.averageExpenses, currency)}. Estimativa sem garantia
-              de realização.
+              {translate('Base da projeção: ')}
+              {data.historicalDays}{' '}
+              {translate(' dias. Média diária: receitas ')}
+              {money(data.averageIncome, currency)} {translate(' e despesas')}{' '}
+              {money(data.averageExpenses, currency)}
+              {translate('. Estimativa sem garantia de realização.')}
             </Typography>
           ) : null}
         </>
@@ -110,6 +116,7 @@ function FilteredTimeline({
 }
 
 export function FinanceChartsPage() {
+  useLocale();
   const today = new Date().toISOString().slice(0, 10);
   const [start, setStart] = useState(`${today.slice(0, 7)}-01`);
   const [end, setEnd] = useState(today);
@@ -130,11 +137,11 @@ export function FinanceChartsPage() {
   return (
     <Stack spacing={2}>
       <Typography variant="h5" component="h1">
-        Dashboard da tesouraria
+        {translate('Dashboard da tesouraria')}
       </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <TextField
-          label="Data início"
+          label={translate('Data início')}
           type="date"
           value={start}
           onChange={(e) => setStart(e.target.value)}
@@ -144,7 +151,7 @@ export function FinanceChartsPage() {
           }}
         />
         <TextField
-          label="Data fim"
+          label={translate('Data fim')}
           type="date"
           value={end}
           onChange={(e) => setEnd(e.target.value)}
@@ -156,34 +163,35 @@ export function FinanceChartsPage() {
       </Stack>
       {!valid ? (
         <Alert severity="warning">
-          Selecione início até hoje, fim após o início e intervalo de até 1095
-          dias.
+          {translate(
+            'Selecione início até hoje, fim após o início e intervalo de até 1095 dias.',
+          )}
         </Alert>
       ) : null}
       <Alert severity="info">
-        Selecione uma data fim futura para projetar o saldo. A estimativa usa as
-        médias diárias de receitas e despesas concluídas entre a data início e
-        hoje (UTC), incluindo dias sem movimentos. Não inclui compromissos
-        pendentes. As pizzas mostram apenas valores realizados. O saldo inclui
-        saldos iniciais e movimentos anteriores ao período.
+        {translate(
+          'Selecione uma data fim futura para projetar o saldo. A estimativa usa as médias diárias de receitas e despesas concluídas entre a data início e hoje (UTC), incluindo dias sem movimentos. Não inclui compromissos pendentes. As pizzas mostram apenas valores realizados. O saldo inclui saldos iniciais e movimentos anteriores ao período.',
+        )}
       </Alert>
       {valid && charts.isFetching ? (
-        <LinearProgress aria-label="Carregando gráficos" />
+        <LinearProgress aria-label={translate('Carregando gráficos')} />
       ) : null}
       {valid && charts.isError ? (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void charts.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar os gráficos.
+          {translate('Não foi possível carregar os gráficos.')}
         </Alert>
       ) : null}
       {valid && charts.data?.currencies.length === 0 ? (
-        <Alert severity="info">Nenhuma conta bancária cadastrada.</Alert>
+        <Alert severity="info">
+          {translate('Nenhuma conta bancária cadastrada.')}
+        </Alert>
       ) : null}
       {valid
         ? charts.data?.currencies.map((c) => (
@@ -205,22 +213,22 @@ export function FinanceChartsPage() {
                 }}
               >
                 <Pie
-                  title="Receitas por categoria"
+                  title={translate('Receitas por categoria')}
                   rows={c.incomeCategories}
                   currency={c.currency}
                 />
                 <Pie
-                  title="Despesas por categoria"
+                  title={translate('Despesas por categoria')}
                   rows={c.expenseCategories}
                   currency={c.currency}
                 />
                 <Pie
-                  title="Receitas por centro de custos"
+                  title={translate('Receitas por centro de custos')}
                   rows={c.incomeCenters}
                   currency={c.currency}
                 />
                 <Pie
-                  title="Despesas por centro de custos"
+                  title={translate('Despesas por centro de custos')}
                   rows={c.expenseCenters}
                   currency={c.currency}
                 />

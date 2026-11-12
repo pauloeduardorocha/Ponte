@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { formatDateOnly, formatDateTime } from '../lib/format';
 import { CachedQueryStatus } from '../components/CachedQueryStatus';
 import { RecordTable, RecordRow } from '../components/RecordTable';
@@ -62,6 +63,7 @@ export interface FinancialDashboard {
   }[];
 }
 export function FinancialDashboardPanel() {
+  useLocale();
   const { hasPermission } = useAuth();
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [accountId, setAccountId] = useState('');
@@ -85,7 +87,7 @@ export function FinancialDashboardPanel() {
     enabled: hasPermission('FINANCE_ACCOUNT_READ'),
   });
   const money = (v: string, currency: string) =>
-    new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(
+    new Intl.NumberFormat(getLocale(), { style: 'currency', currency }).format(
       Number(v),
     );
   const nextMonth = new Date(month + '-01T00:00:00Z');
@@ -108,14 +110,16 @@ export function FinancialDashboardPanel() {
         gap={2}
       >
         <Box>
-          <Typography variant="h5">Financeiro — visão geral</Typography>
+          <Typography variant="h5">
+            {translate('Financeiro — visão geral')}
+          </Typography>
           <Typography variant="body2" color="text.secondary">
-            Resultados do mês e saldo até o fim do período.
+            {translate('Resultados do mês e saldo até o fim do período.')}
           </Typography>
         </Box>
         <Stack direction="row" gap={1}>
           <TextField
-            label="Mês"
+            label={translate('Mês')}
             type="month"
             value={month}
             slotProps={{
@@ -132,12 +136,12 @@ export function FinancialDashboardPanel() {
           {hasPermission('FINANCE_ACCOUNT_READ') && (
             <TextField
               select
-              label="Conta"
+              label={translate('Conta')}
               value={accountId}
               onChange={(e) => setAccountId(e.target.value)}
               sx={{ minWidth: 160 }}
             >
-              <MenuItem value="">Todas as contas</MenuItem>
+              <MenuItem value="">{translate('Todas as contas')}</MenuItem>
               {accounts.data?.items.map((a) => (
                 <MenuItem key={a.id} value={a.id}>
                   {a.name}
@@ -151,42 +155,49 @@ export function FinancialDashboardPanel() {
         <Skeleton
           variant="rounded"
           height={200}
-          aria-label="Carregando painel financeiro"
+          aria-label={translate('Carregando painel financeiro')}
         />
       )}
       <CachedQueryStatus
         updatedAt={data.dataUpdatedAt}
         refreshing={data.isFetching}
         onRefresh={() => void data.refetch()}
-        label="resumo financeiro"
+        label={translate('resumo financeiro')}
       />
       {data.isError && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar o financeiro.
+          {translate('Não foi possível carregar o financeiro.')}
         </Alert>
       )}
       {accounts.isError && (
         <Alert severity="warning">
-          Não foi possível carregar o filtro de contas.
+          {translate('Não foi possível carregar o filtro de contas.')}
         </Alert>
       )}
       {data.data && (
         <Alert severity="info">
           {data.data.bankDataThrough
-            ? `Última atualização dos valores: ${formatDateOnly(data.data.bankDataThrough)} (última data coberta pelos extratos bancários importados).`
-            : 'Ainda não há data de atualização disponível a partir dos extratos bancários importados.'}
+            ? translate(
+                'Última atualização dos valores: {0} (última data coberta pelos extratos bancários importados).',
+                [formatDateOnly(data.data.bankDataThrough)],
+              )
+            : translate(
+                'Ainda não há data de atualização disponível a partir dos extratos bancários importados.',
+              )}
         </Alert>
       )}
       {data.data?.balances.length === 0 && (
         <Alert severity="info">
-          Cadastre uma conta bancária para começar a acompanhar o financeiro.
+          {translate(
+            'Cadastre uma conta bancária para começar a acompanhar o financeiro.',
+          )}
         </Alert>
       )}
       {data.data?.balances.map((b) => (
@@ -194,19 +205,19 @@ export function FinancialDashboardPanel() {
           <Box className="metric-grid">
             {[
               {
-                label: 'Receitas',
+                label: translate('Receitas'),
                 value: b.income,
                 color: 'success.main',
                 href: list ? '/finance?tab=incomes' + period : undefined,
               },
               {
-                label: 'Despesas',
+                label: translate('Despesas'),
                 value: b.expenses,
                 color: 'error.main',
                 href: list ? '/finance?tab=expenses' + period : undefined,
               },
               {
-                label: 'Saldo',
+                label: translate('Saldo'),
                 value: b.balance,
                 color: Number(b.balance) < 0 ? 'error.main' : 'primary.main',
                 href: hasPermission('FINANCE_ACCOUNT_READ')
@@ -216,13 +227,13 @@ export function FinancialDashboardPanel() {
               ...(contribution
                 ? [
                     {
-                      label: 'Dízimos',
+                      label: translate('Dízimos'),
                       value: b.tithes ?? '0',
                       color: 'info.main',
                       href: '/finance?tab=contributions&type=TITHE' + period,
                     },
                     {
-                      label: 'Ofertas',
+                      label: translate('Ofertas'),
                       value: b.offerings ?? '0',
                       color: 'secondary.main',
                       href: '/finance?tab=contributions&type=OFFERING' + period,
@@ -256,7 +267,7 @@ export function FinancialDashboardPanel() {
       {list && data.data && (
         <Box className="metric-grid">
           <MetricCard
-            label="Movimentos pendentes de revisão"
+            label={translate('Movimentos pendentes de revisão')}
             value={data.data.unreconciled ?? 0}
             color="warning.main"
             href={banking ? '/finance/banking?unreconciled=true' : undefined}
@@ -265,7 +276,7 @@ export function FinancialDashboardPanel() {
             <Card variant="outlined">
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  Última importação
+                  {translate('Última importação')}
                 </Typography>
                 {data.data.latestImport ? (
                   <>
@@ -285,15 +296,16 @@ export function FinancialDashboardPanel() {
                       component={Link}
                       to={`/finance/banking?importId=${data.data.latestImport.id}`}
                     >
-                      Revisar {data.data.latestImport._count.transactions}{' '}
-                      movimentos
+                      {translate('Revisar ')}
+                      {data.data.latestImport._count.transactions}{' '}
+                      {translate('movimentos')}
                     </Button>
                   </>
                 ) : (
                   <Typography sx={{ my: 1 }}>
-                    Nenhuma importação.{' '}
+                    {translate('Nenhuma importação.')}{' '}
                     <Button component={Link} to="/finance/banking">
-                      Importar extrato
+                      {translate('Importar extrato')}
                     </Button>
                   </Typography>
                 )}
@@ -305,10 +317,12 @@ export function FinancialDashboardPanel() {
       {list && data.data && (
         <Card variant="outlined">
           <CardContent>
-            <Typography variant="h6">Últimos lançamentos do período</Typography>
+            <Typography variant="h6">
+              {translate('Últimos lançamentos do período')}
+            </Typography>
             {data.data.latestTransactions.length === 0 && (
               <Typography color="text.secondary" sx={{ mt: 2 }}>
-                Nenhum lançamento neste período.
+                {translate('Nenhum lançamento neste período.')}
               </Typography>
             )}
             <RecordTable>
@@ -326,14 +340,16 @@ export function FinancialDashboardPanel() {
                         component={Link}
                         to={`/finance?tab=${t.kind === 'INCOME' ? 'incomes' : 'expenses'}&record=${t.id}`}
                       >
-                        Abrir
+                        {translate('Abrir')}
                       </Button>
                     </>
                   }
                 >
                   <Typography variant="caption" color="text.secondary">
                     {formatDateOnly(t.date)} ·{' '}
-                    {t.kind === 'INCOME' ? 'Receita' : 'Despesa'}
+                    {t.kind === 'INCOME'
+                      ? translate('Receita')
+                      : translate('Despesa')}
                   </Typography>
                   <Typography
                     fontWeight={700}

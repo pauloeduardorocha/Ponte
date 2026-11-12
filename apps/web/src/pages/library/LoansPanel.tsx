@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { StatusChip } from '../../components/DataPresentation';
 import { Button, Stack, Typography } from '@mui/material';
@@ -22,6 +23,7 @@ export function LoansPanel({
   setPageSize: (size: number) => void;
   open: OpenLibraryAction;
 }) {
+  useLocale();
   return (
     <Paged
       total={loans.total}
@@ -31,9 +33,9 @@ export function LoansPanel({
       setPageSize={setPageSize}
     >
       <RecordTable
-        primaryLabel="Livro / Membro"
-        label={'Empréstimos'}
-        summaryLabel="Estado / Prazos"
+        primaryLabel={translate('Livro / Membro')}
+        label={translate('Empréstimos')}
+        summaryLabel={translate('Estado / Prazos')}
       >
         {loans.items.map((loan) => (
           <RecordRow
@@ -53,18 +55,18 @@ export function LoansPanel({
                     <Can permission="LIBRARY_LOAN_RETURN">
                       <Button
                         onClick={() =>
-                          open('Devolver exemplar', () =>
+                          open(translate('Devolver exemplar'), () =>
                             api.returnLoan(loan.id),
                           )
                         }
                       >
-                        Devolver
+                        {translate('Devolver')}
                       </Button>
                       <Button
                         color="error"
                         onClick={() =>
                           open(
-                            'Encerrar empréstimo',
+                            translate('Encerrar empréstimo'),
                             (v) =>
                               api.closeLoan(loan.id, {
                                 status:
@@ -74,7 +76,7 @@ export function LoansPanel({
                             [
                               {
                                 name: 'status',
-                                label: 'Motivo',
+                                label: translate('Motivo'),
                                 required: true,
                                 options: ['LOST', 'CANCELLED'],
                               },
@@ -83,19 +85,19 @@ export function LoansPanel({
                           )
                         }
                       >
-                        Perda / cancelamento
+                        {translate('Perda / cancelamento')}
                       </Button>
                     </Can>
                     {loan.status === 'ACTIVE' && (
                       <Can permission="LIBRARY_LOAN_RENEW">
                         <Button
                           onClick={() =>
-                            open('Renovar empréstimo', () =>
+                            open(translate('Renovar empréstimo'), () =>
                               api.renewLoan(loan.id),
                             )
                           }
                         >
-                          Renovar
+                          {translate('Renovar')}
                         </Button>
                       </Can>
                     )}
@@ -106,17 +108,20 @@ export function LoansPanel({
             summary={
               <>
                 <Typography>
-                  {<StatusChip status={loan.status} />} · Emprestado{' '}
-                  {formatDate(loan.borrowedAt)} · Vence {formatDate(loan.dueAt)}{' '}
-                  · Devolvido{' '}
-                  {loan.returnedAt ? formatDate(loan.returnedAt) : '—'} ·
-                  Renovações {loan.renewedCount}
+                  {<StatusChip status={loan.status} />}{' '}
+                  {translate(' · Emprestado')} {formatDate(loan.borrowedAt)}{' '}
+                  {translate(' · Vence ')}
+                  {formatDate(loan.dueAt)} {translate('· Devolvido')}{' '}
+                  {loan.returnedAt ? formatDate(loan.returnedAt) : '—'}{' '}
+                  {translate(' · Renovações ')}
+                  {loan.renewedCount}
                 </Typography>
               </>
             }
           >
             <Typography variant="caption">
-              ID: {loan.id} · Membro: {loan.memberId} · {loan.observations}
+              ID: {loan.id} {translate(' · Membro: ')}
+              {loan.memberId} · {loan.observations}
             </Typography>
           </RecordRow>
         ))}

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { STATUS_LABELS } from '../../lib/status-labels';
 import { RolesDialog } from './MemberRolesDialog';
 import { useAuth } from '../../auth/auth-context';
@@ -41,6 +42,7 @@ import { MemberLibraryHistory } from '../library/LibraryHistory';
 import { MemberFamily } from '../../components/MemberFamily';
 
 function Field({ label, value }: { label: string; value: string }) {
+  useLocale();
   return (
     <Box>
       <Typography variant="caption" color="text.secondary">
@@ -52,6 +54,7 @@ function Field({ label, value }: { label: string; value: string }) {
 }
 
 export function MemberDetailPage() {
+  useLocale();
   const { user: currentUser, hasPermission, clearSession } = useAuth();
   const administrator =
     currentUser?.roles?.some(
@@ -83,7 +86,7 @@ export function MemberDetailPage() {
         clearSession();
         navigate('/login', {
           replace: true,
-          state: { notice: 'Senha alterada. Entre novamente.' },
+          state: { notice: translate('Senha alterada. Entre novamente.') },
         });
       }
     },
@@ -102,24 +105,28 @@ export function MemberDetailPage() {
     onSuccess: async () => {
       queryClient.removeQueries({ queryKey: ['member', id] });
       await queryClient.invalidateQueries({ queryKey: ['members'] });
-      await queryClient.invalidateQueries({ queryKey: ['community', 'birthdays'] });
+      await queryClient.invalidateQueries({
+        queryKey: ['community', 'birthdays'],
+      });
       navigate('/members', {
         replace: true,
-        state: { notice: 'Membro excluído com sucesso.' },
+        state: { notice: translate('Membro excluído com sucesso.') },
       });
     },
   });
 
   if (member.isPending) {
-    return <CircularProgress aria-label="Carregando" />;
+    return <CircularProgress aria-label={translate('Carregando')} />;
   }
 
   if (member.isError) {
     return (
       <Stack spacing={2}>
-        <PageHeader title="Membro" />
+        <PageHeader title={translate('Membro')} />
         {member.error instanceof ApiError && member.error.status === 404 ? (
-          <Alert severity="warning">Membro não encontrado.</Alert>
+          <Alert severity="warning">
+            {translate('Membro não encontrado.')}
+          </Alert>
         ) : (
           <QueryError
             error={member.error}
@@ -132,7 +139,7 @@ export function MemberDetailPage() {
             to="/members"
             startIcon={<ArrowBackRounded />}
           >
-            Voltar para membros
+            {translate('Voltar para membros')}
           </Button>
         </Box>
       </Stack>
@@ -145,7 +152,7 @@ export function MemberDetailPage() {
     <Stack spacing={3}>
       <PageHeader
         title={data.name}
-        subtitle="Detalhes do membro"
+        subtitle={translate('Detalhes do membro')}
         actions={
           <>
             <Button
@@ -153,7 +160,7 @@ export function MemberDetailPage() {
               to="/members"
               startIcon={<ArrowBackRounded />}
             >
-              Voltar
+              {translate('Voltar')}
             </Button>
             <Can permission="MEMBER_UPDATE">
               <Button
@@ -162,7 +169,7 @@ export function MemberDetailPage() {
                 variant="outlined"
                 startIcon={<EditRounded />}
               >
-                Editar
+                {translate('Editar')}
               </Button>
             </Can>
             <Can permission="MEMBER_DELETE">
@@ -172,41 +179,47 @@ export function MemberDetailPage() {
                 startIcon={<DeleteRounded />}
                 onClick={() => setConfirmOpen(true)}
               >
-                Excluir
+                {translate('Excluir')}
               </Button>
             </Can>
           </>
         }
       />
 
-      {notice && <Alert severity="success">{notice}</Alert>}
+      {notice && <Alert severity="success">{translate(notice ?? '')}</Alert>}
 
       <Card variant="outlined">
         <CardContent>
           <Box className="detail-grid">
-            <Field label="Nome" value={data.name} />
+            <Field label={translate('Nome')} value={data.name} />
             <Box>
               <Typography
                 variant="caption"
                 color="text.secondary"
                 component="p"
               >
-                Status
+                {translate('Status')}
               </Typography>
               <MemberStatusChip status={data.status} />
             </Box>
-            <Field label="E-mail" value={data.email ?? '—'} />
-            <Field label="Telefone" value={data.phone ?? '—'} />
+            <Field label={translate('E-mail')} value={data.email ?? '—'} />
+            <Field label={translate('Telefone')} value={data.phone ?? '—'} />
             <Field label="IBAN" value={data.iban ?? '—'} />
             <Field
-              label="Data de nascimento"
+              label={translate('Data de nascimento')}
               value={formatDateOnly(data.birthDate)}
             />
-            <Field label="Cadastrado em" value={formatDate(data.createdAt)} />
-            <Field label="Atualizado em" value={formatDate(data.updatedAt)} />
+            <Field
+              label={translate('Cadastrado em')}
+              value={formatDate(data.createdAt)}
+            />
+            <Field
+              label={translate('Atualizado em')}
+              value={formatDate(data.updatedAt)}
+            />
           </Box>
           <Box sx={{ mt: 3 }}>
-            <Field label="Observações" value={data.notes ?? '—'} />
+            <Field label={translate('Observações')} value={data.notes ?? '—'} />
           </Box>
         </CardContent>
       </Card>
@@ -221,7 +234,9 @@ export function MemberDetailPage() {
         <Card variant="outlined">
           <CardContent>
             <Stack spacing={2}>
-              <Typography variant="h6">Acesso à plataforma</Typography>
+              <Typography variant="h6">
+                {translate('Acesso à plataforma')}
+              </Typography>
               <Typography>
                 {data.user.email} · {STATUS_LABELS[data.user.status]}
               </Typography>
@@ -233,14 +248,14 @@ export function MemberDetailPage() {
                     onClick={() => access.mutate()}
                   >
                     {data.user.status === 'DISABLED'
-                      ? 'Ativar acesso'
-                      : 'Desativar acesso'}
+                      ? translate('Ativar acesso')
+                      : translate('Desativar acesso')}
                   </Button>
                 )}
               {hasPermission('PERMISSION_MANAGE') &&
                 data.user.id !== currentUser?.id && (
                   <Button onClick={() => setRolesOpen(true)}>
-                    Gerenciar roles
+                    {translate('Gerenciar roles')}
                   </Button>
                 )}
               {access.isError && (
@@ -250,12 +265,12 @@ export function MemberDetailPage() {
                 (administrator || data.user.id !== currentUser?.id) && (
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                     <TextField
-                      label="Nova senha de acesso"
+                      label={translate('Nova senha de acesso')}
                       type="password"
                       autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      helperText="Entre 12 e 128 caracteres"
+                      helperText={translate('Entre 12 e 128 caracteres')}
                     />
                     <Button
                       disabled={
@@ -265,7 +280,7 @@ export function MemberDetailPage() {
                       }
                       onClick={() => passwordMutation.mutate()}
                     >
-                      Definir senha
+                      {translate('Definir senha')}
                     </Button>
                   </Stack>
                 )}
@@ -275,12 +290,12 @@ export function MemberDetailPage() {
                 </Alert>
               )}
               {passwordMutation.isSuccess && (
-                <Alert severity="success">Senha definida.</Alert>
+                <Alert severity="success">{translate('Senha definida.')}</Alert>
               )}
               <Typography variant="body2">
-                Sem roles, o membro pode consultar eventos, reservar livros, ver
-                o balanço financeiro e os grupos e ministérios. Um administrador
-                pode definir a primeira senha no cadastro.
+                {translate(
+                  'Sem roles, o membro pode consultar eventos, reservar livros, ver o balanço financeiro e os grupos e ministérios. Um administrador pode definir a primeira senha no cadastro.',
+                )}
               </Typography>
             </Stack>
           </CardContent>
@@ -302,7 +317,7 @@ export function MemberDetailPage() {
         <Card variant="outlined">
           <CardContent>
             <Typography variant="h6" sx={{ mb: 2 }}>
-              Histórico da biblioteca
+              {translate('Histórico da biblioteca')}
             </Typography>
             <MemberLibraryHistory memberId={data.id} />
           </CardContent>
@@ -310,12 +325,13 @@ export function MemberDetailPage() {
       </Can>
 
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>Excluir membro</DialogTitle>
+        <DialogTitle>{translate('Excluir membro')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <DialogContentText>
-              Tem certeza de que deseja excluir {data.name}? Esta ação não pode
-              ser desfeita.
+              {translate('Tem certeza de que deseja excluir ')}
+              {data.name}
+              {translate('? Esta ação não pode ser desfeita.')}
             </DialogContentText>
             {removal.isError && (
               <Alert severity="error">{errorMessage(removal.error)}</Alert>
@@ -323,14 +339,16 @@ export function MemberDetailPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)}>Cancelar</Button>
+          <Button onClick={() => setConfirmOpen(false)}>
+            {translate('Cancelar')}
+          </Button>
           <Button
             color="error"
             variant="contained"
             disabled={removal.isPending}
             onClick={() => removal.mutate()}
           >
-            Confirmar exclusão
+            {translate('Confirmar exclusão')}
           </Button>
         </DialogActions>
       </Dialog>

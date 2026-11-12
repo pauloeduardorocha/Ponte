@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { useState } from 'react';
 import {
   Box,
@@ -38,12 +39,32 @@ const colors = [
   '#546e7a',
 ];
 const series = [
-  { key: 'balance', label: 'Saldo', color: colors[0] },
-  { key: 'income', label: 'Receitas', color: colors[2] },
-  { key: 'expenses', label: 'Despesas', color: colors[1] },
+  {
+    key: 'balance',
+    get label() {
+      return translate('Saldo');
+    },
+    color: colors[0],
+  },
+  {
+    key: 'income',
+    get label() {
+      return translate('Receitas');
+    },
+    color: colors[2],
+  },
+  {
+    key: 'expenses',
+    get label() {
+      return translate('Despesas');
+    },
+    color: colors[1],
+  },
 ] as const;
 const money = (value: number, currency: string) =>
-  new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(value);
+  new Intl.NumberFormat(getLocale(), { style: 'currency', currency }).format(
+    value,
+  );
 const dateLabel = (date: string) => date.split('-').reverse().join('/');
 
 export function FinancePieChart({
@@ -55,6 +76,7 @@ export function FinancePieChart({
   rows: FinanceSlice[];
   currency: string;
 }) {
+  useLocale();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const total = rows.reduce((sum, row) => sum + row.amount, 0);
   return (
@@ -96,7 +118,7 @@ export function FinancePieChart({
                 </Pie>
                 <Tooltip
                   formatter={(value) =>
-                    `${money(Number(value), currency)} (${((Number(value) / total) * 100).toFixed(1)}%)`
+                    `${money(Number(value), currency)} (${((Number(value) / total) * 100).toLocaleString(getLocale(), { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%)`
                   }
                 />
               </PieChart>
@@ -109,14 +131,18 @@ export function FinancePieChart({
                   ●{' '}
                 </Box>
                 {row.name}: {money(row.amount, currency)} (
-                {((row.amount / total) * 100).toFixed(1)}%)
+                {((row.amount / total) * 100).toLocaleString(getLocale(), {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })}
+                %)
               </Typography>
             ))}
           </Stack>
         </>
       ) : (
         <Typography color="text.secondary">
-          Sem movimentos no período.
+          {translate('Sem movimentos no período.')}
         </Typography>
       )}
     </Card>
@@ -130,6 +156,7 @@ export function FinanceTimelineChart({
   points: FinancePoint[];
   currency: string;
 }) {
+  useLocale();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [hidden, setHidden] = useState<string[]>([]);
   const firstProjection = points.findIndex((p) => p.projected);
@@ -150,19 +177,20 @@ export function FinanceTimelineChart({
   return (
     <Card variant="outlined" sx={{ p: 2, minWidth: 0 }}>
       <Typography variant="h6" component="h3">
-        Saldo bancário, receitas e despesas — {currency}
+        {translate('Saldo bancário, receitas e despesas — ')}
+        {currency}
       </Typography>
       <Typography variant="body2" color="text.secondary">
-        Linhas contínuas: realizado. Tracejadas: projeção. Passe sobre o gráfico
-        para ver os valores diários; use a faixa inferior para ampliar um
-        período.
+        {translate(
+          'Linhas contínuas: realizado. Tracejadas: projeção. Passe sobre o gráfico para ver os valores diários; use a faixa inferior para ampliar um período.',
+        )}
       </Typography>
       <Stack
         direction="row"
         spacing={1}
         flexWrap="wrap"
         sx={{ my: 2 }}
-        aria-label="Séries do gráfico"
+        aria-label={translate('Séries do gráfico')}
       >
         {series.map(({ key, label, color }) => (
           <Button
@@ -170,7 +198,7 @@ export function FinanceTimelineChart({
             size="small"
             variant={hidden.includes(key) ? 'outlined' : 'contained'}
             aria-pressed={!hidden.includes(key)}
-            aria-label={`${hidden.includes(key) ? 'Mostrar' : 'Ocultar'} ${label}`}
+            aria-label={`${hidden.includes(key) ? translate('Mostrar') : translate('Ocultar')} ${label}`}
             onClick={() =>
               setHidden((current) =>
                 current.includes(key)
@@ -186,7 +214,9 @@ export function FinanceTimelineChart({
       </Stack>
       <Box
         role="region"
-        aria-label={`Evolução do saldo, receitas e despesas em ${currency}`}
+        aria-label={translate('Evolução do saldo, receitas e despesas em {0}', [
+          currency,
+        ])}
         sx={{ height: 380, width: '100%' }}
       >
         <ResponsiveContainer
@@ -209,7 +239,7 @@ export function FinanceTimelineChart({
             <YAxis
               width={85}
               tickFormatter={(value: number) =>
-                new Intl.NumberFormat('pt-PT', {
+                new Intl.NumberFormat(getLocale(), {
                   notation: 'compact',
                   maximumFractionDigits: 1,
                 }).format(value)
@@ -223,7 +253,9 @@ export function FinanceTimelineChart({
                   <Card variant="outlined" sx={{ p: 1.5 }} role="status">
                     <Typography fontWeight={700}>
                       {dateLabel(point.date)} ·{' '}
-                      {point.projected ? 'Projeção' : 'Realizado'}
+                      {point.projected
+                        ? translate('Projeção')
+                        : translate('Realizado')}
                     </Typography>
                     {series
                       .filter(({ key }) => !hidden.includes(key))
@@ -252,7 +284,7 @@ export function FinanceTimelineChart({
               <Line
                 key={`${key}Projected`}
                 dataKey={`${key}Projected`}
-                name={`${label} (projeção)`}
+                name={translate('{0} (projeção)', [label])}
                 stroke={color}
                 strokeWidth={2.5}
                 strokeDasharray="7 5"
@@ -275,16 +307,16 @@ export function FinanceTimelineChart({
         </ResponsiveContainer>
       </Box>
       <Box component="details">
-        <summary>Ver valores diários</summary>
+        <summary>{translate('Ver valores diários')}</summary>
         <Box sx={{ maxHeight: 280, overflow: 'auto' }}>
           <table>
             <thead>
               <tr>
-                <th>Data</th>
-                <th>Saldo</th>
-                <th>Receitas</th>
-                <th>Despesas</th>
-                <th>Tipo</th>
+                <th>{translate('Data')}</th>
+                <th>{translate('Saldo')}</th>
+                <th>{translate('Receitas')}</th>
+                <th>{translate('Despesas')}</th>
+                <th>{translate('Tipo')}</th>
               </tr>
             </thead>
             <tbody>
@@ -294,7 +326,11 @@ export function FinanceTimelineChart({
                   <td>{money(p.balance, currency)}</td>
                   <td>{money(p.income, currency)}</td>
                   <td>{money(p.expenses, currency)}</td>
-                  <td>{p.projected ? 'Projeção' : 'Realizado'}</td>
+                  <td>
+                    {p.projected
+                      ? translate('Projeção')
+                      : translate('Realizado')}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { TextField, type TextFieldProps } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
@@ -44,6 +45,7 @@ export function EntitySelect({
   kind?: string;
   query?: Record<string, string>;
 }) {
+  useLocale();
   return endpoint.startsWith('/library/') ? (
     <LibraryAutocomplete endpoint={endpoint} {...props} />
   ) : (
@@ -68,6 +70,7 @@ function FullEntitySelect({
   kind?: string;
   query?: Record<string, string>;
 }) {
+  useLocale();
   const options = useQuery({
     queryKey: ['entity-options', endpoint, query],
     queryFn: async () => {
@@ -95,16 +98,18 @@ function FullEntitySelect({
       helperText={
         options.error?.message ??
         (options.isPending
-          ? 'Carregando opções…'
+          ? translate('Carregando opções…')
           : options.data?.length === 0
-            ? 'Nenhuma entidade disponível.'
+            ? translate('Nenhuma entidade disponível.')
             : helperText)
       }
       slotProps={{ ...props.slotProps, select: { native: true } }}
     >
-      <option value="">Selecione</option>
+      <option value="">{translate('Selecione')}</option>
       {Boolean(value) && !options.data?.some((item) => item.id === value) && (
-        <option value={String(value)}>Registro selecionado</option>
+        <option value={String(value)}>
+          {translate('Registro selecionado')}
+        </option>
       )}
       {options.data
         ?.filter(

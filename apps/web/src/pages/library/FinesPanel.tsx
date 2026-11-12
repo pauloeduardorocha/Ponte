@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { FineMovements } from './FineMovements';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { StatusChip } from '../../components/DataPresentation';
@@ -22,6 +23,7 @@ export function FinesPanel({
   setPageSize: (size: number) => void;
   open: OpenLibraryAction;
 }) {
+  useLocale();
   return (
     <Paged
       total={fines.total}
@@ -31,9 +33,9 @@ export function FinesPanel({
       setPageSize={setPageSize}
     >
       <RecordTable
-        primaryLabel="Livro / Membro"
-        label={'Multas'}
-        summaryLabel="Valores"
+        primaryLabel={translate('Livro / Membro')}
+        label={translate('Multas')}
+        summaryLabel={translate('Valores')}
       >
         {fines.items.map((fine) => (
           <RecordRow
@@ -54,7 +56,7 @@ export function FinesPanel({
                         onClick={() => {
                           const idempotencyKey = crypto.randomUUID();
                           open(
-                            'Pagamento (total ou parcial)',
+                            translate('Pagamento (total ou parcial)'),
                             (v) =>
                               api.payFine(fine.id, {
                                 amount: v.amount ?? '',
@@ -63,21 +65,21 @@ export function FinesPanel({
                             [
                               {
                                 name: 'amount',
-                                label: 'Valor decimal (ex.: 1.50)',
+                                label: translate('Valor decimal (ex.: 1.50)'),
                                 required: true,
                               },
                             ],
                           );
                         }}
                       >
-                        Pagar
+                        {translate('Pagar')}
                       </Button>
                     </Can>
                     <Can permission="LIBRARY_FINE_ADJUST">
                       <Button
                         onClick={() =>
                           open(
-                            'Desconto',
+                            translate('Desconto'),
                             (v) =>
                               api.adjustFine(fine.id, {
                                 kind: 'DISCOUNT',
@@ -87,7 +89,7 @@ export function FinesPanel({
                             [
                               {
                                 name: 'amount',
-                                label: 'Valor do desconto',
+                                label: translate('Valor do desconto'),
                                 required: true,
                               },
                               justification,
@@ -95,12 +97,12 @@ export function FinesPanel({
                           )
                         }
                       >
-                        Desconto
+                        {translate('Desconto')}
                       </Button>
                       <Button
                         onClick={() =>
                           open(
-                            'Perdoar saldo da multa',
+                            translate('Perdoar saldo da multa'),
                             (v) =>
                               api.adjustFine(fine.id, {
                                 kind: 'FORGIVE',
@@ -110,13 +112,13 @@ export function FinesPanel({
                           )
                         }
                       >
-                        Perdoar
+                        {translate('Perdoar')}
                       </Button>
                       <Button
                         color="error"
                         onClick={() =>
                           open(
-                            'Cancelar saldo da multa',
+                            translate('Cancelar saldo da multa'),
                             (v) =>
                               api.adjustFine(fine.id, {
                                 kind: 'CANCEL',
@@ -126,7 +128,7 @@ export function FinesPanel({
                           )
                         }
                       >
-                        Cancelar multa
+                        {translate('Cancelar multa')}
                       </Button>
                     </Can>
                   </Stack>
@@ -136,8 +138,10 @@ export function FinesPanel({
             summary={
               <>
                 <Typography>
-                  {<StatusChip status={fine.status} />} · Total {fine.amount} ·
-                  Pago {fine.paidAmount} · Ajustado {fine.discount} · Saldo{' '}
+                  {<StatusChip status={fine.status} />} {translate(' · Total ')}
+                  {fine.amount} {translate(' · Pago ')}
+                  {fine.paidAmount} {translate(' · Ajustado ')}
+                  {fine.discount} {translate(' · Saldo')}{' '}
                   {api.fineBalance(fine)}
                 </Typography>
               </>

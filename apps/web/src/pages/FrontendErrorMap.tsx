@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Box, Button, Card, Stack, Typography } from '@mui/material';
@@ -15,6 +16,7 @@ function ErrorLocationMap({
   points: ErrorMapPoint[];
   onSelect?: (id: string) => void;
 }) {
+  const locale = useLocale();
   const container = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -46,7 +48,9 @@ function ErrorLocationMap({
         for (const group of groups.values()) {
           const point = group[0]!;
           const marker = L.marker([point.latitude, point.longitude], {
-            title: `${group.length} erro(s) nesta localização aproximada`,
+            title: translate('{0} erro(s) nesta localização aproximada', [
+              group.length,
+            ]),
             icon: L.divIcon({
               className: '',
               iconSize: [30, 30],
@@ -63,7 +67,7 @@ function ErrorLocationMap({
             if (onSelect) {
               const button = document.createElement('button');
               button.type = 'button';
-              button.textContent = 'Ver detalhes do erro';
+              button.textContent = translate('Ver detalhes do erro');
               button.addEventListener('click', () => onSelect(error.id));
               item.append(document.createElement('br'), button);
             }
@@ -90,19 +94,20 @@ function ErrorLocationMap({
       observer?.disconnect();
       map?.remove();
     };
-  }, [points, onSelect]);
+  }, [points, onSelect, locale]);
   return (
     <Stack spacing={1}>
       {failed && (
         <Alert severity="warning">
-          Não foi possível carregar parte do mapa. Os valores das localizações
-          continuam disponíveis.
+          {translate(
+            'Não foi possível carregar parte do mapa. Os valores das localizações continuam disponíveis.',
+          )}
         </Alert>
       )}
       <Box
         ref={container}
         role="region"
-        aria-label="Mapa de localizações aproximadas dos erros"
+        aria-label={translate('Mapa de localizações aproximadas dos erros')}
         sx={{
           height: { xs: 300, md: 380 },
           width: '100%',
@@ -120,6 +125,7 @@ export function FrontendErrorMap({
 }: {
   onSelect: (id: string) => void;
 }) {
+  useLocale();
   const map = useQuery({
     queryKey: ['frontend-error-map'],
     queryFn: () =>
@@ -131,37 +137,40 @@ export function FrontendErrorMap({
     <Card variant="outlined" sx={{ p: 2 }}>
       <Stack spacing={2}>
         <Typography variant="h6" component="h2">
-          Mapa dos erros
+          {translate('Mapa dos erros')}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Últimos 30 dias de calendário (UTC). Localizações aproximadas por IP.
-          Erros na mesma coordenada são agrupados; clique no marcador para
-          consultar cada ocorrência.
+          {translate(
+            'Últimos 30 dias de calendário (UTC). Localizações aproximadas por IP. Erros na mesma coordenada são agrupados; clique no marcador para consultar cada ocorrência.',
+          )}
         </Typography>
         {map.isPending && (
-          <Typography role="status">Carregando localizações—</Typography>
+          <Typography role="status">
+            {translate('Carregando localizações—')}
+          </Typography>
         )}
         {map.isError && (
           <Alert severity="warning">
-            Não foi possível carregar as localizações dos erros.
+            {translate('Não foi possível carregar as localizações dos erros.')}
           </Alert>
         )}
         {map.data && (
           <>
             <Typography>
-              {map.data.points.length} erros no mapa ·{' '}
-              {map.data.total - map.data.points.length} sem coordenadas
+              {map.data.points.length} {translate(' erros no mapa ·')}{' '}
+              {map.data.total - map.data.points.length}{' '}
+              {translate(' sem coordenadas')}
             </Typography>
             {map.data.points.length ? (
               <ErrorLocationMap points={map.data.points} onSelect={onSelect} />
             ) : (
               <Alert severity="info">
-                Ainda não há erros com coordenadas disponíveis.
+                {translate('Ainda não há erros com coordenadas disponíveis.')}
               </Alert>
             )}
             <Box component="details">
               <Box component="summary" sx={{ cursor: 'pointer' }}>
-                Ver ocorrências localizadas
+                {translate('Ver ocorrências localizadas')}
               </Box>
               <Stack
                 spacing={1}
@@ -174,7 +183,7 @@ export function FrontendErrorMap({
                       {point.route} · {point.latitude}, {point.longitude}
                     </Typography>
                     <Button onClick={() => onSelect(point.id)}>
-                      Ver detalhes do erro
+                      {translate('Ver detalhes do erro')}
                     </Button>
                   </Box>
                 ))}
@@ -192,6 +201,7 @@ export function FrontendErrorDetailMap({
 }: {
   report: Record<string, unknown>;
 }) {
+  useLocale();
   const points = useMemo(() => {
     const point = errorLocation(report);
     return point ? [point] : [];
@@ -199,18 +209,20 @@ export function FrontendErrorDetailMap({
   return (
     <Stack spacing={1} sx={{ mb: 2 }}>
       <Typography variant="h6" component="h3">
-        Localização aproximada
+        {translate('Localização aproximada')}
       </Typography>
       {points.length ? (
         <>
           <Typography variant="body2" color="text.secondary">
-            Estimativa por IP, não corresponde à posição GPS do dispositivo.
+            {translate(
+              'Estimativa por IP, não corresponde à posição GPS do dispositivo.',
+            )}
           </Typography>
           <ErrorLocationMap points={points} />
         </>
       ) : (
         <Typography color="text.secondary">
-          Este registro não tem coordenadas disponíveis.
+          {translate('Este registro não tem coordenadas disponíveis.')}
         </Typography>
       )}
     </Stack>

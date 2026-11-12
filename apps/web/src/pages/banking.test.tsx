@@ -141,14 +141,14 @@ describe('Bank statement review', () => {
     );
     await uploadStatement();
     await screen.findByRole('button', { name: 'Usar categoria' });
-    select('Tipo de registro', 'Despesa');
+    select('Tipo de registo', 'Despesa');
     expect(
       screen.queryByRole('button', { name: 'Usar categoria' }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: 'Usar centro de custo' }),
     ).not.toBeInTheDocument();
-    select('Tipo de registro', 'Receita');
+    select('Tipo de registo', 'Receita');
     expect(screen.getByText(/80% de concordância no histórico/)).toBeVisible();
     expect(
       screen.getByRole('combobox', { name: 'Categoria' }),
@@ -569,7 +569,7 @@ describe('Bank statement review', () => {
     await uploadStatement();
     fireEvent.click(screen.getByRole('button', { name: 'Continuar depois' }));
     await screen.findByText(
-      'Progresso salvo. Continue pelo menu Receitas ou Despesas, editando os itens normalmente.',
+      'Progresso guardado. Continue pelo menu Receitas ou Despesas, editando os itens normalmente.',
     );
     expect(requests.some((r) => r.path === '/finance/banking/classify')).toBe(
       false,
@@ -588,7 +588,7 @@ describe('Bank statement review', () => {
             status: 'POSSIBLE_DUPLICATE',
             categoryId: 'category-1',
             costCenterId: 'center-1',
-            duplicateReason: 'Possível duplicidade',
+            duplicateReason: 'Possível duplicação',
           },
         ]),
       },
@@ -597,7 +597,7 @@ describe('Bank statement review', () => {
       },
       'POST /finance/banking/classify': {
         status: 409,
-        body: { message: 'Não foi possível salvar' },
+        body: { message: 'Não foi possível guardar' },
       },
     });
     renderApp('/finance/banking');
@@ -605,7 +605,7 @@ describe('Bank statement review', () => {
     expect(screen.getByRole('button', { name: 'Próxima' })).toBeDisabled();
     fireEvent.click(screen.getByRole('checkbox', { name: /Revisei e aceito/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Próxima' }));
-    await screen.findByText('Não foi possível salvar');
+    await screen.findByText('Não foi possível guardar');
     expect(screen.getByText('Movimento 1 de 1')).toBeInTheDocument();
     expect(
       screen.getByRole('dialog', { name: 'Categorizar movimentação' }),
@@ -707,7 +707,7 @@ describe('Bank statement review', () => {
       ),
     ).toBe(true);
     expect(
-      screen.queryByRole('dialog', { name: 'Buscar faturas deste extrato?' }),
+      screen.queryByRole('dialog', { name: 'Procurar faturas deste extrato?' }),
     ).not.toBeInTheDocument();
     fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Categoria' }));
     fireEvent.click(await screen.findByRole('option', { name: 'Dízimos' }));
@@ -781,7 +781,7 @@ describe('Bank statement review', () => {
   it('hides the pending alert when there are no movements to categorize', async () => {
     mockApi({ ...routes(), 'GET /finance/incomes': { body: page([]) } });
     renderApp('/finance?tab=incomes');
-    await screen.findByText('Nenhum registro.');
+    await screen.findByText('Nenhum registo.');
     expect(
       screen.queryByRole('button', { name: 'Categorizar movimentos' }),
     ).not.toBeInTheDocument();
@@ -799,13 +799,15 @@ describe('Bank statement review', () => {
     });
     renderApp('/finance/banking?importId=import-1');
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Buscar faturas no e-Fatura' }),
+      await screen.findByRole('button', {
+        name: 'Procurar faturas no e-Fatura',
+      }),
     );
     await screen.findByText('Período: 01/08/2026 a 07/10/2026');
     fireEvent.change(screen.getByRole('textbox', { name: /^NIF/ }), {
       target: { value: '123456789' },
     });
-    fireEvent.change(screen.getByLabelText(/Senha das Finanças/), {
+    fireEvent.change(screen.getByLabelText(/Palavra-passe das Finanças/), {
       target: { value: 'test-secret' },
     });
     fireEvent.submit(document.getElementById('efatura-fetch')!);
@@ -818,7 +820,7 @@ describe('Bank statement review', () => {
         password: 'test-secret',
       }),
     );
-    expect(screen.getByLabelText(/Senha das Finanças/)).toHaveValue('');
+    expect(screen.getByLabelText(/Palavra-passe das Finanças/)).toHaveValue('');
     expect(
       screen.queryByRole('button', { name: 'Exportar período para o scraper' }),
     ).not.toBeInTheDocument();
@@ -831,7 +833,7 @@ describe('Bank statement review', () => {
       'GET /finance/incomes': { body: page([]) },
     });
     renderApp('/finance');
-    await screen.findByText('Nenhum registro.');
+    await screen.findByText('Nenhum registo.');
     expect(
       screen.queryByRole('tab', { name: 'Importação bancária' }),
     ).not.toBeInTheDocument();

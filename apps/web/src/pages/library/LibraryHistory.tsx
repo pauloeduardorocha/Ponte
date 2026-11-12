@@ -1,3 +1,5 @@
+import { STATUS_LABELS } from '../../lib/status-labels';
+import { t as translate, useLocale } from '../../i18n';
 import { FineMovements } from './FineMovements';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useQuery } from '@tanstack/react-query';
@@ -18,13 +20,14 @@ import { QueryError } from '../../components/PageParts';
 import { formatDate } from '../../lib/format';
 
 export function HistoryContent({ history }: { history: LibraryHistory }) {
+  useLocale();
   return (
     <Stack spacing={2}>
       <Typography variant="h6">
-        Empréstimos ativos / histórico / atrasos
+        {translate('Empréstimos ativos / histórico / atrasos')}
       </Typography>
       {!history.loans.length && (
-        <Alert severity="info">Nenhum empréstimo.</Alert>
+        <Alert severity="info">{translate('Nenhum empréstimo.')}</Alert>
       )}
       <RecordTable hasActions={false}>
         {history.loans.map((loan) => (
@@ -34,7 +37,7 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
               <>
                 <Typography fontWeight={600}>
                   {loan.bookCopy.book.title} — {loan.bookCopy.assetCode} —{' '}
-                  {loan.status}
+                  {STATUS_LABELS[loan.status] ?? loan.status}
                 </Typography>
               </>
             }
@@ -42,20 +45,27 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
             actions={<></>}
           >
             <Typography variant="body2">
-              {loan.member.name} · Emprestado: {formatDate(loan.borrowedAt)} ·
-              Vencimento: {formatDate(loan.dueAt)} · Devolução:{' '}
-              {loan.returnedAt ? formatDate(loan.returnedAt) : '—'} ·
-              Renovações: {loan.renewedCount}
+              {loan.member.name} {translate(' · Emprestado: ')}
+              {formatDate(loan.borrowedAt)} {translate(' · Vencimento: ')}
+              {formatDate(loan.dueAt)} {translate(' · Devolução:')}{' '}
+              {loan.returnedAt ? formatDate(loan.returnedAt) : '—'}{' '}
+              {translate(' · Renovações: ')}
+              {loan.renewedCount}
             </Typography>
             <Typography variant="body2">
-              Operador: {loan.createdBy} · Recebido por:{' '}
+              {translate('Operador: ')}
+              {loan.createdBy} {translate(' · Recebido por:')}{' '}
               {loan.returnedBy ?? '—'} · {loan.observations}
             </Typography>
             {loan.fine && (
               <>
                 <Typography>
-                  Multa: {loan.fine.status} · Total {loan.fine.amount} · Pago{' '}
-                  {loan.fine.paidAmount} · Ajustado {loan.fine.discount} · Saldo{' '}
+                  {translate('Multa: ')}
+                  {STATUS_LABELS[loan.fine.status] ?? loan.fine.status}{' '}
+                  {translate(' · Total ')}
+                  {loan.fine.amount} {translate(' · Pago')}{' '}
+                  {loan.fine.paidAmount} {translate(' · Ajustado ')}
+                  {loan.fine.discount} {translate(' · Saldo')}{' '}
                   {fineBalance(loan.fine)}
                 </Typography>
                 <FineMovements fineId={loan.fine.id} />
@@ -64,9 +74,9 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
           </RecordRow>
         ))}
       </RecordTable>
-      <Typography variant="h6">Reservas</Typography>
+      <Typography variant="h6">{translate('Reservas')}</Typography>
       {!history.reservations.length && (
-        <Alert severity="info">Nenhuma reserva.</Alert>
+        <Alert severity="info">{translate('Nenhuma reserva.')}</Alert>
       )}
       <RecordTable hasActions={false}>
         {history.reservations.map((reservation) => (
@@ -76,8 +86,11 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
             primary={<Typography>{reservation.book.title}</Typography>}
           >
             <Typography variant="body2">
-              {reservation.member.name} · {reservation.status} · Exemplar{' '}
-              {reservation.bookCopy?.assetCode ?? 'aguardando'} · Expira{' '}
+              {reservation.member.name} ·{' '}
+              {STATUS_LABELS[reservation.status] ?? reservation.status}{' '}
+              {translate(' · Exemplar')}{' '}
+              {reservation.bookCopy?.assetCode ?? translate('aguardando')}{' '}
+              {translate(' · Expira')}{' '}
               {formatDate(reservation.holdUntil ?? reservation.expiresAt)}
             </Typography>
           </RecordRow>
@@ -88,6 +101,7 @@ export function HistoryContent({ history }: { history: LibraryHistory }) {
 }
 
 export function MemberLibraryHistory({ memberId }: { memberId: string }) {
+  useLocale();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const history = useQuery({
@@ -95,7 +109,7 @@ export function MemberLibraryHistory({ memberId }: { memberId: string }) {
     queryFn: () => getMemberLibraryHistory(memberId, { page, pageSize }),
   });
   if (history.isPending)
-    return <CircularProgress aria-label="Carregando biblioteca" />;
+    return <CircularProgress aria-label={translate('Carregando biblioteca')} />;
   if (history.isError)
     return (
       <QueryError
@@ -127,6 +141,7 @@ export function HistoryPagination({
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
 }) {
+  useLocale();
   return (
     <TablePagination
       component="div"
@@ -142,12 +157,12 @@ export function HistoryPagination({
         onPageSizeChange(Number(event.target.value))
       }
       onPageChange={(_, page) => onPageChange(page + 1)}
-      labelRowsPerPage="Por página em cada lista"
-      labelDisplayedRows={({ page }) => `Página ${page + 1}`}
+      labelRowsPerPage={translate('Por página em cada lista')}
+      labelDisplayedRows={({ page }) => translate('Página {0}', [page + 1])}
       getItemAriaLabel={(type) =>
         type === 'next'
-          ? 'Próxima página do histórico'
-          : 'Página anterior do histórico'
+          ? translate('Próxima página do histórico')
+          : translate('Página anterior do histórico')
       }
     />
   );

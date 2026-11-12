@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { errorMessage } from './conversation-utils';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -22,6 +23,7 @@ export function ConversationPostActions({
   topic?: boolean;
   onDeleted: () => void;
 }) {
+  useLocale();
   const { user } = useAuth();
   const client = useQueryClient();
   const [confirm, setConfirm] = useState(false);
@@ -46,7 +48,8 @@ export function ConversationPostActions({
         sx={{ color: 'text.secondary' }}
         onClick={() => setConfirm(true)}
       >
-        Excluir {topic ? 'conversa' : 'mensagem'}
+        {translate('Excluir ')}
+        {topic ? translate('conversa') : translate('mensagem')}
       </Button>
       {remove.isError && (
         <Alert severity="error">{errorMessage(remove.error)}</Alert>
@@ -59,21 +62,24 @@ export function ConversationPostActions({
         aria-labelledby={`delete-${post.id}`}
       >
         <DialogTitle id={`delete-${post.id}`}>
-          Excluir {topic ? 'conversa' : 'mensagem'}?
+          {translate('Excluir ')}
+          {topic ? translate('conversa') : translate('mensagem')}?
         </DialogTitle>
         <DialogContent>
-          O conteúdo deixará de ser exibido. O registro continuará preservado.
+          {translate(
+            'O conteúdo deixará de ser exibido. O registro continuará preservado.',
+          )}
         </DialogContent>
         <DialogActions>
           <Button disabled={remove.isPending} onClick={() => setConfirm(false)}>
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             color="error"
             disabled={remove.isPending}
             onClick={() => remove.mutate()}
           >
-            Excluir
+            {translate('Excluir')}
           </Button>
         </DialogActions>
       </Dialog>

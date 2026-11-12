@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import {
   Box,
   Card,
@@ -12,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { STATUS_LABELS } from '../lib/status-labels';
 
 export function StatusChip({ status }: { status: string }) {
+  useLocale();
   const color = [
     'ACTIVE',
     'AVAILABLE',
@@ -84,6 +86,7 @@ export function MetricCard({
   color?: string;
   href?: string;
 }) {
+  useLocale();
   const content = (
     <CardContent>
       <Typography variant="body2" color="text.secondary">
@@ -140,6 +143,7 @@ export function BreakdownChart({
   title: string;
   items: { label: string; value: number; color: string }[];
 }) {
+  useLocale();
   const maximum = Math.max(1, ...items.map((i) => i.value));
   return (
     <Card variant="outlined">
@@ -153,7 +157,7 @@ export function BreakdownChart({
               <Stack direction="row" justifyContent="space-between">
                 <Typography variant="body2">{i.label}</Typography>
                 <Typography variant="body2" fontWeight={700}>
-                  {i.value.toLocaleString('pt-PT')}
+                  {i.value.toLocaleString(getLocale())}
                 </Typography>
               </Stack>
               <LinearProgress
@@ -176,7 +180,7 @@ export function BreakdownChart({
         </Stack>
         {items.every((i) => i.value === 0) && (
           <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-            Sem dados para apresentar.
+            {translate('Sem dados para apresentar.')}
           </Typography>
         )}
       </CardContent>
@@ -204,24 +208,28 @@ export function MoneyTrend({
   }[];
   currency: string;
 }) {
+  useLocale();
   const max = Math.max(
     1,
     ...rows.flatMap((r) => [Number(r.income), Number(r.expenses)]),
   );
   const format = (v: string) =>
-    new Intl.NumberFormat('pt-PT', { style: 'currency', currency }).format(
+    new Intl.NumberFormat(getLocale(), { style: 'currency', currency }).format(
       Number(v),
     );
   return (
     <Card variant="outlined">
       <CardContent>
-        <Typography variant="h6">Evolução mensal · {currency}</Typography>
+        <Typography variant="h6">
+          {translate('Evolução mensal · ')}
+          {currency}
+        </Typography>
         <Typography variant="caption" color="text.secondary">
-          Lançamentos concluídos, pela data do movimento
+          {translate('Lançamentos concluídos, pela data do movimento')}
         </Typography>
         <Stack direction="row" spacing={2} sx={{ my: 2 }}>
-          <Chip label="Receitas" color="success" size="small" />
-          <Chip label="Despesas" color="error" size="small" />
+          <Chip label={translate('Receitas')} color="success" size="small" />
+          <Chip label={translate('Despesas')} color="error" size="small" />
         </Stack>
         <Stack
           direction="row"
@@ -256,9 +264,7 @@ export function MoneyTrend({
                     borderRadius: 0.5,
                   }}
                 />
-                <Typography variant="caption">
-                  {category.name}
-                </Typography>
+                <Typography variant="caption">{category.name}</Typography>
               </Stack>
             ));
           })}
@@ -283,7 +289,10 @@ export function MoneyTrend({
                 }}
               >
                 {(['income', 'expenses'] as const).map((kind) => {
-                  const label = kind === 'income' ? 'Receitas' : 'Despesas';
+                  const label =
+                    kind === 'income'
+                      ? translate('Receitas')
+                      : translate('Despesas');
                   const categories = (kind === 'income'
                     ? r.incomeCategories
                     : r.expenseCategories) ?? [
@@ -356,12 +365,12 @@ export function MoneyTrend({
         </Box>
         <Box component="details" sx={{ mt: 1 }}>
           <Box component="summary" sx={{ cursor: 'pointer', fontSize: 14 }}>
-            Ver valores do gráfico
+            {translate('Ver valores do gráfico')}
           </Box>
           {rows.map((r) => (
             <Typography key={r.month} variant="body2">
-              {r.month} · Receitas {format(r.income)} · Despesas{' '}
-              {format(r.expenses)}
+              {r.month} {translate(' · Receitas ')}
+              {format(r.income)} {translate(' · Despesas')} {format(r.expenses)}
               {[
                 ...(r.incomeCategories ?? []),
                 ...(r.expenseCategories ?? []),

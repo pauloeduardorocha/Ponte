@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import type { FrontendErrorStat, FrontendErrorStats } from '@church/shared';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -22,11 +23,17 @@ const colors = [
 ];
 const typeLabels: Record<string, string> = {
   api: 'API',
-  runtime: 'Execução JavaScript',
-  unhandled_rejection: 'Rejeição não tratada',
-  console: 'Console',
+  get runtime() {
+    return translate('Execução JavaScript');
+  },
+  get unhandled_rejection() {
+    return translate('Rejeição não tratada');
+  },
+  get console() {
+    return translate('Console');
+  },
 };
-const number = (value: number) => value.toLocaleString('pt-PT');
+const number = (value: number) => value.toLocaleString(getLocale());
 
 function Ranking({
   title,
@@ -35,6 +42,7 @@ function Ranking({
   title: string;
   rows: FrontendErrorStat[];
 }) {
+  useLocale();
   const max = Math.max(1, ...rows.map((row) => row.count));
   return (
     <Card variant="outlined" sx={{ p: 2, minWidth: 0 }}>
@@ -73,7 +81,9 @@ function Ranking({
           </Box>
         ))}
         {rows.length === 0 && (
-          <Typography color="text.secondary">Sem ocorrências.</Typography>
+          <Typography color="text.secondary">
+            {translate('Sem ocorrências.')}
+          </Typography>
         )}
       </Stack>
     </Card>
@@ -81,18 +91,24 @@ function Ranking({
 }
 
 export function FrontendErrorCharts() {
+  useLocale();
   const stats = useQuery({
     queryKey: ['frontend-error-stats'],
     queryFn: () =>
       apiRequest<FrontendErrorStats>('/audit/frontend-errors/stats'),
   });
   if (stats.isPending)
-    return <LinearProgress aria-label="Carregando estatísticas dos erros" />;
+    return (
+      <LinearProgress
+        aria-label={translate('Carregando estatísticas dos erros')}
+      />
+    );
   if (stats.isError)
     return (
       <Alert severity="warning">
-        Não foi possível carregar os gráficos. A lista de erros continua
-        disponível.
+        {translate(
+          'Não foi possível carregar os gráficos. A lista de erros continua disponível.',
+        )}
       </Alert>
     );
   const rows = stats.data.rows;
@@ -114,8 +130,9 @@ export function FrontendErrorCharts() {
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="text.secondary">
-        Resumo dos últimos 30 dias de calendário (UTC), incluindo hoje. Os
-        gráficos consideram todas as páginas.
+        {translate(
+          'Resumo dos últimos 30 dias de calendário (UTC), incluindo hoje. Os gráficos consideram todas as páginas.',
+        )}
       </Typography>
       <Box
         sx={{
@@ -125,10 +142,10 @@ export function FrontendErrorCharts() {
         }}
       >
         {[
-          ['Total de erros', total],
-          ['Erros hoje (UTC)', metric('today')],
-          ['Utilizadores identificados', metric('users')],
-          ['Falhas HTTP 5xx', metric('serverErrors')],
+          [translate('Total de erros'), total],
+          [translate('Erros hoje (UTC)'), metric('today')],
+          [translate('Utilizadores identificados'), metric('users')],
+          [translate('Falhas HTTP 5xx'), metric('serverErrors')],
         ].map(([label, value]) => (
           <Card variant="outlined" key={label} sx={{ p: 2 }}>
             <Typography color="text.secondary" variant="body2">
@@ -141,7 +158,9 @@ export function FrontendErrorCharts() {
         ))}
       </Box>
       {total === 0 ? (
-        <Alert severity="info">Nenhum erro registrado no período.</Alert>
+        <Alert severity="info">
+          {translate('Nenhum erro registrado no período.')}
+        </Alert>
       ) : null}
       <Box
         sx={{
@@ -152,12 +171,19 @@ export function FrontendErrorCharts() {
       >
         <Card variant="outlined" sx={{ p: 2 }}>
           <Typography variant="h6" component="h2" gutterBottom>
-            Tipos de erro
+            {translate('Tipos de erro')}
           </Typography>
           <Stack spacing={2} alignItems="center">
             <Box
               role="img"
-              aria-label={`Gráfico de pizza por tipo de erro: ${types.map((row) => `${typeLabels[row.label] ?? row.label}: ${row.count}`).join(', ') || 'sem ocorrências'}`}
+              aria-label={translate('Gráfico de pizza por tipo de erro: {0}', [
+                types
+                  .map(
+                    (row) =>
+                      `${typeLabels[row.label] ?? row.label}: ${row.count}`,
+                  )
+                  .join(', ') || translate('sem ocorrências'),
+              ])}
               sx={{
                 width: 180,
                 height: 180,
@@ -188,7 +214,16 @@ export function FrontendErrorCharts() {
                   />
                   <Typography variant="body2">
                     {typeLabels[row.label] ?? row.label}: {number(row.count)} (
-                    {total ? ((row.count / total) * 100).toFixed(1) : '0'}%)
+                    {total
+                      ? ((row.count / total) * 100).toLocaleString(
+                          getLocale(),
+                          {
+                            minimumFractionDigits: 1,
+                            maximumFractionDigits: 1,
+                          },
+                        )
+                      : '0'}
+                    %)
                   </Typography>
                 </Stack>
               ))}
@@ -197,16 +232,17 @@ export function FrontendErrorCharts() {
         </Card>
         <Card variant="outlined" sx={{ p: 2, minWidth: 0 }}>
           <Typography variant="h6" component="h2">
-            Evolução diária dos erros
+            {translate('Evolução diária dos erros')}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Data de recebimento (UTC). Passe sobre as barras para ver os
-            valores.
+            {translate(
+              'Data de recebimento (UTC). Passe sobre as barras para ver os valores.',
+            )}
           </Typography>
           <Box
             component="svg"
             role="img"
-            aria-label="Timeline de erros por dia"
+            aria-label={translate('Timeline de erros por dia')}
             viewBox="0 0 660 230"
             sx={{ width: '100%', display: 'block', color: 'primary.main' }}
           >
@@ -243,7 +279,7 @@ export function FrontendErrorCharts() {
                     fill="currentColor"
                   >
                     <title>
-                      {row.label}: {number(row.count)} erros
+                      {row.label}: {number(row.count)} {translate(' erros')}
                     </title>
                   </rect>
                   {i % 7 === 0 || i === timeline.length - 1 ? (
@@ -263,12 +299,12 @@ export function FrontendErrorCharts() {
           </Box>
           <Box component="details">
             <Box component="summary" sx={{ cursor: 'pointer' }}>
-              Ver valores diários
+              {translate('Ver valores diários')}
             </Box>
             <Box component="ul" sx={{ maxHeight: 160, overflowY: 'auto' }}>
               {timeline.map((row) => (
                 <li key={row.label}>
-                  {row.label}: {number(row.count)} erros
+                  {row.label}: {number(row.count)} {translate(' erros')}
                 </li>
               ))}
             </Box>
@@ -276,9 +312,9 @@ export function FrontendErrorCharts() {
         </Card>
       </Box>
       <Typography variant="body2" color="text.secondary">
-        Distribuições abaixo: até 8 itens mais frequentes por categoria.
-        Utilizadores sem sessão válida não entram na contagem de utilizadores
-        identificados.
+        {translate(
+          'Distribuições abaixo: até 8 itens mais frequentes por categoria. Utilizadores sem sessão válida não entram na contagem de utilizadores identificados.',
+        )}
       </Typography>
       <Box
         sx={{
@@ -288,11 +324,11 @@ export function FrontendErrorCharts() {
         }}
       >
         {[
-          ['http', 'Status HTTP'],
-          ['routes', 'Rotas com mais erros'],
-          ['versions', 'Versões da aplicação'],
-          ['browsers', 'Navegadores'],
-          ['systems', 'Sistemas operativos'],
+          ['http', translate('Status HTTP')],
+          ['routes', translate('Rotas com mais erros')],
+          ['versions', translate('Versões da aplicação')],
+          ['browsers', translate('Navegadores')],
+          ['systems', translate('Sistemas operativos')],
         ].map(([kind, title]) => (
           <Ranking
             key={kind}

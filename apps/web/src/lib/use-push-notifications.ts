@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import { useSyncExternalStore } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../auth/auth-context';
@@ -48,7 +49,9 @@ export function usePushNotifications() {
     mutationFn: (mode: 'enable' | 'disable') => {
       if (mode === 'disable') return disablePush();
       if (!config.data?.enabled || !config.data.publicKey)
-        throw new Error('As notificações push ainda não estão disponíveis.');
+        throw new Error(
+          translate('As notificações push ainda não estão disponíveis.'),
+        );
       return enablePush(config.data.publicKey);
     },
     onSettled: () =>

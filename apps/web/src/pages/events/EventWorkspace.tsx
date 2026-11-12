@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useEffect, useState } from 'react';
@@ -19,96 +20,243 @@ import { EventReport } from './EventReport';
 const sections: { key: string; label: string; permission: Permission }[] = [
   {
     key: 'registrations',
-    label: 'Inscrições',
+    get label() {
+      return translate('Inscrições');
+    },
     permission: 'EVENT_REGISTRATION_READ',
   },
   {
     key: 'tickets',
-    label: 'Ingressos e lotes',
+    get label() {
+      return translate('Ingressos e lotes');
+    },
     permission: 'EVENT_TICKET_MANAGE',
   },
   {
     key: 'coupons',
-    label: 'Cupões e cortesias',
+    get label() {
+      return translate('Cupões e cortesias');
+    },
     permission: 'EVENT_COUPON_MANAGE',
   },
-  { key: 'payments', label: 'Pagamentos', permission: 'EVENT_PAYMENT_READ' },
-  { key: 'refunds', label: 'Reembolsos', permission: 'EVENT_PAYMENT_READ' },
-  { key: 'checkin', label: 'Credenciamento', permission: 'EVENT_CHECKIN' },
-  { key: 'sessions', label: 'Sessões', permission: 'EVENT_ATTENDEE_READ' },
+  {
+    key: 'payments',
+    get label() {
+      return translate('Pagamentos');
+    },
+    permission: 'EVENT_PAYMENT_READ',
+  },
+  {
+    key: 'refunds',
+    get label() {
+      return translate('Reembolsos');
+    },
+    permission: 'EVENT_PAYMENT_READ',
+  },
+  {
+    key: 'checkin',
+    get label() {
+      return translate('Credenciamento');
+    },
+    permission: 'EVENT_CHECKIN',
+  },
+  {
+    key: 'sessions',
+    get label() {
+      return translate('Sessões');
+    },
+    permission: 'EVENT_ATTENDEE_READ',
+  },
   {
     key: 'notifications',
-    label: 'Comunicação',
+    get label() {
+      return translate('Comunicação');
+    },
     permission: 'EVENT_NOTIFICATION_SEND',
   },
-  { key: 'reports', label: 'Relatórios', permission: 'EVENT_REPORT_READ' },
-  { key: 'managers', label: 'Gestores', permission: 'EVENT_MANAGER_ASSIGN' },
+  {
+    key: 'reports',
+    get label() {
+      return translate('Relatórios');
+    },
+    permission: 'EVENT_REPORT_READ',
+  },
+  {
+    key: 'managers',
+    get label() {
+      return translate('Gestores');
+    },
+    permission: 'EVENT_MANAGER_ASSIGN',
+  },
 ];
 const fields: Record<string, Field[]> = {
   registrations: [
-    { key: 'memberId', label: 'Membro', lookup: 'people' },
-    { key: 'visitorId', label: 'ID de visitante existente (opcional)' },
-    { key: 'name', label: 'Nome do novo visitante' },
-    { key: 'email', label: 'Email do novo visitante' },
-    { key: 'phone', label: 'Telefone do novo visitante' },
+    {
+      key: 'memberId',
+      get label() {
+        return translate('Membro');
+      },
+      lookup: 'people',
+    },
+    {
+      key: 'visitorId',
+      get label() {
+        return translate('ID de visitante existente (opcional)');
+      },
+    },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome do novo visitante');
+      },
+    },
+    {
+      key: 'email',
+      get label() {
+        return translate('Email do novo visitante');
+      },
+    },
+    {
+      key: 'phone',
+      get label() {
+        return translate('Telefone do novo visitante');
+      },
+    },
     {
       key: 'communicationConsent',
-      label: 'Receber comunicações do evento',
+      get label() {
+        return translate('Receber comunicações do evento');
+      },
       type: 'boolean',
     },
   ],
   tickets: [
-    { key: 'name', label: 'Nome do ingresso / lote', required: true },
-    { key: 'price', label: 'Preço', type: 'number', required: true },
-    { key: 'capacity', label: 'Quantidade', type: 'number', required: true },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome do ingresso / lote');
+      },
+      required: true,
+    },
+    {
+      key: 'price',
+      get label() {
+        return translate('Preço');
+      },
+      type: 'number',
+      required: true,
+    },
+    {
+      key: 'capacity',
+      get label() {
+        return translate('Quantidade');
+      },
+      type: 'number',
+      required: true,
+    },
     {
       key: 'startsAt',
-      label: 'Início das vendas',
+      get label() {
+        return translate('Início das vendas');
+      },
       type: 'datetime-local',
       required: true,
     },
     {
       key: 'endsAt',
-      label: 'Fim das vendas',
+      get label() {
+        return translate('Fim das vendas');
+      },
       type: 'datetime-local',
       required: true,
     },
   ],
   coupons: [
-    { key: 'code', label: 'Código', required: true },
+    {
+      key: 'code',
+      get label() {
+        return translate('Código');
+      },
+      required: true,
+    },
     {
       key: 'discountPercent',
-      label: 'Desconto (%) — 100 para cortesia',
+      get label() {
+        return translate('Desconto (%) — 100 para cortesia');
+      },
       type: 'number',
       required: true,
     },
   ],
   sessions: [
-    { key: 'name', label: 'Nome', required: true },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome');
+      },
+      required: true,
+    },
     {
       key: 'startsAt',
-      label: 'Início',
+      get label() {
+        return translate('Início');
+      },
       type: 'datetime-local',
       required: true,
     },
-    { key: 'endsAt', label: 'Fim', type: 'datetime-local', required: true },
+    {
+      key: 'endsAt',
+      get label() {
+        return translate('Fim');
+      },
+      type: 'datetime-local',
+      required: true,
+    },
   ],
   checkin: [
-    { key: 'qrToken', label: 'Código QR da inscrição', required: true },
-    { key: 'sessionId', label: 'ID da sessão (opcional)' },
+    {
+      key: 'qrToken',
+      get label() {
+        return translate('Código QR da inscrição');
+      },
+      required: true,
+    },
+    {
+      key: 'sessionId',
+      get label() {
+        return translate('ID da sessão (opcional)');
+      },
+    },
   ],
   notifications: [
-    { key: 'subject', label: 'Assunto', required: true },
+    {
+      key: 'subject',
+      get label() {
+        return translate('Assunto');
+      },
+      required: true,
+    },
     {
       key: 'content',
-      label: 'Mensagem aos inscritos',
+      get label() {
+        return translate('Mensagem aos inscritos');
+      },
       type: 'textarea',
       required: true,
     },
   ],
-  managers: [{ key: 'userId', label: 'ID do utilizador', required: true }],
+  managers: [
+    {
+      key: 'userId',
+      get label() {
+        return translate('ID do utilizador');
+      },
+      required: true,
+    },
+  ],
 };
 export function EventWorkspace() {
+  useLocale();
   const { hasPermission } = useAuth();
   const [params, setParams] = useSearchParams();
   const id = params.get('event') ?? '',
@@ -129,7 +277,7 @@ export function EventWorkspace() {
   useEffect(() => {
     if (params.get('create') === 'true' && hasPermission('EVENT_CREATE')) {
       setForm({
-        title: 'Criar evento',
+        title: translate('Criar evento'),
         path: '/events',
         fields: configs.events.fields.filter(
           (f) => !['ministryId', 'smallGroupId'].includes(f.key),
@@ -168,7 +316,7 @@ export function EventWorkspace() {
   const action = useMutation({
     mutationFn: (path: string) => apiRequest(path, { method: 'POST' }),
     onSuccess: () => {
-      setNotice('Operação concluída.');
+      setNotice(translate('Operação concluída.'));
       void client.invalidateQueries({ queryKey: ['event-workspace'] });
     },
     onError: (e) => setNotice(e.message),
@@ -187,7 +335,7 @@ export function EventWorkspace() {
               ...fields.registrations!,
               {
                 key: 'ticketId',
-                label: 'Lote de ingresso',
+                label: translate('Lote de ingresso'),
                 options: lots.data?.map((t) => String(t.id)),
                 optionLabels: Object.fromEntries(
                   (lots.data ?? []).map((t) => [
@@ -216,22 +364,30 @@ export function EventWorkspace() {
     managers: 'EVENT_MANAGER_ASSIGN',
   };
   if (!hasPermission('EVENT_READ'))
-    return <Alert severity="warning">Sem permissão para eventos.</Alert>;
+    return (
+      <Alert severity="warning">
+        {translate('Sem permissão para eventos.')}
+      </Alert>
+    );
   return (
     <Stack spacing={2}>
-      <Typography variant="h4">Gestão de eventos</Typography>
-      {notice && <Alert onClose={() => setNotice('')}>{notice}</Alert>}
+      <Typography variant="h4">{translate('Gestão de eventos')}</Typography>
+      {notice && (
+        <Alert onClose={() => setNotice('')}>{translate(notice ?? '')}</Alert>
+      )}
       {checkoutUrl && (
         <Alert severity="info">
           <Typography>
-            Encaminhe este link à pessoa para concluir o pagamento:
+            {translate(
+              'Encaminhe este link à pessoa para concluir o pagamento:',
+            )}
           </Typography>
           <Button href={checkoutUrl} target="_blank">
-            Abrir pagamento
+            {translate('Abrir pagamento')}
           </Button>
           <TextField
             fullWidth
-            label="Link de pagamento"
+            label={translate('Link de pagamento')}
             value={checkoutUrl}
             slotProps={{ input: { readOnly: true } }}
           />
@@ -243,7 +399,7 @@ export function EventWorkspace() {
           <Button
             onClick={() =>
               setForm({
-                title: 'Criar evento',
+                title: translate('Criar evento'),
                 path: '/events',
                 fields: configs.events.fields.filter(
                   (f) => !['ministryId', 'smallGroupId'].includes(f.key),
@@ -251,12 +407,12 @@ export function EventWorkspace() {
               })
             }
           >
-            Criar evento
+            {translate('Criar evento')}
           </Button>
         )}
         {id && hasPermission('EVENT_PUBLISH') && (
           <Button onClick={() => action.mutate(`/events/${id}/publish`)}>
-            Publicar
+            {translate('Publicar')}
           </Button>
         )}
         {id && hasPermission('EVENT_UPDATE') && (
@@ -264,7 +420,7 @@ export function EventWorkspace() {
             onClick={() => {
               const row = events.data?.items.find((e) => e.id === id);
               setForm({
-                title: 'Editar evento',
+                title: translate('Editar evento'),
                 path: `/events/${id}`,
                 method: 'PATCH',
                 initial: row,
@@ -274,7 +430,7 @@ export function EventWorkspace() {
               });
             }}
           >
-            Editar evento
+            {translate('Editar evento')}
           </Button>
         )}
       </Stack>
@@ -282,7 +438,9 @@ export function EventWorkspace() {
         <Alert severity="info">
           <Stack spacing={1}>
             <Typography>
-              URL pública de inscrição (disponível após publicar o evento)
+              {translate(
+                'URL pública de inscrição (disponível após publicar o evento)',
+              )}
             </Typography>
             <Button
               href={`/events/${id}/register`}
@@ -294,34 +452,34 @@ export function EventWorkspace() {
                   await navigator.clipboard.writeText(
                     `${window.location.origin}/events/${id}/register`,
                   );
-                  setNotice('Link copiado.');
+                  setNotice(translate('Link copiado.'));
                 } catch {
-                  setNotice('Copie o link acima.');
+                  setNotice(translate('Copie o link acima.'));
                 }
               }}
             >
-              Copiar link
+              {translate('Copiar link')}
             </Button>
           </Stack>
         </Alert>
       )}
       {section === 'registrations' && id && (
         <Alert severity="info">
-          Selecione um membro ou visitante existente, ou preencha nome, telefone
-          e email para cadastrar um novo visitante. Para evento pago, selecione
-          o lote e encaminhe o link de pagamento.
+          {translate(
+            'Selecione um membro ou visitante existente, ou preencha nome, telefone e email para cadastrar um novo visitante. Para evento pago, selecione o lote e encaminhe o link de pagamento.',
+          )}
         </Alert>
       )}
       <TextField
         select
-        label="Evento"
+        label={translate('Evento')}
         value={id}
         onChange={(e) => {
           setPage(1);
           setParams({ event: e.target.value, section });
         }}
       >
-        <MenuItem value="">Selecione um evento</MenuItem>
+        <MenuItem value="">{translate('Selecione um evento')}</MenuItem>
         {events.data?.items.map((e) => (
           <MenuItem key={e.id} value={e.id}>
             {String(e.title ?? e.name)}
@@ -346,7 +504,7 @@ export function EventWorkspace() {
       </Stack>
       {!id && (
         <Alert severity="info">
-          Selecione um evento para gerir as operações.
+          {translate('Selecione um evento para gerir as operações.')}
         </Alert>
       )}
       {id && allowed && (
@@ -355,15 +513,15 @@ export function EventWorkspace() {
             hasPermission(createPermission[section]) && (
               <Button onClick={() => open(section)}>
                 {section === 'notifications'
-                  ? 'Enviar aos inscritos'
+                  ? translate('Enviar aos inscritos')
                   : section === 'checkin'
-                    ? 'Registrar entrada'
-                    : 'Adicionar'}
+                    ? translate('Registrar entrada')
+                    : translate('Adicionar')}
               </Button>
             )}
           {section === 'checkin' && hasPermission('EVENT_CHECKIN_REVERSE') && (
             <Button onClick={() => open('checkin', 'checkin/reverse')}>
-              Reverter entrada
+              {translate('Reverter entrada')}
             </Button>
           )}
           {data.isError && <Alert severity="error">{data.error.message}</Alert>}
@@ -389,12 +547,14 @@ export function EventWorkspace() {
                       URL.revokeObjectURL(url);
                     } catch (e) {
                       setNotice(
-                        e instanceof Error ? e.message : 'Falha na exportação',
+                        e instanceof Error
+                          ? e.message
+                          : translate('Falha na exportação'),
                       );
                     }
                   }}
                 >
-                  Exportar relatório
+                  {translate('Exportar relatório')}
                 </Button>
               )}
             </>
@@ -402,7 +562,9 @@ export function EventWorkspace() {
           {listable &&
             section !== 'reports' &&
             rows.length === 0 &&
-            !data.isPending && <Typography>Sem registos.</Typography>}
+            !data.isPending && (
+              <Typography>{translate('Sem registos.')}</Typography>
+            )}
           <RecordTable>
             {rows.map((row) => (
               <RecordRow
@@ -433,7 +595,7 @@ export function EventWorkspace() {
                             )
                           }
                         >
-                          Aprovar inscrição
+                          {translate('Aprovar inscrição')}
                         </Button>
                       )}
                     {section === 'registrations' &&
@@ -445,7 +607,7 @@ export function EventWorkspace() {
                             )
                           }
                         >
-                          Cancelar inscrição
+                          {translate('Cancelar inscrição')}
                         </Button>
                       )}
                     {section === 'tickets' && (
@@ -454,7 +616,7 @@ export function EventWorkspace() {
                           open('tickets', `tickets/${row.id}`, row, 'PATCH')
                         }
                       >
-                        Editar lote e preço
+                        {translate('Editar lote e preço')}
                       </Button>
                     )}
                     {section === 'refunds' &&
@@ -467,7 +629,7 @@ export function EventWorkspace() {
                             )
                           }
                         >
-                          Aprovar reembolso
+                          {translate('Aprovar reembolso')}
                         </Button>
                       )}
                     {section === 'payments' &&
@@ -476,12 +638,12 @@ export function EventWorkspace() {
                         <Button
                           onClick={() =>
                             setForm({
-                              title: 'Solicitar reembolso',
+                              title: translate('Solicitar reembolso'),
                               path: `/events/${id}/payments/${row.id}/refunds`,
                               fields: [
                                 {
                                   key: 'reason',
-                                  label: 'Motivo',
+                                  label: translate('Motivo'),
                                   type: 'textarea',
                                   required: true,
                                 },
@@ -489,21 +651,21 @@ export function EventWorkspace() {
                             })
                           }
                         >
-                          Solicitar reembolso
+                          {translate('Solicitar reembolso')}
                         </Button>
                       )}
                     {section === 'managers' && row.revokedAt == null && (
                       <Button
                         onClick={() =>
                           setForm({
-                            title: 'Revogar gestor',
+                            title: translate('Revogar gestor'),
                             path: `/events/${id}/managers/revoke`,
                             fields: fields.managers!,
                             initial: row,
                           })
                         }
                       >
-                        Revogar atribuição
+                        {translate('Revogar atribuição')}
                       </Button>
                     )}
                   </>
@@ -532,14 +694,17 @@ export function EventWorkspace() {
                 disabled={page === 1}
                 onClick={() => setPage((p) => p - 1)}
               >
-                Anterior
+                {translate('Anterior')}
               </Button>
-              <Typography>Página {page}</Typography>
+              <Typography>
+                {translate('Página ')}
+                {page}
+              </Typography>
               <Button
                 disabled={rows.length < 20}
                 onClick={() => setPage((p) => p + 1)}
               >
-                Seguinte
+                {translate('Seguinte')}
               </Button>
             </Stack>
           )}
@@ -555,7 +720,7 @@ export function EventWorkspace() {
                 '',
             );
             setForm(undefined);
-            setNotice('Operação concluída.');
+            setNotice(translate('Operação concluída.'));
             void client.invalidateQueries({ queryKey: ['event-workspace'] });
             void client.invalidateQueries({ queryKey: ['managed-events'] });
           }}

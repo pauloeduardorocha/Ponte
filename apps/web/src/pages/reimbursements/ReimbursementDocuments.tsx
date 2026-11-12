@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Alert, Button, Stack, Typography } from '@mui/material';
 import { Link } from 'react-router-dom';
@@ -19,6 +20,7 @@ export function ReimbursementDocuments({
   canWrite?: boolean;
   manager?: boolean;
 }) {
+  useLocale();
   const client = useQueryClient();
   const upload = useMutation({
     mutationFn: async ({ file, kind }: { file: File; kind: string }) => {
@@ -33,8 +35,9 @@ export function ReimbursementDocuments({
     <Stack spacing={1}>
       {canWrite && (
         <Typography variant="caption">
-          Fotos JPEG/PNG até 10 MB, comprimidas para cerca de 2 MB sem recortes.
-          PDFs até 1 MB.
+          {translate(
+            'Fotos JPEG/PNG até 10 MB, comprimidas para cerca de 2 MB sem recortes. PDFs até 1 MB.',
+          )}
         </Typography>
       )}
       <DocumentGallery
@@ -42,8 +45,8 @@ export function ReimbursementDocuments({
           ...file,
           caption:
             file.kind === 'PAYMENT'
-              ? 'Comprovativo de transferência bancária'
-              : 'Documento da despesa',
+              ? translate('Comprovativo de transferência bancária')
+              : translate('Documento da despesa'),
           path: `/reimbursements/${row.id}/attachments/${file.id}/download`,
         }))}
       />
@@ -52,8 +55,8 @@ export function ReimbursementDocuments({
           {(manager ? ['DOCUMENT', 'PAYMENT'] : ['DOCUMENT']).map((kind) => (
             <Button component="label" key={kind} disabled={upload.isPending}>
               {kind === 'PAYMENT'
-                ? 'Anexar comprovativo de transferência bancária'
-                : 'Juntar documento'}
+                ? translate('Anexar comprovativo de transferência bancária')
+                : translate('Juntar documento')}
               <input
                 type="file"
                 hidden
@@ -80,6 +83,7 @@ export function MovementReimbursement({
   transactionId: string;
   onLinked?: (categoryId: string) => void;
 }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const canLink =
@@ -122,7 +126,9 @@ export function MovementReimbursement({
       <Stack spacing={1}>
         {!!suggestions.data?.length && (
           <Typography variant="subtitle2">
-            Possíveis pedidos de reembolso — confirme o beneficiário
+            {translate(
+              'Possíveis pedidos de reembolso — confirme o beneficiário',
+            )}
           </Typography>
         )}
         {suggestions.data?.map((row) => (
@@ -134,7 +140,7 @@ export function MovementReimbursement({
               disabled={link.isPending}
               onClick={() => link.mutate(row.id)}
             >
-              Associar reembolso
+              {translate('Associar reembolso')}
             </Button>
           </Stack>
         ))}
@@ -148,12 +154,13 @@ export function MovementReimbursement({
   return (
     <Stack spacing={1}>
       <Typography variant="subtitle2">
-        Reembolso de {result.data.beneficiaryName}
+        {translate('Reembolso de ')}
+        {result.data.beneficiaryName}
       </Typography>
       <Typography>{result.data.purpose}</Typography>
       {result.data.deletedAt && (
         <Typography variant="caption">
-          Pedido excluído · documentos do movimento preservados
+          {translate('Pedido excluído · documentos do movimento preservados')}
         </Typography>
       )}
       <ReimbursementDocuments row={result.data} />
@@ -161,7 +168,7 @@ export function MovementReimbursement({
         component={Link}
         to={`/finance?tab=reimbursements&request=${result.data.id}`}
       >
-        Abrir pedido de reembolso
+        {translate('Abrir pedido de reembolso')}
       </Button>
     </Stack>
   );

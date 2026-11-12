@@ -614,7 +614,7 @@ describe('Library frontend', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: 'Histórico da biblioteca' }),
     );
-    expect(await screen.findByText(/Multa: OPEN/)).toBeInTheDocument();
+    expect(await screen.findByText(/Multa: Em aberto/)).toBeInTheDocument();
   });
   it('supports restricted fine-read users without other queries or payment actions', async () => {
     const requests = mockApi({
@@ -693,7 +693,7 @@ describe('Library frontend', () => {
       ).toBe('10'),
     );
     expect(
-      await screen.findByText('Página 1 · 41 registros'),
+      await screen.findByText('Página 1 · 41 registos'),
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Próxima$/ }));
     await waitFor(() =>

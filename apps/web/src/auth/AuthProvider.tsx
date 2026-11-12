@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import {
   lazy,
   Suspense,
@@ -65,6 +66,7 @@ const ANONYMOUS: AuthState = {
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  useLocale();
   const queryClient = useQueryClient();
   const restoreAfterReconnect = useRef(false);
   const identityRevision = useRef(0);
@@ -192,7 +194,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearSession();
       setState({
         ...ANONYMOUS,
-        sessionError: `A sessão local foi encerrada, mas não foi possível confirmar a revogação no servidor: ${errorMessage(error)}`,
+        sessionError: translate(
+          'A sessão local foi encerrada, mas não foi possível confirmar a revogação no servidor: {0}',
+          [errorMessage(error)],
+        ),
       });
     }
   }, [clearSession]);

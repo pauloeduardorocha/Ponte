@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { type ReactNode } from 'react';
 import { Alert, Button, MenuItem, Stack, Typography } from '@mui/material';
@@ -16,14 +17,19 @@ export function Paged({
   setPageSize: (size: number) => void;
   children: ReactNode;
 }) {
+  useLocale();
   return (
     <Stack spacing={2}>
       {children}
-      {!total && <Alert severity="info">Nenhum registro encontrado.</Alert>}
+      {!total && (
+        <Alert severity="info">
+          {translate('Nenhum registro encontrado.')}
+        </Alert>
+      )}
       <Stack direction="row" spacing={2} alignItems="center">
         <TextField
           select
-          label="Registos por página"
+          label={translate('Registos por página')}
           value={pageSize}
           onChange={(event) => {
             setPageSize(Number(event.target.value));
@@ -38,16 +44,17 @@ export function Paged({
           ))}
         </TextField>
         <Button disabled={page <= 1} onClick={() => setPage(page - 1)}>
-          Anterior
+          {translate('Anterior')}
         </Button>
         <Typography>
-          Página {page} · {total} registros
+          {translate('Página ')}
+          {page} · {total} {translate(' registros')}
         </Typography>
         <Button
           disabled={page * pageSize >= total}
           onClick={() => setPage(page + 1)}
         >
-          Próxima
+          {translate('Próxima')}
         </Button>
       </Stack>
     </Stack>

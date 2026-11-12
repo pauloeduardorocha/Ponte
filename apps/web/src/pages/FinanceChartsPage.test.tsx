@@ -48,12 +48,12 @@ describe('Treasury dashboard', () => {
       'GET /finance/charts': { body: { currencies: [] } },
     });
     renderApp('/finance');
-    await screen.findByText('Nenhum registro.');
+    await screen.findByText('Nenhum registo.');
     expect(
-      screen.queryByRole('tab', { name: 'Dashboard' }),
+      screen.queryByRole('tab', { name: 'Painel financeiro' }),
     ).not.toBeInTheDocument();
     expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
-    fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Painel financeiro' }));
     await screen.findByRole('heading', { name: 'Dashboard da tesouraria' });
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
@@ -91,10 +91,9 @@ describe('Treasury dashboard', () => {
       screen.getByRole('img', { name: /Despesas por centro de custos: Sede/ }),
     ).toBeVisible();
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveAttribute(
-      'href',
-      '/finance/dashboard',
-    );
+    expect(
+      screen.getByRole('link', { name: 'Painel financeiro' }),
+    ).toHaveAttribute('href', '/finance/dashboard');
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar Saldo' }));
     expect(
       screen.getByRole('button', { name: 'Mostrar Saldo' }),
@@ -142,7 +141,7 @@ describe('Treasury dashboard', () => {
       renderApp('/finance/dashboard');
       await screen.findByRole('heading', { name: 'Acesso negado' });
       expect(
-        screen.queryByRole('link', { name: 'Dashboard' }),
+        screen.queryByRole('link', { name: 'Painel financeiro' }),
       ).not.toBeInTheDocument();
       expect(requests.some((r) => r.path === '/finance/charts')).toBe(false);
     },

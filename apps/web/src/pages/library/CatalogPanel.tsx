@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { Box, Button, Typography } from '@mui/material';
 import { Can } from '../../auth/guards';
@@ -31,6 +32,7 @@ export function CatalogPanel({
   open: OpenLibraryAction;
   setDetailBook: (book: api.Book) => void;
 }) {
+  useLocale();
   const availability = useBookAvailability(books.items.map((book) => book.id));
   return (
     <Paged
@@ -42,10 +44,10 @@ export function CatalogPanel({
     >
       <Box>
         <RecordTable
-          primaryLabel="Livro"
-          imageLabel="Capa"
-          label={'Catálogo da biblioteca'}
-          summaryLabel="Autor / Categoria"
+          primaryLabel={translate('Livro')}
+          imageLabel={translate('Capa')}
+          label={translate('Catálogo da biblioteca')}
+          summaryLabel={translate('Autor / Categoria')}
         >
           {books.items.map((book) => (
             <RecordRow
@@ -55,7 +57,7 @@ export function CatalogPanel({
                   <Box
                     component="img"
                     src={book.cover}
-                    alt={`Capa de ${book.title}`}
+                    alt={translate('Capa de {0}', [book.title])}
                     loading="lazy"
                     sx={{
                       width: 80,
@@ -64,7 +66,9 @@ export function CatalogPanel({
                     }}
                   />
                 ) : (
-                  <Typography variant="caption">Sem capa</Typography>
+                  <Typography variant="caption">
+                    {translate('Sem capa')}
+                  </Typography>
                 )
               }
               primary={
@@ -75,13 +79,13 @@ export function CatalogPanel({
               actions={
                 <>
                   <Button onClick={() => setDetailBook(book)}>
-                    Ver detalhes
+                    {translate('Ver detalhes')}
                   </Button>
                   <Can permission="LIBRARY_BOOK_UPDATE">
                     <Button
                       onClick={() =>
                         open(
-                          'Editar livro',
+                          translate('Editar livro'),
                           (v) => api.updateBook(book.id, bookInput(v, true)),
                           bookFields,
                           valuesOf({
@@ -96,39 +100,39 @@ export function CatalogPanel({
                         )
                       }
                     >
-                      Editar
+                      {translate('Editar')}
                     </Button>
                   </Can>
                   <Can permission="LIBRARY_BOOK_DELETE">
                     <Button
                       color="error"
                       onClick={() =>
-                        open('Excluir livro sem histórico', () =>
+                        open(translate('Excluir livro sem histórico'), () =>
                           api.deleteBook(book.id),
                         )
                       }
                     >
-                      Excluir
+                      {translate('Excluir')}
                     </Button>
                   </Can>
                   <Can permission="LIBRARY_COPY_CREATE">
                     <Button
                       onClick={() =>
                         open(
-                          'Novo exemplar',
+                          translate('Novo exemplar'),
                           (v) => api.createCopy(book.id, copyInput(v)),
                           copyFields,
                         )
                       }
                     >
-                      Novo exemplar
+                      {translate('Novo exemplar')}
                     </Button>
                   </Can>
                   <Can permission="LIBRARY_RESERVATION_CREATE">
                     <Button
                       onClick={() =>
                         open(
-                          `Reservar ${book.title}`,
+                          translate('Reservar {0}', [book.title]),
                           (v) =>
                             api.reserve({
                               bookId: book.id,
@@ -138,7 +142,7 @@ export function CatalogPanel({
                         )
                       }
                     >
-                      Reservar
+                      {translate('Reservar')}
                     </Button>
                   </Can>
                 </>
@@ -146,27 +150,31 @@ export function CatalogPanel({
               summary={
                 <>
                   <Box>
-                    {book.subtitle} · {book.author ?? 'Autor não informado'} ·{' '}
-                    {book.category ?? 'Sem categoria'}
+                    {book.subtitle} ·{' '}
+                    {book.author ?? translate('Autor não informado')} ·{' '}
+                    {book.category ?? translate('Sem categoria')}
                     {book.registrationNumber && (
                       <Typography variant="body2">
-                        Registo: {book.registrationNumber}
+                        {translate('Registo: ')}
+                        {book.registrationNumber}
                       </Typography>
                     )}
                     {book.collection && (
                       <Typography variant="body2">
-                        Coleção: {book.collection}
+                        {translate('Coleção: ')}
+                        {book.collection}
                       </Typography>
                     )}
                     {book.primaryCategoryCode &&
                       !book.classificationReviewed && (
                         <Typography variant="body2">
-                          Classificação proposta · por rever
+                          {translate('Classificação proposta · por rever')}
                         </Typography>
                       )}
                     {Boolean(book.pendingInventory) && (
                       <Typography variant="body2">
-                        Por conferir: {book.pendingInventory}
+                        {translate('Por conferir: ')}
+                        {book.pendingInventory}
                       </Typography>
                     )}
                   </Box>
@@ -176,26 +184,27 @@ export function CatalogPanel({
               <Typography>
                 {book.publisher} · {book.edition} · {book.year} ·{' '}
                 {book.language === 'und'
-                  ? 'Idioma não informado'
+                  ? translate('Idioma não informado')
                   : book.language}{' '}
-                · {book.pages ?? '—'} páginas
+                · {book.pages ?? '—'} {translate(' páginas')}
               </Typography>
               <Typography>{book.keywords?.join(', ')}</Typography>
               <Typography>
-                Exemplares:{' '}
+                {translate('Exemplares:')}{' '}
                 {availability.isError
                   ? '—'
                   : (availability.values.get(book.id)?.quantity ?? '—')}{' '}
-                · Disponíveis:{' '}
+                {translate('· Disponíveis:')}{' '}
                 {availability.isFetching
-                  ? 'Verificando…'
+                  ? translate('Verificando…')
                   : availability.isError
-                    ? 'Indisponível para consulta'
+                    ? translate('Indisponível para consulta')
                     : (availability.values.get(book.id)?.available ??
-                      'Não informado')}
+                      translate('Não informado'))}
               </Typography>
               <Typography variant="caption">
-                ID: {book.id} · ISBN: {book.isbn}
+                ID: {book.id} {translate(' · ISBN: ')}
+                {book.isbn}
               </Typography>
             </RecordRow>
           ))}

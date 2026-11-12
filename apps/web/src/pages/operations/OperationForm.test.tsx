@@ -25,7 +25,7 @@ function show(fields: Field[], initial?: Entry, notification = false) {
       }
     >
       <OperationForm
-        title="Editar registro"
+        title="Editar registo"
         path={
           notification ? '/operations/notifications' : '/operations/visitors/v1'
         }
@@ -63,7 +63,7 @@ describe('Operation form selections', () => {
     fireEvent.change(screen.getByLabelText(/Mensagem/), {
       target: { value: 'Encontro de domingo' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         allMembers: true,
@@ -126,7 +126,7 @@ describe('Operation form selections', () => {
       fireEvent.change(screen.getByLabelText(/Mensagem/), {
         target: { value: 'Comunicado coletivo' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
       await waitFor(() =>
         expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
           [key]: ['a1', 'a2'],
@@ -178,7 +178,7 @@ describe('Operation form selections', () => {
       fireEvent.change(screen.getByLabelText(/Mensagem/), {
         target: { value: 'Aviso' },
       });
-      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
       await waitFor(() =>
         expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
           [key]: ['p1', 'p3'],
@@ -203,7 +203,7 @@ describe('Operation form selections', () => {
     fireEvent.change(screen.getByLabelText(/Mensagem/), {
       target: { value: 'Aviso geral' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         allMembers: true,
@@ -232,7 +232,7 @@ describe('Operation form selections', () => {
     fireEvent.change(screen.getByLabelText(/Mensagem/), {
       target: { value: 'Aviso agendado' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         content: 'Aviso agendado',
@@ -260,7 +260,7 @@ describe('Operation form selections', () => {
     fireEvent.change(screen.getByLabelText(/Mensagem/), {
       target: { value: 'Enviar agora' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'POST')?.body).toEqual({
         content: 'Enviar agora',
@@ -291,7 +291,7 @@ describe('Operation form selections', () => {
     expect(
       screen.getByRole('combobox', { name: new RegExp(field.label) }),
     ).toHaveTextContent(label);
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         [field.key]: field.key === 'meetingDay' ? Number(value) : value,
@@ -328,7 +328,7 @@ describe('Operation form selections', () => {
         expect(requests.some((r) => r.method === 'GET')).toBe(true),
       );
       expect(input).toHaveValue('Pessoa salva');
-      fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
       await waitFor(() =>
         expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
           [key]: 'saved-person',
@@ -349,13 +349,13 @@ describe('Operation form selections', () => {
       gender: 'FEMALE',
       status: 'CONTACTED',
     });
-    expect(screen.getByRole('combobox', { name: 'Gênero' })).toHaveTextContent(
+    expect(screen.getByRole('combobox', { name: 'Género' })).toHaveTextContent(
       'Feminino',
     );
     expect(
       screen.getByRole('combobox', { name: 'Situação' }),
     ).toHaveTextContent('Contatado');
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toMatchObject({
         gender: 'FEMALE',
@@ -376,9 +376,9 @@ describe('Operation form selections', () => {
       gender: 'FEMALE',
       status: 'CONTACTED',
     });
-    select('Gênero', 'Masculino');
+    select('Género', 'Masculino');
     select('Situação', 'Em integração');
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         gender: 'MALE',
@@ -390,14 +390,14 @@ describe('Operation form selections', () => {
       ...(requests.find((r) => r.method === 'PATCH')!.body as Entry),
       id: 'v1',
     });
-    expect(screen.getByRole('combobox', { name: 'Gênero' })).toHaveTextContent(
+    expect(screen.getByRole('combobox', { name: 'Género' })).toHaveTextContent(
       'Masculino',
     );
     expect(
       screen.getByRole('combobox', { name: 'Situação' }),
     ).toHaveTextContent('Em integração');
-    select('Gênero', 'Não informado');
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    select('Género', 'Não informado');
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.filter((r) => r.method === 'PATCH')[1]?.body).toEqual({
         gender: null,
@@ -420,7 +420,7 @@ describe('Operation form selections', () => {
     expect(
       screen.getByRole('combobox', { name: 'Dia da semana' }),
     ).toHaveTextContent('Domingo');
-    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         meetingDay: 0,

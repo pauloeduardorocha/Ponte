@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { Stack, Typography } from '@mui/material';
 type Report = {
@@ -15,19 +16,37 @@ type Report = {
   }[];
 };
 const statuses: Record<string, string> = {
-  REGISTERED: 'Inscritos',
-  APPROVED: 'Aprovados',
-  CANCELLED: 'Cancelados',
-  CONFIRMED: 'Confirmados',
-  PENDING: 'Pendentes',
-  FAILED: 'Falhados',
-  REFUNDED: 'Reembolsados',
+  get REGISTERED() {
+    return translate('Inscritos');
+  },
+  get APPROVED() {
+    return translate('Aprovados');
+  },
+  get CANCELLED() {
+    return translate('Cancelados');
+  },
+  get CONFIRMED() {
+    return translate('Confirmados');
+  },
+  get PENDING() {
+    return translate('Pendentes');
+  },
+  get FAILED() {
+    return translate('Falhados');
+  },
+  get REFUNDED() {
+    return translate('Reembolsados');
+  },
 };
 export function EventReport({ value }: { value: unknown }) {
+  useLocale();
   const report = value as Report;
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Presenças: {report.checkedIn}</Typography>
+      <Typography variant="h6">
+        {translate('Presenças: ')}
+        {report.checkedIn}
+      </Typography>
       {report.registrations.map((r) => (
         <Typography key={r.status}>
           {statuses[r.status] ?? r.status}: {r._count._all}
@@ -40,8 +59,8 @@ export function EventReport({ value }: { value: unknown }) {
             primary={
               <>
                 <Typography variant="h6">
-                  Pagamentos {statuses[f.status]?.toLowerCase() ?? f.status} (
-                  {f.currency})
+                  {translate('Pagamentos ')}
+                  {statuses[f.status]?.toLowerCase() ?? f.status} ({f.currency})
                 </Typography>
               </>
             }
@@ -49,13 +68,19 @@ export function EventReport({ value }: { value: unknown }) {
             actions={<></>}
           >
             <Typography>
-              Quantidade: {f.count} · Valor total: {f.amount}
+              {translate('Quantidade: ')}
+              {f.count} {translate(' · Valor total: ')}
+              {f.amount}
             </Typography>
             <Typography>
-              Descontos: {f.discounts} · Taxas: {f.fees} · Reembolsos:{' '}
-              {f.refunds}
+              {translate('Descontos: ')}
+              {f.discounts} {translate(' · Taxas: ')}
+              {f.fees} {translate(' · Reembolsos:')} {f.refunds}
             </Typography>
-            <Typography>Receita líquida: {f.net}</Typography>
+            <Typography>
+              {translate('Receita líquida: ')}
+              {f.net}
+            </Typography>
           </RecordRow>
         ))}
       </RecordTable>

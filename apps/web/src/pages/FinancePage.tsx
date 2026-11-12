@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { formatDateOnly } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
@@ -54,58 +55,86 @@ type RecordData = {
   bankTransaction?: { import: { filename: string } };
 } & Record<string, unknown>;
 const modules = [
-  { route: 'summary', label: 'Resumo', read: 'FINANCE_DASHBOARD_READ' },
-  { route: 'invoices', label: 'Faturas', read: 'FINANCE_INVOICE_READ' },
+  {
+    route: 'summary',
+    get label() {
+      return translate('Resumo');
+    },
+    read: 'FINANCE_DASHBOARD_READ',
+  },
+  {
+    route: 'invoices',
+    get label() {
+      return translate('Faturas');
+    },
+    read: 'FINANCE_INVOICE_READ',
+  },
   {
     route: 'reimbursements',
-    label: 'Reembolsos',
+    get label() {
+      return translate('Reembolsos');
+    },
     read: 'FINANCE_TRANSACTION_READ',
   },
   {
     route: 'incomes',
-    label: 'Receitas',
+    get label() {
+      return translate('Receitas');
+    },
     read: 'FINANCE_TRANSACTION_READ',
     write: 'FINANCE_TRANSACTION_CREATE',
     update: 'FINANCE_TRANSACTION_UPDATE',
   },
   {
     route: 'expenses',
-    label: 'Despesas',
+    get label() {
+      return translate('Despesas');
+    },
     read: 'FINANCE_TRANSACTION_READ',
     write: 'FINANCE_TRANSACTION_CREATE',
     update: 'FINANCE_TRANSACTION_UPDATE',
   },
   {
     route: 'cost-centers',
-    label: 'Centros de custos',
+    get label() {
+      return translate('Centros de custos');
+    },
     read: 'FINANCE_CATEGORY_READ',
     write: 'FINANCE_CATEGORY_WRITE',
     update: 'FINANCE_CATEGORY_WRITE',
   },
   {
     route: 'categories',
-    label: 'Categorias',
+    get label() {
+      return translate('Categorias');
+    },
     read: 'FINANCE_CATEGORY_READ',
     write: 'FINANCE_CATEGORY_WRITE',
     update: 'FINANCE_CATEGORY_WRITE',
   },
   {
     route: 'accounts',
-    label: 'Contas',
+    get label() {
+      return translate('Contas');
+    },
     read: 'FINANCE_ACCOUNT_READ',
     write: 'FINANCE_ACCOUNT_WRITE',
     update: 'FINANCE_ACCOUNT_WRITE',
   },
   {
     route: 'suppliers',
-    label: 'Fornecedores',
+    get label() {
+      return translate('Fornecedores');
+    },
     read: 'FINANCE_SUPPLIER_READ',
     write: 'FINANCE_SUPPLIER_WRITE',
     update: 'FINANCE_SUPPLIER_WRITE',
   },
   {
     route: 'contributions',
-    label: 'Contribuições',
+    get label() {
+      return translate('Contribuições');
+    },
     read: 'FINANCE_CONTRIBUTION_READ',
     write: 'FINANCE_CONTRIBUTION_WRITE',
     update: 'FINANCE_CONTRIBUTION_WRITE',
@@ -119,84 +148,283 @@ type Field = {
   type?: string;
 };
 const transaction: Field[] = [
-  { key: 'amount', label: 'Valor', required: true },
-  { key: 'date', label: 'Data', type: 'date', required: true },
-  { key: 'categoryId', label: 'Categoria', required: true },
-  { key: 'accountId', label: 'Conta', required: true },
-  { key: 'description', label: 'Descrição', required: true },
-  { key: 'costCenterId', label: 'Centro de custo' },
+  {
+    key: 'amount',
+    get label() {
+      return translate('Valor');
+    },
+    required: true,
+  },
+  {
+    key: 'date',
+    get label() {
+      return translate('Data');
+    },
+    type: 'date',
+    required: true,
+  },
+  {
+    key: 'categoryId',
+    get label() {
+      return translate('Categoria');
+    },
+    required: true,
+  },
+  {
+    key: 'accountId',
+    get label() {
+      return translate('Conta');
+    },
+    required: true,
+  },
+  {
+    key: 'description',
+    get label() {
+      return translate('Descrição');
+    },
+    required: true,
+  },
+  {
+    key: 'costCenterId',
+    get label() {
+      return translate('Centro de custo');
+    },
+  },
 ];
 const fields: Record<string, Field[]> = {
-  'cost-centers': [{ key: 'name', label: 'Nome', required: true }],
+  'cost-centers': [
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome');
+      },
+      required: true,
+    },
+  ],
   categories: [
-    { key: 'name', label: 'Nome', required: true },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome');
+      },
+      required: true,
+    },
     {
       key: 'kind',
-      label: 'Tipo',
+      get label() {
+        return translate('Tipo');
+      },
       options: ['INCOME', 'EXPENSE'],
       required: true,
     },
-    { key: 'parentId', label: 'Categoria pai' },
+    {
+      key: 'parentId',
+      get label() {
+        return translate('Categoria pai');
+      },
+    },
   ],
   accounts: [
-    { key: 'bank', label: 'Banco', required: true },
-    { key: 'name', label: 'Nome', required: true },
-    { key: 'branch', label: 'Agência' },
-    { key: 'account', label: 'Conta' },
+    {
+      key: 'bank',
+      get label() {
+        return translate('Banco');
+      },
+      required: true,
+    },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome');
+      },
+      required: true,
+    },
+    {
+      key: 'branch',
+      get label() {
+        return translate('Agência');
+      },
+    },
+    {
+      key: 'account',
+      get label() {
+        return translate('Conta');
+      },
+    },
     { key: 'iban', label: 'IBAN' },
-    { key: 'currency', label: 'Moeda ISO (EUR, BRL)', required: true },
-    { key: 'openingBalance', label: 'Saldo inicial', required: true },
-    { key: 'status', label: 'Status', options: ['ACTIVE', 'INACTIVE'] },
+    {
+      key: 'currency',
+      get label() {
+        return translate('Moeda ISO (EUR, BRL)');
+      },
+      required: true,
+    },
+    {
+      key: 'openingBalance',
+      get label() {
+        return translate('Saldo inicial');
+      },
+      required: true,
+    },
+    {
+      key: 'status',
+      get label() {
+        return translate('Status');
+      },
+      options: ['ACTIVE', 'INACTIVE'],
+    },
   ],
   suppliers: [
-    { key: 'name', label: 'Nome', required: true },
-    { key: 'taxId', label: 'Identificação fiscal' },
+    {
+      key: 'name',
+      get label() {
+        return translate('Nome');
+      },
+      required: true,
+    },
+    {
+      key: 'taxId',
+      get label() {
+        return translate('Identificação fiscal');
+      },
+    },
     { key: 'email', label: 'E-mail' },
-    { key: 'phone', label: 'Telefone' },
+    {
+      key: 'phone',
+      get label() {
+        return translate('Telefone');
+      },
+    },
   ],
   incomes: [
     ...transaction,
-    { key: 'origin', label: 'Origem', required: true },
-    { key: 'memberId', label: 'Membro (opcional)' },
-    { key: 'reference', label: 'Referência' },
+    {
+      key: 'origin',
+      get label() {
+        return translate('Origem');
+      },
+      required: true,
+    },
+    {
+      key: 'memberId',
+      get label() {
+        return translate('Membro (opcional)');
+      },
+    },
+    {
+      key: 'reference',
+      get label() {
+        return translate('Referência');
+      },
+    },
   ],
   expenses: [
     ...transaction,
-    { key: 'dueDate', label: 'Vencimento', type: 'date', required: true },
-    { key: 'paidAt', label: 'Pagamento', type: 'date' },
-    { key: 'supplierId', label: 'Fornecedor' },
-    { key: 'document', label: 'Documento' },
+    {
+      key: 'dueDate',
+      get label() {
+        return translate('Vencimento');
+      },
+      type: 'date',
+      required: true,
+    },
+    {
+      key: 'paidAt',
+      get label() {
+        return translate('Pagamento');
+      },
+      type: 'date',
+    },
+    {
+      key: 'supplierId',
+      get label() {
+        return translate('Fornecedor');
+      },
+    },
+    {
+      key: 'document',
+      get label() {
+        return translate('Documento');
+      },
+    },
   ],
   contributions: [
-    { key: 'incomeId', label: 'Receita', required: true },
-    { key: 'memberId', label: 'Membro', required: true },
+    {
+      key: 'incomeId',
+      get label() {
+        return translate('Receita');
+      },
+      required: true,
+    },
+    {
+      key: 'memberId',
+      get label() {
+        return translate('Membro');
+      },
+      required: true,
+    },
     {
       key: 'type',
-      label: 'Tipo',
+      get label() {
+        return translate('Tipo');
+      },
       required: true,
       options: ['TITHE', 'OFFERING', 'DONATION', 'OTHER'],
     },
   ],
 };
 const labels: Record<string, string> = {
-  income: 'Receitas do mês',
-  expenses: 'Despesas do mês',
-  balance: 'Saldo',
-  tithes: 'Dízimos',
-  offerings: 'Ofertas',
-  PENDING: 'Pendente',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
-  INCOME: 'Receita',
-  EXPENSE: 'Despesa',
-  ACTIVE: 'Ativo',
-  INACTIVE: 'Inativo',
-  TITHE: 'Dízimo',
-  OFFERING: 'Oferta',
-  DONATION: 'Doação',
-  OTHER: 'Outro',
+  get income() {
+    return translate('Receitas do mês');
+  },
+  get expenses() {
+    return translate('Despesas do mês');
+  },
+  get balance() {
+    return translate('Saldo');
+  },
+  get tithes() {
+    return translate('Dízimos');
+  },
+  get offerings() {
+    return translate('Ofertas');
+  },
+  get PENDING() {
+    return translate('Pendente');
+  },
+  get COMPLETED() {
+    return translate('Concluído');
+  },
+  get CANCELLED() {
+    return translate('Cancelado');
+  },
+  get INCOME() {
+    return translate('Receita');
+  },
+  get EXPENSE() {
+    return translate('Despesa');
+  },
+  get ACTIVE() {
+    return translate('Ativo');
+  },
+  get INACTIVE() {
+    return translate('Inativo');
+  },
+  get TITHE() {
+    return translate('Dízimo');
+  },
+  get OFFERING() {
+    return translate('Oferta');
+  },
+  get DONATION() {
+    return translate('Doação');
+  },
+  get OTHER() {
+    return translate('Outro');
+  },
 };
 export function FinancePage() {
+  useLocale();
   const { user, hasPermission } = useAuth();
   const [financeParams] = useSearchParams();
   const legacyPage = new Map([
@@ -218,7 +446,9 @@ export function FinancePage() {
     );
   }
   if (!user?.permissions.some((p) => p.startsWith('FINANCE_')))
-    return <Alert severity="warning">Sem permissão financeira.</Alert>;
+    return (
+      <Alert severity="warning">{translate('Sem permissão financeira.')}</Alert>
+    );
   const managesFinance = user?.permissions.some(
     (p) =>
       p.startsWith('FINANCE_') &&
@@ -232,6 +462,7 @@ export function FinancePage() {
   );
 }
 function FinanceManagementPage() {
+  useLocale();
   const { hasPermission } = useAuth();
   const client = useQueryClient();
   const [params, setParams] = useSearchParams();
@@ -271,7 +502,7 @@ function FinanceManagementPage() {
       }),
     onSuccess: () => {
       setDeleteAccountTarget(null);
-      setNotice('Conta bancária excluída.');
+      setNotice(translate('Conta bancária excluída.'));
       void client.invalidateQueries({ queryKey: ['finance'] });
       void client.invalidateQueries({ queryKey: ['entity-options'] });
     },
@@ -340,7 +571,7 @@ function FinanceManagementPage() {
     },
     onSuccess: () => {
       setEdit(undefined);
-      setNotice('Registro salvo com sucesso.');
+      setNotice(translate('Registro salvo com sucesso.'));
       void client.invalidateQueries({ queryKey: ['finance'] });
       void client.invalidateQueries({ queryKey: ['entity-options'] });
     },
@@ -370,7 +601,9 @@ function FinanceManagementPage() {
     );
   }
   if (!current)
-    return <Alert severity="warning">Sem permissão financeira.</Alert>;
+    return (
+      <Alert severity="warning">{translate('Sem permissão financeira.')}</Alert>
+    );
   const error = data.error;
   const canWrite =
     'write' in current &&
@@ -378,7 +611,7 @@ function FinanceManagementPage() {
     (route !== 'contributions' || hasPermission('FINANCE_CONTRIBUTION_READ'));
   return (
     <Stack spacing={3}>
-      <Typography variant="h4">Financeiro</Typography>
+      <Typography variant="h4">{translate('Financeiro')}</Typography>
       <BankingPage pendingOnly />
       <ExpenseDocumentsAlert />
       <Tabs
@@ -398,7 +631,7 @@ function FinanceManagementPage() {
       {route === 'reimbursements' && <ReimbursementsPage management />}
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
-          {notice}
+          {translate(notice ?? '')}
         </Alert>
       )}
       {error && (
@@ -406,18 +639,19 @@ function FinanceManagementPage() {
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
           {error.message}
         </Alert>
       )}
-      {data.isFetching && <Typography>Carregando…</Typography>}
+      {data.isFetching && <Typography>{translate('Carregando…')}</Typography>}
       {route === 'summary' && <FinancialDashboardPanel />}
       {canWrite && (
         <Button variant="contained" onClick={() => open(null)}>
-          Cadastrar {current.label.toLowerCase()}
+          {translate('Cadastrar ')}
+          {current.label.toLowerCase()}
         </Button>
       )}
       {!['summary', 'invoices', 'reimbursements'].includes(route) && (
@@ -431,12 +665,12 @@ function FinanceManagementPage() {
               hasPermission('FINANCE_ACCOUNT_READ') && (
                 <TextField
                   select
-                  label="Filtrar conta"
+                  label={translate('Filtrar conta')}
                   value={params.get('accountId') ?? ''}
                   onChange={(e) => filter('accountId', e.target.value)}
                   sx={{ minWidth: 180 }}
                 >
-                  <MenuItem value="">Todas as contas</MenuItem>
+                  <MenuItem value="">{translate('Todas as contas')}</MenuItem>
                   {accounts.data?.items.map((a) => (
                     <MenuItem key={a.id} value={a.id}>
                       {a.name}
@@ -448,12 +682,14 @@ function FinanceManagementPage() {
               hasPermission('FINANCE_CATEGORY_READ') && (
                 <TextField
                   select
-                  label="Filtrar categoria"
+                  label={translate('Filtrar categoria')}
                   value={params.get('categoryId') ?? ''}
                   onChange={(e) => filter('categoryId', e.target.value)}
                   sx={{ minWidth: 180 }}
                 >
-                  <MenuItem value="">Todas as categorias</MenuItem>
+                  <MenuItem value="">
+                    {translate('Todas as categorias')}
+                  </MenuItem>
                   {categories.data?.items
                     .filter(
                       (c) =>
@@ -473,13 +709,13 @@ function FinanceManagementPage() {
                 setPage(1);
               }}
             >
-              Limpar filtros
+              {translate('Limpar filtros')}
             </Button>
             {route !== 'contributions' &&
               (route !== 'incomes' ||
                 hasPermission('FINANCE_CONTRIBUTION_READ')) && (
                 <TextField
-                  label="Pesquisar"
+                  label={translate('Pesquisar')}
                   value={search}
                   onChange={(e) => {
                     setSearch(e.target.value);
@@ -492,14 +728,14 @@ function FinanceManagementPage() {
               <>
                 <TextField
                   type="date"
-                  label="De"
+                  label={translate('De')}
                   value={params.get('start') ?? ''}
                   onChange={(e) => filter('start', e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
                   type="date"
-                  label="Até"
+                  label={translate('Até')}
                   value={params.get('end') ?? ''}
                   onChange={(e) => filter('end', e.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
@@ -509,11 +745,11 @@ function FinanceManagementPage() {
             {route === 'contributions' && (
               <TextField
                 select
-                label="Tipo de contribuição"
+                label={translate('Tipo de contribuição')}
                 value={params.get('type') ?? ''}
                 onChange={(e) => filter('type', e.target.value)}
               >
-                <MenuItem value="">Todos</MenuItem>
+                <MenuItem value="">{translate('Todos')}</MenuItem>
                 {['TITHE', 'OFFERING', 'DONATION', 'OTHER'].map((v) => (
                   <MenuItem key={v} value={v}>
                     {labels[v]}
@@ -523,14 +759,14 @@ function FinanceManagementPage() {
             )}
           </Stack>
           {data.data?.items.length === 0 && (
-            <Alert severity="info">Nenhum registro.</Alert>
+            <Alert severity="info">{translate('Nenhum registro.')}</Alert>
           )}
           <RecordTable
-            primaryLabel="Registo"
+            primaryLabel={translate('Registo')}
             label={current.label}
             summaryLabel={
               ['incomes', 'expenses', 'contributions'].includes(route)
-                ? 'Valor'
+                ? translate('Valor')
                 : undefined
             }
           >
@@ -556,7 +792,7 @@ function FinanceManagementPage() {
                           component={Link}
                           to={`/finance/banking?transactionId=${item.income.bankTransactionId}`}
                         >
-                          Ver origem da contribuição
+                          {translate('Ver origem da contribuição')}
                         </Button>
                       )}
                     {typeof item.bankTransactionId === 'string' &&
@@ -566,7 +802,7 @@ function FinanceManagementPage() {
                           component={Link}
                           to={`/finance/banking?transactionId=${item.bankTransactionId}`}
                         >
-                          Ver origem bancária
+                          {translate('Ver origem bancária')}
                         </Button>
                       )}
                     {typeof item.bankTransactionId === 'string' &&
@@ -577,7 +813,7 @@ function FinanceManagementPage() {
                             setFileMovement(item.bankTransactionId as string)
                           }
                         >
-                          Anexos bancários
+                          {translate('Anexos bancários')}
                         </Button>
                       )}
                     {route === 'accounts' &&
@@ -589,11 +825,13 @@ function FinanceManagementPage() {
                             setDeleteAccountTarget(item);
                           }}
                         >
-                          Excluir conta
+                          {translate('Excluir conta')}
                         </Button>
                       )}
                     {'update' in current && hasPermission(current.update) && (
-                      <Button onClick={() => open(item)}>Editar</Button>
+                      <Button onClick={() => open(item)}>
+                        {translate('Editar')}
+                      </Button>
                     )}
                     {route === 'expenses' &&
                       (hasPermission('FINANCE_ATTACHMENT_READ') ||
@@ -603,7 +841,7 @@ function FinanceManagementPage() {
                             setFileExpense(item);
                           }}
                         >
-                          Documentos
+                          {translate('Documentos')}
                         </Button>
                       )}
                   </>
@@ -632,12 +870,14 @@ function FinanceManagementPage() {
               >
                 {item.costCenterRecord && (
                   <Typography>
-                    Centro de custo: {item.costCenterRecord.name}
+                    {translate('Centro de custo: ')}
+                    {item.costCenterRecord.name}
                   </Typography>
                 )}
                 {item.category && (
                   <Typography variant="body2">
-                    Categoria: {item.category.name}
+                    {translate('Categoria: ')}
+                    {item.category.name}
                   </Typography>
                 )}
                 <Typography>
@@ -649,23 +889,25 @@ function FinanceManagementPage() {
                 </Typography>
                 {item.parentId && (
                   <Typography>
-                    Categoria pai: {item.parent?.name ?? item.parentId}
+                    {translate('Categoria pai: ')}
+                    {item.parent?.name ?? item.parentId}
                   </Typography>
                 )}
                 {route === 'contributions' && (
                   <Typography>
-                    {labels[item.type!]} · Receita {item.income?.id} ·{' '}
-                    {item.income?.amount} · Origem{' '}
-                    {String(item.income?.origin ?? '')}{' '}
+                    {labels[item.type!]} {translate(' · Receita ')}
+                    {item.income?.id} · {item.income?.amount}{' '}
+                    {translate(' · Origem')} {String(item.income?.origin ?? '')}{' '}
                     {item.income?.bankTransaction?.import.filename}
                   </Typography>
                 )}
                 {route === 'accounts' && (
                   <Typography variant="body2">
-                    Banco: {String(item.bank ?? '')} · Conta:{' '}
-                    {String(item.account ?? '—')} · Agência:{' '}
-                    {String(item.branch ?? '—')} · IBAN:{' '}
-                    {String(item.iban ?? '—')} · Saldo inicial:{' '}
+                    {translate('Banco: ')}
+                    {String(item.bank ?? '')} {translate(' · Conta:')}{' '}
+                    {String(item.account ?? '—')} {translate(' · Agência:')}{' '}
+                    {String(item.branch ?? '—')} {translate(' · IBAN:')}{' '}
+                    {String(item.iban ?? '—')} {translate(' · Saldo inicial:')}{' '}
                     {String(item.openingBalance ?? '0')} {item.currency}
                   </Typography>
                 )}
@@ -677,11 +919,12 @@ function FinanceManagementPage() {
                 )}
                 {route === 'expenses' && (
                   <Typography variant="body2">
-                    Vencimento: {formatDateOnly(String(item.dueDate ?? ''))} ·
-                    Pagamento:{' '}
+                    {translate('Vencimento: ')}
+                    {formatDateOnly(String(item.dueDate ?? ''))}{' '}
+                    {translate(' · Pagamento:')}{' '}
                     {item.paidAt
                       ? formatDateOnly(String(item.paidAt))
-                      : 'Pendente'}
+                      : translate('Pendente')}
                   </Typography>
                 )}
                 <Typography variant="caption">ID: {item.id}</Typography>
@@ -690,16 +933,19 @@ function FinanceManagementPage() {
           </RecordTable>
           <Stack direction="row" gap={2}>
             <Button disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-              Anterior
+              {translate('Anterior')}
             </Button>
-            <Typography>Página {page}</Typography>
+            <Typography>
+              {translate('Página ')}
+              {page}
+            </Typography>
             <Button
               disabled={
                 !data.data || page * data.data.pageSize >= data.data.total
               }
               onClick={() => setPage((p) => p + 1)}
             >
-              Próxima
+              {translate('Próxima')}
             </Button>
           </Stack>
         </>
@@ -710,7 +956,8 @@ function FinanceManagementPage() {
         fullWidth
       >
         <DialogTitle>
-          {edit ? 'Editar' : 'Cadastrar'} {current.label.toLowerCase()}
+          {edit ? translate('Editar') : translate('Cadastrar')}{' '}
+          {current.label.toLowerCase()}
         </DialogTitle>
         <Box
           component="form"
@@ -786,7 +1033,7 @@ function FinanceManagementPage() {
                         }
                         helperText={
                           submitted && f.required && !values[f.key]?.trim()
-                            ? 'Campo obrigatório'
+                            ? translate('Campo obrigatório')
                             : undefined
                         }
                         value={values[f.key] ?? ''}
@@ -808,9 +1055,9 @@ function FinanceManagementPage() {
                       }
                       helperText={
                         submitted && f.required && !values[f.key]?.trim()
-                          ? 'Campo obrigatório'
+                          ? translate('Campo obrigatório')
                           : ['amount', 'openingBalance'].includes(f.key)
-                            ? 'Valor com até duas casas decimais'
+                            ? translate('Valor com até duas casas decimais')
                             : undefined
                       }
                       type={f.type ?? 'text'}
@@ -832,7 +1079,9 @@ function FinanceManagementPage() {
                           : undefined,
                       }}
                     >
-                      {f.options && <MenuItem value="">Selecione</MenuItem>}
+                      {f.options && (
+                        <MenuItem value="">{translate('Selecione')}</MenuItem>
+                      )}
                       {f.options?.map((o) => (
                         <MenuItem key={o} value={o}>
                           {labels[o] ?? o}
@@ -844,9 +1093,11 @@ function FinanceManagementPage() {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEdit(undefined)}>Cancelar</Button>
+            <Button onClick={() => setEdit(undefined)}>
+              {translate('Cancelar')}
+            </Button>
             <Button type="submit" variant="contained" disabled={save.isPending}>
-              Salvar
+              {translate('Salvar')}
             </Button>
           </DialogActions>
         </Box>
@@ -856,7 +1107,7 @@ function FinanceManagementPage() {
         onClose={() => setFileMovement(null)}
         fullWidth
       >
-        <DialogTitle>Anexos do movimento bancário</DialogTitle>
+        <DialogTitle>{translate('Anexos do movimento bancário')}</DialogTitle>
         <DialogContent>
           {fileMovement && (
             <MovementAttachments
@@ -871,7 +1122,7 @@ function FinanceManagementPage() {
         onClose={() => setFileExpense(null)}
         fullWidth
       >
-        <DialogTitle>Documentos privados</DialogTitle>
+        <DialogTitle>{translate('Documentos privados')}</DialogTitle>
         <DialogContent>
           {fileExpense && (
             <Stack spacing={2}>
@@ -880,7 +1131,7 @@ function FinanceManagementPage() {
                 hasPermission('FINANCE_CONTRIBUTION_READ') && (
                   <>
                     <Typography variant="subtitle2">
-                      Anexos do movimento bancário
+                      {translate('Anexos do movimento bancário')}
                     </Typography>
                     <MovementAttachments
                       key={fileExpense.bankTransactionId}
@@ -904,13 +1155,15 @@ function FinanceManagementPage() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>Excluir conta bancária?</DialogTitle>
+        <DialogTitle>{translate('Excluir conta bancária?')}</DialogTitle>
         <DialogContent>
           <Stack spacing={2}>
             <Typography>
-              A conta “{deleteAccountTarget?.name}” será excluída
-              permanentemente. Contas com receitas, despesas ou importações
-              devem ser desativadas.
+              {translate('A conta “')}
+              {deleteAccountTarget?.name}
+              {translate(
+                '” será excluída permanentemente. Contas com receitas, despesas ou importações devem ser desativadas.',
+              )}
             </Typography>
             {deleteAccount.error && (
               <Alert severity="error">{deleteAccount.error.message}</Alert>
@@ -922,7 +1175,7 @@ function FinanceManagementPage() {
             disabled={deleteAccount.isPending}
             onClick={() => setDeleteAccountTarget(null)}
           >
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             color="error"
@@ -930,7 +1183,9 @@ function FinanceManagementPage() {
             disabled={deleteAccount.isPending}
             onClick={() => deleteAccount.mutate()}
           >
-            {deleteAccount.isPending ? 'Excluindo…' : 'Confirmar exclusão'}
+            {deleteAccount.isPending
+              ? translate('Excluindo…')
+              : translate('Confirmar exclusão')}
           </Button>
         </DialogActions>
       </Dialog>

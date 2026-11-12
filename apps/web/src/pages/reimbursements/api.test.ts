@@ -58,7 +58,7 @@ describe('reimbursement transport', () => {
     body.append('files', new File(['receipt'], 'receipt.pdf'));
     await expect(reimbursementFileRequest('', body)).rejects.toMatchObject({
       status: 503,
-      message: expect.stringContaining('Confira se o pedido foi guardado'),
+      message: expect.stringContaining('Verifique se o pedido foi guardado'),
     });
     const writes = fetch.mock.calls.filter(
       ([, options]) => options?.method === 'POST',
@@ -97,7 +97,8 @@ describe('reimbursement transport', () => {
       reimbursementFileRequest('', new FormData()),
     ).rejects.toMatchObject({
       status: 0,
-      message: 'Falha de comunicação. Confira se o pedido foi guardado antes de tentar novamente.',
+      message:
+        'Falha de comunicação. Verifique se o pedido foi guardado antes de tentar novamente.',
     });
     expect(fetch).toHaveBeenCalledTimes(2);
   });

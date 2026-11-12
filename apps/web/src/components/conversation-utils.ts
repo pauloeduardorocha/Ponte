@@ -1,5 +1,8 @@
+import { t as translate } from '../i18n';
 export const errorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Não foi possível concluir a ação.';
+  error instanceof Error
+    ? error.message
+    : translate('Não foi possível concluir a ação.');
 
 export function personInitials(name: string) {
   return name

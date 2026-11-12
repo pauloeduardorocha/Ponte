@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { STATUS_LABELS } from '../../lib/status-labels';
 import { useState } from 'react';
@@ -23,6 +24,7 @@ export function CopyHistoryDialog({
   id: string;
   close: () => void;
 }) {
+  useLocale();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const history = useQuery({
@@ -31,7 +33,7 @@ export function CopyHistoryDialog({
   });
   return (
     <Dialog open onClose={close} fullWidth maxWidth="md">
-      <DialogTitle>Histórico completo do exemplar</DialogTitle>
+      <DialogTitle>{translate('Histórico completo do exemplar')}</DialogTitle>
       <DialogContent>
         {history.isPending && <CircularProgress />}
         {history.isError && (
@@ -50,9 +52,9 @@ export function CopyHistoryDialog({
             </Typography>
             <HistoryContent history={history.data} />
             <Typography variant="h6">
-              Auditoria / manutenção / mudanças de status
+              {translate('Auditoria / manutenção / mudanças de status')}
             </Typography>
-            <RecordTable hasActions={false} primaryLabel="Ação">
+            <RecordTable hasActions={false} primaryLabel={translate('Ação')}>
               {history.data.events.map((event) => (
                 <RecordRow
                   key={event.id}
@@ -61,7 +63,7 @@ export function CopyHistoryDialog({
                 >
                   <Typography variant="body2">
                     {formatDate(event.createdAt)} ·{' '}
-                    {event.actorId ?? 'automático'} ·{' '}
+                    {event.actorId ?? translate('automático')} ·{' '}
                     {JSON.stringify(event.metadata)}
                   </Typography>
                 </RecordRow>
@@ -79,7 +81,7 @@ export function CopyHistoryDialog({
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={close}>Fechar</Button>
+        <Button onClick={close}>{translate('Fechar')}</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import type {
   PublicKeyCredentialCreationOptionsJSON,
   PublicKeyCredentialRequestOptionsJSON,
@@ -38,12 +39,14 @@ export function passkeyError(error: unknown) {
       ? error.name
       : undefined;
   if (name === 'NotAllowedError' || name === 'AbortError')
-    return 'Operação cancelada ou expirada. Pode tentar novamente ou entrar com a senha.';
+    return translate(
+      'Operação cancelada ou expirada. Pode tentar novamente ou entrar com a senha.',
+    );
   if (name === 'InvalidStateError')
-    return 'Esta passkey já está registada. Use-a para entrar.';
+    return translate('Esta passkey já está registada. Use-a para entrar.');
   return error instanceof Error
     ? error.message
-    : 'Não foi possível utilizar a passkey.';
+    : translate('Não foi possível utilizar a passkey.');
 }
 
 export async function registerPasskey(

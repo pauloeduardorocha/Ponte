@@ -70,11 +70,11 @@ async function signIn() {
   fireEvent.change(await screen.findByLabelText('E-mail'), {
     target: { value: makeUser().email },
   });
-  fireEvent.change(screen.getByLabelText('Senha', { exact: true }), {
+  fireEvent.change(screen.getByLabelText('Palavra-passe', { exact: true }), {
     target: { value: 'current-password' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
-  await screen.findByRole('heading', { name: 'Minha conta', hidden: true });
+  await screen.findByRole('heading', { name: 'A minha conta', hidden: true });
 }
 
 function mobileViewport() {
@@ -165,7 +165,7 @@ describe('Passkey invitation after password login', () => {
         id: 'new-credential',
       } as never);
       renderApp('/account?from=test');
-      await screen.findByRole('heading', { name: 'Minha conta' });
+      await screen.findByRole('heading', { name: 'A minha conta' });
       expect(startAuthentication).toHaveBeenCalledTimes(1);
       expect(getAccessToken()).toBe('passkey-session');
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -270,7 +270,7 @@ describe('Passkey invitation after password login', () => {
       'GET /auth/passkeys': { body: [] },
     });
     renderApp('/account');
-    await screen.findByRole('heading', { name: 'Minha conta' });
+    await screen.findByRole('heading', { name: 'A minha conta' });
     expect(platformAvailable).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -280,7 +280,7 @@ describe('Passkey invitation after password login', () => {
     rememberPasskey(user.id, 'existing');
     mockApi({ ...sessionRoutes(user), 'GET /auth/passkeys': { body: [] } });
     renderApp('/account');
-    await screen.findByRole('heading', { name: 'Minha conta' });
+    await screen.findByRole('heading', { name: 'A minha conta' });
     fireEvent.click(
       screen.getByRole('button', { name: 'Abrir menu da conta' }),
     );

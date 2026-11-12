@@ -31,10 +31,10 @@ describe('Event manager workspace', () => {
       screen.queryByRole('button', { name: 'Gestores' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: 'Financeiro' }),
+      screen.queryByRole('link', { name: 'Finanças' }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole('link', { name: 'Usuários' }),
+      screen.queryByRole('link', { name: 'Utilizadores' }),
     ).not.toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/finance'))).toBe(false);
   });

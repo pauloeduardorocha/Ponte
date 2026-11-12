@@ -85,7 +85,7 @@ describe('Frontend error location maps', () => {
     ).toBeInTheDocument();
     render(<FrontendErrorDetailMap report={{ id: 'old' }} />);
     expect(
-      screen.getByText('Este registro não tem coordenadas disponíveis.'),
+      screen.getByText('Este registo não tem coordenadas disponíveis.'),
     ).toBeInTheDocument();
     expect(leaflet.marker).not.toHaveBeenCalled();
   });

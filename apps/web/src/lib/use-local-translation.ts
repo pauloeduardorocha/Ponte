@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 declare global {
@@ -19,7 +20,7 @@ interface TranslationMessage {
 }
 export function useLocalTranslation(audienceUrl: string | null) {
   const [text, setText] = useState(''),
-    [status, setStatus] = useState('Pronto para conectar'),
+    [status, setStatus] = useState(translate('Pronto para conectar')),
     [error, setError] = useState('');
   const [connected, setConnected] = useState(false),
     [muted, setMuted] = useState(false);
@@ -53,14 +54,14 @@ export function useLocalTranslation(audienceUrl: string | null) {
   useEffect(() => {
     setConnected(false);
     setText('');
-    setStatus('Pronto para conectar');
+    setStatus(translate('Pronto para conectar'));
     return () => disconnect();
   }, [audienceUrl, disconnect]);
   const connect = useCallback(async () => {
     if (!audienceUrl) return;
     disconnect();
     setError('');
-    setStatus('Conectando ao computador da igreja…');
+    setStatus(translate('Conectando ao computador da igreja…'));
     setConnected(false);
     const generation = runtime.current.generation;
     try {
@@ -69,7 +70,7 @@ export function useLocalTranslation(audienceUrl: string | null) {
         url.protocol !== 'http:' ||
         !/^\/listen\/[a-f0-9]{24}$/.test(url.pathname)
       )
-        throw new Error('Endereço da transmissão inválido.');
+        throw new Error(translate('Endereço da transmissão inválido.'));
       runtime.current.context = new AudioContext();
       await runtime.current.context.resume();
       const moduleUrl = '/translation-codec.js';
@@ -83,7 +84,7 @@ export function useLocalTranslation(audienceUrl: string | null) {
       socket.onopen = () => {
         if (generation === runtime.current.generation) {
           setConnected(true);
-          setStatus('Conectado à igreja');
+          setStatus(translate('Conectado à igreja'));
         }
       };
       socket.onmessage = (event) => {
@@ -119,7 +120,9 @@ export function useLocalTranslation(audienceUrl: string | null) {
             node.onended = () => runtime.current.nodes.delete(node);
           } catch {
             setError(
-              'Um bloco de áudio não pôde ser reproduzido. Aguardando o próximo.',
+              translate(
+                'Um bloco de áudio não pôde ser reproduzido. Aguardando o próximo.',
+              ),
             );
           }
           return;
@@ -128,8 +131,8 @@ export function useLocalTranslation(audienceUrl: string | null) {
         if (message.state) {
           setStatus(
             message.state === 'live'
-              ? 'Tradução ao vivo'
-              : 'Aguardando o apresentador',
+              ? translate('Tradução ao vivo')
+              : translate('Aguardando o apresentador'),
           );
           if (message.state !== 'live') clearAudio();
         }
@@ -147,10 +150,12 @@ export function useLocalTranslation(audienceUrl: string | null) {
       socket.onclose = () => {
         if (generation === runtime.current.generation) {
           setConnected(false);
-          setStatus('Desconectado');
+          setStatus(translate('Desconectado'));
           clearAudio();
           setError(
-            'Confira o Wi-Fi e permita o acesso à rede local. Se o navegador bloquear, use Abrir página local.',
+            translate(
+              'Confira o Wi-Fi e permita o acesso à rede local. Se o navegador bloquear, use Abrir página local.',
+            ),
           );
         }
       };
@@ -158,9 +163,11 @@ export function useLocalTranslation(audienceUrl: string | null) {
     } catch {
       if (generation === runtime.current.generation) {
         disconnect();
-        setStatus('Não foi possível conectar');
+        setStatus(translate('Não foi possível conectar'));
         setError(
-          'Conecte-se ao Wi-Fi da igreja e permita acesso à rede local. Você também pode usar Abrir página local.',
+          translate(
+            'Conecte-se ao Wi-Fi da igreja e permita acesso à rede local. Você também pode usar Abrir página local.',
+          ),
         );
       }
     }
@@ -173,7 +180,7 @@ export function useLocalTranslation(audienceUrl: string | null) {
   const stop = useCallback(() => {
     disconnect();
     setConnected(false);
-    setStatus('Desconectado');
+    setStatus(translate('Desconectado'));
   }, [disconnect]);
   return { text, status, error, connected, muted, connect, toggleMute, stop };
 }

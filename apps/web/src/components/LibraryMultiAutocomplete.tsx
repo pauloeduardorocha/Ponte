@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState, type ChangeEvent } from 'react';
 import {
   Autocomplete,
@@ -23,6 +24,7 @@ export function LibraryMultiAutocomplete({
   endpoint: string;
   freeSolo?: boolean;
 }) {
+  useLocale();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const debounced = useDebouncedValue(search);
@@ -78,20 +80,24 @@ export function LibraryMultiAutocomplete({
         if (
           input &&
           !available.some(
-            (option) => option.id.toLocaleLowerCase() === input.toLocaleLowerCase(),
+            (option) =>
+              option.id.toLocaleLowerCase() === input.toLocaleLowerCase(),
           )
         )
-          return [...available, { id: input, name: `Adicionar “${input}”` }];
+          return [
+            ...available,
+            { id: input, name: translate('Adicionar “{0}”', [input]) },
+          ];
         return available;
       }}
       loading={options.isFetching || search !== debounced}
-      loadingText="Carregando opções…"
+      loadingText={translate('Carregando opções…')}
       noOptionsText={
         options.isError
-          ? 'Não foi possível carregar as opções.'
+          ? translate('Não foi possível carregar as opções.')
           : freeSolo && search.trim()
-            ? `Adicionar “${search.trim()}”`
-            : 'Nenhum resultado.'
+            ? translate('Adicionar “{0}”', [search.trim()])
+            : translate('Nenhum resultado.')
       }
       onInputChange={(_, text, reason) => {
         if (reason !== 'blur') setSearch(text);

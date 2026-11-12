@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { STATUS_LABELS } from '../../lib/status-labels';
 import { StatusChip } from '../../components/DataPresentation';
@@ -32,6 +33,7 @@ export function CopiesPanel({
   open: OpenLibraryAction;
   setCopyHistory: (id: string) => void;
 }) {
+  useLocale();
   return (
     <Paged
       total={copies.total}
@@ -41,10 +43,10 @@ export function CopiesPanel({
       setPageSize={setPageSize}
     >
       <RecordTable
-        primaryLabel="Livro / Exemplar"
-        imageLabel="Capa"
-        label={'Exemplares'}
-        summaryLabel="Situação"
+        primaryLabel={translate('Livro / Exemplar')}
+        imageLabel={translate('Capa')}
+        label={translate('Exemplares')}
+        summaryLabel={translate('Situação')}
       >
         {copies.items.map((copy) => (
           <RecordRow
@@ -54,12 +56,14 @@ export function CopiesPanel({
                 <Box
                   component="img"
                   src={copy.book.cover}
-                  alt={`Capa de ${copy.book.title}`}
+                  alt={translate('Capa de {0}', [copy.book.title])}
                   loading="lazy"
                   sx={{ width: 80, height: 112, objectFit: 'contain' }}
                 />
               ) : (
-                <Typography variant="caption">Sem capa</Typography>
+                <Typography variant="caption">
+                  {translate('Sem capa')}
+                </Typography>
               )
             }
             primary={
@@ -73,14 +77,14 @@ export function CopiesPanel({
               <>
                 <Can permission="LIBRARY_HISTORY_READ">
                   <Button onClick={() => setCopyHistory(copy.id)}>
-                    Histórico
+                    {translate('Histórico')}
                   </Button>
                 </Can>
                 <Can permission="LIBRARY_COPY_UPDATE">
                   <Button
                     onClick={() =>
                       open(
-                        'Editar exemplar / manutenção',
+                        translate('Editar exemplar / manutenção'),
                         (v) =>
                           api.updateCopy(copy.id, {
                             ...copyInput(v, true),
@@ -96,7 +100,7 @@ export function CopiesPanel({
                           ...copyFields,
                           {
                             name: 'status',
-                            label: 'Status (vazio mantém atual)',
+                            label: translate('Status (vazio mantém atual)'),
                             options: [
                               '',
                               'PENDING_INVENTORY',
@@ -116,7 +120,7 @@ export function CopiesPanel({
                       )
                     }
                   >
-                    Editar / status
+                    {translate('Editar / status')}
                   </Button>
                 </Can>
                 {(copy.status === 'AVAILABLE' ||
@@ -125,7 +129,7 @@ export function CopiesPanel({
                     <Button
                       onClick={() =>
                         open(
-                          `Emprestar ${copy.assetCode}`,
+                          translate('Emprestar {0}', [copy.assetCode]),
                           (v) =>
                             api.borrow({
                               memberId: v.memberId ?? '',
@@ -136,13 +140,13 @@ export function CopiesPanel({
                             memberField,
                             {
                               name: 'observations',
-                              label: 'Observações',
+                              label: translate('Observações'),
                             },
                           ],
                         )
                       }
                     >
-                      Emprestar
+                      {translate('Emprestar')}
                     </Button>
                   </Can>
                 )}
@@ -153,15 +157,17 @@ export function CopiesPanel({
                 <Typography>
                   {<StatusChip status={copy.status} />} ·{' '}
                   {STATUS_LABELS[copy.condition ?? ''] ?? copy.condition} ·{' '}
-                  {copy.location} · Cota: {copy.shelfmark ?? 'Por atribuir'} ·{' '}
-                  {copy.notes}
+                  {copy.location} {translate(' · Cota: ')}
+                  {copy.shelfmark ?? translate('Por atribuir')} · {copy.notes}
                 </Typography>
               </>
             }
           >
             <Typography variant="caption">
-              ID: {copy.id} · Livro: {copy.bookId} · Barcode: {copy.barcode} ·
-              QR: {copy.qrCode} · Aquisição:{' '}
+              ID: {copy.id} {translate(' · Livro: ')}
+              {copy.bookId} {translate(' · Barcode: ')}
+              {copy.barcode} {translate(' · QR: ')}
+              {copy.qrCode} {translate(' · Aquisição:')}{' '}
               {copy.acquiredAt ? formatDate(copy.acquiredAt) : '—'}
             </Typography>
           </RecordRow>

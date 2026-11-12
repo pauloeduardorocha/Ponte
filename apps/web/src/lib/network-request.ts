@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 export interface NetworkFailureDetails {
   kind: 'offline' | 'network' | 'timeout' | 'cancelled';
   attempts: number;
@@ -9,7 +10,7 @@ export interface NetworkFailureDetails {
 
 export class NetworkFailure extends Error {
   constructor(readonly diagnostics: NetworkFailureDetails) {
-    super('Falha de comunicação com o servidor.');
+    super(translate('Falha de comunicação com o servidor.'));
     this.name = 'NetworkFailure';
   }
 }
@@ -59,7 +60,12 @@ export async function networkRequest(
             () => {
               timedOut = true;
               controller.abort();
-              reject(new DOMException('Request timed out', 'TimeoutError'));
+              reject(
+                new DOMException(
+                  translate('Request timed out'),
+                  'TimeoutError',
+                ),
+              );
             },
             Math.min(timeoutMs, remainingMs),
           );

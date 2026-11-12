@@ -40,7 +40,7 @@ describe('Cost centers', () => {
     });
     renderApp('/finance?tab=incomes');
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Cadastrar receitas' }),
+      await screen.findByRole('button', { name: 'Registar receitas' }),
     );
     const select = await screen.findByRole('combobox', {
       name: 'Centro de custo',
@@ -73,7 +73,7 @@ describe('Cost centers', () => {
     renderApp('/finance?tab=cost-centers');
     expect(await screen.findByText('Missões')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: 'Cadastrar centros de custos' }),
+      screen.getByRole('button', { name: 'Registar centros de custos' }),
     ).toBeInTheDocument();
   });
 });

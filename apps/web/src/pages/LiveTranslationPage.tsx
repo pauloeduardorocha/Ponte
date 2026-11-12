@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import {
   Alert,
   Box,
@@ -17,26 +18,33 @@ import { useLiveTranslation } from '../lib/live-translation';
 export function LiveTranslationPage({
   publicAccess = false,
 }: { publicAccess?: boolean } = {}) {
+  useLocale();
   const session = useLiveTranslation({ publicAccess });
   const url = session.active ? (session.data?.audienceUrl ?? null) : null;
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Tradução ao vivo"
-        subtitle="Escolha um canal e acompanhe a mensagem no seu idioma, com áudio e texto."
+        title={translate('Tradução ao vivo')}
+        subtitle={translate(
+          'Escolha um canal e acompanhe a mensagem no seu idioma, com áudio e texto.',
+        )}
       />
       {session.isPending ? (
-        <Alert severity="info">Procurando a tradução ao vivo…</Alert>
+        <Alert severity="info">
+          {translate('Procurando a tradução ao vivo…')}
+        </Alert>
       ) : session.isError ? (
         <Alert
           severity="warning"
           action={
             <Button color="inherit" onClick={() => void session.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível verificar a transmissão. Confira sua conexão.
+          {translate(
+            'Não foi possível verificar a transmissão. Confira sua conexão.',
+          )}
         </Alert>
       ) : !session.active ? (
         <Box
@@ -48,11 +56,12 @@ export function LiveTranslationPage({
             sx={{ fontSize: 40, mb: 2, opacity: 0.6 }}
           />
           <Typography variant="h6" color="text.primary">
-            Aguardando a transmissão
+            {translate('Aguardando a transmissão')}
           </Typography>
           <Typography sx={{ mt: 1, maxWidth: 440, mx: 'auto' }}>
-            Assim que começar, a tradução aparecerá aqui. Pode manter esta
-            página aberta.
+            {translate(
+              'Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.',
+            )}
           </Typography>
         </Box>
       ) : (
@@ -67,28 +76,37 @@ export function LiveTranslationPage({
                 useFlexGap
               >
                 <TranslateRounded color="primary" />
-                <Typography variant="h6">Canais de tradução</Typography>
-                <Chip label="Disponível ao vivo" size="small" color="success" />
+                <Typography variant="h6">
+                  {translate('Canais de tradução')}
+                </Typography>
+                <Chip
+                  label={translate('Disponível ao vivo')}
+                  size="small"
+                  color="success"
+                />
               </Stack>
               <Alert severity="info">
-                Conecte-se ao Wi-Fi da igreja e use fones de ouvido.
+                {translate(
+                  'Conecte-se ao Wi-Fi da igreja e use fones de ouvido.',
+                )}
               </Alert>
               <Typography>
-                Ouça e acompanhe o texto na mesma tela. Use o mesmo leitor com a
-                tela aberta, minimizada ou bloqueada, quando o aparelho
-                permitir.
+                {translate(
+                  'Ouça e acompanhe o texto na mesma tela. Use o mesmo leitor com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir.',
+                )}
               </Typography>
               <Button variant="contained" href={url!}>
-                Abrir tradução ao vivo
+                {translate('Abrir tradução ao vivo')}
               </Button>
               <Typography variant="body2" color="text.secondary">
-                A tradução abre nesta aba, diretamente no computador da igreja.
-                Na próxima tela, escolha um canal e toque em Ouvir ao vivo. Use
-                o botão Voltar do navegador para retornar ao Ponte.
+                {translate(
+                  'A tradução abre nesta aba, diretamente no computador da igreja. Na próxima tela, escolha um canal e toque em Ouvir ao vivo. Use o botão Voltar do navegador para retornar ao Ponte.',
+                )}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                Mantenha o Wi-Fi conectado e esta aba aberta. Ao pausar e
-                retomar, ouvirá a transmissão atual.
+                {translate(
+                  'Mantenha o Wi-Fi conectado e esta aba aberta. Ao pausar e retomar, ouvirá a transmissão atual.',
+                )}
               </Typography>
             </Stack>
           </CardContent>
@@ -99,6 +117,7 @@ export function LiveTranslationPage({
 }
 
 export function PublicTranslationPage() {
+  useLocale();
   return (
     <Box
       sx={{
@@ -125,7 +144,7 @@ export function PublicTranslationPage() {
             <Typography fontWeight={700}>A Ponte</Typography>
           </Stack>
           <Button component={RouterLink} to="/login">
-            Voltar ao login
+            {translate('Voltar ao login')}
           </Button>
         </Stack>
         <LiveTranslationPage publicAccess />

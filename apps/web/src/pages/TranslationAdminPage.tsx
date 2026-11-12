@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -22,6 +23,7 @@ import { translationApiUrl, useLiveTranslation } from '../lib/live-translation';
 import { errorMessage } from '../lib/errors';
 
 export function TranslationAdminPage() {
+  useLocale();
   const [configuration, setConfiguration] = useState(''),
     [notice, setNotice] = useState('');
   const client = useQueryClient(),
@@ -54,7 +56,7 @@ export function TranslationAdminPage() {
   });
   async function downloadLocal() {
     try {
-      setNotice('Preparando download…');
+      setNotice(translate('Preparando download…'));
       const response = await apiResponse('/live-translation/download/archive'),
         blob = await response.blob();
       const url = URL.createObjectURL(blob),
@@ -63,7 +65,9 @@ export function TranslationAdminPage() {
       anchor.download = 'Ponte-Traducao-Windows.zip';
       anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-      setNotice('Download iniciado. Extraia o ZIP e execute Instalar.cmd.');
+      setNotice(
+        translate('Download iniciado. Extraia o ZIP e execute Instalar.cmd.'),
+      );
     } catch (error) {
       setNotice(errorMessage(error));
     }
@@ -71,28 +75,29 @@ export function TranslationAdminPage() {
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Aplicativo de tradução"
-        subtitle="Prepare o computador da igreja para traduzir o culto e publicar na PWA."
+        title={translate('Aplicativo de tradução')}
+        subtitle={translate(
+          'Prepare o computador da igreja para traduzir o culto e publicar na PWA.',
+        )}
       />
       <Card>
         <CardContent>
           <Stack spacing={2}>
             <Typography component="h2" variant="h6">
-              1. Baixe e instale no Windows
+              {translate('1. Baixe e instale no Windows')}
             </Typography>
             <Typography>
-              Extraia a pasta do ZIP e execute Instalar.cmd. Depois, use o
-              atalho Ponte - Tradução. Para atualizar, feche o aplicativo e
-              execute o instalador da nova versão: ele substitui a anterior no
-              mesmo local, mantendo os atalhos.
+              {translate(
+                'Extraia a pasta do ZIP e execute Instalar.cmd. Depois, use o atalho Ponte - Tradução. Para atualizar, feche o aplicativo e execute o instalador da nova versão: ele substitui a anterior no mesmo local, mantendo os atalhos.',
+              )}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              O ZIP inclui GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt ao lado
-              do aplicativo. Abra o guia com dois cliques para consultar sem
-              internet.
+              {translate(
+                'O ZIP inclui GUIA-COMECE-AQUI.html e LEIA-ME-PRIMEIRO.txt ao lado do aplicativo. Abra o guia com dois cliques para consultar sem internet.',
+              )}
             </Typography>
             <Button href="#guia-windows" sx={{ alignSelf: 'flex-start' }}>
-              Ver guia passo a passo para Windows
+              {translate('Ver guia passo a passo para Windows')}
             </Button>
             {download.data?.url ? (
               <Button
@@ -101,7 +106,7 @@ export function TranslationAdminPage() {
                 startIcon={<DownloadRounded />}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Baixar aplicativo para Windows
+                {translate('Baixar aplicativo para Windows')}
               </Button>
             ) : download.data?.localAvailable ? (
               <Button
@@ -110,19 +115,19 @@ export function TranslationAdminPage() {
                 startIcon={<DownloadRounded />}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                Baixar aplicativo para Windows
+                {translate('Baixar aplicativo para Windows')}
               </Button>
             ) : (
               <Alert severity="info">
-                O pacote Windows ainda não foi disponibilizado neste ambiente.
-                Peça ao responsável pelo Ponte para publicar a versão de
-                download.
+                {translate(
+                  'O pacote Windows ainda não foi disponibilizado neste ambiente. Peça ao responsável pelo Ponte para publicar a versão de download.',
+                )}
               </Alert>
             )}
             {download.error && (
               <Alert severity="error">{errorMessage(download.error)}</Alert>
             )}
-            {notice && <Alert severity="info">{notice}</Alert>}
+            {notice && <Alert severity="info">{translate(notice ?? '')}</Alert>}
           </Stack>
         </CardContent>
       </Card>
@@ -130,15 +135,15 @@ export function TranslationAdminPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography component="h2" variant="h6">
-              {windowsGuide.title}
+              {translate(windowsGuide.title)}
             </Typography>
             <Typography color="text.secondary">
-              {windowsGuide.introduction}
+              {translate(windowsGuide.introduction)}
             </Typography>
             <Box>
               {windowsGuide.sections.map((section, index) => (
                 <Accordion
-                  key={section.title}
+                  key={translate(section.title)}
                   defaultExpanded={index === 0}
                   disableGutters
                 >
@@ -148,7 +153,7 @@ export function TranslationAdminPage() {
                     id={`windows-guide-heading-${index}`}
                   >
                     <Typography component="h3" fontWeight={650}>
-                      {section.title}
+                      {translate(section.title)}
                     </Typography>
                   </AccordionSummary>
                   <AccordionDetails id={`windows-guide-${index}`}>
@@ -156,10 +161,10 @@ export function TranslationAdminPage() {
                       {section.steps.map((step) => (
                         <Typography
                           component="li"
-                          key={step}
+                          key={translate(step)}
                           sx={{ mb: 1.5, lineHeight: 1.7 }}
                         >
-                          {step}
+                          {translate(step)}
                         </Typography>
                       ))}
                     </Box>
@@ -173,18 +178,18 @@ export function TranslationAdminPage() {
                   id="windows-troubleshooting-heading"
                 >
                   <Typography component="h3" fontWeight={650}>
-                    Se algo não funcionar
+                    {translate('Se algo não funcionar')}
                   </Typography>
                 </AccordionSummary>
                 <AccordionDetails id="windows-troubleshooting">
                   <Stack spacing={2}>
                     {windowsGuide.troubleshooting.map((item) => (
-                      <Box key={item.problem}>
+                      <Box key={translate(item.problem)}>
                         <Typography component="h4" fontWeight={650}>
-                          {item.problem}
+                          {translate(item.problem)}
                         </Typography>
                         <Typography color="text.secondary">
-                          {item.solution}
+                          {translate(item.solution)}
                         </Typography>
                       </Box>
                     ))}
@@ -199,12 +204,12 @@ export function TranslationAdminPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography component="h2" variant="h6">
-              2. Conecte o aplicativo ao Ponte
+              {translate('2. Conecte o aplicativo ao Ponte')}
             </Typography>
             <Alert severity="warning">
-              Gerar uma nova ligação revoga a anterior e retira a transmissão
-              atual do menu. Guarde a ligação com segurança; ela autoriza
-              publicar no Ponte.
+              {translate(
+                'Gerar uma nova ligação revoga a anterior e retira a transmissão atual do menu. Guarde a ligação com segurança; ela autoriza publicar no Ponte.',
+              )}
             </Alert>
             <Button
               variant="outlined"
@@ -212,7 +217,7 @@ export function TranslationAdminPage() {
               disabled={credential.isPending}
               sx={{ alignSelf: 'flex-start' }}
             >
-              Gerar ligação para o computador
+              {translate('Gerar ligação para o computador')}
             </Button>
             {credential.error && (
               <Alert severity="error">{errorMessage(credential.error)}</Alert>
@@ -220,7 +225,7 @@ export function TranslationAdminPage() {
             {configuration && (
               <>
                 <TextField
-                  label="Ligação do aplicativo"
+                  label={translate('Ligação do aplicativo')}
                   value={configuration}
                   type="password"
                   InputProps={{ readOnly: true }}
@@ -232,21 +237,26 @@ export function TranslationAdminPage() {
                       .writeText(configuration)
                       .then(() =>
                         setNotice(
-                          'Ligação copiada. Cole no aplicativo do computador.',
+                          translate(
+                            'Ligação copiada. Cole no aplicativo do computador.',
+                          ),
                         ),
                       )
                       .catch(() =>
                         setNotice(
-                          'Não foi possível copiar. Selecione o campo da ligação e copie manualmente.',
+                          translate(
+                            'Não foi possível copiar. Selecione o campo da ligação e copie manualmente.',
+                          ),
                         ),
                       )
                   }
                 >
-                  Copiar ligação
+                  {translate('Copiar ligação')}
                 </Button>
                 <Typography variant="body2" color="text.secondary">
-                  Exibida somente nesta sessão. Cole em “Ligação gerada pelo
-                  administrador” no aplicativo.
+                  {translate(
+                    'Exibida somente nesta sessão. Cole em “Ligação gerada pelo administrador” no aplicativo.',
+                  )}
                 </Typography>
               </>
             )}
@@ -257,24 +267,22 @@ export function TranslationAdminPage() {
         <CardContent>
           <Stack spacing={2}>
             <Typography component="h2" variant="h6">
-              3. Inicie e publique a tradução
+              {translate('3. Inicie e publique a tradução')}
             </Typography>
             <Typography>
-              No aplicativo: informe a chave Gemini, selecione o microfone e
-              inicie a tradução. Escolha o endereço da rede Wi-Fi da igreja e
-              clique em Publicar tradução. O menu aparece em até 1 minuto. Ao
-              parar, ele é retirado; se o computador desconectar, a publicação
-              expira em até 2 minutos.
+              {translate(
+                'No aplicativo: informe a chave Gemini, selecione o microfone e inicie a tradução. Escolha o endereço da rede Wi-Fi da igreja e clique em Publicar tradução. O menu aparece em até 1 minuto. Ao parar, ele é retirado; se o computador desconectar, a publicação expira em até 2 minutos.',
+              )}
             </Typography>
             <Alert severity={live.active ? 'success' : 'info'}>
               {live.active
-                ? 'Há uma tradução publicada no Ponte.'
-                : 'Nenhuma tradução publicada.'}
+                ? translate('Há uma tradução publicada no Ponte.')
+                : translate('Nenhuma tradução publicada.')}
             </Alert>
             <Typography variant="body2" color="text.secondary">
-              Áudio e texto circulam somente na rede local. O Ponte consulta
-              apenas a disponibilidade. Alguns navegadores exigem permissão de
-              rede local; a página oferece um link direto como alternativa.
+              {translate(
+                'Áudio e texto circulam somente na rede local. O Ponte consulta apenas a disponibilidade. Alguns navegadores exigem permissão de rede local; a página oferece um link direto como alternativa.',
+              )}
             </Typography>
           </Stack>
         </CardContent>

@@ -77,7 +77,7 @@ describe('Dismissible notification header', () => {
     ).toBeInTheDocument();
     expect(requestPermission).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('link', { name: 'Notificações' }));
-    await screen.findByRole('heading', { name: 'Minhas notificações' });
+    await screen.findByRole('heading', { name: 'As minhas notificações' });
     expect(
       screen.getByRole('alert', { name: 'Aviso de notificações' }),
     ).toBeInTheDocument();
@@ -104,7 +104,7 @@ describe('Dismissible notification header', () => {
       },
     });
     renderApp('/account');
-    await screen.findByRole('heading', { name: 'Minha conta' });
+    await screen.findByRole('heading', { name: 'A minha conta' });
     expect(
       screen.queryByRole('alert', { name: 'Aviso de notificações' }),
     ).not.toBeInTheDocument();

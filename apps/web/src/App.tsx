@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from './i18n';
 import { lazy, Suspense, type ReactNode } from 'react';
 const ConversationPage = lazy(() =>
   import('./components/ConversationDetail').then((m) => ({
@@ -156,9 +157,12 @@ const PublicTranslationPage = lazy(() =>
 );
 
 export function App({ children }: { children?: ReactNode }) {
+  useLocale();
   return (
     <AuthProvider>
-      <Suspense fallback={<LinearProgress aria-label="Carregando tela" />}>
+      <Suspense
+        fallback={<LinearProgress aria-label={translate('Carregando tela')} />}
+      >
         <Routes>
           <Route
             path="/events/:id/register"
@@ -317,7 +321,10 @@ export function App({ children }: { children?: ReactNode }) {
                     />
                   }
                 />
-                <Route path="*" element={<PlaceholderPage title="Módulo" />} />
+                <Route
+                  path="*"
+                  element={<PlaceholderPage title={translate('Módulo')} />}
+                />
               </Route>
             </Route>
           </Route>
@@ -329,7 +336,8 @@ export function App({ children }: { children?: ReactNode }) {
         color="text.secondary"
         sx={{ display: 'block', textAlign: 'center', py: 2, px: 2 }}
       >
-        A Ponte · v{APP_VERSION}
+        {translate('A Ponte · v')}
+        {APP_VERSION}
       </Typography>
       {children}
     </AuthProvider>

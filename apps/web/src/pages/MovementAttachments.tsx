@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { DocumentGallery } from '../components/DocumentGallery';
 import { MovementReimbursement } from './reimbursements/ReimbursementDocuments';
 import { useState } from 'react';
@@ -28,7 +29,7 @@ async function requestFile(path: string, options?: RequestInit) {
     },
   );
   if (!response.ok) {
-    let message = 'Não foi possível processar o anexo.';
+    let message = translate('Não foi possível processar o anexo.');
     try {
       const data = await response.json();
       message = Array.isArray(data.message)
@@ -57,6 +58,7 @@ export function MovementAttachments({
   showReimbursement?: boolean;
   onReimbursementLinked?: (categoryId: string) => void;
 }) {
+  useLocale();
   const client = useQueryClient();
   const mobile = useMediaQuery('(pointer: coarse)');
   const [error, setError] = useState('');
@@ -127,13 +129,15 @@ export function MovementAttachments({
     setError('');
     const selected = Array.from(files);
     if (selected.length + (attachments.data?.length ?? 0) > maxFiles) {
-      setError('Cada movimento permite até 5 anexos.');
+      setError(translate('Cada movimento permite até 5 anexos.'));
       return;
     }
     if (
       selected.some((file) => file.size < 1 || file.size > maxMb * 1024 * 1024)
     ) {
-      setError(`Cada arquivo deve ter entre 1 byte e ${maxMb} MB.`);
+      setError(
+        translate('Cada arquivo deve ter entre 1 byte e {0} MB.', [maxMb]),
+      );
       return;
     }
     if (
@@ -142,7 +146,7 @@ export function MovementAttachments({
           !['application/pdf', 'image/jpeg', 'image/png'].includes(file.type),
       )
     ) {
-      setError('Selecione PDF ou imagem JPEG/PNG.');
+      setError(translate('Selecione PDF ou imagem JPEG/PNG.'));
       return;
     }
     upload.mutate(selected);
@@ -162,22 +166,25 @@ export function MovementAttachments({
         />
       )}
       <Typography variant="subtitle2">
-        Anexos ({attachments.data?.length ?? 0}
+        {translate('Anexos (')}
+        {attachments.data?.length ?? 0}
         {expenseId ? '' : '/5'})
       </Typography>
       <Typography variant="caption">
-        PDF ou imagem JPEG/PNG · até {maxMb} MB por arquivo
+        {translate('PDF ou imagem JPEG/PNG · até ')}
+        {maxMb} {translate(' MB por arquivo')}
       </Typography>
       {attachments.isFetching && (
-        <LinearProgress aria-label="Carregando anexos" />
+        <LinearProgress aria-label={translate('Carregando anexos')} />
       )}
       {upload.isPending && (
         <Stack spacing={1} role="status">
           <Typography variant="caption">
-            Enviando arquivos: {progress.completed} de {progress.total}{' '}
-            concluídos
+            {translate('Enviando arquivos: ')}
+            {progress.completed} {translate(' de ')}
+            {progress.total} {translate('concluídos')}
           </Typography>
-          <LinearProgress aria-label="Enviando anexos" />
+          <LinearProgress aria-label={translate('Enviando anexos')} />
         </Stack>
       )}
       {(error || attachments.error) && (
@@ -186,10 +193,12 @@ export function MovementAttachments({
       <Stack direction="row" spacing={1}>
         <Button component="label" disabled={disabled}>
           {upload.isPending && <CircularProgress size={16} sx={{ mr: 1 }} />}
-          {upload.isPending ? 'Enviando…' : 'Adicionar arquivos'}
+          {upload.isPending
+            ? translate('Enviando…')
+            : translate('Adicionar arquivos')}
           <input
             hidden
-            aria-label="Selecionar anexos"
+            aria-label={translate('Selecionar anexos')}
             type="file"
             multiple
             accept="application/pdf,image/jpeg,image/png"
@@ -201,7 +210,7 @@ export function MovementAttachments({
         </Button>
         {mobile && (
           <Button component="label" disabled={disabled}>
-            Tirar foto
+            {translate('Tirar foto')}
             <input
               hidden
               type="file"
@@ -225,7 +234,7 @@ export function MovementAttachments({
           <>
             <Button
               disabled={busy || !canWrite}
-              aria-label={`Renomear ${document.filename}`}
+              aria-label={translate('Renomear {0}', [document.filename])}
               onClick={() => {
                 setError('');
                 setEditing(document as Attachment);
@@ -237,18 +246,18 @@ export function MovementAttachments({
                 );
               }}
             >
-              Renomear
+              {translate('Renomear')}
             </Button>
             <Button
               disabled={busy || !canWrite}
               color="error"
-              aria-label={`Excluir ${document.filename}`}
+              aria-label={translate('Excluir {0}', [document.filename])}
               onClick={() => {
                 setError('');
                 setDeleting(document as Attachment);
               }}
             >
-              Excluir
+              {translate('Excluir')}
             </Button>
           </>
         )}
@@ -262,23 +271,25 @@ export function MovementAttachments({
         maxWidth="xs"
         aria-labelledby="rename-attachment-title"
       >
-        <DialogTitle id="rename-attachment-title">Renomear anexo</DialogTitle>
+        <DialogTitle id="rename-attachment-title">
+          {translate('Renomear anexo')}
+        </DialogTitle>
         <DialogContent>
-          {error && <Alert severity="error">{error}</Alert>}
+          {error && <Alert severity="error">{translate(error ?? '')}</Alert>}
           <TextField
             autoFocus
             fullWidth
             margin="dense"
-            label="Nome do arquivo"
+            label={translate('Nome do arquivo')}
             value={name}
             disabled={rename.isPending}
             onChange={(e) => setName(e.target.value)}
-            helperText={`A extensão ${extension} será mantida.`}
+            helperText={translate('A extensão {0} será mantida.', [extension])}
           />
         </DialogContent>
         <DialogActions>
           <Button disabled={rename.isPending} onClick={() => setEditing(null)}>
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             disabled={rename.isPending || !name.trim()}
@@ -295,11 +306,11 @@ export function MovementAttachments({
             {rename.isPending && (
               <CircularProgress
                 size={16}
-                aria-label="Renomeando anexo"
+                aria-label={translate('Renomeando anexo')}
                 sx={{ mr: 1 }}
               />
             )}
-            {rename.isPending ? 'Salvando…' : 'Salvar'}
+            {rename.isPending ? translate('Salvando…') : translate('Salvar')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -310,16 +321,19 @@ export function MovementAttachments({
         }}
         aria-labelledby="delete-attachment-title"
       >
-        <DialogTitle id="delete-attachment-title">Excluir anexo?</DialogTitle>
+        <DialogTitle id="delete-attachment-title">
+          {translate('Excluir anexo?')}
+        </DialogTitle>
         <DialogContent>
-          {error && <Alert severity="error">{error}</Alert>}
+          {error && <Alert severity="error">{translate(error ?? '')}</Alert>}
           <Typography>
-            O arquivo {deleting?.filename} será excluído deste movimento.
+            {translate('O arquivo ')}
+            {deleting?.filename} {translate(' será excluído deste movimento.')}
           </Typography>
         </DialogContent>
         <DialogActions>
           <Button disabled={remove.isPending} onClick={() => setDeleting(null)}>
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             color="error"
@@ -334,11 +348,13 @@ export function MovementAttachments({
             {remove.isPending && (
               <CircularProgress
                 size={16}
-                aria-label="Excluindo anexo"
+                aria-label={translate('Excluindo anexo')}
                 sx={{ mr: 1 }}
               />
             )}
-            {remove.isPending ? 'Excluindo…' : 'Excluir anexo'}
+            {remove.isPending
+              ? translate('Excluindo…')
+              : translate('Excluir anexo')}
           </Button>
         </DialogActions>
       </Dialog>

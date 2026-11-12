@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -27,25 +28,34 @@ const memberSchema = z.object({
   phone: z
     .string()
     .trim()
-    .max(32, 'O telefone deve ter no máximo 32 caracteres.'),
+    .max(32, {
+      error: () => translate('O telefone deve ter no máximo 32 caracteres.'),
+    }),
   iban: z
     .string()
     .transform((value) => value.replace(/\s/g, '').toUpperCase())
     .pipe(
       z
         .string()
-        .max(34, 'O IBAN deve ter no máximo 34 caracteres.')
-        .regex(
-          /^$|^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/,
-          'Informe um IBAN válido.',
-        ),
+        .max(34, {
+          error: () => translate('O IBAN deve ter no máximo 34 caracteres.'),
+        })
+        .regex(/^$|^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/, {
+          error: () => translate('Informe um IBAN válido.'),
+        }),
     ),
   status: z.enum(['ACTIVE', 'INACTIVE']),
-  birthDate: z.union([z.literal(''), z.iso.date('Informe uma data válida.')]),
+  birthDate: z.union([
+    z.literal(''),
+    z.iso.date(translate('Informe uma data válida.')),
+  ]),
   notes: z
     .string()
     .trim()
-    .max(2000, 'As observações devem ter no máximo 2000 caracteres.'),
+    .max(2000, {
+      error: () =>
+        translate('As observações devem ter no máximo 2000 caracteres.'),
+    }),
 });
 
 type MemberFields = z.infer<typeof memberSchema>;
@@ -94,6 +104,7 @@ function MemberForm({
   member?: Member;
   onSaved: (member: Member) => void;
 }) {
+  useLocale();
   const isEdit = Boolean(member);
   const queryClient = useQueryClient();
   const [error, setError] = useState<string | null>(null);
@@ -126,13 +137,13 @@ function MemberForm({
       <CardContent>
         <Box component="form" onSubmit={onSubmit} noValidate>
           <Stack spacing={2}>
-            {error && <Alert severity="error">{error}</Alert>}
+            {error && <Alert severity="error">{translate(error ?? '')}</Alert>}
             <Box className="form-grid">
               <TextField
-                label="Nome"
+                label={translate('Nome')}
                 required
                 error={Boolean(formState.errors.name)}
-                helperText={formState.errors.name?.message}
+                helperText={translate(formState.errors.name?.message ?? '')}
                 {...register('name')}
               />
               <Controller
@@ -141,52 +152,54 @@ function MemberForm({
                 render={({ field }) => (
                   <TextField
                     select
-                    label="Status"
+                    label={translate('Status')}
                     name={field.name}
                     value={field.value}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
                     inputRef={field.ref}
                   >
-                    <MenuItem value="ACTIVE">Ativo</MenuItem>
-                    <MenuItem value="INACTIVE">Inativo</MenuItem>
+                    <MenuItem value="ACTIVE">{translate('Ativo')}</MenuItem>
+                    <MenuItem value="INACTIVE">{translate('Inativo')}</MenuItem>
                   </TextField>
                 )}
               />
               <TextField
-                label="E-mail"
+                label={translate('E-mail')}
                 required
                 type="email"
                 error={Boolean(formState.errors.email)}
-                helperText={formState.errors.email?.message}
+                helperText={translate(formState.errors.email?.message ?? '')}
                 {...register('email')}
               />
               <TextField
-                label="Telefone"
+                label={translate('Telefone')}
                 type="tel"
                 error={Boolean(formState.errors.phone)}
-                helperText={formState.errors.phone?.message}
+                helperText={translate(formState.errors.phone?.message ?? '')}
                 {...register('phone')}
               />
               <TextField
                 label="IBAN"
                 error={Boolean(formState.errors.iban)}
-                helperText={formState.errors.iban?.message}
+                helperText={translate(formState.errors.iban?.message ?? '')}
                 {...register('iban')}
               />
               <TextField
-                label="Data de nascimento"
+                label={translate('Data de nascimento')}
                 type="date"
                 error={Boolean(formState.errors.birthDate)}
-                helperText={formState.errors.birthDate?.message}
+                helperText={translate(
+                  formState.errors.birthDate?.message ?? '',
+                )}
                 slotProps={{ inputLabel: { shrink: true } }}
                 {...register('birthDate')}
               />
             </Box>
             <TextField
-              label="Observações"
+              label={translate('Observações')}
               error={Boolean(formState.errors.notes)}
-              helperText={formState.errors.notes?.message}
+              helperText={translate(formState.errors.notes?.message ?? '')}
               multiline
               minRows={3}
               {...register('notes')}
@@ -196,14 +209,16 @@ function MemberForm({
                 component={RouterLink}
                 to={member ? `/members/${member.id}` : '/members'}
               >
-                Cancelar
+                {translate('Cancelar')}
               </Button>
               <Button
                 type="submit"
                 variant="contained"
                 disabled={save.isPending}
               >
-                {isEdit ? 'Salvar alterações' : 'Cadastrar membro'}
+                {isEdit
+                  ? translate('Salvar alterações')
+                  : translate('Cadastrar membro')}
               </Button>
             </Stack>
           </Stack>
@@ -214,18 +229,19 @@ function MemberForm({
 }
 
 export function MemberCreatePage() {
+  useLocale();
   const navigate = useNavigate();
   return (
     <Stack spacing={3}>
       <PageHeader
-        title="Novo membro"
-        subtitle="Preencha os dados para cadastrar um membro."
+        title={translate('Novo membro')}
+        subtitle={translate('Preencha os dados para cadastrar um membro.')}
       />
       <MemberForm
         onSaved={(member) =>
           navigate(`/members/${member.id}`, {
             replace: true,
-            state: { notice: 'Membro cadastrado com sucesso.' },
+            state: { notice: translate('Membro cadastrado com sucesso.') },
           })
         }
       />
@@ -234,6 +250,7 @@ export function MemberCreatePage() {
 }
 
 export function MemberEditPage() {
+  useLocale();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const member = useQuery({
@@ -243,8 +260,13 @@ export function MemberEditPage() {
 
   return (
     <Stack spacing={3}>
-      <PageHeader title="Editar membro" subtitle={member.data?.name} />
-      {member.isPending && <CircularProgress aria-label="Carregando" />}
+      <PageHeader
+        title={translate('Editar membro')}
+        subtitle={member.data?.name}
+      />
+      {member.isPending && (
+        <CircularProgress aria-label={translate('Carregando')} />
+      )}
       {member.isError && (
         <QueryError
           error={member.error}
@@ -258,7 +280,7 @@ export function MemberEditPage() {
           onSaved={(saved) =>
             navigate(`/members/${saved.id}`, {
               replace: true,
-              state: { notice: 'Membro atualizado com sucesso.' },
+              state: { notice: translate('Membro atualizado com sucesso.') },
             })
           }
         />

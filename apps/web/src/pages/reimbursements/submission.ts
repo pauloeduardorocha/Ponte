@@ -1,3 +1,4 @@
+import { t as translate } from '../../i18n';
 import { ApiError, apiRequest } from '../../lib/api';
 import { reimbursementFileRequest } from './api';
 
@@ -21,7 +22,9 @@ function readBytes(file: Blob): Promise<ArrayBuffer> {
     reader.onload = () => resolve(reader.result as ArrayBuffer);
     reader.onerror = reader.onabort = () =>
       reject(
-        new Error('Não foi possível ler o documento. Selecione-o novamente.'),
+        new Error(
+          translate('Não foi possível ler o documento. Selecione-o novamente.'),
+        ),
       );
     reader.readAsArrayBuffer(file);
   });
@@ -88,7 +91,9 @@ export function createReimbursementSubmitter() {
       ),
     );
     if (started.id !== session.id || started.chunkSize !== CHUNK_SIZE)
-      throw new Error('Não foi possível iniciar o envio. Recarregue a página.');
+      throw new Error(
+        translate('Não foi possível iniciar o envio. Recarregue a página.'),
+      );
     for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
       const file = files[fileIndex]!;
       for (let offset = 0; offset < file.size; offset += CHUNK_SIZE) {

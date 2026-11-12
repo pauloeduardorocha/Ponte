@@ -1,7 +1,10 @@
-const GENERIC_MESSAGE = 'Ocorreu um erro inesperado. Tente novamente.';
+import { t as translate } from '../i18n';
+const GENERIC_MESSAGE = translate(
+  'Ocorreu um erro inesperado. Tente novamente.',
+);
 
 export function errorMessage(error: unknown): string {
   return error instanceof Error && error.message
-    ? error.message
-    : GENERIC_MESSAGE;
+    ? translate(error.message)
+    : translate(GENERIC_MESSAGE);
 }

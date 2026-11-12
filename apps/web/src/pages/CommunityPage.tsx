@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { LocalizedTextField as TextField } from '../components/LocalizedTextField';
 import { formatDateOnly, formatDateTime } from '../lib/format';
 import { RecordTable, RecordRow } from '../components/RecordTable';
@@ -35,6 +36,7 @@ type Entry = {
   description?: string | null;
 };
 export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const allowed = hasPermission(
     kind === 'events' ? 'EVENT_READ' : 'VISITOR_READ',
@@ -59,27 +61,27 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
   const fields =
     kind === 'events'
       ? [
-          { key: 'name', label: 'Nome do evento', required: true },
+          { key: 'name', label: translate('Nome do evento'), required: true },
           {
             key: 'startsAt',
-            label: 'Data e hora local',
+            label: translate('Data e hora local'),
             type: 'datetime-local',
             required: true,
           },
-          { key: 'location', label: 'Local', required: true },
-          { key: 'description', label: 'Descrição' },
+          { key: 'location', label: translate('Local'), required: true },
+          { key: 'description', label: translate('Descrição') },
         ]
       : [
-          { key: 'name', label: 'Nome', required: true },
+          { key: 'name', label: translate('Nome'), required: true },
           {
             key: 'visitedAt',
-            label: 'Data da visita',
+            label: translate('Data da visita'),
             type: 'date',
             required: true,
           },
           { key: 'email', label: 'E-mail', type: 'email' },
-          { key: 'phone', label: 'Telefone' },
-          { key: 'notes', label: 'Observações' },
+          { key: 'phone', label: translate('Telefone') },
+          { key: 'notes', label: translate('Observações') },
         ];
   const data = useQuery({
     queryKey: ['community', kind, page, debounced, status],
@@ -103,7 +105,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
     },
     onSuccess: () => {
       setEdit(undefined);
-      setNotice('Cadastro salvo com sucesso.');
+      setNotice(translate('Cadastro salvo com sucesso.'));
       void client.invalidateQueries({ queryKey: ['community'] });
     },
   });
@@ -131,34 +133,35 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
   if (!allowed)
     return (
       <Alert severity="warning">
-        Você não tem permissão para consultar este cadastro.
+        {translate('Você não tem permissão para consultar este cadastro.')}
       </Alert>
     );
   return (
     <Stack spacing={3}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="h4">
-          {kind === 'events' ? 'Eventos' : 'Visitantes'}
+          {kind === 'events' ? translate('Eventos') : translate('Visitantes')}
         </Typography>
         {canWrite && (
           <Button variant="contained" onClick={() => open(null)}>
-            Cadastrar {kind === 'events' ? 'evento' : 'visitante'}
+            {translate('Cadastrar ')}
+            {kind === 'events' ? translate('evento') : translate('visitante')}
           </Button>
         )}
       </Stack>
       <Typography color="text.secondary">
         {kind === 'events'
-          ? 'Organize a agenda e acompanhe a situação dos encontros.'
-          : 'Acompanhe as visitas e o acolhimento de A Ponte.'}
+          ? translate('Organize a agenda e acompanhe a situação dos encontros.')
+          : translate('Acompanhe as visitas e o acolhimento de A Ponte.')}
       </Typography>
       {notice && (
         <Alert severity="success" onClose={() => setNotice('')}>
-          {notice}
+          {translate(notice ?? '')}
         </Alert>
       )}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
         <TextField
-          label="Pesquisar por nome"
+          label={translate('Pesquisar por nome')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
@@ -168,7 +171,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
         />
         <TextField
           select
-          label="Situação"
+          label={translate('Situação')}
           value={status}
           onChange={(e) => {
             setStatus(e.target.value);
@@ -176,7 +179,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
           }}
           sx={{ minWidth: 180 }}
         >
-          <MenuItem value="">Todas</MenuItem>
+          <MenuItem value="">{translate('Todas')}</MenuItem>
           {statuses.map((s) => (
             <MenuItem key={s} value={s}>
               {STATUS_LABELS[s]}
@@ -188,7 +191,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
         <Skeleton
           variant="rounded"
           height={180}
-          aria-label="Carregando cadastros"
+          aria-label={translate('Carregando cadastros')}
         />
       )}
       {data.isError && (
@@ -196,23 +199,26 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
-          Não foi possível carregar a lista.
+          {translate('Não foi possível carregar a lista.')}
         </Alert>
       )}
       {data.data?.items.length === 0 && (
         <Alert severity="info">
-          Nenhum cadastro encontrado. Ajuste os filtros ou crie o primeiro
-          registro.
+          {translate(
+            'Nenhum cadastro encontrado. Ajuste os filtros ou crie o primeiro registro.',
+          )}
         </Alert>
       )}
       <RecordTable
-        primaryLabel="Nome"
-        label={kind === 'events' ? 'Eventos' : 'Visitantes'}
-        summaryLabel="Estado / Data"
+        primaryLabel={translate('Nome')}
+        label={
+          kind === 'events' ? translate('Eventos') : translate('Visitantes')
+        }
+        summaryLabel={translate('Estado / Data')}
       >
         {data.data?.items.map((item) => (
           <RecordRow
@@ -224,7 +230,11 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
             }
             actions={
               <>
-                {canWrite && <Button onClick={() => open(item)}>Editar</Button>}
+                {canWrite && (
+                  <Button onClick={() => open(item)}>
+                    {translate('Editar')}
+                  </Button>
+                )}
               </>
             }
             summary={
@@ -278,8 +288,8 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
           }}
         >
           <DialogTitle>
-            {edit ? 'Editar' : 'Cadastrar'}{' '}
-            {kind === 'events' ? 'evento' : 'visitante'}
+            {edit ? translate('Editar') : translate('Cadastrar')}{' '}
+            {kind === 'events' ? translate('evento') : translate('visitante')}
           </DialogTitle>
           <DialogContent>
             <Stack spacing={2} sx={{ mt: 1 }}>
@@ -303,7 +313,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
                   error={submitted && !!f.required && !values[f.key]?.trim()}
                   helperText={
                     submitted && f.required && !values[f.key]?.trim()
-                      ? 'Preencha este campo'
+                      ? translate('Preencha este campo')
                       : undefined
                   }
                   slotProps={{
@@ -323,7 +333,7 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
               ))}
               <TextField
                 select
-                label="Situação"
+                label={translate('Situação')}
                 value={values.status ?? statuses[0]}
                 onChange={(e) =>
                   setValues((v) => ({ ...v, status: e.target.value }))
@@ -342,10 +352,10 @@ export function CommunityPage({ kind }: { kind: 'events' | 'visitors' }) {
               disabled={save.isPending}
               onClick={() => setEdit(undefined)}
             >
-              Cancelar
+              {translate('Cancelar')}
             </Button>
             <Button type="submit" variant="contained" disabled={save.isPending}>
-              {save.isPending ? 'Salvando…' : 'Salvar'}
+              {save.isPending ? translate('Salvando…') : translate('Salvar')}
             </Button>
           </DialogActions>
         </form>

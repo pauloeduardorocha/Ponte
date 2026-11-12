@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { formatDateTime } from '../../lib/format';
 import { useState } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -32,6 +33,7 @@ type PublicEvent = {
   tickets: { id: string; name: string; price: string; available: number }[];
 };
 export function PublicEventRegistration() {
+  useLocale();
   const { id } = useParams();
   const { user, status } = useAuth();
   const location = useLocation();
@@ -89,9 +91,11 @@ export function PublicEventRegistration() {
     <Container maxWidth="sm" sx={{ py: 5 }}>
       <Stack spacing={3}>
         <Typography variant="h4">
-          {event.data?.name ?? 'Inscrição no evento'}
+          {event.data?.name ?? translate('Inscrição no evento')}
         </Typography>
-        {event.isPending && <Typography>Carregando evento…</Typography>}
+        {event.isPending && (
+          <Typography>{translate('Carregando evento…')}</Typography>
+        )}
         {event.isError && <Alert severity="error">{event.error.message}</Alert>}
         {event.data && (
           <>
@@ -101,10 +105,10 @@ export function PublicEventRegistration() {
             </Typography>
             <Typography>
               {event.data.isPaid
-                ? 'Evento pago · valores em euros'
-                : 'Inscrição gratuita'}
+                ? translate('Evento pago · valores em euros')
+                : translate('Inscrição gratuita')}
               {event.data.available !== null
-                ? ` · ${event.data.available} vagas disponíveis`
+                ? translate(' · {0} vagas disponíveis', [event.data.available])
                 : ''}
             </Typography>
             {sessionId && (
@@ -114,22 +118,29 @@ export function PublicEventRegistration() {
                 }
               >
                 {payment.data?.status === 'CONFIRMED'
-                  ? 'Pagamento confirmado. Inscrição concluída!'
+                  ? translate('Pagamento confirmado. Inscrição concluída!')
                   : payment.data?.status === 'REFUNDED'
-                    ? 'Pagamento devolvido: a inscrição foi cancelada ou a vaga já não estava disponível.'
+                    ? translate(
+                        'Pagamento devolvido: a inscrição foi cancelada ou a vaga já não estava disponível.',
+                      )
                     : payment.data?.status === 'FAILED'
-                      ? 'Pagamento não concluído. Pode tentar novamente.'
-                      : 'Aguardando confirmação do pagamento.'}
+                      ? translate(
+                          'Pagamento não concluído. Pode tentar novamente.',
+                        )
+                      : translate('Aguardando confirmação do pagamento.')}
               </Alert>
             )}
             {params.has('cancelled') && (
               <Alert severity="info">
-                Pagamento interrompido. A vaga fica reservada até a sessão
-                expirar (35 minutos).
+                {translate(
+                  'Pagamento interrompido. A vaga fica reservada até a sessão expirar (35 minutos).',
+                )}
               </Alert>
             )}
             {signup.isSuccess && !signup.data.checkoutUrl ? (
-              <Alert severity="success">Inscrição concluída!</Alert>
+              <Alert severity="success">
+                {translate('Inscrição concluída!')}
+              </Alert>
             ) : (
               !sessionId && (
                 <>
@@ -139,16 +150,19 @@ export function PublicEventRegistration() {
                       to="/login"
                       state={{ from: { pathname: location.pathname } }}
                     >
-                      Sou membro — entrar e preencher meus dados
+                      {translate('Sou membro — entrar e preencher meus dados')}
                     </Button>
                   )}
                   {profile.isPending && user && (
-                    <Typography>Carregando dados do membro…</Typography>
+                    <Typography>
+                      {translate('Carregando dados do membro…')}
+                    </Typography>
                   )}
                   {profile.isError && (
                     <Alert severity="info">
-                      Sua conta não está associada a um membro ativo. Preencha
-                      os dados como visitante.
+                      {translate(
+                        'Sua conta não está associada a um membro ativo. Preencha os dados como visitante.',
+                      )}
                     </Alert>
                   )}
                   {profile.data && (
@@ -159,7 +173,7 @@ export function PublicEventRegistration() {
                           onChange={(e) => setVisitor(e.target.checked)}
                         />
                       }
-                      label="Inscrever outra pessoa como visitante"
+                      label={translate('Inscrever outra pessoa como visitante')}
                     />
                   )}
                   <Box
@@ -172,7 +186,7 @@ export function PublicEventRegistration() {
                     <Stack spacing={2}>
                       <TextField
                         required
-                        label="Nome"
+                        label={translate('Nome')}
                         value={member ? profile.data!.name : name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={member}
@@ -181,7 +195,7 @@ export function PublicEventRegistration() {
                       />
                       <TextField
                         required={!member}
-                        label="Email"
+                        label={translate('Email')}
                         type="email"
                         value={member ? (profile.data!.email ?? '') : email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -190,7 +204,7 @@ export function PublicEventRegistration() {
                       />
                       <TextField
                         required={!member}
-                        label="Telefone"
+                        label={translate('Telefone')}
                         type="tel"
                         value={member ? (profile.data!.phone ?? '') : phone}
                         onChange={(e) => setPhone(e.target.value)}
@@ -201,12 +215,14 @@ export function PublicEventRegistration() {
                       {!!event.data.tickets.length && (
                         <TextField
                           select
-                          label="Lote de ingressos"
+                          label={translate('Lote de ingressos')}
                           required={event.data.isPaid}
                           value={ticketId}
                           onChange={(e) => setTicketId(e.target.value)}
                         >
-                          <MenuItem value="">Selecione um lote</MenuItem>
+                          <MenuItem value="">
+                            {translate('Selecione um lote')}
+                          </MenuItem>
                           {event.data.tickets.map((t) => (
                             <MenuItem
                               key={t.id}
@@ -215,15 +231,16 @@ export function PublicEventRegistration() {
                             >
                               {t.name} · €
                               {event.data!.isPaid ? t.price : '0.00'} ·{' '}
-                              {t.available} disponíveis
+                              {t.available} {translate(' disponíveis')}
                             </MenuItem>
                           ))}
                         </TextField>
                       )}
                       {!member && (
                         <Typography variant="body2">
-                          Seus dados serão cadastrados como visitante para gerir
-                          a inscrição.
+                          {translate(
+                            'Seus dados serão cadastrados como visitante para gerir a inscrição.',
+                          )}
                         </Typography>
                       )}
                       <FormControlLabel
@@ -233,12 +250,15 @@ export function PublicEventRegistration() {
                             onChange={(e) => setConsent(e.target.checked)}
                           />
                         }
-                        label="Quero receber comunicações sobre este evento"
+                        label={translate(
+                          'Quero receber comunicações sobre este evento',
+                        )}
                       />
                       {requiresPayment && !event.data.paymentsReady && (
                         <Alert severity="info">
-                          A compra de ingressos estará disponível quando os
-                          pagamentos forem configurados.
+                          {translate(
+                            'A compra de ingressos estará disponível quando os pagamentos forem configurados.',
+                          )}
                         </Alert>
                       )}
                       {signup.isError && (
@@ -256,10 +276,10 @@ export function PublicEventRegistration() {
                         }
                       >
                         {signup.isPending
-                          ? 'Processando…'
+                          ? translate('Processando…')
                           : requiresPayment
-                            ? 'Comprar ingresso'
-                            : 'Confirmar inscrição gratuita'}
+                            ? translate('Comprar ingresso')
+                            : translate('Confirmar inscrição gratuita')}
                       </Button>
                     </Stack>
                   </Box>

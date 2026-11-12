@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { LocalizedTextField as TextField } from '../../components/LocalizedTextField';
 import { EntitySelect } from '../../components/EntitySelect';
 import { LibraryMultiAutocomplete } from '../../components/LibraryMultiAutocomplete';
@@ -27,6 +28,7 @@ export function ActionDialog({
   close: () => void;
   onSaved: () => void;
 }) {
+  useLocale();
   const { control, handleSubmit } = useForm<Record<string, string>>({
     defaultValues: Object.fromEntries(
       action.fields.map((field) => [
@@ -66,7 +68,7 @@ export function ActionDialog({
               <Alert severity="error">{errorMessage(mutation.error)}</Alert>
             )}
             {!action.fields.length && (
-              <Typography>Confirma esta operação?</Typography>
+              <Typography>{translate('Confirma esta operação?')}</Typography>
             )}
             {action.fields.map((field) => (
               <Controller
@@ -74,7 +76,9 @@ export function ActionDialog({
                 name={field.name}
                 control={control}
                 rules={{
-                  required: field.required ? 'Campo obrigatório' : false,
+                  required: field.required
+                    ? translate('Campo obrigatório')
+                    : false,
                 }}
                 render={({ field: input, fieldState }) =>
                   field.multiple && field.endpoint ? (
@@ -86,7 +90,7 @@ export function ActionDialog({
                       freeSolo={field.freeSolo}
                       disabled={mutation.isPending}
                       error={Boolean(fieldState.error)}
-                      helperText={fieldState.error?.message}
+                      helperText={translate(fieldState.error?.message ?? '')}
                     />
                   ) : field.endpoint ? (
                     <EntitySelect
@@ -98,7 +102,7 @@ export function ActionDialog({
                       required={field.required}
                       disabled={mutation.isPending}
                       error={Boolean(fieldState.error)}
-                      helperText={fieldState.error?.message}
+                      helperText={translate(fieldState.error?.message ?? '')}
                     />
                   ) : (
                     <TextField
@@ -112,7 +116,7 @@ export function ActionDialog({
                       select={Boolean(field.options)}
                       disabled={mutation.isPending}
                       error={Boolean(fieldState.error)}
-                      helperText={fieldState.error?.message}
+                      helperText={translate(fieldState.error?.message ?? '')}
                       slotProps={
                         field.type === 'date'
                           ? { inputLabel: { shrink: true } }
@@ -123,9 +127,9 @@ export function ActionDialog({
                         <MenuItem key={option} value={option}>
                           {STATUS_LABELS[option] ??
                             (option === 'true'
-                              ? 'Sim'
+                              ? translate('Sim')
                               : option === 'false'
-                                ? 'Não'
+                                ? translate('Não')
                                 : option)}
                         </MenuItem>
                       ))}
@@ -138,14 +142,14 @@ export function ActionDialog({
         </DialogContent>
         <DialogActions>
           <Button disabled={mutation.isPending} onClick={close}>
-            Cancelar
+            {translate('Cancelar')}
           </Button>
           <Button
             type="submit"
             variant="contained"
             disabled={mutation.isPending}
           >
-            Confirmar
+            {translate('Confirmar')}
           </Button>
         </DialogActions>
       </Box>

@@ -108,10 +108,10 @@ describe('Reimbursements', () => {
       });
       renderApp(route);
       fireEvent.click(
-        await screen.findByRole('button', { name: 'Excluir pedido' }),
+        await screen.findByRole('button', { name: 'Eliminar pedido' }),
       );
       expect(
-        screen.getByRole('dialog', { name: 'Excluir pedido de reembolso?' }),
+        screen.getByRole('dialog', { name: 'Eliminar pedido de reembolso?' }),
       ).toHaveTextContent(
         'documentos associados a movimentos bancários serão preservados',
       );
@@ -119,7 +119,7 @@ describe('Reimbursements', () => {
         false,
       );
       fireEvent.click(
-        screen.getByRole('button', { name: 'Confirmar exclusão' }),
+        screen.getByRole('button', { name: 'Confirmar eliminação' }),
       );
       expect(
         await screen.findByText('Nenhum pedido encontrado.'),
@@ -313,7 +313,7 @@ describe('Reimbursements', () => {
       });
       renderApp('/pedir-reembolso');
       await screen.findByText(
-        'O cadastro de reembolsos é exclusivo para membros.',
+        'O registo de reembolsos é exclusivo para membros.',
       );
       expect(
         screen.getByRole('button', { name: 'Guardar pedido' }),

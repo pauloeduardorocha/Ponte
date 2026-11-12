@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -52,7 +53,7 @@ async function loadPrivateDocument(
     }
     if (!response.ok)
       throw new Error(
-        'N\u00e3o foi poss\u00edvel carregar este documento. Tente novamente.',
+        translate('Não foi possível carregar este documento. Tente novamente.'),
       );
     return response;
   };
@@ -64,7 +65,7 @@ async function loadPrivateDocument(
       const response = await request(`bytes=${offset}-${end}`);
       const chunk = await response.blob();
       if (response.status !== 206 || chunk.size !== end - offset + 1)
-        throw new Error('Resposta de arquivo incompleta.');
+        throw new Error(translate('Resposta de arquivo incompleta.'));
       type = chunk.type;
       chunks.push(chunk);
     }
@@ -85,7 +86,7 @@ function useDocument(document: PreviewDocument, scope: string) {
               signal,
               document.ranged ? document.size : undefined,
             )
-          : Promise.reject(new Error('Documento indisponível')),
+          : Promise.reject(new Error(translate('Documento indisponível'))),
     staleTime: Infinity,
     gcTime: 0,
     retry: false,
@@ -126,6 +127,7 @@ function DocumentContent({
   thumbnail?: boolean;
   zoom?: number;
 }) {
+  useLocale();
   const result = useDocument(document, scope);
   const url = useObjectUrl(result.data);
   const mime = mimeType(document);
@@ -133,7 +135,7 @@ function DocumentContent({
     return (
       <CircularProgress
         size={thumbnail ? 24 : 40}
-        aria-label={`A carregar ${document.filename}`}
+        aria-label={translate('A carregar {0}', [document.filename])}
       />
     );
   if (result.error)
@@ -144,7 +146,7 @@ function DocumentContent({
         severity="error"
         action={
           <Button onClick={() => void result.refetch()}>
-            Tentar novamente
+            {translate('Tentar novamente')}
           </Button>
         }
       >
@@ -186,6 +188,7 @@ function FullDocument({
   onNext?: () => void;
   position: string;
 }) {
+  useLocale();
   const [zoom, setZoom] = useState(1);
   const result = useDocument(document, scope);
   const url = useObjectUrl(result.data);
@@ -207,17 +210,17 @@ function FullDocument({
           {document.filename}
         </Typography>
         <IconButton
-          aria-label="Reduzir zoom"
+          aria-label={translate('Reduzir zoom')}
           disabled={zoom <= 1}
           onClick={() => setZoom((value) => Math.max(1, value - 0.5))}
         >
           <ZoomOutRounded />
         </IconButton>
-        <Button onClick={() => setZoom(1)} aria-label="Repor zoom">
+        <Button onClick={() => setZoom(1)} aria-label={translate('Repor zoom')}>
           {Math.round(zoom * 100)}%
         </Button>
         <IconButton
-          aria-label="Aumentar zoom"
+          aria-label={translate('Aumentar zoom')}
           disabled={zoom >= 3}
           onClick={() => setZoom((value) => Math.min(3, value + 0.5))}
         >
@@ -230,9 +233,12 @@ function FullDocument({
           aria-disabled={!url}
           sx={{ pointerEvents: url ? 'auto' : 'none' }}
         >
-          Descarregar
+          {translate('Descarregar')}
         </Button>
-        <IconButton aria-label="Fechar visualização" onClick={onClose}>
+        <IconButton
+          aria-label={translate('Fechar visualização')}
+          onClick={onClose}
+        >
           <CloseRounded />
         </IconButton>
       </Toolbar>
@@ -264,11 +270,11 @@ function FullDocument({
         sx={{ p: 1 }}
       >
         <Button disabled={!onPrevious} onClick={onPrevious}>
-          Anexo anterior
+          {translate('Anexo anterior')}
         </Button>
         <Typography variant="caption">{position}</Typography>
         <Button disabled={!onNext} onClick={onNext}>
-          Anexo seguinte
+          {translate('Anexo seguinte')}
         </Button>
       </Stack>
     </>
@@ -284,6 +290,7 @@ export function DocumentGallery({
   actions?: (document: PreviewDocument, index: number) => ReactNode;
   disabled?: boolean;
 }) {
+  useLocale();
   const scope = useId();
   const [selected, setSelected] = useState<string>();
   const index = documents.findIndex((document) => document.id === selected);
@@ -300,7 +307,7 @@ export function DocumentGallery({
         {documents.map((document, position) => (
           <Card key={document.id} variant="outlined">
             <CardActionArea
-              aria-label={`Ver ${document.filename}`}
+              aria-label={translate('Ver {0}', [document.filename])}
               disabled={disabled}
               onClick={() => setSelected(document.id)}
             >
@@ -332,9 +339,12 @@ export function DocumentGallery({
                     variant="caption"
                     color="text.secondary"
                   >
-                    {(document.size / (1024 * 1024)).toLocaleString('pt-PT', {
-                      maximumFractionDigits: 2,
-                    })}{' '}
+                    {(document.size / (1024 * 1024)).toLocaleString(
+                      getLocale(),
+                      {
+                        maximumFractionDigits: 2,
+                      },
+                    )}{' '}
                     MB
                   </Typography>
                 )}

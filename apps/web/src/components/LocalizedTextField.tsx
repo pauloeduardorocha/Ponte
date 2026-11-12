@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { forwardRef, useCallback, useLayoutEffect, useRef } from 'react';
 import { TextField, type TextFieldProps } from '@mui/material';
 import type { InputBaseComponentProps } from '@mui/material/InputBase';
@@ -36,6 +37,7 @@ const LocalizedDateInput = forwardRef<
   { type, value, defaultValue, onChange, onBlur, ...props },
   ref,
 ) {
+  useLocale();
   const canonical = useRef<HTMLInputElement | null>(null);
   const visible = useRef<HTMLInputElement | null>(null);
   const withTime = type === 'datetime-local';
@@ -89,7 +91,9 @@ const LocalizedDateInput = forwardRef<
           const raw = event.target.value;
           const iso = raw ? parse(raw, withTime) : '';
           event.target.setCustomValidity(
-            iso === null ? 'Use uma data válida no formato dd/mm/yyyy.' : '',
+            iso === null
+              ? translate('Use uma data válida no formato dd/mm/yyyy.')
+              : '',
           );
           if (iso !== null && canonical.current) {
             canonical.current.value = iso;
@@ -117,6 +121,7 @@ export function LocalizedTextField({
   nativePicker,
   ...props
 }: TextFieldProps & { nativePicker?: boolean }) {
+  useLocale();
   if (
     nativePicker ||
     (props.type !== 'date' && props.type !== 'datetime-local')

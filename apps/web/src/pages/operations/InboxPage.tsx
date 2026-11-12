@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { formatDateTime } from '../../lib/format';
 import { RecordTable, RecordRow } from '../../components/RecordTable';
 import { useState } from 'react';
@@ -23,6 +24,7 @@ type Message = {
   readAt: string | null;
 };
 export function InboxPage() {
+  useLocale();
   const client = useQueryClient();
   const remove = useMutation({
     mutationFn: (id: string) =>
@@ -61,9 +63,11 @@ export function InboxPage() {
   });
   return (
     <Stack spacing={3}>
-      <Typography variant="h4">Minhas notificações</Typography>
+      <Typography variant="h4">{translate('Minhas notificações')}</Typography>
       <Typography color="text.secondary">
-        Mensagens internas enviadas para o seu cadastro de membro.
+        {translate(
+          'Mensagens internas enviadas para o seu cadastro de membro.',
+        )}
       </Typography>
       <PushControls />
       <Button
@@ -71,12 +75,12 @@ export function InboxPage() {
         disabled={read.isPending || !data.data?.items.length}
         onClick={() => read.mutate(undefined)}
       >
-        Marcar todas como lidas
+        {translate('Marcar todas como lidas')}
       </Button>
       {read.isError && <Alert severity="error">{read.error.message}</Alert>}
       {remove.isError && <Alert severity="error">{remove.error.message}</Alert>}
       <TextField
-        label="Pesquisar por assunto"
+        label={translate('Pesquisar por assunto')}
         value={search}
         onChange={(e) => {
           setSearch(e.target.value);
@@ -89,7 +93,7 @@ export function InboxPage() {
           severity="error"
           action={
             <Button onClick={() => void data.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -97,13 +101,15 @@ export function InboxPage() {
         </Alert>
       )}
       {data.data?.items.length === 0 && (
-        <Alert severity="info">Você ainda não tem mensagens internas.</Alert>
+        <Alert severity="info">
+          {translate('Você ainda não tem mensagens internas.')}
+        </Alert>
       )}
       <RecordTable
         hasActions={false}
-        primaryLabel="Assunto"
-        label={'Minhas notificações'}
-        summaryLabel="Enviado em"
+        primaryLabel={translate('Assunto')}
+        label={translate('Minhas notificações')}
+        summaryLabel={translate('Enviado em')}
       >
         {data.data?.items.map((m) => (
           <RecordRow
@@ -111,10 +117,14 @@ export function InboxPage() {
             primary={
               <>
                 <Typography variant="h6">
-                  {m.subject ?? 'Mensagem de A Ponte'}
+                  {m.subject ?? translate('Mensagem de A Ponte')}
                 </Typography>
                 {!m.readAt && (
-                  <Chip size="small" color="primary" label="Não lida" />
+                  <Chip
+                    size="small"
+                    color="primary"
+                    label={translate('Não lida')}
+                  />
                 )}
               </>
             }
@@ -138,16 +148,18 @@ export function InboxPage() {
                 disabled={read.isPending}
                 onClick={() => read.mutate(m.id)}
               >
-                Marcar como lida
+                {translate('Marcar como lida')}
               </Button>
             )}
             <Button
               color="error"
               disabled={remove.isPending}
-              aria-label={`Apagar mensagem: ${m.subject ?? 'Mensagem de A Ponte'}`}
+              aria-label={translate('Apagar mensagem: {0}', [
+                m.subject ?? 'Mensagem de A Ponte',
+              ])}
               onClick={() => remove.mutate(m.id)}
             >
-              Apagar
+              {translate('Apagar')}
             </Button>
           </RecordRow>
         ))}

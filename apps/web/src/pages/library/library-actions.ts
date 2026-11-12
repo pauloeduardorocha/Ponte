@@ -1,3 +1,4 @@
+import { t as translate } from '../../i18n';
 import * as api from '../../lib/library-api';
 export interface Field {
   name: string;
@@ -19,49 +20,172 @@ export interface Action {
 }
 export const memberField: Field = {
   name: 'memberId',
-  label: 'Membro',
+  get label() {
+    return translate('Membro');
+  },
   endpoint: '/library/members',
   required: true,
 };
 export const copyFields: Field[] = [
-  { name: 'shelfmark', label: 'Cota' },
-  { name: 'assetCode', label: 'Código patrimonial', required: true },
-  { name: 'barcode', label: 'Código de barras' },
-  { name: 'qrCode', label: 'QR code' },
-  { name: 'condition', label: 'Condição' },
-  { name: 'location', label: 'Localização', required: true },
-  { name: 'acquiredAt', label: 'Data de aquisição', type: 'date' },
-  { name: 'notes', label: 'Observações', multiline: true },
+  {
+    name: 'shelfmark',
+    get label() {
+      return translate('Cota');
+    },
+  },
+  {
+    name: 'assetCode',
+    get label() {
+      return translate('Código patrimonial');
+    },
+    required: true,
+  },
+  {
+    name: 'barcode',
+    get label() {
+      return translate('Código de barras');
+    },
+  },
+  {
+    name: 'qrCode',
+    get label() {
+      return translate('QR code');
+    },
+  },
+  {
+    name: 'condition',
+    get label() {
+      return translate('Condição');
+    },
+  },
+  {
+    name: 'location',
+    get label() {
+      return translate('Localização');
+    },
+    required: true,
+  },
+  {
+    name: 'acquiredAt',
+    get label() {
+      return translate('Data de aquisição');
+    },
+    type: 'date',
+  },
+  {
+    name: 'notes',
+    get label() {
+      return translate('Observações');
+    },
+    multiline: true,
+  },
 ];
 export const bookFields: Field[] = [
-  { name: 'registrationNumber', label: 'Número de registo' },
-  { name: 'collection', label: 'Coleção' },
-  { name: 'catalogueNotes', label: 'Notas de catalogação', multiline: true },
+  {
+    name: 'registrationNumber',
+    get label() {
+      return translate('Número de registo');
+    },
+  },
+  {
+    name: 'collection',
+    get label() {
+      return translate('Coleção');
+    },
+  },
+  {
+    name: 'catalogueNotes',
+    get label() {
+      return translate('Notas de catalogação');
+    },
+    multiline: true,
+  },
   {
     name: 'categoryCodes',
-    label: 'Categoria',
+    get label() {
+      return translate('Categoria');
+    },
     endpoint: '/library/categories',
     multiple: true,
   },
   {
     name: 'classificationReviewed',
-    label: 'Classificação revista',
+    get label() {
+      return translate('Classificação revista');
+    },
     options: ['true', 'false'],
   },
-  { name: 'title', label: 'Título', required: true },
-  { name: 'subtitle', label: 'Subtítulo' },
-  { name: 'author', label: 'Autor' },
+  {
+    name: 'title',
+    get label() {
+      return translate('Título');
+    },
+    required: true,
+  },
+  {
+    name: 'subtitle',
+    get label() {
+      return translate('Subtítulo');
+    },
+  },
+  {
+    name: 'author',
+    get label() {
+      return translate('Autor');
+    },
+  },
   { name: 'isbn', label: 'ISBN' },
-  { name: 'publisher', label: 'Editora' },
-  { name: 'edition', label: 'Edição' },
-  { name: 'year', label: 'Ano', type: 'number' },
-  { name: 'language', label: 'Idioma' },
-  { name: 'description', label: 'Descrição', multiline: true },
-  { name: 'pages', label: 'Páginas', type: 'number' },
-  { name: 'cover', label: 'Capa (URL HTTPS)', type: 'url' },
+  {
+    name: 'publisher',
+    get label() {
+      return translate('Editora');
+    },
+  },
+  {
+    name: 'edition',
+    get label() {
+      return translate('Edição');
+    },
+  },
+  {
+    name: 'year',
+    get label() {
+      return translate('Ano');
+    },
+    type: 'number',
+  },
+  {
+    name: 'language',
+    get label() {
+      return translate('Idioma');
+    },
+  },
+  {
+    name: 'description',
+    get label() {
+      return translate('Descrição');
+    },
+    multiline: true,
+  },
+  {
+    name: 'pages',
+    get label() {
+      return translate('Páginas');
+    },
+    type: 'number',
+  },
+  {
+    name: 'cover',
+    get label() {
+      return translate('Capa (URL HTTPS)');
+    },
+    type: 'url',
+  },
   {
     name: 'keywords',
-    label: 'Assuntos relacionados',
+    get label() {
+      return translate('Assuntos relacionados');
+    },
     endpoint: '/library/book-options/keywords',
     multiple: true,
     freeSolo: true,
@@ -69,7 +193,9 @@ export const bookFields: Field[] = [
 ];
 export const justification: Field = {
   name: 'justification',
-  label: 'Justificativa',
+  get label() {
+    return translate('Justificativa');
+  },
   required: true,
   multiline: true,
 };

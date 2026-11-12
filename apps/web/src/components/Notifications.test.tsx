@@ -118,7 +118,7 @@ describe('Personal notification inbox', () => {
       await screen.findByRole('button', { name: 'Apagar mensagem: Aviso' }),
     );
     expect(
-      await screen.findByText('Você ainda não tem mensagens internas.'),
+      await screen.findByText('Ainda não tem mensagens internas.'),
     ).toBeInTheDocument();
     expect(screen.queryByText('Mensagem a apagar')).not.toBeInTheDocument();
     expect(requests.find((r) => r.method === 'DELETE')).toMatchObject({

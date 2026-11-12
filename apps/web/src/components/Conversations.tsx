@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { errorMessage } from './conversation-utils';
 import { useState } from 'react';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
@@ -27,6 +28,7 @@ import {
 import { ConversationComposer } from './ConversationContent';
 import type { ConversationPageView as Page } from '@church/shared';
 function ConversationBoard({ all = false }: { all?: boolean }) {
+  useLocale();
   const [create, setCreate] = useState(false);
   const navigate = useNavigate();
   const client = useQueryClient();
@@ -49,7 +51,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
     <Stack
       spacing={2}
       component="section"
-      aria-label="Painéis de conversas"
+      aria-label={translate('Painéis de conversas')}
       sx={{ minWidth: 0 }}
     >
       {all && (
@@ -61,7 +63,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           gap={1}
         >
           <Typography variant="h4" component="h1">
-            Mural
+            {translate('Mural')}
           </Typography>
           <Stack direction="row" spacing={1} alignItems="center">
             <CachedQueryRefreshButton
@@ -70,7 +72,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
               label="conversas"
             />
             <Button variant="contained" onClick={() => setCreate(true)}>
-              Nova conversa
+              {translate('Nova conversa')}
             </Button>
           </Stack>
         </Stack>
@@ -84,13 +86,15 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           refreshButton="hidden"
         />
       )}
-      {list.isPending && <CircularProgress aria-label="Carregando conversas" />}
+      {list.isPending && (
+        <CircularProgress aria-label={translate('Carregando conversas')} />
+      )}
       {list.isError && (
         <Alert
           severity="error"
           action={
             <Button onClick={() => void list.refetch()}>
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -98,7 +102,9 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
         </Alert>
       )}
       {list.data?.pages[0]?.items.length === 0 && (
-        <Alert severity="info">Comece uma conversa com a comunidade.</Alert>
+        <Alert severity="info">
+          {translate('Comece uma conversa com a comunidade.')}
+        </Alert>
       )}
       <Box
         sx={{
@@ -140,7 +146,9 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
                     component={all ? 'h2' : 'h3'}
                     sx={{ overflowWrap: 'anywhere' }}
                   >
-                    {post.deletedAt ? 'conversa excluída' : post.title}
+                    {post.deletedAt
+                      ? translate('conversa excluída')
+                      : post.title}
                   </Typography>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <Avatar
@@ -148,7 +156,9 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
                       alt={post.author.name}
                       sx={{ width: 32, height: 32 }}
                     >
-                      {post.author.name.charAt(0).toLocaleUpperCase('pt-PT')}
+                      {post.author.name
+                        .charAt(0)
+                        .toLocaleUpperCase(getLocale())}
                     </Avatar>
                     <Typography variant="body2">
                       {post.author.name} · {formatDateTime(post.createdAt)}
@@ -172,7 +182,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
                     </Typography>
                   )}
                   <Typography variant="caption">
-                    {post._count?.replies ?? 0} respostas
+                    {post._count?.replies ?? 0} {translate(' respostas')}
                   </Typography>
                 </Stack>
               </CardContent>
@@ -188,7 +198,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           color="primary"
           sx={{ alignSelf: 'flex-start' }}
         >
-          Ver mural
+          {translate('Ver mural')}
         </Typography>
       )}
       {all && list.hasNextPage && (
@@ -196,7 +206,7 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           disabled={list.isFetchingNextPage}
           onClick={() => void list.fetchNextPage()}
         >
-          Carregar mais conversas
+          {translate('Carregar mais conversas')}
         </Button>
       )}
       <Dialog
@@ -206,7 +216,9 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
         maxWidth="sm"
         aria-labelledby="new-conversation"
       >
-        <DialogTitle id="new-conversation">Nova conversa</DialogTitle>
+        <DialogTitle id="new-conversation">
+          {translate('Nova conversa')}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 1 }}>
             <ConversationComposer
@@ -221,7 +233,9 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreate(false)}>Fechar</Button>
+          <Button onClick={() => setCreate(false)}>
+            {translate('Fechar')}
+          </Button>
         </DialogActions>
       </Dialog>
     </Stack>
@@ -229,13 +243,15 @@ function ConversationBoard({ all = false }: { all?: boolean }) {
 }
 
 export function ConversationsCarousel() {
+  useLocale();
   return <ConversationBoard />;
 }
 export function ConversationsPage() {
+  useLocale();
   return (
     <Stack spacing={2}>
       <Button component={Link} to="/" sx={{ alignSelf: 'flex-start' }}>
-        Voltar para o início
+        {translate('Voltar para o início')}
       </Button>
       <ConversationBoard all />
     </Stack>

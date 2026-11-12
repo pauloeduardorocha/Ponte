@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { formatDateOnly } from '../lib/format';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ import { useDebouncedValue } from '../lib/use-debounced-value';
 import { suggestInvoiceExpenses } from './invoice-expense-suggestions';
 
 function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
+  useLocale();
   const client = useQueryClient();
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -73,20 +75,24 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
         {invoice.issuerName} · {invoice.number}
       </Typography>
       <Typography>
-        {formatDateOnly(invoice.date)} · {invoice.amount} {invoice.currency} ·
-        NIF {invoice.issuerTaxId}
+        {formatDateOnly(invoice.date)} · {invoice.amount} {invoice.currency}{' '}
+        {translate(' · NIF ')}
+        {invoice.issuerTaxId}
       </Typography>
       <InvoiceLink invoice={invoice} />
       {association.isSuccess ? (
-        <Alert severity="success">Fatura associada à despesa.</Alert>
+        <Alert severity="success">
+          {translate('Fatura associada à despesa.')}
+        </Alert>
       ) : (
         <>
           <Alert severity="info">
-            Selecione a despesa correspondente. Um pagamento pode incluir várias
-            faturas; confira data, valor e moeda antes de associar.
+            {translate(
+              'Selecione a despesa correspondente. Um pagamento pode incluir várias faturas; confira data, valor e moeda antes de associar.',
+            )}
           </Alert>
           <TextField
-            label="Pesquisar despesa"
+            label={translate('Pesquisar despesa')}
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -94,20 +100,25 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
             }}
           />
           {suggestions.isPending && !listingAll && (
-            <Typography>Procurando movimentos semelhantes…</Typography>
+            <Typography>
+              {translate('Procurando movimentos semelhantes…')}
+            </Typography>
           )}
           {suggestions.error && (
             <Alert severity="error">{suggestions.error.message}</Alert>
           )}
           {suggestions.data?.length === 0 && (
             <Alert severity="info">
-              Não encontramos movimentos parecidos. Todas as despesas estão
-              listadas abaixo para seleção manual.
+              {translate(
+                'Não encontramos movimentos parecidos. Todas as despesas estão listadas abaixo para seleção manual.',
+              )}
             </Alert>
           )}
           {!listingAll && Boolean(suggestions.data?.length) && (
             <Typography fontWeight={600}>
-              Movimentos sugeridos · confirme a associação manualmente
+              {translate(
+                'Movimentos sugeridos · confirme a associação manualmente',
+              )}
             </Typography>
           )}
           <Button
@@ -117,16 +128,18 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
               setPage(1);
             }}
           >
-            {showAll ? 'Ver sugestões' : 'Ver todas as despesas'}
+            {showAll
+              ? translate('Ver sugestões')
+              : translate('Ver todas as despesas')}
           </Button>
           {listingAll && expenses.isFetching && (
-            <Typography>Carregando despesas…</Typography>
+            <Typography>{translate('Carregando despesas…')}</Typography>
           )}
           {listingAll && expenses.error && (
             <Alert severity="error">{expenses.error.message}</Alert>
           )}
           {listingAll && expenses.data?.total === 0 && (
-            <Typography>Nenhuma despesa encontrada.</Typography>
+            <Typography>{translate('Nenhuma despesa encontrada.')}</Typography>
           )}
           {(listingAll ? expenses.data?.items : suggestions.data)?.map(
             (expense) => (
@@ -142,8 +155,9 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
                 )}
                 {Number(expense.amount) !== Number(invoice.amount) && (
                   <Typography color="warning.main">
-                    Valor diferente da fatura; confira se é um pagamento
-                    agrupado.
+                    {translate(
+                      'Valor diferente da fatura; confira se é um pagamento agrupado.',
+                    )}
                   </Typography>
                 )}
                 <Button
@@ -154,7 +168,8 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
                   }
                   onClick={() => association.mutate(expense.id)}
                 >
-                  Associar a {expense.description}
+                  {translate('Associar a ')}
+                  {expense.description}
                 </Button>
               </Stack>
             ),
@@ -165,9 +180,12 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
                 disabled={page === 1 || expenses.isFetching}
                 onClick={() => setPage(page - 1)}
               >
-                Anterior
+                {translate('Anterior')}
               </Button>
-              <Typography>Página {page}</Typography>
+              <Typography>
+                {translate('Página ')}
+                {page}
+              </Typography>
               <Button
                 disabled={
                   page * 20 >= (expenses.data?.total ?? 0) ||
@@ -175,7 +193,7 @@ function ImportedInvoiceReview({ invoice }: { invoice: Invoice }) {
                 }
                 onClick={() => setPage(page + 1)}
               >
-                Seguinte
+                {translate('Seguinte')}
               </Button>
             </Stack>
           )}
@@ -197,6 +215,7 @@ type Expense = {
   bankTransactionId?: unknown;
 };
 export function ExpenseDocumentContent({ expense }: { expense: Expense }) {
+  useLocale();
   const { hasPermission } = useAuth();
   const linked = useQuery({
     queryKey: ['finance', 'invoices', 'expense', expense.id],
@@ -236,6 +255,7 @@ export function ExpenseDocumentContent({ expense }: { expense: Expense }) {
   );
 }
 export function ExpenseDocumentsAlert() {
+  useLocale();
   const { hasPermission } = useAuth();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [index, setIndex] = useState(0);
@@ -282,17 +302,20 @@ export function ExpenseDocumentsAlert() {
               disabled={review.isPending || open}
               onClick={() => review.mutate()}
             >
-              {review.isPending ? 'Carregando…' : 'Associar faturas'}
+              {review.isPending
+                ? translate('Carregando…')
+                : translate('Associar faturas')}
             </Button>
           }
         >
           <Typography fontWeight={600}>
             {total === 1
               ? '1 fatura sem movimento associado'
-              : `${total} faturas sem movimento associado`}
+              : translate('{0} faturas sem movimento associado', [total])}
           </Typography>
-          Selecione um movimento para associar a cada fatura importada do
-          e-Fatura.
+          {translate(
+            'Selecione um movimento para associar a cada fatura importada do e-Fatura.',
+          )}
         </Alert>
       )}
       {(pending.error || review.error) && (
@@ -304,7 +327,7 @@ export function ExpenseDocumentsAlert() {
                 review.error ? review.mutate() : void pending.refetch()
               }
             >
-              Tentar novamente
+              {translate('Tentar novamente')}
             </Button>
           }
         >
@@ -319,7 +342,9 @@ export function ExpenseDocumentsAlert() {
         aria-labelledby="expense-documents-title"
       >
         <DialogTitle id="expense-documents-title">
-          Associar faturas importadas · {index + 1} de {invoices.length}
+          {translate('Associar faturas importadas · ')}
+          {index + 1} {translate(' de ')}
+          {invoices.length}
         </DialogTitle>
         <DialogContent>
           {invoices[index] && (
@@ -330,7 +355,9 @@ export function ExpenseDocumentsAlert() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Continuar depois</Button>
+          <Button onClick={() => setOpen(false)}>
+            {translate('Continuar depois')}
+          </Button>
           <Button
             onClick={() => {
               if (index + 1 < invoices.length) setIndex(index + 1);
@@ -338,8 +365,8 @@ export function ExpenseDocumentsAlert() {
             }}
           >
             {index + 1 < invoices.length
-              ? 'Próxima fatura / Pular'
-              : 'Concluir revisão'}
+              ? translate('Próxima fatura / Pular')
+              : translate('Concluir revisão')}
           </Button>
         </DialogActions>
       </Dialog>

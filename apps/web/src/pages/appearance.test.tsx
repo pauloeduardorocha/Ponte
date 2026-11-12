@@ -53,7 +53,7 @@ describe('Account appearance', () => {
       'light',
     );
     fireEvent.click(screen.getByRole('radio', { name: 'Escuro' }));
-    await screen.findByText('Preferência de aparência salva.');
+    await screen.findByText('Preferência de aparência guardada.');
     expect(screen.getByRole('radio', { name: 'Escuro' })).toBeChecked();
     expect(getComputedStyle(document.documentElement).colorScheme).toBe('dark');
     expect(getComputedStyle(document.body).backgroundColor).toBe(
@@ -67,7 +67,7 @@ describe('Account appearance', () => {
     renderApp('/account');
     expect(await screen.findByRole('radio', { name: 'Escuro' })).toBeChecked();
     fireEvent.click(screen.getByRole('radio', { name: 'Claro' }));
-    await screen.findByText('Preferência de aparência salva.');
+    await screen.findByText('Preferência de aparência guardada.');
     expect(getComputedStyle(document.documentElement).colorScheme).toBe(
       'light',
     );
@@ -85,7 +85,7 @@ describe('Account appearance', () => {
     });
     renderApp('/account');
     fireEvent.click(await screen.findByRole('radio', { name: 'Escuro' }));
-    await screen.findByText('Não foi possível salvar.');
+    await screen.findByText('Não foi possível guardar.');
     expect(
       screen.getByRole('radio', { name: 'Seguir o dispositivo' }),
     ).toBeChecked();
@@ -108,7 +108,7 @@ describe('Account appearance', () => {
       screen.getByRole('button', { name: 'Abrir menu da conta' }),
     );
     fireEvent.click(await screen.findByRole('menuitem', { name: /sair/i }));
-    await screen.findByRole('heading', { name: 'Acesse sua conta' });
+    await screen.findByRole('heading', { name: 'Aceda à sua conta' });
     expect(getComputedStyle(document.documentElement).colorScheme).toBe('dark');
   });
 
@@ -148,7 +148,7 @@ describe('Account appearance', () => {
     fireEvent.click(
       screen.getByRole('radio', { name: 'Seguir o dispositivo' }),
     );
-    await screen.findByText('Preferência de aparência salva.');
+    await screen.findByText('Preferência de aparência guardada.');
     expect(getComputedStyle(document.documentElement).colorScheme).toBe('dark');
     expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
       colorMode: 'system',
@@ -195,7 +195,7 @@ describe('Account appearance', () => {
     });
     expect(overdue).toBeChecked();
     fireEvent.click(overdue);
-    await screen.findByText('Preferência de notificações salva.');
+    await screen.findByText('Preferência de notificações guardada.');
     expect(overdue).not.toBeChecked();
     expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
       [key]: false,

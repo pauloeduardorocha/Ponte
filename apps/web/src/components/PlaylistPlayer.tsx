@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { retryQuery } from '../lib/query-retry';
 import { useInfiniteQuery } from '@tanstack/react-query';
@@ -21,6 +22,7 @@ export function PlaylistPlayer({
 }: {
   playlist: { id: string; title: string };
 }) {
+  useLocale();
   const [selected, setSelected] = useState<PlaylistVideo>();
   const query = useInfiniteQuery({
     queryKey: ['playlist-videos', playlist.id],
@@ -53,7 +55,7 @@ export function PlaylistPlayer({
       <Box sx={{ minWidth: 0 }}>
         <Box
           component="iframe"
-          title={`Vídeos da playlist: ${playlist.title}`}
+          title={translate('Vídeos da playlist: {0}', [playlist.title])}
           src={src}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
@@ -75,7 +77,7 @@ export function PlaylistPlayer({
       </Box>
       <Stack
         component="section"
-        aria-label="Vídeos desta playlist"
+        aria-label={translate('Vídeos desta playlist')}
         spacing={1}
         sx={{
           minWidth: 0,
@@ -91,11 +93,14 @@ export function PlaylistPlayer({
           fontWeight={600}
           sx={{ px: 2, pt: 2 }}
         >
-          Vídeos da playlist
+          {translate('Vídeos da playlist')}
         </Typography>
         {query.isPending && (
           <Box role="status" sx={{ p: 2 }}>
-            <CircularProgress size={24} aria-label="A carregar vídeos" />
+            <CircularProgress
+              size={24}
+              aria-label={translate('A carregar vídeos')}
+            />
           </Box>
         )}
         {query.isError && (
@@ -103,24 +108,27 @@ export function PlaylistPlayer({
             severity="warning"
             action={
               <Button onClick={() => void query.refetch()}>
-                Tentar novamente
+                {translate('Tentar novamente')}
               </Button>
             }
           >
-            Não foi possível carregar a lista. Pode usar o menu do reprodutor ou
-            abrir no YouTube.
+            {translate(
+              'Não foi possível carregar a lista. Pode usar o menu do reprodutor ou abrir no YouTube.',
+            )}
           </Alert>
         )}
         {query.data?.pages.some((page) => page.stale) && (
-          <Alert severity="info">A mostrar a última lista carregada.</Alert>
+          <Alert severity="info">
+            {translate('A mostrar a última lista carregada.')}
+          </Alert>
         )}
         {query.data && !videos.length && (
           <Typography sx={{ p: 2 }}>
-            Não há vídeos públicos disponíveis nesta playlist.
+            {translate('Não há vídeos públicos disponíveis nesta playlist.')}
           </Typography>
         )}
         <List
-          aria-label="Selecionar vídeo"
+          aria-label={translate('Selecionar vídeo')}
           sx={{ maxHeight: { xs: 360, md: 520 }, overflowY: 'auto', p: 0 }}
         >
           {videos.map((video) => (
@@ -163,7 +171,9 @@ export function PlaylistPlayer({
             disabled={query.isFetchingNextPage}
             onClick={() => void query.fetchNextPage()}
           >
-            {query.isFetchingNextPage ? 'A carregar…' : 'Carregar mais vídeos'}
+            {query.isFetchingNextPage
+              ? translate('A carregar…')
+              : translate('Carregar mais vídeos')}
           </Button>
         )}
       </Stack>

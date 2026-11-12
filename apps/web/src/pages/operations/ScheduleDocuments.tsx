@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../../i18n';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -23,6 +24,7 @@ export function ScheduleDocuments({
   canManage: boolean;
   onDeleted: () => void;
 }) {
+  useLocale();
   const client = useQueryClient();
   const [error, setError] = useState('');
   const [removal, setRemoval] = useState<{ path: string; schedule: boolean }>();
@@ -80,10 +82,11 @@ export function ScheduleDocuments({
   });
   return (
     <Stack spacing={2}>
-      <Typography variant="h6">Anexos da escala</Typography>
+      <Typography variant="h6">{translate('Anexos da escala')}</Typography>
       <Typography variant="body2">
-        Visíveis a todos os membros do ministério. Até 5 MB por arquivo. Imagens
-        e PDFs têm pré-visualização.
+        {translate(
+          'Visíveis a todos os membros do ministério. Até 5 MB por arquivo. Imagens e PDFs têm pré-visualização.',
+        )}
       </Typography>
       {(error || upload.error || remove.error || files.error) && (
         <Alert severity="error">
@@ -96,7 +99,9 @@ export function ScheduleDocuments({
       {canManage && (
         <Button component="label" disabled={upload.isPending}>
           {' '}
-          {upload.isPending ? 'A enviar…' : 'Anexar arquivo'}
+          {upload.isPending
+            ? translate('A enviar…')
+            : translate('Anexar arquivo')}
           <input
             hidden
             type="file"
@@ -105,7 +110,7 @@ export function ScheduleDocuments({
               event.target.value = '';
               if (!file) return;
               if (!file.size || file.size > 5 * 1024 * 1024) {
-                setError('Selecione um arquivo de até 5 MB.');
+                setError(translate('Selecione um arquivo de até 5 MB.'));
                 return;
               }
               upload.mutate(file);
@@ -113,9 +118,11 @@ export function ScheduleDocuments({
           />
         </Button>
       )}
-      {files.isPending && <Typography>A carregar anexos…</Typography>}
+      {files.isPending && (
+        <Typography>{translate('A carregar anexos…')}</Typography>
+      )}
       {files.data?.length === 0 && (
-        <Typography>Nenhum anexo nesta escala.</Typography>
+        <Typography>{translate('Nenhum anexo nesta escala.')}</Typography>
       )}
       <DocumentGallery
         documents={(files.data ?? []).map((file) => ({
@@ -136,7 +143,7 @@ export function ScheduleDocuments({
                     })
                   }
                 >
-                  Excluir arquivo
+                  {translate('Excluir arquivo')}
                 </Button>
               )
             : undefined
@@ -147,23 +154,25 @@ export function ScheduleDocuments({
           color="error"
           onClick={() => setRemoval({ path, schedule: true })}
         >
-          Excluir escala
+          {translate('Excluir escala')}
         </Button>
       )}
       <Dialog open={!!removal} onClose={() => setRemoval(undefined)}>
         <DialogTitle>
           {removal?.schedule
-            ? 'Excluir escala e todos os seus anexos?'
-            : 'Excluir este arquivo?'}
+            ? translate('Excluir escala e todos os seus anexos?')
+            : translate('Excluir este arquivo?')}
         </DialogTitle>
         <DialogActions>
-          <Button onClick={() => setRemoval(undefined)}>Voltar</Button>
+          <Button onClick={() => setRemoval(undefined)}>
+            {translate('Voltar')}
+          </Button>
           <Button
             color="error"
             disabled={remove.isPending}
             onClick={() => removal && remove.mutate(removal)}
           >
-            Excluir
+            {translate('Excluir')}
           </Button>
         </DialogActions>
       </Dialog>

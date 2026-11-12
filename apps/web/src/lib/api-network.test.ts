@@ -47,7 +47,7 @@ describe('Network recovery and diagnostics', () => {
       apiRequest('/things', { method: 'POST', body: new FormData() }),
     ).rejects.toMatchObject({
       details: { kind: 'timeout', attempts: 1 },
-      message: expect.stringContaining('Confira se o pedido foi guardado'),
+      message: expect.stringContaining('Verifique se o pedido foi guardado'),
     });
     await vi.advanceTimersByTimeAsync(90_000);
     await result;
@@ -120,7 +120,7 @@ describe('Network recovery and diagnostics', () => {
         apiRequest('/things', { method, body: { ok: true } }),
       ).rejects.toMatchObject({
         status: 0,
-        message: expect.stringContaining('Confira se o pedido foi guardado'),
+        message: expect.stringContaining('Verifique se o pedido foi guardado'),
       });
       expect(fetch).toHaveBeenCalledTimes(1);
     },

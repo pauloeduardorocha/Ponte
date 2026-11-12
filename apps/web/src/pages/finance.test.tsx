@@ -78,7 +78,7 @@ describe('Finance permissions and dashboard', () => {
     );
     fireEvent.mouseDown(dialog.getByRole('combobox', { name: 'Status' }));
     fireEvent.click(screen.getByRole('option', { name: 'Ativo' }));
-    fireEvent.click(dialog.getByRole('button', { name: 'Salvar' }));
+    fireEvent.click(dialog.getByRole('button', { name: 'Guardar' }));
     await waitFor(() =>
       expect(requests.find((r) => r.method === 'PATCH')?.body).toEqual({
         status: 'ACTIVE',
@@ -120,7 +120,7 @@ describe('Finance permissions and dashboard', () => {
       await screen.findByText('Movimento de teste');
       expect(screen.queryByText('Concluído')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
-      fireEvent.click(screen.getByRole('button', { name: /^Cadastrar/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Registar/ }));
       await screen.findByRole('dialog');
       expect(screen.queryByLabelText('Status')).not.toBeInTheDocument();
     },
@@ -166,7 +166,7 @@ describe('Finance permissions and dashboard', () => {
       await screen.findByRole('button', { name: 'Renomear bank.pdf' }),
     ).toBeVisible();
     expect(
-      screen.getByRole('button', { name: 'Excluir bank.pdf' }),
+      screen.getByRole('button', { name: 'Eliminar bank.pdf' }),
     ).toBeVisible();
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
     await waitFor(() =>
@@ -177,7 +177,7 @@ describe('Finance permissions and dashboard', () => {
       await screen.findByRole('button', { name: 'Renomear expense.pdf' }),
     ).toBeVisible();
     expect(
-      screen.getByRole('button', { name: 'Excluir expense.pdf' }),
+      screen.getByRole('button', { name: 'Eliminar expense.pdf' }),
     ).toBeVisible();
   });
   it.each([true, false])(
@@ -291,7 +291,7 @@ describe('Finance permissions and dashboard', () => {
     const requests = mockApi(sessionRoutes(makeUser(['MEMBER_READ'])));
     renderApp('/finance');
     expect(
-      await screen.findByText('Você não tem permissão para acessar esta área.'),
+      await screen.findByText('Não tem permissão para aceder a esta área.'),
     ).toBeInTheDocument();
     expect(requests.some((r) => r.path.startsWith('/finance'))).toBe(false);
   });
@@ -339,7 +339,7 @@ describe('Finance permissions and dashboard', () => {
       false,
     );
     expect(
-      screen.queryByRole('button', { name: /Cadastrar/ }),
+      screen.queryByRole('button', { name: /Registar/ }),
     ).not.toBeInTheDocument();
   });
   it('confirms account deletion and refreshes the list', async () => {
@@ -371,12 +371,14 @@ describe('Finance permissions and dashboard', () => {
     });
     renderApp('/finance?tab=accounts');
     fireEvent.click(
-      await screen.findByRole('button', { name: 'Excluir conta' }),
+      await screen.findByRole('button', { name: 'Eliminar conta' }),
     );
     expect(requests.some((r) => r.method === 'DELETE')).toBe(false);
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar exclusão' }));
-    await screen.findByText('Conta bancária excluída.');
-    await screen.findByText('Nenhum registro.');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Confirmar eliminação' }),
+    );
+    await screen.findByText('Conta bancária eliminada.');
+    await screen.findByText('Nenhum registo.');
     expect(requests.filter((r) => r.method === 'DELETE')).toHaveLength(1);
   });
   it('hides account deletion from read-only users', async () => {
@@ -396,7 +398,7 @@ describe('Finance permissions and dashboard', () => {
     renderApp('/finance?tab=accounts');
     await screen.findByText('Conta de teste');
     expect(
-      screen.queryByRole('button', { name: 'Excluir conta' }),
+      screen.queryByRole('button', { name: 'Eliminar conta' }),
     ).not.toBeInTheDocument();
   });
 });

@@ -1,3 +1,4 @@
+import { t as translate } from '../i18n';
 type Invoice = {
   amount: string;
   currency: string;
@@ -58,11 +59,11 @@ export function suggestInvoiceExpenses<T extends Expense>(
           days,
           reasons: [
             equalAmount
-              ? 'Valor e moeda iguais'
-              : 'Valor diferente; confira pagamento agrupado',
-            `Diferença de ${Math.round(days)} dias`,
-            ...(reference ? ['Referência/NIF na despesa'] : []),
-            ...(issuer ? ['Emitente na descrição'] : []),
+              ? translate('Valor e moeda iguais')
+              : translate('Valor diferente; confira pagamento agrupado'),
+            translate('Diferença de {0} dias', [Math.round(days)]),
+            ...(reference ? [translate('Referência/NIF na despesa')] : []),
+            ...(issuer ? [translate('Emitente na descrição')] : []),
           ],
         },
       ];

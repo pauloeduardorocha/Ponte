@@ -48,9 +48,10 @@ describe('Sortable tables', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Ordenar por Nome' }));
     expect(recordNames()).toEqual(['Álvaro', 'Ana', 'Zulu']);
-    expect(
-      screen.getByRole('columnheader', { name: 'Nome' }),
-    ).toHaveAttribute('aria-sort', 'ascending');
+    expect(screen.getByRole('columnheader', { name: 'Nome' })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Ordenar por Nome' }));
     expect(recordNames()).toEqual(['Zulu', 'Ana', 'Álvaro']);
     fireEvent.click(screen.getByRole('button', { name: 'Ordenar por Valor' }));
@@ -109,13 +110,13 @@ describe('Sortable tables', () => {
         </TableHead>
         <TableBody>
           <TableRow>
-            <TableCell colSpan={3}>Carregando</TableCell>
+            <TableCell colSpan={3}>A carregar</TableCell>
           </TableRow>
         </TableBody>
       </SortableTable>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Ordenar por Estado' }));
-    expect(screen.getByText('Carregando')).toBeVisible();
+    expect(screen.getByText('A carregar')).toBeVisible();
     rerender(
       <SortableTable nonSortableColumns={[2]}>
         <TableHead>

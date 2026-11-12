@@ -1,3 +1,4 @@
+import { t as translate, getLocale, useLocale } from '../i18n';
 import { useQuery } from '@tanstack/react-query';
 import {
   Avatar,
@@ -14,6 +15,7 @@ import { QueryError } from './PageParts';
 import { CachedQueryStatus } from './CachedQueryStatus';
 
 export function BirthdaysCard() {
+  useLocale();
   const { user } = useAuth();
   const query = useQuery({
     queryKey: ['community', 'birthdays', 'week', user?.id],
@@ -30,11 +32,14 @@ export function BirthdaysCard() {
           <Stack direction="row" spacing={1} alignItems="center">
             <CakeOutlinedIcon color="primary" />
             <Typography component="h2" variant="h6">
-              Aniversariantes da semana
+              {translate('Aniversariantes da semana')}
             </Typography>
           </Stack>
           {query.isPending && (
-            <Skeleton aria-label="Carregando aniversariantes" height={48} />
+            <Skeleton
+              aria-label={translate('Carregando aniversariantes')}
+              height={48}
+            />
           )}
           {query.isError && (
             <QueryError
@@ -52,7 +57,7 @@ export function BirthdaysCard() {
             (query.data.length ? (
               <>
                 <Typography color="text.secondary">
-                  Celebramos os aniversariantes desta semana!
+                  {translate('Celebramos os aniversariantes desta semana!')}
                 </Typography>
                 <Stack
                   component="ul"
@@ -72,7 +77,7 @@ export function BirthdaysCard() {
                         alt={member.name}
                         sx={{ bgcolor: 'primary.main' }}
                       >
-                        {member.name.charAt(0).toLocaleUpperCase('pt-PT')}
+                        {member.name.charAt(0).toLocaleUpperCase(getLocale())}
                       </Avatar>
                       <Typography fontWeight={600}>{member.name}</Typography>
                       <Typography color="text.secondary">
@@ -84,7 +89,7 @@ export function BirthdaysCard() {
               </>
             ) : (
               <Typography color="text.secondary">
-                Nenhum aniversariante nesta semana.
+                {translate('Nenhum aniversariante nesta semana.')}
               </Typography>
             ))}
         </Stack>

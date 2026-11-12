@@ -1,7 +1,9 @@
+import { t as translate, useLocale } from '../../i18n';
 import { Alert } from '@mui/material';
 import { useAuth } from '../../auth/auth-context';
 import { OperationalDashboard } from './OperationalDashboard';
 export function OperationsDashboardPage() {
+  useLocale();
   const { user } = useAuth();
   return user?.permissions.some((p) =>
     [
@@ -17,7 +19,7 @@ export function OperationsDashboardPage() {
     <OperationalDashboard />
   ) : (
     <Alert severity="warning">
-      Você não tem permissão para acessar este painel.
+      {translate('Você não tem permissão para acessar este painel.')}
     </Alert>
   );
 }

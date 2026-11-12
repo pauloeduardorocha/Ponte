@@ -1,3 +1,4 @@
+import { t as translate, localized } from '../../i18n';
 import type { Permission } from '../../lib/types';
 export type Resource =
   | 'visitors'
@@ -40,29 +41,61 @@ export type Config = {
   statuses?: string[];
   fields: Field[];
 };
-const name: Field = { key: 'name', label: 'Nome', required: true };
-const notes: Field = { key: 'notes', label: 'Observações', type: 'textarea' };
-const member: Field = { key: 'memberId', label: 'Membro', lookup: 'people' };
+const name: Field = {
+  key: 'name',
+  get label() {
+    return translate('Nome');
+  },
+  required: true,
+};
+const notes: Field = {
+  key: 'notes',
+  get label() {
+    return translate('Observações');
+  },
+  type: 'textarea',
+};
+const member: Field = {
+  key: 'memberId',
+  get label() {
+    return translate('Membro');
+  },
+  lookup: 'people',
+};
 const visitor: Field = {
   key: 'visitorId',
-  label: 'Visitante',
+  get label() {
+    return translate('Visitante');
+  },
   lookup: 'visitors',
 };
 const leader: Field = {
   key: 'leaderMemberId',
-  label: 'Líder',
+  get label() {
+    return translate('Líder');
+  },
   lookup: 'people',
   required: true,
 };
 const description: Field = {
   key: 'description',
-  label: 'Descrição',
+  get label() {
+    return translate('Descrição');
+  },
   type: 'textarea',
 };
-const active: Field = { key: 'active', label: 'Ativo', type: 'boolean' };
+const active: Field = {
+  key: 'active',
+  get label() {
+    return translate('Ativo');
+  },
+  type: 'boolean',
+};
 export const configs: Record<Resource, Config> = {
   visitors: {
-    title: 'Visitantes',
+    get title() {
+      return translate('Visitantes');
+    },
     read: 'VISITOR_READ',
     create: 'VISITOR_CREATE',
     update: 'VISITOR_UPDATE',
@@ -76,28 +109,67 @@ export const configs: Record<Resource, Config> = {
       'ARCHIVED',
     ],
     fields: [
-      { key: 'firstName', label: 'Nome', required: true },
-      { key: 'lastName', label: 'Sobrenome' },
+      {
+        key: 'firstName',
+        get label() {
+          return translate('Nome');
+        },
+        required: true,
+      },
+      {
+        key: 'lastName',
+        get label() {
+          return translate('Sobrenome');
+        },
+      },
       { key: 'email', label: 'E-mail', type: 'email' },
-      { key: 'phone', label: 'Telefone' },
-      { key: 'birthDate', label: 'Nascimento', type: 'date' },
+      {
+        key: 'phone',
+        get label() {
+          return translate('Telefone');
+        },
+      },
+      {
+        key: 'birthDate',
+        get label() {
+          return translate('Nascimento');
+        },
+        type: 'date',
+      },
       {
         key: 'gender',
-        label: 'Gênero',
+        get label() {
+          return translate('Gênero');
+        },
         options: ['FEMALE', 'MALE', 'OTHER', 'UNDISCLOSED'],
       },
       {
         key: 'firstVisitDate',
-        label: 'Primeira visita',
+        get label() {
+          return translate('Primeira visita');
+        },
         type: 'date',
         required: true,
       },
-      { key: 'howDidYouHear', label: 'Como conheceu a igreja?' },
-      { key: 'invitedByMemberId', label: 'Convidado por', lookup: 'people' },
+      {
+        key: 'howDidYouHear',
+        get label() {
+          return translate('Como conheceu a igreja?');
+        },
+      },
+      {
+        key: 'invitedByMemberId',
+        get label() {
+          return translate('Convidado por');
+        },
+        lookup: 'people',
+      },
       notes,
       {
         key: 'status',
-        label: 'Situação',
+        get label() {
+          return translate('Situação');
+        },
         options: [
           'NEW',
           'CONTACTED',
@@ -111,7 +183,9 @@ export const configs: Record<Resource, Config> = {
     ],
   },
   'follow-ups': {
-    title: 'Acompanhamento',
+    get title() {
+      return translate('Acompanhamento');
+    },
     read: 'FOLLOWUP_READ',
     create: 'FOLLOWUP_CREATE',
     update: 'FOLLOWUP_UPDATE',
@@ -121,19 +195,25 @@ export const configs: Record<Resource, Config> = {
       visitor,
       {
         key: 'assignedToUserId',
-        label: 'Responsável',
+        get label() {
+          return translate('Responsável');
+        },
         lookup: 'assignees',
         required: true,
       },
       {
         key: 'nextContactAt',
-        label: 'Próximo contato',
+        get label() {
+          return translate('Próximo contato');
+        },
         type: 'datetime-local',
       },
       notes,
       {
         key: 'status',
-        label: 'Situação',
+        get label() {
+          return translate('Situação');
+        },
         options: [
           'PENDING',
           'IN_PROGRESS',
@@ -145,7 +225,9 @@ export const configs: Record<Resource, Config> = {
     ],
   },
   'small-groups': {
-    title: 'Grupos familiares',
+    get title() {
+      return translate('Grupos familiares');
+    },
     read: 'SMALL_GROUP_READ',
     create: 'SMALL_GROUP_MANAGE',
     update: 'SMALL_GROUP_MANAGE',
@@ -153,39 +235,83 @@ export const configs: Record<Resource, Config> = {
       name,
       description,
       leader,
-      { key: 'coLeaderMemberId', label: 'Co-líder', lookup: 'people' },
-      { key: 'hostMemberId', label: 'Anfitrião', lookup: 'people' },
-      { key: 'address', label: 'Endereço' },
+      {
+        key: 'coLeaderMemberId',
+        get label() {
+          return translate('Co-líder');
+        },
+        lookup: 'people',
+      },
+      {
+        key: 'hostMemberId',
+        get label() {
+          return translate('Anfitrião');
+        },
+        lookup: 'people',
+      },
+      {
+        key: 'address',
+        get label() {
+          return translate('Endereço');
+        },
+      },
       {
         key: 'meetingDay',
-        label: 'Dia da semana',
+        get label() {
+          return translate('Dia da semana');
+        },
         options: ['0', '1', '2', '3', '4', '5', '6'],
         required: true,
       },
-      { key: 'meetingTime', label: 'Horário', type: 'time', required: true },
-      { key: 'capacity', label: 'Capacidade', type: 'number' },
+      {
+        key: 'meetingTime',
+        get label() {
+          return translate('Horário');
+        },
+        type: 'time',
+        required: true,
+      },
+      {
+        key: 'capacity',
+        get label() {
+          return translate('Capacidade');
+        },
+        type: 'number',
+      },
       active,
     ],
   },
   ministries: {
-    title: 'Ministérios',
+    get title() {
+      return translate('Ministérios');
+    },
     read: 'MINISTRY_READ',
     create: 'MINISTRY_MANAGE',
     update: 'MINISTRY_MANAGE',
     fields: [name, description, leader, active],
   },
   events: {
-    title: 'Eventos',
+    get title() {
+      return translate('Eventos');
+    },
     read: 'EVENT_READ',
     create: 'EVENT_MANAGE',
     update: 'EVENT_MANAGE',
     statuses: ['SCHEDULED', 'COMPLETED', 'CANCELLED'],
     fields: [
-      { key: 'title', label: 'Título', required: true },
+      {
+        key: 'title',
+        get label() {
+          return translate('Título');
+        },
+        required: true,
+      },
       description,
       {
         key: 'type',
-        label: 'Tipo',
+        get label() {
+          return translate('Tipo');
+        },
         options: [
           'SERVICE',
           'CONFERENCE',
@@ -198,68 +324,128 @@ export const configs: Record<Resource, Config> = {
         ],
         required: true,
       },
-      { key: 'location', label: 'Local', required: true },
+      {
+        key: 'location',
+        get label() {
+          return translate('Local');
+        },
+        required: true,
+      },
       {
         key: 'startDateTime',
-        label: 'Início',
+        get label() {
+          return translate('Início');
+        },
         type: 'datetime-local',
         required: true,
       },
       {
         key: 'endDateTime',
-        label: 'Fim',
+        get label() {
+          return translate('Fim');
+        },
         type: 'datetime-local',
         required: true,
       },
-      { key: 'capacity', label: 'Capacidade', type: 'number' },
-      { key: 'isPaid', label: 'Evento pago', type: 'boolean' },
       {
-        key: 'registrationRequired',
-        label: 'Inscrição obrigatória',
+        key: 'capacity',
+        get label() {
+          return translate('Capacidade');
+        },
+        type: 'number',
+      },
+      {
+        key: 'isPaid',
+        get label() {
+          return translate('Evento pago');
+        },
         type: 'boolean',
       },
-      { key: 'ministryId', label: 'Ministério', lookup: 'ministries' },
-      { key: 'smallGroupId', label: 'Grupo familiar', lookup: 'small-groups' },
+      {
+        key: 'registrationRequired',
+        get label() {
+          return translate('Inscrição obrigatória');
+        },
+        type: 'boolean',
+      },
+      {
+        key: 'ministryId',
+        get label() {
+          return translate('Ministério');
+        },
+        lookup: 'ministries',
+      },
+      {
+        key: 'smallGroupId',
+        get label() {
+          return translate('Grupo familiar');
+        },
+        lookup: 'small-groups',
+      },
       active,
       {
         key: 'status',
-        label: 'Situação',
+        get label() {
+          return translate('Situação');
+        },
         options: ['SCHEDULED', 'COMPLETED', 'CANCELLED'],
       },
     ],
   },
   schedules: {
-    title: 'Escalas',
+    get title() {
+      return translate('Escalas');
+    },
     read: 'SCHEDULE_READ',
     create: 'SCHEDULE_MANAGE',
     update: 'SCHEDULE_MANAGE',
     statuses: ['DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED'],
     fields: [
-      { key: 'title', label: 'Título', required: true },
-      { key: 'eventId', label: 'Evento (opcional)', lookup: 'events' },
+      {
+        key: 'title',
+        get label() {
+          return translate('Título');
+        },
+        required: true,
+      },
+      {
+        key: 'eventId',
+        get label() {
+          return translate('Evento (opcional)');
+        },
+        lookup: 'events',
+      },
       {
         key: 'ministryId',
-        label: 'Ministério',
+        get label() {
+          return translate('Ministério');
+        },
         lookup: 'ministries',
         required: true,
         managedOnly: true,
       },
       {
         key: 'date',
-        label: 'Data e hora',
+        get label() {
+          return translate('Data e hora');
+        },
         type: 'datetime-local',
         required: true,
       },
       notes,
       {
         key: 'status',
-        label: 'Situação',
+        get label() {
+          return translate('Situação');
+        },
         options: ['DRAFT', 'PUBLISHED', 'CANCELLED', 'COMPLETED'],
       },
     ],
   },
   notifications: {
-    title: 'Notificações',
+    get title() {
+      return translate('Notificações');
+    },
     read: 'NOTIFICATION_READ',
     create: 'NOTIFICATION_SEND',
     update: 'NOTIFICATION_SEND',
@@ -267,7 +453,9 @@ export const configs: Record<Resource, Config> = {
     fields: [
       {
         key: 'audience',
-        label: 'Enviar para',
+        get label() {
+          return translate('Enviar para');
+        },
         required: true,
         options: [
           'MEMBER',
@@ -278,66 +466,114 @@ export const configs: Record<Resource, Config> = {
           'ALL',
         ],
         optionLabels: {
-          MEMBER: 'Membros',
-          VISITOR: 'Visitantes',
-          SMALL_GROUPS: 'Grupos familiares',
-          MINISTRIES: 'Ministérios',
-          ROLES: 'Roles',
-          ALL: 'Todos os membros',
+          get MEMBER() {
+            return translate('Membros');
+          },
+          get VISITOR() {
+            return translate('Visitantes');
+          },
+          get SMALL_GROUPS() {
+            return translate('Grupos familiares');
+          },
+          get MINISTRIES() {
+            return translate('Ministérios');
+          },
+          get ROLES() {
+            return translate('Roles');
+          },
+          get ALL() {
+            return translate('Todos os membros');
+          },
         },
       },
       {
         ...member,
         key: 'recipientMemberIds',
-        label: 'Destinatários: membros',
+        get label() {
+          return translate('Destinatários: membros');
+        },
         multiple: true,
         required: true,
       },
       {
         ...visitor,
         key: 'recipientVisitorIds',
-        label: 'Destinatários: visitantes',
+        get label() {
+          return translate('Destinatários: visitantes');
+        },
         multiple: true,
         required: true,
       },
       {
         key: 'smallGroupIds',
-        label: 'Grupos familiares',
+        get label() {
+          return translate('Grupos familiares');
+        },
         lookup: 'notification-audiences/small-groups',
         multiple: true,
         required: true,
       },
       {
         key: 'ministryIds',
-        label: 'Ministérios',
+        get label() {
+          return translate('Ministérios');
+        },
         lookup: 'notification-audiences/ministries',
         multiple: true,
         required: true,
       },
       {
         key: 'roleIds',
-        label: 'Roles',
+        get label() {
+          return translate('Roles');
+        },
         lookup: 'notification-audiences/roles',
         multiple: true,
         required: true,
       },
       {
         key: 'channel',
-        label: 'Canal',
+        get label() {
+          return translate('Canal');
+        },
         options: ['INTERNAL', 'EMAIL', 'SMS', 'WHATSAPP', 'PUSH'],
         optionLabels: {
-          INTERNAL: 'Interna (com alerta push para quem ativou)',
-          PUSH: 'Push (exige um dispositivo inscrito)',
+          get INTERNAL() {
+            return translate('Interna (com alerta push para quem ativou)');
+          },
+          get PUSH() {
+            return translate('Push (exige um dispositivo inscrito)');
+          },
         },
         required: true,
       },
-      { key: 'subject', label: 'Assunto' },
-      { key: 'content', label: 'Mensagem', type: 'textarea', required: true },
-      { key: 'scheduledAt', label: 'Agendamento', type: 'datetime-local' },
+      {
+        key: 'subject',
+        get label() {
+          return translate('Assunto');
+        },
+      },
+      {
+        key: 'content',
+        get label() {
+          return translate('Mensagem');
+        },
+        type: 'textarea',
+        required: true,
+      },
+      {
+        key: 'scheduledAt',
+        get label() {
+          return translate('Agendamento');
+        },
+        type: 'datetime-local',
+      },
     ],
   },
   'notification-templates': {
-    title: 'Modelos de mensagem',
+    get title() {
+      return translate('Modelos de mensagem');
+    },
     read: 'NOTIFICATION_READ',
     create: 'NOTIFICATION_SEND',
     update: 'NOTIFICATION_SEND',
@@ -345,64 +581,164 @@ export const configs: Record<Resource, Config> = {
       name,
       {
         key: 'channel',
-        label: 'Canal',
+        get label() {
+          return translate('Canal');
+        },
         options: ['INTERNAL', 'EMAIL', 'SMS', 'WHATSAPP', 'PUSH'],
         required: true,
       },
-      { key: 'subject', label: 'Assunto' },
-      { key: 'content', label: 'Mensagem', type: 'textarea', required: true },
+      {
+        key: 'subject',
+        get label() {
+          return translate('Assunto');
+        },
+      },
+      {
+        key: 'content',
+        get label() {
+          return translate('Mensagem');
+        },
+        type: 'textarea',
+        required: true,
+      },
       active,
     ],
   },
 };
 export const operationLabels: Record<string, string> = {
-  NEW: 'Novo',
-  CONTACTED: 'Contatado',
-  IN_FOLLOW_UP: 'Em acompanhamento',
-  INTEGRATING: 'Em integração',
-  INTEGRATED: 'Integrado',
-  INACTIVE: 'Inativo',
-  ARCHIVED: 'Arquivado',
-  PENDING: 'Pendente',
-  IN_PROGRESS: 'Em andamento',
-  WAITING: 'Aguardando',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
-  DRAFT: 'Rascunho',
-  PUBLISHED: 'Publicado',
-  ABSENT: 'Ausente',
-  REGISTERED: 'Inscrito',
-  INVITED: 'Convidado',
-  CONFIRMED: 'Confirmado',
-  DECLINED: 'Recusado',
-  REPLACED: 'Substituído',
-  SENT: 'Enviado',
-  FAILED: 'Falhou',
-  SCHEDULED: 'Agendado',
-  PHONE: 'Telefone',
-  WHATSAPP: 'WhatsApp',
+  get NEW() {
+    return translate('Novo');
+  },
+  get CONTACTED() {
+    return translate('Contatado');
+  },
+  get IN_FOLLOW_UP() {
+    return translate('Em acompanhamento');
+  },
+  get INTEGRATING() {
+    return translate('Em integração');
+  },
+  get INTEGRATED() {
+    return translate('Integrado');
+  },
+  get INACTIVE() {
+    return translate('Inativo');
+  },
+  get ARCHIVED() {
+    return translate('Arquivado');
+  },
+  get PENDING() {
+    return translate('Pendente');
+  },
+  get IN_PROGRESS() {
+    return translate('Em andamento');
+  },
+  get WAITING() {
+    return translate('Aguardando');
+  },
+  get COMPLETED() {
+    return translate('Concluído');
+  },
+  get CANCELLED() {
+    return translate('Cancelado');
+  },
+  get DRAFT() {
+    return translate('Rascunho');
+  },
+  get PUBLISHED() {
+    return translate('Publicado');
+  },
+  get ABSENT() {
+    return translate('Ausente');
+  },
+  get REGISTERED() {
+    return translate('Inscrito');
+  },
+  get INVITED() {
+    return translate('Convidado');
+  },
+  get CONFIRMED() {
+    return translate('Confirmado');
+  },
+  get DECLINED() {
+    return translate('Recusado');
+  },
+  get REPLACED() {
+    return translate('Substituído');
+  },
+  get SENT() {
+    return translate('Enviado');
+  },
+  get FAILED() {
+    return translate('Falhou');
+  },
+  get SCHEDULED() {
+    return translate('Agendado');
+  },
+  get PHONE() {
+    return translate('Telefone');
+  },
+  get WHATSAPP() {
+    return translate('WhatsApp');
+  },
   EMAIL: 'E-mail',
-  IN_PERSON: 'Presencial',
-  OTHER: 'Outro',
-  INTERNAL: 'Interno',
+  get IN_PERSON() {
+    return translate('Presencial');
+  },
+  get OTHER() {
+    return translate('Outro');
+  },
+  get INTERNAL() {
+    return translate('Interno');
+  },
   SMS: 'SMS',
-  PUSH: 'Push',
-  LEADER: 'Líder',
-  CO_LEADER: 'Co-líder',
-  HOST: 'Anfitrião',
-  MEMBER: 'Participante',
-  SERVICE: 'Culto',
-  CONFERENCE: 'Conferência',
-  MEETING: 'Reunião',
-  TRAINING: 'Formação',
-  SMALL_GROUP: 'Grupo familiar',
-  MINISTRY: 'Ministério',
-  SPECIAL: 'Especial',
-  FEMALE: 'Feminino',
-  MALE: 'Masculino',
-  UNDISCLOSED: 'Não informado',
+  get PUSH() {
+    return translate('Push');
+  },
+  get LEADER() {
+    return translate('Líder');
+  },
+  get CO_LEADER() {
+    return translate('Co-líder');
+  },
+  get HOST() {
+    return translate('Anfitrião');
+  },
+  get MEMBER() {
+    return translate('Participante');
+  },
+  get SERVICE() {
+    return translate('Culto');
+  },
+  get CONFERENCE() {
+    return translate('Conferência');
+  },
+  get MEETING() {
+    return translate('Reunião');
+  },
+  get TRAINING() {
+    return translate('Formação');
+  },
+  get SMALL_GROUP() {
+    return translate('Grupo familiar');
+  },
+  get MINISTRY() {
+    return translate('Ministério');
+  },
+  get SPECIAL() {
+    return translate('Especial');
+  },
+  get FEMALE() {
+    return translate('Feminino');
+  },
+  get MALE() {
+    return translate('Masculino');
+  },
+  get UNDISCLOSED() {
+    return translate('Não informado');
+  },
 };
-export const dayLabels = [
+export const dayLabels = localized([
   'Domingo',
   'Segunda-feira',
   'Terça-feira',
@@ -410,7 +746,7 @@ export const dayLabels = [
   'Quinta-feira',
   'Sexta-feira',
   'Sábado',
-];
+]);
 export type Entry = { id: string; [key: string]: unknown };
 export const entryName = (e: Entry) =>
   String(
@@ -423,5 +759,5 @@ export const entryName = (e: Entry) =>
       (e.recipientVisitor as Entry | undefined)?.name ??
       e.function ??
       e.type ??
-      'Registro',
+      translate('Registro'),
   );

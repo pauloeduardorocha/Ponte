@@ -1,3 +1,4 @@
+import { t as translate, useLocale } from '../i18n';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -20,11 +21,12 @@ import { useAuth } from '../auth/auth-context';
 import { forgetPasskey, rememberPasskey } from '../lib/passkey-preferences';
 
 export function PasskeySettings() {
+  useLocale();
   const { user } = useAuth();
   const client = useQueryClient();
   const keys = useQuery({ queryKey: ['passkeys'], queryFn: listPasskeys });
   const [password, setPassword] = useState('');
-  const [name, setName] = useState('O meu dispositivo');
+  const [name, setName] = useState(translate('O meu dispositivo'));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -49,20 +51,24 @@ export function PasskeySettings() {
       <CardContent>
         <Stack spacing={2}>
           <Typography variant="h6" fontWeight={700}>
-            Biometria e passkeys
+            {translate('Biometria e passkeys')}
           </Typography>
           <Typography variant="body2">
-            Entre com a impressão digital, reconhecimento facial ou PIN do
-            dispositivo, também no PWA. Os dados biométricos ficam no
-            dispositivo. Mantenha a senha para recuperar o acesso.
+            {translate(
+              'Entre com a impressão digital, reconhecimento facial ou PIN do dispositivo, também no PWA. Os dados biométricos ficam no dispositivo. Mantenha a senha para recuperar o acesso.',
+            )}
           </Typography>
-          {notice && <Alert severity="success">{notice}</Alert>}
+          {notice && (
+            <Alert severity="success">{translate(notice ?? '')}</Alert>
+          )}
           {(error || keys.error) && (
             <Alert severity="error">{error ?? passkeyError(keys.error)}</Alert>
           )}
-          {keys.isPending && <Typography>A carregar passkeys…</Typography>}
+          {keys.isPending && (
+            <Typography>{translate('A carregar passkeys…')}</Typography>
+          )}
           {keys.data?.length === 0 && (
-            <Typography>Nenhuma passkey registada.</Typography>
+            <Typography>{translate('Nenhuma passkey registada.')}</Typography>
           )}
           {keys.data?.map((key) => (
             <Stack
@@ -76,15 +82,15 @@ export function PasskeySettings() {
               <Button
                 color="error"
                 disabled={busy}
-                aria-label={`Remover ${key.name}`}
+                aria-label={translate('Remover {0}', [key.name])}
                 onClick={() =>
                   void perform(async () => {
                     await removePasskey(key.id);
                     if (user) forgetPasskey(user.id, key.id);
-                  }, 'Passkey removida. Este método já não permite novos acessos.')
+                  }, translate('Passkey removida. Este método já não permite novos acessos.'))
                 }
               >
-                Remover
+                {translate('Remover')}
               </Button>
             </Stack>
           ))}
@@ -98,11 +104,11 @@ export function PasskeySettings() {
                   void perform(async () => {
                     const id = await registerPasskey(password, name.trim());
                     if (user) rememberPasskey(user.id, id);
-                  }, 'Passkey ativada. Já pode utilizá-la no próximo acesso.');
+                  }, translate('Passkey ativada. Já pode utilizá-la no próximo acesso.'));
               }}
             >
               <TextField
-                label="Nome do dispositivo"
+                label={translate('Nome do dispositivo')}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 slotProps={{ htmlInput: { maxLength: 80 } }}
@@ -110,7 +116,7 @@ export function PasskeySettings() {
                 disabled={busy}
               />
               <TextField
-                label="Senha atual para ativar"
+                label={translate('Senha atual para ativar')}
                 type="password"
                 autoComplete="current-password"
                 value={password}
@@ -129,13 +135,16 @@ export function PasskeySettings() {
                   keys.isError
                 }
               >
-                {busy ? 'A confirmar…' : 'Ativar biometria / criar passkey'}
+                {busy
+                  ? translate('A confirmar…')
+                  : translate('Ativar biometria / criar passkey')}
               </Button>
             </Stack>
           ) : (
             <Alert severity="info">
-              Este navegador não disponibiliza passkeys. Utilize um navegador
-              atualizado com HTTPS.
+              {translate(
+                'Este navegador não disponibiliza passkeys. Utilize um navegador atualizado com HTTPS.',
+              )}
             </Alert>
           )}
         </Stack>
