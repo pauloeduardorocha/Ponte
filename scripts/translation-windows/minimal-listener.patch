@@ -1,0 +1,853 @@
+diff --git a/audience.html b/audience.html
+--- a/audience.html
++++ b/audience.html
+@@ -1,8 +1,8 @@
+-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
+-<body><main class="listener"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><div><strong>A Ponte</strong><span>Tradução ao vivo · Canais</span></div></header>
+-<p class="eyebrow">TRADUÇÃO AO VIVO</p><h1 lang="en">To know Christ and make Him known</h1><p>Toque na bandeira para escolher o idioma e acompanhar a tradução.</p>
++<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A Ponte</title><link rel="stylesheet" href="/style.css"></head>
++<body><main class="listener listener-minimal"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><strong>A Ponte</strong></header>
+ <div id="broadcast-notice" class="broadcast-notice" role="status" hidden>Não há nenhuma transmissão ativa no momento. Por favor, aguarde o início da transmissão.</div>
+-<section class="settings" aria-label="Reprodução da tradução"><div class="channel-select"><p id="channels-loading" role="status">Carregando canais…</p><div id="listener-channel" class="listener-channel-grid" data-count="0" role="group" aria-label="Canais de tradução"></div><p id="channel-notice" role="status"></p></div><audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio><div class="controls"><button id="listen" aria-describedby="radio-status">Ouvir ao vivo</button></div><p id="radio-status" role="status">Pronto para ouvir. Use fones de ouvido.</p><p>Depois de o áudio começar, pode minimizar o navegador ou bloquear o ecrã. Mantenha esta aba aberta e o Wi-Fi da igreja conectado.</p></section>
+-<section class="transcript" aria-labelledby="transcript-title"><div class="heading"><h2 id="transcript-title">Texto da tradução</h2><span id="status" role="status">Conectando o texto…</span></div><p>O texto pode chegar antes do áudio.</p><div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução"></div></section>
+-<details><summary>Precisa de ajuda para ouvir?</summary><p>Confira o volume, os fones e o Wi-Fi da igreja. Se o áudio parar, toque em Retomar ao vivo. Ao retomar, ouvirá a transmissão atual.</p><p>Chamadas e economia de bateria podem interromper o áudio. O suporte com o ecrã bloqueado depende do aparelho e do navegador.</p></details><footer>Áudio e texto vêm diretamente do computador da igreja. Não é preciso usar o microfone nem entrar na conta.</footer>
++<div id="listener-channel" class="listener-channel-grid" data-count="0" role="group" aria-label="Canais de tradução"></div>
++<audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio>
++<div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução" hidden></div>
++<span id="radio-status" class="screen-reader-only" role="status"></span><span id="status" class="screen-reader-only" role="status"></span><span id="channel-notice" class="screen-reader-only" role="status"></span>
+ </main><script src="/language-flags.js"></script><script src="/radio.js"></script><script src="/audience.js"></script></body></html>
+diff --git a/audience.js b/audience.js
+--- a/audience.js
++++ b/audience.js
+@@ -1,63 +1,208 @@
+ (() => {
+-  const text=document.getElementById('text'),status=document.getElementById('status'),grid=document.getElementById('listener-channel'),notice=document.getElementById('channel-notice');
+-  let connection,retry,closed=false,channels=[],selected=null,initialized=false;
+-  const labels={live:'ao vivo',idle:'aguardando',connecting:'conectando',error:'indisponível'};
+-  function choose(id,notify=true){
+-    if(id===selected && notify)return;
+-    const channel=channels.find(item=>item.id===id);selected=channel?.id??null;grid.dataset.selectedChannel=selected||'';text.replaceChildren();renderCards();
+-    window.translationPlayer.selectChannel(selected,channel?.nativeName,channel?.state);
+-    status.textContent=channel?(labels[channel.state]||'aguardando'):'Escolha um canal';
+-    if(notify && selected && connection?.readyState===WebSocket.OPEN)connection.send(JSON.stringify({action:'select-channel',channelId:selected}));
++  const text = document.getElementById("text"),
++    status = document.getElementById("status"),
++    grid = document.getElementById("listener-channel"),
++    notice = document.getElementById("channel-notice");
++  let connection,
++    retry,
++    closed = false,
++    channels = [],
++    selected = null,
++    initialized = false,
++    playback = { channelId: null, active: false, phase: "idle" };
++  function syncPlayback() {
++    for (const tile of grid.children) {
++      const channel = channels.find(
++        (item) => item.id === tile.dataset.channelId,
++      );
++      if (!channel) continue;
++      const current = playback.channelId === channel.id;
++      tile.dataset.playback = current ? playback.phase : "idle";
++      tile.setAttribute("aria-pressed", String(channel.id === selected));
++      const label =
++        (current && playback.active ? "Pausar " : "Ouvir ") +
++        channel.nativeName;
++      tile.setAttribute("aria-label", label);
++      tile.title = label;
++    }
++  }
++  window.translationPlayer.subscribe((value) => {
++    playback = value;
++    syncPlayback();
++  });
++  function showText() {
++    text.hidden = !text.textContent.trim();
++  }
++  function choose(id, notify = true) {
++    const channel = channels.find((item) => item.id === id),
++      next = channel?.id ?? null,
++      changed = next !== selected;
++    selected = next;
++    grid.dataset.selectedChannel = selected || "";
++    if (changed) {
++      text.replaceChildren();
++      showText();
++    }
++    if (notify && channel)
++      window.translationPlayer.activateChannel(
++        selected,
++        channel.nativeName,
++        channel.state,
++      );
++    else
++      window.translationPlayer.selectChannel(
++        selected,
++        channel?.nativeName,
++        channel?.state,
++      );
++    renderCards();
++    if (
++      notify &&
++      changed &&
++      selected &&
++      connection?.readyState === WebSocket.OPEN
++    )
++      connection.send(
++        JSON.stringify({ action: "select-channel", channelId: selected }),
++      );
+   }
+-  function renderCards(){
+-    const focused=document.activeElement?.dataset.channelId;
+-    grid.dataset.count=channels.length;grid.dataset.selectedChannel=selected||'';grid.replaceChildren();
+-    for(const channel of channels){
+-      const tile=document.createElement('button');tile.type='button';tile.className='listener-channel-tile';tile.dataset.channelId=channel.id;tile.setAttribute('aria-label',channel.nativeName+' · '+channel.name);tile.setAttribute('aria-pressed',String(channel.id===selected));tile.title=channel.nativeName+' · '+channel.name;
+-      const flag=window.TranslationFlags[channel.id];
+-      if(flag){const img=document.createElement('img');img.src='/flags/'+flag+'.svg';img.alt='';img.setAttribute('aria-hidden','true');img.className='language-flag';tile.append(img);}
+-      else{const icon=document.createElement('span');icon.textContent='🌐';icon.setAttribute('aria-hidden','true');tile.append(icon);}
+-      const state=document.createElement('span');state.className='listener-channel-state';state.textContent=labels[channel.state]||'aguardando';tile.append(state);
+-      tile.onclick=()=>{notice.textContent='';choose(channel.id);};grid.append(tile);
++  function renderCards() {
++    const focused = document.activeElement?.dataset.channelId;
++    grid.dataset.count = channels.length;
++    grid.dataset.selectedChannel = selected || "";
++    grid.replaceChildren();
++    for (const channel of channels) {
++      const tile = document.createElement("button");
++      tile.type = "button";
++      tile.className = "listener-channel-tile";
++      tile.dataset.channelId = channel.id;
++      const flag = window.TranslationFlags[channel.id];
++      if (flag) {
++        const img = document.createElement("img");
++        img.src = "/flags/" + flag + ".svg";
++        img.alt = "";
++        img.setAttribute("aria-hidden", "true");
++        img.className = "language-flag";
++        tile.append(img);
++      } else {
++        const icon = document.createElement("span");
++        icon.textContent = "🌐";
++        icon.setAttribute("aria-hidden", "true");
++        tile.append(icon);
++      }
++      tile.onclick = () => {
++        notice.textContent = "";
++        choose(channel.id);
++      };
++      grid.append(tile);
+     }
+-    if(focused)grid.querySelector('[data-channel-id="'+focused+'"]')?.focus({preventScroll:true});
++    syncPlayback();
++    if (focused)
++      [...grid.children]
++        .find((tile) => tile.dataset.channelId === focused)
++        ?.focus({ preventScroll: true });
+   }
+-  function catalogue(list){
+-    document.getElementById('broadcast-notice').hidden=list.some(channel=>channel.state==='live');
+-    channels=list;document.getElementById('channels-loading').hidden=true;renderCards();
+-    if(selected && !list.some(channel=>channel.id===selected)){choose(null,false);notice.textContent='O canal que você ouvia foi fechado. Escolha outro canal aberto.';}
+-    else {grid.dataset.selectedChannel=selected||'';const current=channels.find(channel=>channel.id===selected);if(current)window.translationPlayer.updateState(current.state);}
++  function catalogue(list) {
++    document.getElementById("broadcast-notice").hidden = list.some(
++      (channel) => channel.state === "live",
++    );
++    channels = list;
++    if (selected && !list.some((channel) => channel.id === selected)) {
++      choose(null, false);
++      notice.textContent =
++        "O canal que você ouvia foi fechado. Escolha outro canal aberto.";
++    } else {
++      const current = channels.find((channel) => channel.id === selected);
++      if (current) window.translationPlayer.updateState(current.state);
++      renderCards();
++    }
+   }
+-  function connect(){
+-    clearTimeout(retry);const room=location.pathname.split('/').pop();
+-    connection=new WebSocket(`${location.protocol==='https:'?'wss:':'ws:'}//${location.host}/audience-ws/${room}`);
+-    connection.onmessage=event=>{
+-      if(typeof event.data!=='string')return;
+-      let message;try{message=JSON.parse(event.data);}catch{return;}
+-      if(message.channels)catalogue(message.channels);
+-      if(!initialized && message.channels){initialized=true;choose(message.selectedChannel??channels[0]?.id??null,false);}
+-      if(message.selectionError){notice.textContent=message.selectionError;return;}
+-      if(message.channelClosed){choose(null,false);notice.textContent='O canal que você ouvia foi fechado. Escolha outro canal aberto.';}
+-      // On reconnect request the previous selection instead of accepting the server default.
+-      if(Object.hasOwn(message,'selectedChannel') && message.selectedChannel!==selected){
+-        if(selected && channels.some(channel=>channel.id===selected)){connection.send(JSON.stringify({action:'select-channel',channelId:selected}));return;}
+-      }
+-      if(message.channelId!==selected || !selected)return;
+-      if(message.state){status.textContent=labels[message.state]||'aguardando';window.translationPlayer.updateState(message.state);}
+-      if(message.reset)text.replaceChildren();
+-      if(typeof message.snapshot==='string')text.textContent=message.snapshot;
+-      const content=message.content;if(!content)return;
+-      const follow=text.scrollHeight-text.scrollTop-text.clientHeight<60;
+-      if(content.outputTranscription?.text)text.append(document.createTextNode(content.outputTranscription.text));
+-      if(content.turnComplete)text.append(document.createTextNode('\n\n'));
+-      if(text.textContent.length>50000)text.textContent=text.textContent.slice(-50000);
+-      if(follow)text.scrollTop=text.scrollHeight;
++  function connect() {
++    clearTimeout(retry);
++    const room = location.pathname.split("/").pop();
++    connection = new WebSocket(
++      `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/audience-ws/${room}`,
++    );
++    connection.onmessage = (event) => {
++      if (typeof event.data !== "string") return;
++      let message;
++      try {
++        message = JSON.parse(event.data);
++      } catch {
++        return;
++      }
++      if (message.channels) catalogue(message.channels);
++      if (!initialized && message.channels) {
++        initialized = true;
++        renderCards();
++      }
++      if (message.selectionError) {
++        notice.textContent = message.selectionError;
++        return;
++      }
++      if (message.channelClosed) {
++        choose(null, false);
++        notice.textContent =
++          "O canal que você ouvia foi fechado. Escolha outro canal aberto.";
++      }
++      if (
++        Object.hasOwn(message, "selectedChannel") &&
++        message.selectedChannel !== selected
++      ) {
++        if (selected && channels.some((channel) => channel.id === selected)) {
++          connection.send(
++            JSON.stringify({ action: "select-channel", channelId: selected }),
++          );
++          return;
++        }
++      }
++      if (message.channelId !== selected || !selected) return;
++      if (message.state) {
++        status.textContent = message.state;
++        window.translationPlayer.updateState(message.state);
++      }
++      if (message.reset) text.replaceChildren();
++      if (typeof message.snapshot === "string")
++        text.textContent = message.snapshot;
++      const content = message.content;
++      if (content) {
++        const follow =
++          text.scrollHeight - text.scrollTop - text.clientHeight < 60;
++        if (content.outputTranscription?.text)
++          text.append(
++            document.createTextNode(content.outputTranscription.text),
++          );
++        if (content.turnComplete) text.append(document.createTextNode("\n\n"));
++        if (text.textContent.length > 50000)
++          text.textContent = text.textContent.slice(-50000);
++        if (follow) text.scrollTop = text.scrollHeight;
++      }
++      showText();
++    };
++    connection.onclose = () => {
++      status.textContent = "Texto desconectado. Reconectando…";
++      if (!closed) retry = setTimeout(connect, 2500);
+     };
+-    connection.onclose=()=>{status.textContent='Texto desconectado. Reconectando…';if(!closed)retry=setTimeout(connect,2500);};
+-    connection.onerror=()=>connection.close();
++    connection.onerror = () => connection.close();
+   }
+-  window.addEventListener('pagehide',()=>{closed=true;clearTimeout(retry);connection?.close();});
+-  window.addEventListener('pageshow',()=>{if(closed){closed=false;connect();}});
+-  document.addEventListener('visibilitychange',()=>{if(!document.hidden && !closed && connection?.readyState===WebSocket.CLOSED)connect();});
++  window.addEventListener("pagehide", () => {
++    closed = true;
++    clearTimeout(retry);
++    connection?.close();
++  });
++  window.addEventListener("pageshow", () => {
++    if (closed) {
++      closed = false;
++      connect();
++    }
++  });
++  document.addEventListener("visibilitychange", () => {
++    if (
++      !document.hidden &&
++      !closed &&
++      connection?.readyState === WebSocket.CLOSED
++    )
++      connect();
++  });
+   connect();
+ })();
+diff --git a/radio.js b/radio.js
+--- a/radio.js
++++ b/radio.js
+@@ -1,36 +1,168 @@
+ (() => {
+-  const audio=document.getElementById('radio'), status=document.getElementById('radio-status'), button=document.getElementById('listen');
+-  const room=location.pathname.split('/').pop();
+-  let generation=0, active=false, channelId=null, channelName='', state='idle';
+-  try { if(navigator.audioSession)navigator.audioSession.type='playback'; } catch { /* optional */ }
+-  function mediaState(value){if('mediaSession' in navigator)navigator.mediaSession.playbackState=value;}
+-  function release(){generation++;active=false;audio.pause();audio.removeAttribute('src');audio.load();mediaState('paused');}
+-  function pause(){release();button.textContent='Retomar ao vivo';button.disabled=!channelId||state!=='live';status.textContent=channelId?'Áudio pausado. O texto continua disponível. Retome para ouvir a transmissão atual.':'Escolha um canal aberto para ouvir.';}
+-  async function start(){
+-    if(!channelId || state!=='live'){status.textContent=channelId?'Este canal ainda não está ao vivo. Aguarde o apresentador.':'Escolha um canal aberto para ouvir.';return;}
+-    const attempt=++generation;active=true;button.disabled=false;button.textContent='Cancelar conexão';status.textContent='Conectando ao canal '+channelName+'…';
+-    audio.src='/audio/'+room+'.mp3?channel='+encodeURIComponent(channelId);audio.load();
+-    try{await audio.play();}catch{if(attempt!==generation)return;active=false;button.textContent='Tentar ouvir novamente';status.textContent='Não foi possível ouvir. Confira o Wi-Fi e se o canal está ao vivo; depois tente novamente.';mediaState('none');}
+-    finally{if(attempt===generation)button.disabled=false;}
+-  }
+-  function selectChannel(id,name,nextState){
+-    if(id===channelId){updateState(nextState);return;}
+-    const resume=active;release();channelId=id;channelName=name||'';state=nextState||'idle';button.disabled=!id||state!=='live';button.textContent='Ouvir ao vivo';
+-    status.textContent=id?'Canal '+channelName+' selecionado. Toque em Ouvir ao vivo.':'O canal foi fechado. Escolha outro canal para continuar.';
+-    if('mediaSession' in navigator && typeof MediaMetadata!=='undefined')navigator.mediaSession.metadata=new MediaMetadata({title:'Tradução ao vivo — '+channelName,artist:'A Ponte',artwork:[{src:new URL('/logo.png',location.origin).href,type:'image/png'}]});
+-    if(resume && state==='live')void start();
+-  }
+-  function updateState(next){
+-    state=next||'idle';button.disabled=!channelId||state!=='live';
+-    if(state!=='live' && active){pause();status.textContent='O canal está '+(state==='error'?'indisponível. Escolha outro canal ou aguarde.':'aguardando tradução. Toque em Retomar ao vivo quando voltar.');}
+-  }
+-  button.disabled=true;button.onclick=()=>{if(active)pause();else void start();};
+-  audio.addEventListener('playing',()=>{if(!channelId || !active)return;button.disabled=false;button.textContent='Pausar áudio';status.textContent='Reproduzindo ao vivo · '+channelName;mediaState('playing');});
+-  audio.addEventListener('pause',()=>{if(active && audio.paused && !audio.ended && !audio.error)pause();});
+-  audio.addEventListener('waiting',()=>{if(active)status.textContent='Aguardando áudio do canal '+channelName+'…';});
+-  function unavailable(message){if(!channelId || !active)return;generation++;active=false;button.disabled=false;button.textContent='Retomar ao vivo';status.textContent=message;mediaState('none');}
+-  audio.addEventListener('ended',()=>unavailable('A transmissão deste canal terminou. Escolha outro ou toque em Retomar ao vivo.'));
+-  audio.addEventListener('error',()=>unavailable('O áudio foi interrompido. Confira o Wi-Fi e toque em Retomar ao vivo.'));
+-  if('mediaSession' in navigator)for(const [action,handler]of Object.entries({play:()=>void start(),pause,stop:pause})){try{navigator.mediaSession.setActionHandler(action,handler);}catch{/* optional */}}
+-  window.translationPlayer={selectChannel,updateState,pause};window.addEventListener('pagehide',pause);
++  const audio = document.getElementById("radio"),
++    status = document.getElementById("radio-status"),
++    room = location.pathname.split("/").pop(),
++    observers = new Set();
++  let generation = 0,
++    active = false,
++    channelId = null,
++    channelName = "",
++    state = "idle",
++    phase = "idle";
++  try {
++    if (navigator.audioSession) navigator.audioSession.type = "playback";
++  } catch {
++    /* optional */
++  }
++  function mediaState(value) {
++    if ("mediaSession" in navigator)
++      navigator.mediaSession.playbackState = value;
++  }
++  function emit(message) {
++    if (message) status.textContent = message;
++    for (const observer of observers)
++      observer({ channelId, active, phase, state });
++  }
++  function release() {
++    generation++;
++    active = false;
++    audio.pause();
++    audio.removeAttribute("src");
++    audio.load();
++    mediaState("paused");
++  }
++  function pause() {
++    release();
++    phase = "paused";
++    emit(
++      channelId
++        ? "Áudio pausado. Toque na bandeira para retomar ao vivo."
++        : "Escolha outro canal para continuar.",
++    );
++  }
++  async function start() {
++    if (!channelId || state !== "live") {
++      phase = "waiting";
++      emit("Este canal ainda não está ao vivo. Aguarde o apresentador.");
++      return;
++    }
++    const attempt = ++generation;
++    active = true;
++    phase = "connecting";
++    emit("Conectando ao canal " + channelName + "…");
++    audio.src =
++      "/audio/" + room + ".mp3?channel=" + encodeURIComponent(channelId);
++    audio.load();
++    try {
++      await audio.play();
++    } catch {
++      if (attempt !== generation) return;
++      active = false;
++      phase = "error";
++      mediaState("none");
++      emit(
++        "Não foi possível ouvir. Confira o Wi-Fi e toque novamente na bandeira.",
++      );
++    }
++  }
++  function selectChannel(id, name, nextState) {
++    if (id === channelId) {
++      updateState(nextState);
++      return;
++    }
++    release();
++    channelId = id;
++    channelName = name || "";
++    state = nextState || "idle";
++    phase = "idle";
++    if ("mediaSession" in navigator && typeof MediaMetadata !== "undefined")
++      navigator.mediaSession.metadata = new MediaMetadata({
++        title: "Tradução ao vivo — " + channelName,
++        artist: "A Ponte",
++        artwork: [
++          {
++            src: new URL("/logo.png", location.origin).href,
++            type: "image/png",
++          },
++        ],
++      });
++    emit(
++      id
++        ? "Canal " + channelName + " selecionado."
++        : "O canal foi fechado. Escolha outro canal para continuar.",
++    );
++  }
++  function activateChannel(id, name, nextState) {
++    if (id === channelId && active) {
++      pause();
++      return;
++    }
++    selectChannel(id, name, nextState);
++    void start();
++  }
++  function updateState(next) {
++    state = next || "idle";
++    if (state !== "live" && active) {
++      release();
++      phase = state === "error" ? "error" : "waiting";
++      emit("O canal não está ao vivo. Escolha outro ou aguarde.");
++    } else emit();
++  }
++  audio.addEventListener("playing", () => {
++    if (!channelId || !active) return;
++    phase = "playing";
++    mediaState("playing");
++    emit("Reproduzindo ao vivo · " + channelName);
++  });
++  audio.addEventListener("pause", () => {
++    if (active && audio.paused && !audio.ended && !audio.error) pause();
++  });
++  audio.addEventListener("waiting", () => {
++    if (active) {
++      phase = "connecting";
++      emit("Aguardando áudio do canal " + channelName + "…");
++    }
++  });
++  function unavailable(message) {
++    if (!channelId || !active) return;
++    generation++;
++    active = false;
++    phase = "error";
++    mediaState("none");
++    emit(message);
++  }
++  audio.addEventListener("ended", () =>
++    unavailable(
++      "A transmissão deste canal terminou. Toque na bandeira para tentar retomar.",
++    ),
++  );
++  audio.addEventListener("error", () =>
++    unavailable(
++      "O áudio foi interrompido. Confira o Wi-Fi e toque na bandeira.",
++    ),
++  );
++  if ("mediaSession" in navigator)
++    for (const [action, handler] of Object.entries({
++      play: () => void start(),
++      pause,
++      stop: pause,
++    })) {
++      try {
++        navigator.mediaSession.setActionHandler(action, handler);
++      } catch {
++        /* optional */
++      }
++    }
++  window.translationPlayer = {
++    selectChannel,
++    activateChannel,
++    updateState,
++    pause,
++    play: start,
++    subscribe: (observer) => {
++      observers.add(observer);
++      return () => observers.delete(observer);
++    },
++  };
++  window.addEventListener("pagehide", pause);
+ })();
+diff --git a/audience.test.cjs b/audience.test.cjs
+--- a/audience.test.cjs
++++ b/audience.test.cjs
+@@ -1,44 +1,148 @@
+-const test = require('node:test'), assert = require('node:assert/strict'), vm = require('node:vm'), fs = require('node:fs');
++const test = require("node:test"),
++  assert = require("node:assert/strict"),
++  vm = require("node:vm"),
++  fs = require("node:fs");
+ function player(play = async () => {}) {
+-  const handlers = {}, actions = {}, audio = { src: '', pause() { handlers.pause?.(); }, removeAttribute() { this.src = ''; }, load() { this.loads = (this.loads || 0) + 1; }, play, addEventListener(name, handler) { handlers[name] = handler; } };
+-  const window = { addEventListener() {} };
+-  const button = {}, status = {}, navigator = { mediaSession: { setActionHandler(name, handler) { actions[name] = handler; } } };
+-  const elements = { radio: audio, listen: button, 'radio-status': status };
+-  vm.runInNewContext(fs.readFileSync(__dirname + '/radio.js', 'utf8'), { document: { getElementById: id => elements[id] }, location: { pathname: '/listen/room' }, navigator, window });
+-  window.translationPlayer.selectChannel('en','English','live');
+-  return { audio, button, status, actions, handlers, navigator, player: window.translationPlayer };
++  const handlers = {},
++    actions = {},
++    audio = {
++      src: "",
++      pause() {
++        handlers.pause?.();
++      },
++      removeAttribute() {
++        this.src = "";
++      },
++      load() {
++        this.loads = (this.loads || 0) + 1;
++      },
++      play,
++      addEventListener(name, handler) {
++        handlers[name] = handler;
++      },
++    };
++  const status = {},
++    navigator = {
++      mediaSession: {
++        setActionHandler(name, handler) {
++          actions[name] = handler;
++        },
++      },
++    },
++    window = { addEventListener() {} };
++  vm.runInNewContext(fs.readFileSync(__dirname + "/radio.js", "utf8"), {
++    document: {
++      getElementById: (id) => ({ radio: audio, "radio-status": status })[id],
++    },
++    location: { pathname: "/listen/room" },
++    navigator,
++    window,
++  });
++  let state;
++  window.translationPlayer.subscribe((value) => {
++    state = value;
++  });
++  window.translationPlayer.selectChannel("en", "English", "live");
++  return {
++    audio,
++    status,
++    actions,
++    handlers,
++    navigator,
++    player: window.translationPlayer,
++    get state() {
++      return state;
++    },
++  };
+ }
+-test('one native player starts on a gesture, pauses and resumes from a fresh live connection', async () => {
+-  let plays = 0; const p = player(async () => { plays++; });
+-  assert.equal(p.audio.src, '', 'no audio or network request before user gesture');
+-  p.button.onclick(); await Promise.resolve(); p.handlers.playing();
+-  assert.equal(p.audio.src, '/audio/room.mp3?channel=en'); assert.equal(p.button.textContent, 'Pausar áudio');
+-  p.button.onclick(); assert.equal(p.audio.src, ''); assert.match(p.status.textContent, /texto continua/);
+-  p.button.onclick(); await Promise.resolve(); p.handlers.playing();
+-  assert.equal(plays, 2); assert.equal(p.audio.loads, 4); assert.equal(p.navigator.mediaSession.playbackState, 'playing');
++test("a flag tap starts native audio without a play button; another tap pauses and resumes live", async () => {
++  let plays = 0;
++  const p = player(async () => {
++    plays++;
++  });
++  assert.equal(p.audio.src, "");
++  p.player.activateChannel("en", "English", "live");
++  await Promise.resolve();
++  p.handlers.playing();
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=en");
++  assert.equal(p.state.phase, "playing");
++  p.player.activateChannel("en", "English", "live");
++  assert.equal(p.audio.src, "");
++  assert.equal(p.state.phase, "paused");
++  p.player.activateChannel("en", "English", "live");
++  await Promise.resolve();
++  assert.equal(plays, 2);
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=en");
+ });
+-test('screen controls use the same pause and fresh-live resume actions', async () => {
+-  const p = player(); p.actions.play(); await Promise.resolve(); p.handlers.playing();
+-  p.actions.pause(); assert.equal(p.audio.src, '');
+-  p.actions.play(); await Promise.resolve(); assert.equal(p.audio.src, '/audio/room.mp3?channel=en');
+-  p.actions.stop(); assert.equal(p.navigator.mediaSession.playbackState, 'paused');
++test("lock-screen play, pause and stop use the same native media stream", async () => {
++  const p = player();
++  p.actions.play();
++  await Promise.resolve();
++  p.handlers.playing();
++  assert.equal(p.navigator.mediaSession.playbackState, "playing");
++  p.actions.pause();
++  assert.equal(p.audio.src, "");
++  p.actions.play();
++  await Promise.resolve();
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=en");
++  p.actions.stop();
++  assert.equal(p.state.phase, "paused");
+ });
+-test('blocked playback and stream failures leave a usable retry button', async () => {
+-  const p = player(async () => { throw Error('autoplay denied'); });
+-  p.button.onclick(); await new Promise(resolve => setImmediate(resolve));
+-  assert.equal(p.button.disabled, false); assert.match(p.status.textContent, /Não foi possível ouvir/);
+-  p.actions.play(); p.handlers.error(); assert.equal(p.button.textContent, 'Retomar ao vivo');
+-  p.actions.play(); p.handlers.ended(); assert.match(p.status.textContent, /terminou/);
++test("failed playback can be retried by tapping the same flag", async () => {
++  let plays = 0;
++  const p = player(async () => {
++    if (++plays === 1) throw Error("blocked");
++  });
++  p.player.activateChannel("en", "English", "live");
++  await new Promise((resolve) => setImmediate(resolve));
++  assert.equal(p.state.phase, "error");
++  assert.match(p.status.textContent, /Não foi possível/);
++  p.player.activateChannel("en", "English", "live");
++  await Promise.resolve();
++  p.handlers.playing();
++  assert.equal(p.state.phase, "playing");
++  assert.equal(plays, 2);
+ });
+-test('late play rejection cannot overwrite a newer pause action', async () => {
+-  let reject; const p = player(() => new Promise((_, fail) => { reject = fail; }));
+-  p.actions.play(); p.actions.pause(); reject(Error('aborted')); await new Promise(resolve => setImmediate(resolve));
+-  assert.match(p.status.textContent, /pausado/); assert.equal(p.button.disabled, false);
++test("late play rejection cannot overwrite a newer pause action", async () => {
++  let reject;
++  const p = player(
++    () =>
++      new Promise((_, fail) => {
++        reject = fail;
++      }),
++  );
++  p.player.activateChannel("en", "English", "live");
++  p.actions.pause();
++  reject(Error("aborted"));
++  await new Promise((resolve) => setImmediate(resolve));
++  assert.equal(p.state.phase, "paused");
++  assert.match(p.status.textContent, /pausado/);
+ });
+-test('switching channel replaces the native source while listening; closing it disables playback', async()=>{
+- const p=player();p.button.onclick();await Promise.resolve();p.handlers.playing();
+- p.player.selectChannel('es','Español','live');await Promise.resolve();assert.equal(p.audio.src,'/audio/room.mp3?channel=es');p.handlers.playing();assert.match(p.status.textContent,/Español/);
+- p.player.selectChannel(null,'','idle');assert.equal(p.audio.src,'');assert.equal(p.button.disabled,true);assert.match(p.status.textContent,/fechado/);p.actions.play();assert.equal(p.audio.src,'');
++test("another flag replaces the audio immediately and closing that channel stops playback", async () => {
++  const p = player();
++  p.player.activateChannel("en", "English", "live");
++  await Promise.resolve();
++  p.handlers.playing();
++  p.player.activateChannel("es", "Español", "live");
++  await Promise.resolve();
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=es");
++  p.handlers.playing();
++  assert.match(p.status.textContent, /Español/);
++  p.player.selectChannel(null, "", "idle");
++  assert.equal(p.audio.src, "");
++  assert.equal(p.state.active, false);
++  p.actions.play();
++  assert.equal(p.audio.src, "");
++});
++test("a waiting channel never requests audio until live and tapped", async () => {
++  const p = player();
++  p.player.activateChannel("es", "Español", "idle");
++  assert.equal(p.audio.src, "");
++  p.player.updateState("live");
++  assert.equal(p.audio.src, "");
++  p.player.activateChannel("es", "Español", "live");
++  await Promise.resolve();
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=es");
++  p.player.updateState("idle");
++  assert.equal(p.audio.src, "");
+ });
+-
+-test('waiting channel enables listening automatically only when it becomes live',()=>{const p=player();p.player.selectChannel('es','Español','idle');assert.equal(p.button.disabled,true);p.player.updateState('connecting');assert.equal(p.button.disabled,true);p.player.updateState('live');assert.equal(p.button.disabled,false);p.player.updateState('idle');assert.equal(p.button.disabled,true);});
+diff --git a/radio-stream.test.cjs b/radio-stream.test.cjs
+--- a/radio-stream.test.cjs
++++ b/radio-stream.test.cjs
+@@ -34,7 +34,7 @@ test('HTTP radio runs without an audience WebSocket and stops with the presenter
+   const info = await server.listen(), address = new URL(info.presenterUrl), base = `http://127.0.0.1:${address.port}`;
+   assert.equal((await fetch(base + `/audio/${server.room}.mp3`)).status, 503);
+   const page = await (await fetch(base + `/listen/${server.room}?mode=background`)).text();
+-  assert.match(page, /<audio /); assert.match(page, /Ouvir ao vivo/);
++  assert.match(page, /<audio /); assert.doesNotMatch(page, /id="listen"/);
+   assert.match(page, /Texto da tradução/);
+   assert.equal(await (await fetch(base + `/listen/${server.room}`)).text(), page, 'legacy background and default links serve the same audio and transcript player');
+   const presenter = new WebSocket(base.replace('http:', 'ws:') + '/presenter-ws', { origin: base });
+diff --git a/style.css b/style.css
+--- a/style.css
++++ b/style.css
+@@ -7,3 +7,4 @@
+
+ .listener .broadcast-notice{margin:24px 0;padding:20px;border:1px solid #e1c6c8;border-left:4px solid #d91017;border-radius:10px;background:#fff4f4;font-size:17px;line-height:1.7}.listener .broadcast-notice[hidden]{display:none}
+ .listener main{max-width:1180px}.listener-channel-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:4px 0 20px}.listener-channel-grid[data-count="0"]{display:none}.listener-channel-grid[data-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}.listener-channel-grid[data-count="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}.listener-channel-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:100%;min-width:0;min-height:150px;background:#f7f8fa;border:2px solid #e0e3e8;border-radius:12px;padding:18px 12px;color:#626976}.listener-channel-tile:hover{background:#fff4f4}.listener-channel-tile[aria-pressed="true"]{border-color:#d91017;background:#fff4f4;box-shadow:0 0 0 1px #d91017}.listener-channel-tile .language-flag{display:block;width:160px;max-width:100%;height:auto;aspect-ratio:4/3;object-fit:contain;filter:drop-shadow(0 2px 3px #0002);border-radius:3px}.listener-channel-state{font-size:13px;font-weight:500;color:#626976}.listener-channel-tile[aria-pressed="true"] .listener-channel-state{color:#ad0d13}.listener-channel-grid[data-count="3"] .language-flag{width:128px}.listener [hidden]{display:none!important}@media(max-width:500px){.listener-channel-grid{gap:8px}.listener-channel-tile{min-height:108px;padding:14px 8px;gap:10px}.listener-channel-state{font-size:11px}.listener-channel-grid[data-count="1"] .language-flag{max-width:160px}}
++.screen-reader-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}.listener-minimal .brand{margin:4px 0 28px}.listener-minimal .brand strong{font-size:24px}.listener-minimal .listener-channel-grid{margin:0 0 24px}.listener-minimal #text{min-height:0;max-height:65vh;margin-top:24px;padding:20px;background:white;border:1px solid #e5e7eb;border-radius:12px;overflow-wrap:anywhere}.listener-minimal #text:empty::before{content:none}.listener-minimal .listener-channel-tile{position:relative;gap:0;min-height:144px}.listener-minimal .listener-channel-tile[data-playback="playing"]{box-shadow:0 0 0 2px #d91017}.listener-minimal .listener-channel-tile[data-playback="paused"]{border-color:#afb4be;box-shadow:none}.listener-minimal .listener-channel-tile[data-playback="error"]{border-color:#b57914;box-shadow:0 0 0 1px #b57914}.listener-minimal audio{display:none}@media(max-width:500px){.listener-minimal .listener-channel-tile{min-height:100px}.listener-minimal #text{font-size:20px;padding:16px}}
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.6.0",
++  "version": "0.7.0",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.6.0",
++  "version": "0.7.0",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.6.0",
++      "version": "0.7.0",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/channels-smoke.cjs b/channels-smoke.cjs
+--- a/channels-smoke.cjs
++++ b/channels-smoke.cjs
+@@ -225,8 +225,23 @@ app.whenReady().then(async () => {
+       "!document.getElementById('broadcast-notice').hidden",
+     );
+     assert.equal(
+-      await run(listener, "document.getElementById('listen').disabled"),
+-      true,
++      await run(listener, "document.getElementById('listen')"),
++      null,
++    );
++    assert.equal(
++      await run(listener, "document.getElementById('radio').currentSrc"),
++      "",
++    );
++    assert.equal(
++      await run(listener, "document.querySelector('.brand').innerText.trim()"),
++      "A Ponte",
++    );
++    assert.equal(
++      await run(
++        listener,
++        "document.querySelectorAll('h1,h2,p,footer,details,.listener-channel-state').length",
++      ),
++      0,
+     );
+     assert.match(
+       await run(
+@@ -303,8 +318,16 @@ app.whenReady().then(async () => {
+       listener,
+       "document.querySelectorAll('#listener-channel button').length===3",
+     );
+-    await run(listener, "document.getElementById('listen').click()");
++    assert.equal(
++      await run(listener, "document.getElementById('text').hidden"),
++      true,
++    );
++    await run(
++      listener,
++      "document.querySelector('#listener-channel [data-channel-id=en]').click()",
++    );
+     await until(listener, "document.getElementById('radio').currentTime>0");
++    await until(listener, "!document.getElementById('text').hidden");
+     for (const id of ["es", "en", "fr", "es"]) {
+       await run(
+         listener,
+@@ -326,6 +349,28 @@ app.whenReady().then(async () => {
+       ),
+       false,
+     );
++    await run(
++      listener,
++      "document.querySelector('#listener-channel [data-channel-id=es]').click()",
++    );
++    await until(listener, "document.getElementById('radio').paused");
++    assert.match(
++      await run(listener, "document.getElementById('text').textContent"),
++      /Hola/,
++    );
++    await run(
++      listener,
++      "document.querySelector('#listener-channel [data-channel-id=es]').click()",
++    );
++    await until(
++      listener,
++      "!document.getElementById('radio').paused && document.getElementById('radio').currentTime>0",
++    );
++    await wait(200);
++    fs.writeFileSync(
++      path.join(output, "listener-minimal-active.png"),
++      (await listener.webContents.capturePage()).toPNG(),
++    );
+     for (const win of [host, listener])
+       assert.ok(
+         await run(win, "document.documentElement.scrollWidth<=innerWidth"),
+@@ -346,7 +391,7 @@ app.whenReady().then(async () => {
+     );
+     await until(
+       listener,
+-      "document.getElementById('listener-channel').dataset.selectedChannel==='' && document.getElementById('listen').disabled",
++      "document.getElementById('listener-channel').dataset.selectedChannel==='' && document.getElementById('radio').paused && document.getElementById('text').hidden",
+     );
+     assert.equal(
+       await run(
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -30,7 +30,9 @@ O acesso direto mostra um link e um QR code lado a lado. Eles abrem a mesma pág
+
+ ## Ouvir
+
+-Abra **Tradução ao vivo** no Ponte e depois **Abrir tradução ao vivo**. Na tela local, toque na bandeira do idioma e em **Ouvir ao vivo**. Os cartões dividem a largura igualmente: um canal usa 100%, dois usam 50% cada e três usam um terço cada. O canal selecionado fica destacado. Os nomes dos idiomas permanecem nos rótulos acessíveis e nas dicas ao passar o mouse. Pode trocar de canal a qualquer momento: áudio e texto mudam juntos e a escuta retoma no ponto atual. Se estava pausado, continua pausado. Se o canal for fechado, escolha outro; nenhum idioma alternativo começa a tocar sozinho.
++Abra **Tradução ao vivo** no Ponte e depois **Abrir tradução ao vivo**. Na tela local, toque na bandeira do idioma para iniciar o áudio e mostrar a transcrição. Os cartões dividem a largura igualmente: um canal usa 100%, dois usam 50% cada e três usam um terço cada. O canal selecionado fica destacado. Os nomes dos idiomas permanecem nos rótulos acessíveis e nas dicas ao passar o mouse. Pode trocar de canal a qualquer momento: áudio e texto mudam juntos e a escuta retoma no ponto atual. Toque novamente na bandeira escolhida para pausar; outro toque retoma ao vivo. Se o canal for fechado, escolha outro; nenhum idioma alternativo começa a tocar sozinho.
++
++A página mostra somente a logo e o nome da igreja, as bandeiras e a transcrição. Sem transmissão, o aviso de espera permanece.
+
+ O mesmo player HTML recebe MP3 mono contínuo a 48 kbit/s e permite minimizar ou bloquear o ecrã quando o aparelho suportar. Mantenha a aba aberta e o Wi-Fi conectado. Chamadas, políticas de bateria e o sistema podem interromper áudio; valide no celular real. O texto usa WebSocket independentemente e pode chegar antes do áudio. O servidor mantém ADPCM para clientes compatíveis anteriores, sem enviar PCM bruto à audiência.
+
+diff --git a/windows-guide.json b/windows-guide.json
+--- a/windows-guide.json
++++ b/windows-guide.json
+@@ -54,10 +54,10 @@
+       "steps": [
+         "Peça às pessoas que se conectem ao Wi-Fi da igreja e usem fones de ouvido. O link local não funciona em casa ou somente com dados móveis.",
+         "No Ponte, abra Tradução ao vivo e toque em Abrir tradução ao vivo. A tela do ouvinte abre na mesma aba. Use o botão Voltar do navegador para retornar ao Ponte.",
+-        "Na tela do ouvinte, toque na bandeira do idioma e em Ouvir ao vivo. Um canal ocupa toda a largura; dois dividem a tela ao meio; três usam um terço cada. Pode trocar de canal a qualquer momento; áudio e texto mudam juntos. O texto pode chegar antes do áudio.",
+-        "Use Pausar áudio para interromper o som sem perder o texto. Retomar ao vivo reconecta à transmissão atual, sem repetir o áudio da pausa.",
++        "Na tela do ouvinte, toque na bandeira do idioma para iniciar o áudio e mostrar a transcrição. Um canal ocupa toda a largura; dois dividem a tela ao meio; três usam um terço cada. Pode trocar de canal a qualquer momento; áudio e texto mudam juntos. O texto pode chegar antes do áudio.",
++        "Toque novamente na bandeira selecionada para pausar. Outro toque retoma a transmissão atual, sem repetir o áudio da pausa.",
+         "O mesmo leitor funciona com a tela aberta, minimizada ou bloqueada, quando o aparelho permitir. Não é preciso escolher outro modo. Atualize o aplicativo Windows para 0.3.1 ou superior; não feche a aba nem encerre o navegador.",
+-        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque em Retomar ao vivo. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto.",
++        "Se o áudio parar, confira o Wi-Fi, o volume e os fones e toque novamente na bandeira. Chamadas e economia de bateria podem interromper a escuta. Teste no celular antes do culto.",
+         "Se o canal escolhido for fechado, o áudio para e a tela pede para selecionar outro. Uma falha em um canal não interrompe os outros; no computador, use Reconectar para tentar novamente."
+       ]
+     },
+@@ -97,7 +97,7 @@
+     },
+     {
+       "problem": "O texto aparece, mas não ouço o áudio",
+-      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Toque em Ouvir ao vivo ou Retomar ao vivo. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
++      "solution": "Confira o volume do celular, os fones e se o áudio não está silenciado. Toque na bandeira do idioma para ouvir. A reprodução começa nas próximas palavras traduzidas, sem repetir o áudio anterior."
+     },
+     {
+       "problem": "Aparece que a porta já está em uso",
