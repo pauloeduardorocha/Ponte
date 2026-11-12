@@ -129,6 +129,14 @@ As rotas de dispositivo usam autenticação própria, não o JWT do usuário. Ac
 
 Testes de API: validação de endereços, hashes, permissões administrativas, expiração, conflito de sessão e retirada. Testes web: entrada única na mesma aba para visitantes e membros, visibilidade condicional, rotas negadas, download e geração da ligação. Testes do leitor: pausa, retomada com conexão nova, controles Media Session, falhas e rejeições tardias de reprodução. Testes do aplicativo: codec, distribuição e publicação/retirada. O teste real completo ainda requer uma chave Gemini, microfone, migration aplicada e celulares no Wi-Fi da igreja, incluindo Safari/iOS e permissões de rede local.
 
+## Ícone do aplicativo Windows
+
+O aplicativo usa o símbolo da Ponte combinado com o globo de missões, sem texto. O ícone aparece na janela, no executável e nos atalhos da instalação. A logo institucional nas telas continua usando logo.png.
+
+A arte aprovada está em [app-icon-source.png](../scripts/translation-windows/assets/app-icon-source.png). O script [build-app-icon.ps1](../scripts/translation-windows/build-app-icon.ps1) gera app-icon.png de 512 px e app-icon.ico com tamanhos de 16, 24, 32, 48, 64, 128 e 256 px, preservando a transparência. O empacotamento incorpora o ICO no executável com rcedit, usado apenas no desenvolvimento e fora do runtime distribuído.
+
+Para preparar uma fonte Windows 0.7.2, copie a arte e o script para sua raiz, mantendo os nomes app-icon-source.png e build-app-icon.ps1, e aplique [app-icon.patch](../scripts/translation-windows/app-icon.patch). Instale as dependências de desenvolvimento antes de gerar o pacote. O instalador aponta os atalhos para o ICO incluído em resources/app; uma instalação existente recebe o ícone ao executar o instalador atualizado.
+
 ## Manutenção da fonte Windows
 
 Confira a versão de base antes de aplicar cada patch com git apply --no-index. Não reaplique um patch já incorporado. Os caminhos abaixo são relativos à raiz do Ponte; a aplicação ocorre na pasta da fonte Windows.

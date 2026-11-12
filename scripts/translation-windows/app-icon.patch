@@ -1,0 +1,350 @@
+diff --git a/main.cjs b/main.cjs
+--- a/main.cjs
++++ b/main.cjs
+@@ -1,6 +1,7 @@
+ const { app, BrowserWindow, session, dialog, shell, Menu } = require('electron');
+ const { createTranslationServer } = require('./server.cjs');
+ const path = require('node:path');
++const { platform } = require('node:process');
+ const { isPrivateIPv4 } = require('./network-address.cjs');
+ const { createUpdateChecker } = require('./update-checker.cjs');
+ const version = require('./package.json').version;
+@@ -11,7 +12,7 @@ app.whenReady().then(async () => {
+   try {
+     const info = await instance.listen();
+     session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => callback(contents === win?.webContents && permission === 'media'));
+-    win = new BrowserWindow({ title: 'Ponte · Tradução ao vivo — ' + version, icon: path.join(__dirname, 'logo.png'), width: 1280, height: 960, minWidth: 1040, minHeight: 700, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
++    win = new BrowserWindow({ title: 'Ponte · Tradução ao vivo — ' + version, icon: path.join(__dirname, platform === 'win32' ? 'app-icon.ico' : 'app-icon.png'), width: 1280, height: 960, minWidth: 1040, minHeight: 700, webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true } });
+     win.webContents.setWindowOpenHandler(({ url }) => {
+       try {
+         const link = new URL(url);
+diff --git a/build-windows.cjs b/build-windows.cjs
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -7,10 +7,14 @@ if (process.platform !== 'win32') throw new Error('Execute o empacotamento no Wi
+ const root = __dirname, version = require('./package.json').version;
+ const destination = path.join(root, 'dist', `Ponte-Traducao-${version}-${Date.now()}`);
+ const application = path.join(destination, 'resources', 'app');
++const iconBuild = spawnSync('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', path.join(root, 'build-app-icon.ps1')], { stdio: 'inherit', windowsHide: true });
++if (iconBuild.status !== 0) throw new Error('Could not generate application icons.');
+ fs.cpSync(path.join(root, 'node_modules', 'electron', 'dist'), destination, { recursive: true });
+ fs.renameSync(path.join(destination, 'electron.exe'), path.join(destination, 'Ponte-Traducao.exe'));
++const iconStamp = spawnSync(process.execPath, [path.join(root, 'set-app-icon.cjs'), path.join(destination, 'Ponte-Traducao.exe'), path.join(root, 'app-icon.ico')], { stdio: 'inherit', windowsHide: true });
++if (iconStamp.status !== 0) throw new Error('Could not set executable icon.');
+ fs.mkdirSync(application, { recursive: true });
+-const sources = ['main.cjs','update-checker.cjs','server.cjs','network-address.cjs','qr-code.cjs','qr-code.LICENSE.txt','translation-channels.cjs','languages.js','language-flags.js','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','README.md'];
++const sources = ['main.cjs','update-checker.cjs','server.cjs','network-address.cjs','qr-code.cjs','qr-code.LICENSE.txt','translation-channels.cjs','languages.js','language-flags.js','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','app-icon.png','app-icon.ico','README.md'];
+ for (const file of sources) fs.copyFileSync(path.join(root, file), path.join(application, file));
+ fs.writeFileSync(path.join(application, 'package.json'), JSON.stringify({ name: 'ponte-traducao', productName: 'Ponte · Tradução ao vivo', version, main: 'main.cjs' }, null, 2));
+ fs.cpSync(path.join(root, 'flags'), path.join(application, 'flags'), { recursive: true });
+diff --git a/install-windows.ps1 b/install-windows.ps1
+--- a/install-windows.ps1
++++ b/install-windows.ps1
+@@ -74,6 +74,7 @@ try {
+             $shortcut = $shortcutShell.CreateShortcut((Join-Path $folder 'Ponte - Tradução.lnk'))
+             $shortcut.TargetPath = Join-Path $target 'Ponte-Traducao.exe'
+             $shortcut.WorkingDirectory = $target
++            $shortcut.IconLocation = (Join-Path $target 'resources\app\app-icon.ico') + ',0'
+             $shortcut.Description = 'Ponte - Tradução ao vivo'
+             $shortcut.Save()
+         }
+diff --git a/update-checker.test.cjs b/update-checker.test.cjs
+--- a/update-checker.test.cjs
++++ b/update-checker.test.cjs
+@@ -82,6 +82,7 @@ test('desktop startup triggers a non-blocking check and exposes a manual menu ac
+   });
+   await ready();
+   assert.equal(loaded, true); assert.equal(windows.length, 1); assert.ok(options.title.endsWith(require('./package.json').version));
++  assert.ok(options.icon.endsWith(process.platform === 'win32' ? 'app-icon.ico' : 'app-icon.png'));
+   assert.equal(checks.length, 1, 'startup checks once without waiting for the network');
+   menu.find(item => item.label === 'Ajuda').submenu[0].click();
+   assert.equal(checks[1].manual, true);
+diff --git a/package.json b/package.json
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.2",
++  "version": "0.7.3",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+@@ -13,7 +13,8 @@
+   },
+   "devDependencies": {
+     "electron": "^42.0.0",
+-    "jsqr": "1.4.0"
++    "jsqr": "1.4.0",
++    "rcedit": "5.0.2"
+   },
+   "dependencies": {
+     "lamejs": "1.2.1",
+diff --git a/package-lock.json b/package-lock.json
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,19 +1,20 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.2",
++  "version": "0.7.3",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.7.2",
++      "version": "0.7.3",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+       },
+       "devDependencies": {
+         "electron": "^42.0.0",
+-        "jsqr": "1.4.0"
++        "jsqr": "1.4.0",
++        "rcedit": "5.0.2"
+       }
+     },
+     "node_modules/@electron-internal/extract-zip": {
+@@ -47,6 +48,29 @@
+         "undici": "^7.24.4"
+       }
+     },
++    "node_modules/@malept/cross-spawn-promise": {
++      "version": "1.1.1",
++      "resolved": "https://registry.npmjs.org/@malept/cross-spawn-promise/-/cross-spawn-promise-1.1.1.tgz",
++      "integrity": "sha512-RTBGWL5FWQcg9orDOCcp4LvItNzUPcyEU9bwaeJX0rJ1IQxzucC48Y0/sQLp/g6t99IQgAlGIaesJS+gTn7tVQ==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "individual",
++          "url": "https://github.com/sponsors/malept"
++        },
++        {
++          "type": "tidelift",
++          "url": "https://tidelift.com/subscription/pkg/npm-.malept-cross-spawn-promise?utm_medium=referral&utm_source=npm_fund"
++        }
++      ],
++      "license": "Apache-2.0",
++      "dependencies": {
++        "cross-spawn": "^7.0.1"
++      },
++      "engines": {
++        "node": ">= 10"
++      }
++    },
+     "node_modules/@types/node": {
+       "version": "24.19.2",
+       "resolved": "https://registry.npmjs.org/@types/node/-/node-24.19.2.tgz",
+@@ -57,6 +81,46 @@
+         "undici-types": ">=7.24.0 <7.24.7"
+       }
+     },
++    "node_modules/cross-spawn": {
++      "version": "7.0.6",
++      "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
++      "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "path-key": "^3.1.0",
++        "shebang-command": "^2.0.0",
++        "which": "^2.0.1"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
++    "node_modules/cross-spawn-windows-exe": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/cross-spawn-windows-exe/-/cross-spawn-windows-exe-1.2.0.tgz",
++      "integrity": "sha512-mkLtJJcYbDCxEG7Js6eUnUNndWjyUZwJ3H7bErmmtOYU/Zb99DyUkpamuIZE0b3bhmJyZ7D90uS6f+CGxRRjOw==",
++      "dev": true,
++      "funding": [
++        {
++          "type": "individual",
++          "url": "https://github.com/sponsors/malept"
++        },
++        {
++          "type": "tidelift",
++          "url": "https://tidelift.com/subscription/pkg/npm-cross-spawn-windows-exe?utm_medium=referral&utm_source=npm_fund"
++        }
++      ],
++      "license": "Apache-2.0",
++      "dependencies": {
++        "@malept/cross-spawn-promise": "^1.1.0",
++        "is-wsl": "^2.2.0",
++        "which": "^2.0.2"
++      },
++      "engines": {
++        "node": ">= 10"
++      }
++    },
+     "node_modules/debug": {
+       "version": "4.4.3",
+       "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+@@ -114,6 +178,49 @@
+       "dev": true,
+       "license": "ISC"
+     },
++    "node_modules/is-docker": {
++      "version": "2.2.1",
++      "resolved": "https://registry.npmjs.org/is-docker/-/is-docker-2.2.1.tgz",
++      "integrity": "sha512-F+i2BKsFrH66iaUFc0woD8sLy8getkwTwtOBjvs56Cx4CgJDeKQeqfz8wAYiSb8JOprWhHH5p77PbmYCvvUuXQ==",
++      "dev": true,
++      "license": "MIT",
++      "bin": {
++        "is-docker": "cli.js"
++      },
++      "engines": {
++        "node": ">=8"
++      },
++      "funding": {
++        "url": "https://github.com/sponsors/sindresorhus"
++      }
++    },
++    "node_modules/is-wsl": {
++      "version": "2.2.0",
++      "resolved": "https://registry.npmjs.org/is-wsl/-/is-wsl-2.2.0.tgz",
++      "integrity": "sha512-fKzAra0rGJUUBwGBgNkHZuToZcn+TtXHpeCgmkMJMMYx1sQDYaCSyjJBSCa2nH1DGm7s3n1oBnohoVTBaN7Lww==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "is-docker": "^2.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/isexe": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
++      "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==",
++      "dev": true,
++      "license": "ISC"
++    },
++    "node_modules/jsqr": {
++      "version": "1.4.0",
++      "resolved": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
++      "integrity": "sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==",
++      "dev": true,
++      "license": "Apache-2.0"
++    },
+     "node_modules/lamejs": {
+       "version": "1.2.1",
+       "resolved": "https://registry.npmjs.org/lamejs/-/lamejs-1.2.1.tgz",
+@@ -130,6 +237,16 @@
+       "dev": true,
+       "license": "MIT"
+     },
++    "node_modules/path-key": {
++      "version": "3.1.1",
++      "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
++      "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
+     "node_modules/progress": {
+       "version": "2.0.3",
+       "resolved": "https://registry.npmjs.org/progress/-/progress-2.0.3.tgz",
+@@ -140,6 +257,20 @@
+         "node": ">=0.4.0"
+       }
+     },
++    "node_modules/rcedit": {
++      "version": "5.0.2",
++      "resolved": "https://registry.npmjs.org/rcedit/-/rcedit-5.0.2.tgz",
++      "integrity": "sha512-dgysxaeXZ4snLpPjn8aVtHvZDCx+aRcvZbaWBgl1poU6OPustMvOkj9a9ZqASQ6i5Y5szJ13LSvglEOwrmgUxA==",
++      "deprecated": "Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "cross-spawn-windows-exe": "^1.1.0"
++      },
++      "engines": {
++        "node": ">= 22.12.0"
++      }
++    },
+     "node_modules/semver": {
+       "version": "7.8.6",
+       "resolved": "https://registry.npmjs.org/semver/-/semver-7.8.6.tgz",
+@@ -153,6 +284,29 @@
+         "node": ">=10"
+       }
+     },
++    "node_modules/shebang-command": {
++      "version": "2.0.0",
++      "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
++      "integrity": "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "shebang-regex": "^3.0.0"
++      },
++      "engines": {
++        "node": ">=8"
++      }
++    },
++    "node_modules/shebang-regex": {
++      "version": "3.0.0",
++      "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
++      "integrity": "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==",
++      "dev": true,
++      "license": "MIT",
++      "engines": {
++        "node": ">=8"
++      }
++    },
+     "node_modules/sumchecker": {
+       "version": "3.0.1",
+       "resolved": "https://registry.npmjs.org/sumchecker/-/sumchecker-3.0.1.tgz",
+@@ -190,6 +344,22 @@
+       "integrity": "sha512-IeiWvvEXfW5ltKVMkxq6FvNf2LojMKvB2OCeja6+ct24S1XOmQw2dGr2JyndwACWAGJva9B7yPHwAmeA9QCqAQ==",
+       "license": "ISC"
+     },
++    "node_modules/which": {
++      "version": "2.0.2",
++      "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
++      "integrity": "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==",
++      "dev": true,
++      "license": "ISC",
++      "dependencies": {
++        "isexe": "^2.0.0"
++      },
++      "bin": {
++        "node-which": "bin/node-which"
++      },
++      "engines": {
++        "node": ">= 8"
++      }
++    },
+     "node_modules/ws": {
+       "version": "8.22.1",
+       "resolved": "https://registry.npmjs.org/ws/-/ws-8.22.1.tgz",
+@@ -210,13 +380,6 @@
+           "optional": true
+         }
+       }
+-    },
+-    "node_modules/jsqr": {
+-      "version": "1.4.0",
+-      "resolved": "https://registry.npmjs.org/jsqr/-/jsqr-1.4.0.tgz",
+-      "integrity": "sha512-dxLob7q65Xg2DvstYkRpkYtmKm2sPJ9oFhrhmudT1dZvNFFTlroai3AWSpLey/w5vMcLBXRgOJsbXpdN9HzU/A==",
+-      "dev": true,
+-      "license": "Apache-2.0"
+     }
+   }
+ }
+diff --git a/set-app-icon.cjs b/set-app-icon.cjs
+new file mode 100644
+--- /dev/null
++++ b/set-app-icon.cjs
+@@ -0,0 +1,4 @@
++(async () => {
++  const { rcedit } = await import('rcedit');
++  await rcedit(process.argv[2], { icon: process.argv[3] });
++})().catch(error => { console.error(error.message); process.exitCode = 1; });
