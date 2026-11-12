@@ -85,7 +85,7 @@ describe('Account appearance', () => {
     });
     renderApp('/account');
     fireEvent.click(await screen.findByRole('radio', { name: 'Escuro' }));
-    await screen.findByText('Não foi possível guardar.');
+    await screen.findByText('Não foi possível salvar.');
     expect(
       screen.getByRole('radio', { name: 'Seguir o dispositivo' }),
     ).toBeChecked();

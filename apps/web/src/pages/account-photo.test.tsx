@@ -50,7 +50,7 @@ it('keeps the photo when saving fails', async () => {
   });
   renderApp('/account');
   fireEvent.click(await screen.findByRole('button', { name: 'Remover foto' }));
-  await screen.findByText('Falha ao guardar foto.');
+  await screen.findByText('Falha ao salvar foto.');
   expect(
     within(screen.getByRole('main')).getByAltText(user.name),
   ).toHaveAttribute('src', user.avatar);

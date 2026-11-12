@@ -93,7 +93,7 @@ describe('Private and local document gallery', () => {
       credentials: 'include',
     });
     expect(screen.getByRole('link', { name: 'Descarregar' })).toHaveAttribute(
-      'transferência',
+      'download',
       'comprovativo.jpg',
     );
   });
