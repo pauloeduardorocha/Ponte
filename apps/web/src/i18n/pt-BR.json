@@ -79,7 +79,6 @@
   " sem coordenadas": " sem coordenadas",
   " será excluído deste movimento.": " será excluído deste movimento.",
   "? Esta ação não pode ser desfeita.": "? Esta ação não pode ser desfeita.",
-  ". Acompanhe os dados e acesse as listas pelo seu painel.": ". Acompanhe os dados e acesse as listas pelo seu painel.",
   ". Estimativa sem garantia de realização.": ". Estimativa sem garantia de realização.",
   "· Até ": "· Até ",
   "· despesas ": "· despesas ",
@@ -333,7 +332,6 @@
   "Biometria e passkeys": "Biometria e passkeys",
   "Bloco de documento inválido.": "Bloco de documento inválido.",
   "Bloquear atrasados": "Bloquear atrasados",
-  "Bom dia, A Ponte": "Bom dia, A Ponte",
   "Busca inválida.": "Busca inválida.",
   "Busca muito longa.": "Busca muito longa.",
   "Buscando membros": "Buscando membros",
@@ -1986,5 +1984,6 @@
   "Aguardando a transmissão": "Aguardando a transmissão",
   "Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.": "Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.",
   "Por página": "Por página",
-  "Por página em cada lista": "Por página em cada lista"
+  "Por página em cada lista": "Por página em cada lista",
+  "Olá, {0}": "Olá, {0}"
 }

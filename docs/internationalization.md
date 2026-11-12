@@ -5,6 +5,12 @@ Brasil (`pt-BR`) e inglês (`en`). O seletor fica na barra superior, imediatamen
 antes do avatar, e nas páginas de autenticação. Cada opção apresenta a bandeira
 de Portugal, Brasil ou Reino Unido e o nome do idioma na própria língua.
 
+O nome da igreja, **A Ponte**, nunca é traduzido, incluindo em saudações,
+cabeçalhos e mensagens. Referências à aplicação Ponte e nomes de atalhos,
+como `Ponte - Tradução`, também mantêm a grafia original em todos os idiomas.
+A página inicial apresenta uma única saudação com o primeiro nome do utilizador,
+sem referência à hora do dia nem um segundo texto de apresentação.
+
 A escolha atualiza a interface sem recarregar a página, preservando os dados dos
 formulários. A preferência fica neste navegador, na chave `ponte.locale.v1` do
 `localStorage`, e sincroniza entre separadores. Sem preferência válida, utiliza-se

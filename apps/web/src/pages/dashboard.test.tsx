@@ -9,6 +9,21 @@ import {
 } from '../test/utils';
 describe('Permission scoped dashboard', () => {
   beforeEach(resetTestState);
+  it('greets the member once using only the first name, without time-of-day copy', async () => {
+    mockApi({
+      ...sessionRoutes({ ...makeUser(), name: 'Ana Maria Exemplo' }),
+      'GET /conversations': { body: { items: [], hasMore: false } },
+    });
+    renderApp('/');
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Olá, Ana' }),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+    expect(
+      screen.queryByText(/Bom dia|Acompanhe os dados/),
+    ).not.toBeInTheDocument();
+  });
+
   it('shows real administrative indicators with links and avoids ungranted finance/library queries', async () => {
     const requests = mockApi({
       'GET /conversations': { body: { items: [], hasMore: false } },
@@ -82,7 +97,7 @@ describe('Permission scoped dashboard', () => {
       'GET /health': { body: { status: 'ok' } },
     });
     renderApp('/');
-    await screen.findByRole('heading', { name: /Bom dia, A Ponte/ });
+    await screen.findByRole('heading', { name: /Olá, Ana/ });
     expect(
       requests.some(
         (r) =>

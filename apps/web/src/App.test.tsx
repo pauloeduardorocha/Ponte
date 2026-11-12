@@ -84,7 +84,7 @@ describe('Authentication', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Entrar' }));
 
     expect(
-      await screen.findByRole('heading', { name: /Bom dia, A Ponte/ }),
+      await screen.findByRole('heading', { name: /Olá, Ana/ }),
     ).toBeInTheDocument();
     expect(getAccessToken()).toBe('access-login');
     expect(window.localStorage.length).toBe(0);
@@ -126,7 +126,7 @@ describe('Authentication', () => {
     renderApp('/');
 
     expect(
-      await screen.findByRole('heading', { name: /Bom dia, A Ponte/ }),
+      await screen.findByRole('heading', { name: /Olá, Ana/ }),
     ).toBeInTheDocument();
     const refresh = requests.find((r) => r.path === '/auth/refresh');
     expect(refresh?.method).toBe('POST');

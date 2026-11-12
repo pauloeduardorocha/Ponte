@@ -62,6 +62,7 @@ export function DashboardPage() {
 function ApprovedDashboard() {
   useLocale();
   const { hasPermission, user } = useAuth();
+  const firstName = user?.name.trim().split(/\s+/)[0];
   const canCommunity = ['MEMBER_READ', 'VISITOR_READ', 'EVENT_READ'].some((p) =>
     user?.permissions.some((code) => code === p),
   );
@@ -84,14 +85,9 @@ function ApprovedDashboard() {
           {formatDate(new Date().toISOString())}
         </Typography>
         <Typography variant="h4" component="h1">
-          {translate('Bom dia, A Ponte')}
-        </Typography>
-        <Typography color="text.secondary">
-          {translate('Olá, ')}
-          {user?.name}
-          {translate(
-            '. Acompanhe os dados e acesse as listas pelo seu painel.',
-          )}
+          {firstName
+            ? translate('Olá, {0}', [firstName])
+            : translate('Visão geral')}
         </Typography>
       </Box>
       <ConversationsCarousel />

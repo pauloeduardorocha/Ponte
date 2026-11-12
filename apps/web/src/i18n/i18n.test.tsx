@@ -89,6 +89,7 @@ describe('Application language', () => {
       screen.getByRole('combobox', { name: 'Idioma' }),
     );
     choose('Idioma', 'English');
+    expect(screen.getByText('A Ponte dashboard')).toBeInTheDocument();
     expect(
       await screen.findByRole('button', { name: 'Open account menu' }),
     ).toBeInTheDocument();
@@ -163,6 +164,24 @@ describe('Application language', () => {
     expect(getLocale()).toBe('pt-BR');
     expect(screen.getByLabelText('Senha')).toBeInTheDocument();
     blocked.mockRestore();
+  });
+
+  it('preserves the church name and named application references in every catalog', () => {
+    for (const catalog of [ptPT, ptBR, en]) {
+      for (const [source, translation] of Object.entries(catalog)) {
+        if (!/\bPonte\b/.test(source)) continue;
+        expect(translation.match(/\bPonte\b/g)?.length ?? 0, source).toBe(
+          source.match(/\bPonte\b/g)!.length,
+        );
+        expect(translation, source).not.toMatch(/\bbridge\b/i);
+        if (source.includes('A Ponte'))
+          expect(translation.match(/\bA Ponte\b/g)?.length ?? 0, source).toBe(
+            source.match(/\bA Ponte\b/g)!.length,
+          );
+        if (source.includes('Ponte - Tradução'))
+          expect(translation, source).toContain('Ponte - Tradução');
+      }
+    }
   });
 
   it('keeps complete catalogs and all interpolation placeholders in every language', () => {
