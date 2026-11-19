@@ -22,7 +22,7 @@ export POSTGRES_PASSWORD
 export PGPASSWORD="$POSTGRES_PASSWORD"
 started=$SECONDS
 snapshots=$(restic snapshots --host ponte --tag ponte-database --json "$SNAPSHOT_PREFIX")
-RESTORE_SNAPSHOT=$(printf '%s' "$snapshots" | jq -er 'if length == 1 and .[0].paths == ["/ponte.dump"] and .[0].hostname == "ponte" and ((.[0].tags // []) | index("ponte-database") != null) then .[0].id else error("Snapshot must identify exactly one Ponte database backup") end')
+RESTORE_SNAPSHOT=$(printf '%s' "$snapshots" | jq -er 'if length == 1 and (.[0].paths == ["/ponte.dump"] or .[0].paths == ["/ponte-v2.tar"] or .[0].paths == ["/ponte-v3.tar"]) and .[0].hostname == "ponte" and ((.[0].tags // []) | index("ponte-database") != null) then .[0].id else error("Snapshot must identify exactly one Ponte database backup") end')
 export RESTORE_SNAPSHOT
 restic check
 docker-entrypoint.sh postgres -p "$PGPORT" >/tmp/ponte-recovery-postgres.log 2>&1 &

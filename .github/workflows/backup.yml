@@ -53,7 +53,7 @@ jobs:
           INITIALIZE: ${{ inputs.initialize == true && 'true' || 'false' }}
         run: |
           set -euo pipefail
-          docker run --rm \
+          docker run --rm --shm-size=1g \
             -e PGHOST -e PGDATABASE -e PGUSER -e PGPASSWORD -e PGSSLMODE \
             -e PRIVATE_STORAGE_DRIVER -e RESTIC_REPOSITORY -e RESTIC_PASSWORD \
             -e RCLONE_CONFIG_GDRIVE_TYPE -e RCLONE_CONFIG_GDRIVE_SCOPE \
@@ -62,7 +62,7 @@ jobs:
             --entrypoint bash ponte-backup -euo pipefail -c '
               if [[ "$INITIALIZE" == true ]]; then restic init; fi
               bash /opt/ponte/backup-database.sh
-              restic forget --host ponte --tag ponte-database --group-by host,paths \
+              restic forget --host ponte --tag ponte-database --group-by host \
                 --keep-within 7d --keep-weekly 4 --keep-monthly 3 --prune
             '
       - name: Failure instructions

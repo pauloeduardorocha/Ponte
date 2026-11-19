@@ -15,9 +15,17 @@ if [[ "${PRIVATE_STORAGE_DRIVER:-}" != database ]]; then
   echo 'This backup requires PRIVATE_STORAGE_DRIVER=database; filesystem attachments need a coordinated copy.' >&2; exit 1
 fi
 export PGCONNECT_TIMEOUT=20
-# No plaintext archive on disk. Unlike --stdin, this cancels the snapshot when
-# pg_dump fails. Database bytea attachments are included in its consistent snapshot.
-restic backup --host ponte --tag ponte-database --stdin-filename ponte.dump \
-  --stdin-from-command -- pg_dump --format=custom --no-owner --no-acl --no-password --lock-wait-timeout=60s
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+[[ "$(stat -f -c %T /dev/shm)" == tmpfs ]]
+work=$(mktemp -d /dev/shm/ponte-backup.XXXXXXXX)
+trap 'rm -rf -- "$work"' EXIT
+cd "$work"
+previous=$(restic snapshots --host ponte --tag ponte-database --path /ponte-v3.tar --latest 1 --json | jq -er '.[0].id // "none"')
+if [[ "$previous" != none ]]; then
+  restic dump "$previous" /ponte-v3.tar | tar -xf - rows.sqlite
+fi
+export PGCLIENTENCODING=UTF8 PGDATESTYLE=ISO PGOPTIONS="-c row_security=off -c timezone=UTC -c bytea_output=hex -c intervalstyle=postgres"
+python3 "$script_dir/incremental-backup.py"
+restic backup --host ponte --tag ponte-database --stdin-filename ponte-v3.tar \
+  --stdin-from-command -- tar -cf - core.dump rows.sqlite
 restic check
-echo 'Encrypted database backup and repository check completed.'

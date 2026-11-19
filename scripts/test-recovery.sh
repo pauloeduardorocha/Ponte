@@ -10,9 +10,11 @@ export RCLONE_CONFIG_LOCAL_TYPE=local
 export PRIVATE_STORAGE_DRIVER=database
 restic init
 psql -X -v ON_ERROR_STOP=1 <<'SQL'
-INSERT INTO private_files (id,content) VALUES ('00000000-0000-4000-8000-000000000001',decode('255044462d312e370a00ff','hex'));
+CREATE TABLE incremental_drill (label text, amount integer);
+INSERT INTO incremental_drill VALUES ('same',1),('same',1),('edit',1),('remove',2);
+INSERT INTO private_files (id,content) VALUES ('00000000-0000-4000-8000-000000000001',decode('deadbeef','hex'));
 INSERT INTO volunteer_schedules (id,title,date,"updatedAt") VALUES ('00000000-0000-4000-8000-000000000002','Recovery drill',now(),now());
-INSERT INTO schedule_attachments (id,"scheduleId",filename,mime,size,content) VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002','drill.pdf','application/pdf',11,decode('255044462d312e370a00ff','hex'));
+INSERT INTO schedule_attachments (id,"scheduleId",filename,mime,size,content) VALUES ('00000000-0000-4000-8000-000000000004','00000000-0000-4000-8000-000000000002','drill.pdf','application/pdf',11,decode('255044462d312e370a00ff','hex'));
 SQL
 # Fingerprint every table, including migration history and both attachment stores.
 fingerprint() {
@@ -22,11 +24,24 @@ FROM pg_tables WHERE schemaname='public' ORDER BY tablename;
 \gexec
 SQL
 }
-fingerprint > /tmp/before.txt
 bash /tmp/backup-database.sh
+psql -X -v ON_ERROR_STOP=1 <<'SQL'
+UPDATE incremental_drill SET amount=2 WHERE label='edit';
+DELETE FROM incremental_drill WHERE label='remove';
+INSERT INTO incremental_drill VALUES ('new',3);
+CREATE TABLE incremental_empty (id integer);
+UPDATE private_files SET content=decode('255044462d312e370a00ff','hex') WHERE id='00000000-0000-4000-8000-000000000001';
+DELETE FROM schedule_attachments WHERE id='00000000-0000-4000-8000-000000000004';
+INSERT INTO schedule_attachments (id,"scheduleId",filename,mime,size,content) VALUES ('00000000-0000-4000-8000-000000000003','00000000-0000-4000-8000-000000000002','drill.pdf','application/pdf',11,decode('255044462d312e370a00ff','hex'));
+SQL
+bash /tmp/backup-database.sh
+bash /tmp/backup-database.sh | tee /tmp/reuse.log
+grep -Fq '"public"."incremental_drill": 4 rows, 0 downloaded' /tmp/reuse.log
+if grep -Eq ', [1-9][0-9]* downloaded$' /tmp/reuse.log; then exit 1; fi
+fingerprint > /tmp/before.txt
 if PGHOST=example-pooler.invalid bash /tmp/backup-database.sh; then exit 1; fi
 if PRIVATE_STORAGE_DRIVER=filesystem bash /tmp/backup-database.sh; then exit 1; fi
-export RESTORE_SNAPSHOT=$(restic snapshots --tag ponte-database --json | sed -n 's/.*"id":"\([0-9a-f]\{64\}\)".*/\1/p')
+export RESTORE_SNAPSHOT=$(restic snapshots --latest 1 --tag ponte-database --json | sed -n 's/.*"id":"\([0-9a-f]\{64\}\)".*/\1/p')
 [[ "$RESTORE_SNAPSHOT" =~ ^[0-9a-f]{64}$ ]]
 # A failed producer must never create a snapshot.
 before=$(restic snapshots --json)

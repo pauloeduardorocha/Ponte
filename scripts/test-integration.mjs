@@ -173,11 +173,13 @@ try {
       'bash',
       'restic',
       'rclone',
+      'python3',
       'diffutils',
       'jq',
     );
     for (const file of [
       'backup-database.sh',
+      'incremental-backup.py',
       'restore-database.sh',
       'test-recovery.sh',
       'rehearse-recovery.sh',

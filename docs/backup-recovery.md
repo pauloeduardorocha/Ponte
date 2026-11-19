@@ -30,10 +30,22 @@ acesso ao substituto. Sem essa senha não é possível recuperar as cópias.
 ## O que está incluído
 
 O script exige `PRIVATE_STORAGE_DRIVER=database`, modo persistente usado pela
-aplicação na Vercel. `pg_dump` inclui todas as tabelas, histórico de migrações,
-funções/triggers, documentos `private_files.content` e anexos
-`schedule_attachments.content`. Os documentos e metadados compartilham o mesmo
-snapshot consistente. Nenhum endpoint/contrato HTTP foi alterado.
+aplicação na Vercel. A cada seis horas, o backup descobre as tabelas de dados
+da aplicação em todos os esquemas de utilizador, incluindo histórico Prisma,
+auditoria, anexos e buffers temporários. Usa um único snapshot do PostgreSQL.
+Na primeira cópia v3 lê todas as linhas. Nas seguintes recebe um identificador
+temporário e um hash SHA-256 por linha, recupera do Drive o conteúdo já conhecido
+e baixa do Neon apenas as versões ausentes. Registra a multiplicidade de linhas
+iguais mesmo em tabelas sem chave primária. Tabelas vazias, novas ou removidas
+e exclusões de linhas ficam refletidas em cada cópia independente.
+
+O pg_dump guarda a estrutura, sequências e objetos geridos por extensões. No
+restauro, as linhas são carregadas antes dos índices e chaves estrangeiras.
+Os formatos anteriores continuam aceitos. Os logs indicam quantas versões foram
+baixadas por tabela. O cálculo dos hashes ainda lê as tabelas no servidor e usa
+CPU; os manifestos e a estrutura também consomem transferência. O processo usa
+memória temporária no runner (1 GiB de /dev/shm no workflow); dimensionar para
+o arquivo SQLite, suas operações temporárias e o dump de estrutura.
 
 Papéis globais, senhas do PostgreSQL, variáveis Vercel, Bird/Stripe/Web Push,
 domínios e conta Google não estão no dump. Recuperá-los do gestor de segredos;
@@ -88,7 +100,7 @@ artifacts GitHub com dumps, tokens ou configurações rclone.
 
 ## Execução fora do GitHub
 
-Linux ou WSL, com PostgreSQL client 18, Restic com `--stdin-from-command` e rclone.
+Linux ou WSL, com PostgreSQL client 18, Python 3, jq, Restic com `--stdin-from-command` e rclone.
 Configurar variáveis por um gestor de segredos/arquivo privado fora do Git.
 `PGHOST`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE=require`,
 `PRIVATE_STORAGE_DRIVER=database`, `RESTIC_PASSWORD` e
@@ -101,11 +113,7 @@ bash scripts/backup-database.sh
 restic snapshots --host ponte --tag ponte-database
 ```
 
-O fluxo usa `restic backup --stdin-from-command -- pg_dump`: uma falha do produtor
-cancela a criação do snapshot. Não substituir por um pipe com `restic --stdin`,
-que pode registrar um dump incompleto como backup. Nenhum dump em claro é escrito
-no disco durante a cópia. `restic check` verifica a estrutura após cada backup;
-fazer também `restic check --read-data` no ensaio mensal para ler todos os blocos.
+O Restic publica o arquivo somente após a exportação completa em memória. A rotina executa `restic check` após cada cópia. No ensaio, `restic check --read-data` verifica também os blocos.
 
 A imagem `scripts/backup.Dockerfile` contém essas ferramentas. Não passar valores
 secretos em argumentos Docker; usar `-e NOME_DA_VARIAVEL` e o ambiente do processo.

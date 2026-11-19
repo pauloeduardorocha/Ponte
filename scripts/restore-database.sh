@@ -21,10 +21,39 @@ export PGCONNECT_TIMEOUT=20
 [[ "$(stat -f -c %T /dev/shm)" == tmpfs ]] || { echo '/dev/shm must be tmpfs.' >&2; exit 1; }
 restore_dir=$(mktemp -d /dev/shm/ponte-restore.XXXXXXXX)
 trap 'rm -rf -- "$restore_dir"' EXIT
-restic restore "$RESTORE_SNAPSHOT" --target "$restore_dir" --include /ponte.dump
-[[ -s "$restore_dir/ponte.dump" ]] || { echo 'Missing database archive.' >&2; exit 1; }
-if ! pg_restore --dbname="$PGDATABASE" --no-owner --no-acl --exit-on-error --single-transaction "$restore_dir/ponte.dump" >"$restore_dir/pg-restore.log" 2>&1; then
-  echo 'pg_restore failed. Inspect the archive in a private isolated environment; source rows are omitted from logs.' >&2
-  exit 1
-fi
+paths=$(restic snapshots "$RESTORE_SNAPSHOT" --host ponte --tag ponte-database --json | jq -er 'if length == 1 then .[0].paths | join(",") else error("Unknown snapshot") end')
+script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+cd "$restore_dir"
+case "$paths" in
+  /ponte.dump)
+    restic restore "$RESTORE_SNAPSHOT" --target . --include /ponte.dump
+    pg_restore --dbname="$PGDATABASE" --no-owner --no-acl --exit-on-error --single-transaction ponte.dump >pg-restore.log 2>&1
+    ;;
+  /ponte-v2.tar|/ponte-v3.tar)
+    restic dump "$RESTORE_SNAPSHOT" "$paths" | tar -xf -
+    [[ -s core.dump ]]
+    export PGCLIENTENCODING=UTF8 PGDATESTYLE=ISO PGOPTIONS="-c timezone=UTC -c intervalstyle=postgres"
+    # COMMIT is emitted only after all three pg_restore sections and COPYs succeed.
+    (
+      set -e
+      echo BEGIN\;
+      pg_restore -f - --no-owner --no-acl --section=pre-data core.dump || exit 1
+      pg_restore -f - --no-owner --no-acl --section=data core.dump || exit 1
+      if [[ "$paths" == /ponte-v3.tar ]]; then
+        python3 "$script_dir/incremental-backup.py" restore || exit 1
+      else
+        [[ -d rows ]] || exit 1
+        shopt -s nullglob
+        for table in private_files schedule_attachments; do
+          echo "COPY public.$table FROM stdin;"
+          for row in rows/"$table"-*; do cat "$row" || exit 1; done
+          printf '%s\n' '\.'
+        done
+      fi
+      pg_restore -f - --no-owner --no-acl --section=post-data core.dump || exit 1
+      echo COMMIT\;
+    ) | psql -Xq -v ON_ERROR_STOP=1 >pg-restore.log 2>&1
+    ;;
+  *) echo 'Unknown backup format.' >&2; exit 1 ;;
+esac
 echo 'Database restored. Apply restricted runtime privileges before starting the API.'
