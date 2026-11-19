@@ -25,16 +25,16 @@ snapshots=$(restic snapshots --host ponte --tag ponte-database --json "$SNAPSHOT
 RESTORE_SNAPSHOT=$(printf '%s' "$snapshots" | jq -er 'if length == 1 and (.[0].paths == ["/ponte.dump"] or .[0].paths == ["/ponte-v2.tar"] or .[0].paths == ["/ponte-v3.tar"]) and .[0].hostname == "ponte" and ((.[0].tags // []) | index("ponte-database") != null) then .[0].id else error("Snapshot must identify exactly one Ponte database backup") end')
 export RESTORE_SNAPSHOT
 restic check
-docker-entrypoint.sh postgres -p "$PGPORT" >/tmp/ponte-recovery-postgres.log 2>&1 &
-server_pid=$!
-trap 'kill "$server_pid" 2>/dev/null || true; wait "$server_pid" 2>/dev/null || true' EXIT
-ready=false
-for attempt in {1..60}; do
-  if pg_isready -q; then ready=true; break; fi
-  kill -0 "$server_pid" 2>/dev/null || { echo 'Disposable PostgreSQL failed to start.' >&2; exit 1; }
-  sleep 1
-done
-[[ "$ready" == true ]] || { echo 'Disposable PostgreSQL did not become ready.' >&2; exit 1; }
+# Bootstrap the isolated cluster directly. This works both in a fresh recovery
+# container and in CI where another postmaster already serves the source DB.
+install -d -m 700 -o postgres -g postgres "$PGDATA"
+printf '%s\n' "$PGPASSWORD" | su -s /bin/sh postgres -c 'exec initdb -D "$PGDATA" -U church_restore --pwfile=- --auth=scram-sha-256' >/dev/null
+su -s /bin/sh postgres -c 'exec pg_ctl -D "$PGDATA" -l "$PGDATA/server.log" -o "-p 55432 -h 127.0.0.1 -k $PGDATA" -w start'
+stop_cluster() {
+  su -s /bin/sh postgres -c 'pg_ctl -D "$PGDATA" -m fast -w stop'
+}
+trap stop_cluster EXIT
+createdb --maintenance-db=postgres "$PGDATABASE"
 bash "$script_dir/restore-database.sh"
 # Avoid printing source rows or attachment names, including on a failed check.
 if ! psql -X -v ON_ERROR_STOP=1 >/tmp/ponte-recovery-validation.log 2>&1 <<'SQL'
