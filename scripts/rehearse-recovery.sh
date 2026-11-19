@@ -28,7 +28,12 @@ restic check
 # Bootstrap the isolated cluster directly. This works both in a fresh recovery
 # container and in CI where another postmaster already serves the source DB.
 install -d -m 700 -o postgres -g postgres "$PGDATA"
-printf '%s\n' "$PGPASSWORD" | su -s /bin/sh postgres -c 'exec initdb -D "$PGDATA" -U church_restore --pwfile=- --auth=scram-sha-256' >/dev/null
+pwfile=$(mktemp /dev/shm/ponte-initdb.XXXXXXXX)
+trap 'rm -f -- "$pwfile"' EXIT
+printf '%s\n' "$PGPASSWORD" >"$pwfile"
+chown postgres "$pwfile"
+su -s /bin/sh postgres -c 'exec initdb -D "$PGDATA" -U church_restore --pwfile="$1" --auth=scram-sha-256' sh "$pwfile" >/dev/null
+rm -f -- "$pwfile"
 su -s /bin/sh postgres -c 'exec pg_ctl -D "$PGDATA" -l "$PGDATA/server.log" -o "-p 55432 -h 127.0.0.1 -k $PGDATA" -w start'
 stop_cluster() {
   su -s /bin/sh postgres -c 'pg_ctl -D "$PGDATA" -m fast -w stop'
