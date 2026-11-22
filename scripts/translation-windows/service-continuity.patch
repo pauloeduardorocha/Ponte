@@ -1,0 +1,862 @@
+diff --git a/audience.html b/audience.html
+index 69190fb..2e79a21 100644
+--- a/audience.html
++++ b/audience.html
+@@ -1,6 +1,7 @@
+ <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A Ponte</title><link rel="stylesheet" href="/style.css"></head>
+ <body><main class="listener listener-minimal"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><strong>A Ponte</strong></header>
+ <div id="broadcast-notice" class="broadcast-notice" role="status" hidden><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></svg><strong>Aguardando a transmissão</strong><p>Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.</p></div>
++<p id="reconnect-portal" hidden>O computador da tradução não respondeu. <a href="https://igrejaponte.com/listen-translation">Voltar ao Ponte e reconectar à tradução</a></p>
+ <div id="listener-channel" class="listener-channel-grid" data-count="0" role="group" aria-label="Canais de tradução"></div>
+ <audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio>
+ <div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução" hidden></div>
+diff --git a/audience.js b/audience.js
+index a424235..4f98dc6 100644
+--- a/audience.js
++++ b/audience.js
+@@ -5,6 +5,9 @@
+     notice = document.getElementById("channel-notice");
+   let connection,
+     retry,
++    connectTimeout,
++    watchdog,
++    lastResponse,
+     closed = false,
+     channels = [],
+     selected = null,
+@@ -20,7 +23,7 @@
+       tile.dataset.playback = current ? playback.phase : "idle";
+       tile.setAttribute("aria-pressed", String(channel.id === selected));
+       const label =
+-        (current && playback.active ? "Pausar " : "Ouvir ") +
++        (current && playback.wanted ? "Pausar " : "Ouvir ") +
+         channel.nativeName;
+       tile.setAttribute("aria-label", label);
+       tile.title = label;
+@@ -123,7 +126,23 @@
+     connection = new WebSocket(
+       `${location.protocol === "https:" ? "wss:" : "ws:"}//${location.host}/audience-ws/${room}`,
+     );
++    connectTimeout = setTimeout(() => {
++      document.getElementById("reconnect-portal").hidden = false;
++      connection.close();
++    }, 8000);
++    connection.onopen = () => {
++      clearTimeout(connectTimeout);
++      lastResponse = Date.now();
++      watchdog = setInterval(() => {
++        if (Date.now() - lastResponse > 45000) {
++          document.getElementById("reconnect-portal").hidden = false;
++          connection.close();
++        }
++      }, 15000);
++      document.getElementById("reconnect-portal").hidden = true;
++    };
+     connection.onmessage = (event) => {
++      lastResponse = Date.now();
+       if (typeof event.data !== "string") return;
+       let message;
+       try {
+@@ -180,6 +199,9 @@
+       showText();
+     };
+     connection.onclose = () => {
++      clearInterval(watchdog);
++      clearTimeout(connectTimeout);
++      document.getElementById("reconnect-portal").hidden = false;
+       status.textContent = "Texto desconectado. Reconectando…";
+       if (!closed) retry = setTimeout(connect, 2500);
+     };
+@@ -187,6 +209,7 @@
+   }
+   window.addEventListener("pagehide", () => {
+     closed = true;
++    clearTimeout(connectTimeout);
+     clearTimeout(retry);
+     connection?.close();
+   });
+diff --git a/audience.test.cjs b/audience.test.cjs
+index 79d313f..d21b889 100644
+--- a/audience.test.cjs
++++ b/audience.test.cjs
+@@ -36,6 +36,7 @@ function player(play = async () => {}) {
+     },
+     location: { pathname: "/listen/room" },
+     navigator,
++    setTimeout, clearTimeout,
+     window,
+   });
+   let state;
+@@ -134,15 +135,30 @@ test("another flag replaces the audio immediately and closing that channel stops
+   p.actions.play();
+   assert.equal(p.audio.src, "");
+ });
+-test("a waiting channel never requests audio until live and tapped", async () => {
++test("a tap on a waiting channel resumes audio as soon as it goes live", async () => {
+   const p = player();
+   p.player.activateChannel("es", "Español", "idle");
+   assert.equal(p.audio.src, "");
+   p.player.updateState("live");
+-  assert.equal(p.audio.src, "");
+-  p.player.activateChannel("es", "Español", "live");
++  assert.equal(p.audio.src, "/audio/room.mp3?channel=es");
+   await Promise.resolve();
+   assert.equal(p.audio.src, "/audio/room.mp3?channel=es");
+   p.player.updateState("idle");
+   assert.equal(p.audio.src, "");
+ });
++
++test("interrupted audio retries automatically, manual pause cancels the retry", async t => {
++  t.mock.timers.enable({ apis: ["setTimeout"] });
++  let attempts = 0;
++  const p = player(async () => { attempts++; });
++  p.player.activateChannel("en", "English", "live");
++  await Promise.resolve();
++  p.handlers.error();
++  t.mock.timers.tick(3000);
++  await Promise.resolve();
++  assert.equal(attempts, 2);
++  p.handlers.ended();
++  p.player.pause();
++  t.mock.timers.tick(10000);
++  assert.equal(attempts, 2);
++});
+diff --git a/bridge.test.cjs b/bridge.test.cjs
+index b4c90d6..d2bb8fa 100644
+--- a/bridge.test.cjs
++++ b/bridge.test.cjs
+@@ -93,5 +93,10 @@ test('diagnostics rotate readable timestamped records and tolerate unavailable s
+   const entry = JSON.parse(fs.readFileSync(file, 'utf8'));
+   assert.equal(entry.event, 'gemini.failure');
+   assert.ok(Date.parse(entry.time));
++  fs.writeFileSync(file, Buffer.alloc(1024 * 1024 - 1));
++  createDiagnostics(dir)('presenter.recovery-start', { seconds: 600 });
++  assert.equal(fs.statSync(file + '.1').size, 1024 * 1024 - 1);
++  assert.ok(fs.statSync(file).size < 1024);
++  assert.deepEqual(fs.readdirSync(dir).sort(), ['traducao.txt', 'traducao.txt.1']);
+   assert.doesNotThrow(() => createDiagnostics(file)('desktop.start'));
+ });
+diff --git a/channels-smoke.cjs b/channels-smoke.cjs
+index afee10a..70d6535 100644
+--- a/channels-smoke.cjs
++++ b/channels-smoke.cjs
+@@ -239,7 +239,7 @@ app.whenReady().then(async () => {
+     assert.equal(
+       await run(
+         listener,
+-        "document.querySelectorAll('h1,h2,p:not(.broadcast-notice p),footer,details,.listener-channel-state').length",
++        "document.querySelectorAll('h1,h2,p:not(.broadcast-notice p):not([hidden]),footer,details,.listener-channel-state').length",
+       ),
+       0,
+     );
+@@ -268,6 +268,11 @@ app.whenReady().then(async () => {
+       "document.getElementById('start').textContent==='Tentar publicar'",
+     );
+     assert.equal(bridges[0].starts, 1);
++    await run(host, "stream.getAudioTracks()[0].stop(); stream.getAudioTracks()[0].dispatchEvent(new Event('ended'))");
++    await until(host, "!document.getElementById('microphone-notice').hidden && document.activeElement.id==='microphone'");
++    await run(host, "document.getElementById('refresh').click()");
++    await until(host, "document.getElementById('microphone-notice').hidden && stream.active");
++    assert.equal(bridges[0].starts, 1);
+     failPublication = false;
+     await run(host, "document.getElementById('start').click()");
+     await until(
+@@ -426,6 +431,10 @@ app.whenReady().then(async () => {
+       listener,
+       "!document.getElementById('broadcast-notice').hidden",
+     );
++    await server.close();
++    server = null;
++    await until(listener, "!document.getElementById('reconnect-portal').hidden");
++    assert.equal(await run(listener, "document.querySelector('#reconnect-portal a').href"), "https://igrejaponte.com/listen-translation");
+     assert.equal(errors.length, 0, JSON.stringify(errors));
+     console.log(
+       "PASS: ordered setup, three stable columns, inactive panels, one-action start/publish, retry without restart, independently decoded QR, native audio switching, and stop.",
+diff --git a/diagnostics.cjs b/diagnostics.cjs
+index e285558..a32703f 100644
+--- a/diagnostics.cjs
++++ b/diagnostics.cjs
+@@ -6,10 +6,13 @@ function createDiagnostics(directory) {
+   const file = path.join(directory, 'traducao.txt');
+   return (event, fields = {}) => {
+     try {
++      const line = JSON.stringify({ time: new Date().toISOString(), event, ...fields }) + '\n';
++      const bytes = Buffer.byteLength(line);
++      if (bytes > 1024 * 1024) return;
+       fs.mkdirSync(directory, { recursive: true });
+-      if ((fs.statSync(file, { throwIfNoEntry: false })?.size || 0) >= 1024 * 1024)
++      if ((fs.statSync(file, { throwIfNoEntry: false })?.size || 0) + bytes > 1024 * 1024)
+         fs.renameSync(file, file + '.1');
+-      fs.appendFileSync(file, JSON.stringify({ time: new Date().toISOString(), event, ...fields }) + '\n');
++      fs.appendFileSync(file, line);
+     } catch { /* A storage failure must not interrupt capture. */ }
+   };
+ }
+diff --git a/index.html b/index.html
+index 68370e3..e230d28 100644
+--- a/index.html
++++ b/index.html
+@@ -6,7 +6,7 @@
+ <section class="settings setup" aria-label="Configuração da transmissão">
+ <label for="key">1. Chave Gemini API</label><input id="key" type="password" autocomplete="off" aria-required="true" placeholder="Cole sua chave do Google AI Studio"><small>Usada para gerar a tradução. Fica somente na memória durante o uso.</small>
+ <label for="ponte-config">2. Ligação gerada pelo administrador</label><input id="ponte-config" type="password" autocomplete="off" aria-required="true" placeholder="Cole a ligação gerada na administração do Ponte"><small>Autoriza a publicação da transmissão no Ponte.</small>
+-<label for="microphone">3. Microfone</label><div class="microphone-row"><select id="microphone"><option value="">Padrão do sistema</option></select><button id="refresh">Atualizar microfones</button></div>
++<p id="microphone-notice" role="alert" hidden></p><label for="microphone">3. Microfone</label><div class="microphone-row"><select id="microphone"><option value="">Padrão do sistema</option></select><button id="refresh">Atualizar microfones</button></div>
+ <div class="service-controls"><button id="start" disabled>Iniciar tradução e publicar</button><button id="stop" disabled>Parar transmissão</button><span id="status" role="status">Conectando ao aplicativo…</span></div><p id="publication-status" role="status">A publicação será feita ao iniciar a tradução.</p>
+ </section>
+ <section class="channels-section" aria-labelledby="channels-title"><div class="heading"><h2 id="channels-title">Canais de tradução</h2><span id="channel-count">1 de 3 abertos</span></div><p class="channel-help">O idioma falado é detectado automaticamente. Abra até três canais e acompanhe cada tradução abaixo. Use fones para ouvir neste computador.</p><div id="channel-list" class="channel-grid" role="list" aria-label="Canais de tradução"></div><p id="channel-notice" role="status"></p></section>
+diff --git a/main.cjs b/main.cjs
+index 5b53aca..d2459da 100644
+--- a/main.cjs
++++ b/main.cjs
+@@ -1,4 +1,4 @@
+-const { app, BrowserWindow, session, dialog, shell, Menu } = require('electron');
++const { app, BrowserWindow, session, dialog, shell, Menu, powerMonitor } = require('electron');
+ const { createTranslationServer } = require('./server.cjs');
+ const path = require('node:path');
+ const { platform } = require('node:process');
+@@ -33,9 +33,20 @@ app.whenReady().then(async () => {
+         { label: 'Versão ' + version, enabled: false },
+       ] },
+     ]));
++    let closing = false;
++    const suspend = () => { log('desktop.suspend'); win.close(); };
++    powerMonitor.on('suspend', suspend);
++    win.on('close', event => {
++      event.preventDefault();
++      if (closing) return;
++      closing = true;
++      powerMonitor.removeListener('suspend', suspend);
++      log('desktop.close');
++      win.hide();
++      instance.close().finally(() => { win.destroy(); app.quit(); });
++    });
+     await win.loadURL(info.presenterUrl);
+     void checkUpdates();
+-    win.on('close', event => { event.preventDefault(); win.hide(); instance.close().finally(() => { win.destroy(); app.quit(); }); });
+   } catch (error) { dialog.showErrorBox('Não foi possível iniciar', error.code === 'EADDRINUSE' ? 'A porta 3210 já está em uso. Feche a outra instância do aplicativo.' : error.message); await instance.close(); app.quit(); }
+ });
+ app.on('window-all-closed', () => app.quit());
+diff --git a/package-lock.json b/package-lock.json
+index a3eeb28..3c2fa0f 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.4",
++  "version": "0.7.5",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.7.4",
++      "version": "0.7.5",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/package.json b/package.json
+index 7ccb7ea..ce1bb0a 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.4",
++  "version": "0.7.5",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+diff --git a/ponte-publisher.cjs b/ponte-publisher.cjs
+index 303dd67..44929ef 100644
+--- a/ponte-publisher.cjs
++++ b/ponte-publisher.cjs
+@@ -1,10 +1,10 @@
+ const { randomUUID } = require('node:crypto');
+
+-const retryDelays = [1000, 2000, 4000, 8000, 16000, 30000, 60000];
++const retryDelays = [3000, 6000, 12000, 24000, 48000, 60000];
+
+ class PontePublisher {
+   retryStep = 0;
+-  constructor(emit, request = fetch, log = () => {}) { this.log = log; this.emit = emit; this.request = request; this.sessionId = randomUUID(); this.generation = 0; }
++  constructor(emit, request = fetch, log = () => {}, currentUrl = url => url) { this.currentUrl = currentUrl; this.log = log; this.emit = emit; this.request = request; this.sessionId = randomUUID(); this.generation = 0; }
+   configure(value) {
+     if (this.published || this.busy) throw new Error('Retire a publicação antes de alterar a ligação.');
+     let configuration;
+@@ -22,6 +22,7 @@ class PontePublisher {
+   }
+   async call(action, body) {
+     if (!this.configuration) throw new Error('Conecte o aplicativo ao Ponte primeiro.');
++    if (action === "publish") body = { audienceUrl: this.currentUrl(body.audienceUrl) };
+     const response = await this.request(`${this.configuration.apiUrl}/live-translation/${action}`, {
+       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.configuration.token}` },
+       body: JSON.stringify({ sessionId: this.sessionId, ...body }), signal: AbortSignal.timeout(8000), redirect: 'error'
+diff --git a/ponte-publisher.test.cjs b/ponte-publisher.test.cjs
+index 99160c9..d986c59 100644
+--- a/ponte-publisher.test.cjs
++++ b/ponte-publisher.test.cjs
+@@ -71,7 +71,7 @@ test('republication keeps the minute interval beyond 250 attempts and wakes on n
+   publisher.configure(JSON.stringify({ apiUrl: 'https://ponte.example', token: 'b'.repeat(64) }));
+   await assert.rejects(publisher.publish('http://192.168.1.2'));
+   const advance = async ms => { t.mock.timers.tick(ms); await new Promise(setImmediate); };
+-  const delays = [1, 2, 4, 8, 16, 30, ...Array(246).fill(60)];
++  const delays = [3, 6, 12, 24, 48, ...Array(246).fill(60)];
+   for (const seconds of delays) {
+     const before = calls;
+     await advance(seconds * 1000 - 1);
+@@ -88,9 +88,9 @@ test('republication keeps the minute interval beyond 250 attempts and wakes on n
+   assert.equal(publisher.published, true);
+   available = false;
+   await advance(30000); // renewal fails
+-  await advance(999);
++  await advance(2999);
+   assert.equal(calls, before + 2);
+-  await advance(1); // new outage starts again at one second
++  await advance(1); // new outage starts again at three seconds
+   assert.equal(calls, before + 3);
+   await publisher.unpublish();
+   const stopped = calls;
+diff --git a/radio.js b/radio.js
+index 408eb3d..56f0e1c 100644
+--- a/radio.js
++++ b/radio.js
+@@ -5,6 +5,8 @@
+     observers = new Set();
+   let generation = 0,
+     active = false,
++    wanted = false,
++    retryTimer,
+     channelId = null,
+     channelName = "",
+     state = "idle",
+@@ -21,9 +23,10 @@
+   function emit(message) {
+     if (message) status.textContent = message;
+     for (const observer of observers)
+-      observer({ channelId, active, phase, state });
++      observer({ channelId, active, wanted, phase, state });
+   }
+   function release() {
++    clearTimeout(retryTimer);
+     generation++;
+     active = false;
+     audio.pause();
+@@ -32,6 +35,7 @@
+     mediaState("paused");
+   }
+   function pause() {
++    wanted = false;
+     release();
+     phase = "paused";
+     emit(
+@@ -41,6 +45,8 @@
+     );
+   }
+   async function start() {
++    wanted = Boolean(channelId);
++    clearTimeout(retryTimer);
+     if (!channelId || state !== "live") {
+       phase = "waiting";
+       emit("Este canal ainda não está ao vivo. Aguarde o apresentador.");
+@@ -55,9 +61,14 @@
+     audio.load();
+     try {
+       await audio.play();
+-    } catch {
++    } catch (error) {
+       if (attempt !== generation) return;
+       active = false;
++      if (error?.name === "NetworkError" || audio.error?.code === 2) {
++        retryPlayback();
++        return;
++      }
++      wanted = false;
+       phase = "error";
+       mediaState("none");
+       emit(
+@@ -70,6 +81,7 @@
+       updateState(nextState);
+       return;
+     }
++    wanted = false;
+     release();
+     channelId = id;
+     channelName = name || "";
+@@ -93,7 +105,7 @@
+     );
+   }
+   function activateChannel(id, name, nextState) {
+-    if (id === channelId && active) {
++    if (id === channelId && wanted) {
+       pause();
+       return;
+     }
+@@ -101,12 +113,14 @@
+     void start();
+   }
+   function updateState(next) {
++    const wasLive = state === "live";
+     state = next || "idle";
+     if (state !== "live" && active) {
+       release();
+       phase = state === "error" ? "error" : "waiting";
+       emit("O canal não está ao vivo. Escolha outro ou aguarde.");
+-    } else emit();
++    } else if (!wasLive && state === "live" && wanted) void start();
++    else emit();
+   }
+   audio.addEventListener("playing", () => {
+     if (!channelId || !active) return;
+@@ -123,6 +137,13 @@
+       emit("Aguardando áudio do canal " + channelName + "…");
+     }
+   });
++  function retryPlayback() {
++    clearTimeout(retryTimer);
++    if (!wanted || state !== "live") return;
++    phase = "connecting";
++    emit("Reconectando o áudio.");
++    retryTimer = setTimeout(() => { if (wanted && state === "live") void start(); }, 3000);
++  }
+   function unavailable(message) {
+     if (!channelId || !active) return;
+     generation++;
+@@ -130,6 +151,7 @@
+     phase = "error";
+     mediaState("none");
+     emit(message);
++    retryPlayback();
+   }
+   audio.addEventListener("ended", () =>
+     unavailable(
+diff --git a/renderer.js b/renderer.js
+index a9393f1..0c1c176 100644
+--- a/renderer.js
++++ b/renderer.js
+@@ -7,6 +7,8 @@ let context,
+   generation = 0,
+   active = false,
+   audioWired = false,
++  microphoneLost = false,
++  replacingMicrophone = false,
+   connected = false;
+ let published = false,
+   publishing = false,
+@@ -57,8 +59,9 @@ function renderActions() {
+     publishing ||
+     (active && (published || !translationReady));
+   $("stop").disabled = !active;
+-  $("microphone").disabled = active;
+-  $("refresh").disabled = active;
++  $("microphone").disabled = replacingMicrophone || (active && !microphoneLost);
++  $("refresh").disabled = $("microphone").disabled;
++  $("refresh").textContent = microphoneLost ? "Usar este microfone" : "Atualizar microfones";
+   $("key").disabled = active;
+   $("ponte-config").disabled = active;
+ }
+@@ -71,6 +74,7 @@ function renderChannels() {
+     if (!slots.includes(channel.id)) slots[slots.indexOf(null)] = channel.id;
+   if (monitorId && !channels.some((channel) => channel.id === monitorId)) {
+     monitorId = null;
++    window.translator.monitor(null);
+     silence();
+   }
+   const scroll = new Map(
+@@ -134,6 +138,7 @@ function renderChannels() {
+         () => {
+           silence();
+           monitorId = monitorId === channel.id ? null : channel.id;
++          window.translator.monitor(monitorId);
+           renderChannels();
+         },
+         "Ouvir canal " + channel.name + " neste computador",
+@@ -221,10 +226,14 @@ $("copy-link").onclick = async () => {
+ };
+ function stop(message = "Transmissão parada") {
+   generation++;
++  microphoneLost = false;
++  replacingMicrophone = false;
++  $("microphone-notice").hidden = true;
+   active = false;
+   audioWired = false;
+   published = false;
+   monitorId = null;
++  window.translator.monitor(null);
+   window.translator.stop();
+   capture?.disconnect();
+   source?.disconnect();
+@@ -249,7 +258,75 @@ async function microphones() {
+   if ([...$("microphone").options].some((option) => option.value === selected))
+     $("microphone").value = selected;
+ }
++function acquireMicrophone() {
++  return navigator.mediaDevices.getUserMedia({
++    audio: {
++        deviceId: $("microphone").value
++          ? { exact: $("microphone").value }
++          : undefined,
++        channelCount: 1,
++        echoCancellation: true,
++        noiseSuppression: true,
++      },
++    });
++}
++function lostMicrophone(input) {
++  if (!active || stream !== input || microphoneLost) return;
++  microphoneLost = true;
++  window.translator.microphone(true);
++  $("microphone-notice").textContent = "Microfone desconectado. Escolha outro dispositivo e clique em Usar este microfone. Os canais continuam abertos.";
++  $("microphone-notice").hidden = false;
++  renderActions();
++  $("microphone").focus();
++  void microphones().catch(() => {});
++}
++function watchMicrophone(input) {
++  const track = input.getAudioTracks()[0];
++  track.addEventListener("ended", () => lostMicrophone(input), { once: true });
++  if (track.readyState === "ended") lostMicrophone(input);
++}
++navigator.mediaDevices.addEventListener("devicechange", async () => {
++  const input = stream;
++  if (!active || !input) return;
++  try {
++    const devices = await navigator.mediaDevices.enumerateDevices();
++    const id = input.getAudioTracks()[0]?.getSettings().deviceId;
++    if (id && !devices.some(d => d.kind === "audioinput" && d.deviceId === id)) lostMicrophone(input);
++    if (microphoneLost) await microphones();
++  } catch { /* The track also signals loss through ended. */ }
++});
++async function replaceMicrophone() {
++  const token = generation;
++  let input;
++  replacingMicrophone = true;
++  renderActions();
++  try {
++    input = await acquireMicrophone();
++    if (generation !== token) return;
++    const next = context.createMediaStreamSource(input);
++    if (audioWired) next.connect(capture);
++    source?.disconnect();
++    stream?.getTracks().forEach(track => track.stop());
++    source = next;
++    stream = input;
++    input = null;
++    microphoneLost = false;
++    window.translator.microphone(false);
++    $("microphone-notice").hidden = true;
++    watchMicrophone(stream);
++  } catch {
++    if (generation === token)
++      $("microphone-notice").textContent = "Não foi possível usar este microfone. Escolha outro e tente novamente.";
++  } finally {
++    input?.getTracks().forEach(track => track.stop());
++    if (generation === token) {
++      replacingMicrophone = false;
++      renderActions();
++    }
++  }
++}
+ $("refresh").onclick = async () => {
++  if (microphoneLost) return replaceMicrophone();
+   try {
+     const permission = await navigator.mediaDevices.getUserMedia({
+       audio: true,
+@@ -289,16 +366,7 @@ $("start").onclick = async () => {
+   renderChannels();
+   $("status").textContent = "Preparando microfone e canais…";
+   try {
+-    const acquired = await navigator.mediaDevices.getUserMedia({
+-      audio: {
+-        deviceId: $("microphone").value
+-          ? { exact: $("microphone").value }
+-          : undefined,
+-        channelCount: 1,
+-        echoCancellation: true,
+-        noiseSuppression: true,
+-      },
+-    });
++    const acquired = await acquireMicrophone();
+     if (token !== generation) {
+       acquired.getTracks().forEach((track) => track.stop());
+       return;
+@@ -315,6 +383,7 @@ $("start").onclick = async () => {
+     if (token !== generation) return;
+     source = context.createMediaStreamSource(stream);
+     capture = new AudioWorkletNode(context, "capture");
++    watchMicrophone(stream);
+     capture.port.onmessage = (event) => {
+       if (active && token === generation)
+         window.translator.audio(new Uint8Array(event.data));
+diff --git a/server.cjs b/server.cjs
+index 644adbe..0bcc49a 100644
+--- a/server.cjs
++++ b/server.cjs
+@@ -18,11 +18,29 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+   const audience = new Set();
+   const send = (client, data) => {
+     if (client.readyState !== WebSocket.OPEN) return;
+-    if (client.bufferedAmount > 1024 * 1024) { client.close(1013, 'Connection too slow'); return; }
++    if (client === presenter) {
++      if (client.bufferedAmount >= 128000 && !client.shedding) {
++        client.shedding = true;
++        log('presenter.preview-paused');
++      } else if (client.shedding && client.bufferedAmount < 32000) {
++        client.shedding = false;
++        log('presenter.preview-resumed');
++      }
++      if (client.shedding && (data.content || data.viewers !== undefined && !data.authenticated)) return;
++    } else if (client.bufferedAmount > 1024 * 1024) { client.close(1013, 'Connection too slow'); return; }
+     client.send(JSON.stringify(data));
+   };
+   const counts = () => { if (presenter) send(presenter, { viewers: audience.size }); };
+-  const publisher = new PontePublisher(message => { if (presenter) send(presenter, message); }, fetch, log);
++  const publisher = new PontePublisher(message => { if (presenter) send(presenter, message); }, fetch, log, previous => {
++    const links = audienceLinks();
++    const current = links.includes(previous) ? previous : selectAudienceUrl(links, networkInterfaces());
++    if (audienceUrl !== current) {
++      audienceUrl = current;
++      if (presenter) send(presenter, { audienceUrl });
++    }
++    if (!current) throw Error('Aguardando a rede local da igreja.');
++    return current;
++  });
+   const selectedSnapshot = client => {
+     const channel = channels.channels.get(client.channelId);
+     return { selectedChannel: channel?.id ?? null, channelId: channel?.id ?? null, state: channel?.state ?? 'idle', snapshot: channel?.transcript ?? '', reset: true };
+@@ -42,7 +60,6 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+     },
+     onError: (channel, error) => { if (presenter) send(presenter, { channelError: channel.name + ': ' + error, errorChannelId: channel.id }); },
+     onMessage: (channel, message) => {
+-      if (presenter) send(presenter, { ...message, channelId: channel.id });
+       const packets = [], content = message.content;
+       let publicContent;
+       if (content) {
+@@ -64,6 +81,11 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       }
+       const data = { ...message, channelId: channel.id, state: channel.state };
+       if (publicContent) data.content = publicContent;
++      if (presenter) {
++        const includeAudio = presenter.monitorChannel === undefined || presenter.monitorChannel === channel.id;
++        const preview = content && !includeAudio ? { ...message, content: publicContent } : message;
++        send(presenter, { ...preview, channelId: channel.id });
++      }
+       for (const client of audience) {
+         if (client.channelId !== channel.id) continue;
+         send(client, data);
+@@ -132,12 +154,18 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+         log('presenter.disconnected', { code });
+         presenter = null;
+         const stopAbandonedSession = () => { autoPublish = false; serviceGeneration++; channels.stop(); };
+-        if (!closing && client.canResume && channels.running)
+-          presenterTimeout = setTimeout(stopAbandonedSession, 30000);
+-        else if (!closing) stopAbandonedSession();
++        if (!closing && client.canResume && channels.running) {
++          log('presenter.recovery-start', { seconds: 600 });
++          presenterTimeout = setTimeout(() => {
++            presenterTimeout = undefined;
++            log('presenter.recovery-expired');
++            stopAbandonedSession();
++          }, 600000);
++        } else if (!closing) stopAbandonedSession();
+       }
+     });
+     client.on('message', (raw, binary) => {
++      client.isAlive = true;
+       if (binary) { if (authenticated && presenter === client && channels.running) channels.audio(raw); return; }
+       let message; try { message = JSON.parse(raw.toString()); } catch { client.close(1008); return; }
+       if (!message || typeof message !== 'object') { client.close(1008); return; }
+@@ -145,9 +173,28 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+         const token = Buffer.from(typeof message.token === 'string' ? message.token : '');
+         if (token.length !== presenterToken.length || !timingSafeEqual(token, Buffer.from(presenterToken))) { client.close(1008, 'Access denied'); return; }
+         if (presenter) { client.close(1013, 'Presenter connected'); return; }
+-        clearTimeout(timeout); clearTimeout(presenterTimeout); client.canResume = message.canResume === true; authenticated = true; presenter = client; log('presenter.connected');
++        clearTimeout(timeout);
++        if (presenterTimeout) {
++          clearTimeout(presenterTimeout);
++          presenterTimeout = undefined;
++          log('presenter.recovered');
++        }
++        presenter = client;
++        client.monitorChannel = message.monitorChannel;
++        client.canResume = message.canResume === true; authenticated = true; log('presenter.connected');
+         send(client, { authenticated: true, publication: { published: Boolean(publisher.published), publishing }, links: audienceLinks(), audienceUrl, viewers: audience.size, channels: channels.list(), running: channels.running, state: channels.state }); return;
+       }
++      if (message.action === 'monitor') {
++        client.monitorChannel = channels.channels.has(message.channelId) ? message.channelId : null;
++        return;
++      }
++      if (message.action === 'microphone') {
++        if (typeof message.lost === 'boolean' && message.lost !== client.microphoneLost) {
++          client.microphoneLost = message.lost;
++          log(message.lost ? 'microphone.lost' : 'microphone.restored');
++        }
++        return;
++      }
+       if (message.action === 'network-online') { publisher.retryNow?.(); return; }
+       if (message.action === 'start-service') { void startService(client, message); return; }
+       if (message.action === 'publish-service') { if (channels.state === 'live') void publishService(); return; }
+@@ -204,7 +251,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       channels.start(message.key.trim());
+     } catch (error) { autoPublish = false; if (presenter === client) send(client, { serviceError: error.message }); }
+   }
+-  const heartbeat = setInterval(() => { for (const client of wss.clients) { if (!client.isAlive) { if (client === presenter) log('presenter.heartbeat-timeout'); client.terminate(); } else { client.isAlive = false; client.ping(); } } }, 15000);
++  const heartbeat = setInterval(() => { for (const client of wss.clients) { if (!client.isAlive) { if (client === presenter) log('presenter.heartbeat-timeout'); client.terminate(); } else { client.isAlive = false; client.ping(); if (audience.has(client)) send(client, { heartbeat: true }); } } }, 15000);
+   function audienceLinks() {
+     const actualPort = server.address().port;
+     const ips = Object.values(networkInterfaces()).flat().filter(item => item && item.family === 'IPv4' && !item.internal).map(item => item.address);
+diff --git a/server.test.cjs b/server.test.cjs
+index c12f290..5b04c6e 100644
+--- a/server.test.cjs
++++ b/server.test.cjs
+@@ -101,12 +101,15 @@ test('only a configured PWA origin can connect across origins, and only to the a
+
+ test('presenter resumes the same running bridge after losing its local socket', { timeout: 5000 }, async t => {
+   let starts = 0;
++  const logs = [];
++  const { EventEmitter } = require('node:events');
++  const events = new EventEmitter();
+   class Bridge {
+     constructor(emit) { this.emit = emit; }
+     start() { starts++; this.emit({ ready: true }); }
+     stop() {}
+   }
+-  const instance = createTranslationServer({ port: 0, host: '127.0.0.1', Bridge });
++  const instance = createTranslationServer({ port: 0, host: '127.0.0.1', Bridge, log: (event, metadata) => { logs.push(event); events.emit(event, metadata); } });
+   t.after(() => instance.close());
+   const url = new URL((await instance.listen()).presenterUrl);
+   const connect = async () => {
+@@ -120,12 +123,65 @@ test('presenter resumes the same running bridge after losing its local socket',
+   const first = await connect();
+   first.socket.send(JSON.stringify({ action: 'start', key: 'synthetic' }));
+   await first.next(message => message.ready);
++  t.mock.timers.enable({ apis: ['setTimeout'] });
++  const recovering = once(events, 'presenter.recovery-start');
+   first.socket.terminate();
+-  await once(first.socket, 'close');
++  assert.equal((await recovering)[0].seconds, 600);
++  t.mock.timers.tick(599999);
+   const second = await connect();
+   assert.equal(second.state.running, true);
+   assert.equal(second.state.state, 'live');
+   assert.equal(starts, 1);
+-  second.socket.send(JSON.stringify({ action: 'stop' }));
+-  await second.next(message => message.running === false);
++  assert.ok(logs.includes('presenter.recovered'));
++  const again = once(events, 'presenter.recovery-start');
++  second.socket.terminate();
++  await again;
++  t.mock.timers.tick(600000);
++  assert.ok(logs.includes('presenter.recovery-expired'));
++  const third = await connect();
++  assert.equal(third.state.running, false);
++});
++
++test('presenter backlog drops preview and the listener still receives translation', { timeout: 5000 }, async t => {
++  let bridge, presenterSocket;
++  const logs = [];
++  class Bridge {
++    constructor(emit) { bridge = this; this.emit = emit; }
++    start() { this.emit({ ready: true }); }
++    stop() {}
++    audio() { this.emit({ content: { outputTranscription: { text: 'live' } } }); }
++  }
++  const original = WebSocket.prototype.send;
++  t.mock.method(WebSocket.prototype, 'send', function(data, ...options) {
++    if (typeof data === 'string' && data.includes('"authenticated":true')) presenterSocket = this;
++    return original.call(this, data, ...options);
++  });
++  const instance = createTranslationServer({ port: 0, host: '127.0.0.1', Bridge, log: event => logs.push(event) });
++  t.after(() => instance.close());
++  const url = new URL((await instance.listen()).presenterUrl);
++  async function connect(path) {
++    const socket = new WebSocket('ws://' + url.host + path, { origin: url.origin });
++    const next = inbox(socket);
++    await once(socket, 'open');
++    return { socket, next };
++  }
++  const host = await connect('/presenter-ws');
++  host.socket.send(JSON.stringify({ token: url.hash.slice(1) }));
++  await host.next(m => m.authenticated);
++  const listener = await connect('/audience-ws/' + instance.room);
++  host.socket.send(JSON.stringify({ action: 'start', key: 'test' }));
++  await host.next(m => m.ready);
++  let backlog = 2 * 1024 * 1024;
++  Object.defineProperty(presenterSocket, 'bufferedAmount', { get: () => backlog });
++  const received = [];
++  host.socket.on('message', data => received.push(JSON.parse(data)));
++  for (let i = 0; i < 2; i++) {
++    host.socket.send(Buffer.from([1, 2]));
++    await listener.next(m => m.content?.outputTranscription.text === 'live');
++  }
++  backlog = 0;
++  bridge.emit({content: {outputTranscription: {text: 'restored'}}});
++  await host.next(m => m.content?.outputTranscription.text === 'restored');
++  assert.equal(received.filter(m => m.content).length, 1);
++  assert.deepEqual(logs.filter(e => e.startsWith('presenter.preview')), ['presenter.preview-paused', 'presenter.preview-resumed']);
+ });
+diff --git a/transport.js b/transport.js
+index 60c34e2..9c5c0cb 100644
+--- a/transport.js
++++ b/transport.js
+@@ -5,7 +5,7 @@
+   let authenticated = false;
+   let socket, delay = 500, stopPending = false;
+   const notify = message => callbacks.forEach(callback => callback(message));
+-  let onlinePending = false;
++  let onlinePending = false, monitorChannel = null;
+   function forwardOnline() {
+     onlinePending = true;
+     if (authenticated && socket.readyState === WebSocket.OPEN) {
+@@ -16,7 +16,7 @@
+   window.addEventListener('online', forwardOnline);
+   function connect() {
+     socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/presenter-ws`);
+-    socket.onopen = () => socket.send(JSON.stringify({ token, canResume: true }));
++    socket.onopen = () => socket.send(JSON.stringify({ token, canResume: true, monitorChannel }));
+     socket.onmessage = event => {
+       const message = JSON.parse(event.data);
+       if (message.authenticated) {
+@@ -50,6 +50,13 @@
+       if (!authenticated) throw Error('Página sem autorização. Reabra o aplicativo.');
+       socket.send(JSON.stringify({ action: 'start-service', key, configuration }));
+     },
++    monitor: id => {
++      monitorChannel = id;
++      if (authenticated) socket.send(JSON.stringify({ action: 'monitor', channelId: id }));
++    },
++    microphone: lost => {
++      if (authenticated) socket.send(JSON.stringify({ action: 'microphone', lost }));
++    },
+     publishService: () => { if (authenticated) socket.send(JSON.stringify({ action: 'publish-service' })); },
+     start: async key => {
+       if (!authenticated && socket.readyState < WebSocket.CLOSING) await new Promise(resolve => pending.push(resolve));
+diff --git a/update-checker.test.cjs b/update-checker.test.cjs
+index c2f2e4b..7ef854c 100644
+--- a/update-checker.test.cjs
++++ b/update-checker.test.cjs
+@@ -63,12 +63,15 @@ const vm = require('node:vm'), fs = require('node:fs');
+ test('desktop startup triggers a non-blocking check and exposes a manual menu action', async () => {
+   let ready, menu, options, loaded = false;
+   const checks = [], windows = [], pending = new Promise(() => {});
++  let suspended = false;
++  const powerMonitor = new (require("node:events").EventEmitter)();
+   class Window {
+     constructor(settings) { options = settings; windows.push(this); this.webContents = { setWindowOpenHandler() {}, on() {} }; }
+     async loadURL() { loaded = true; }
+     on() {}
++    close() { suspended = true; }
+   }
+-  const electron = { app: { getPath: () => __dirname, whenReady: () => ({ then: callback => { ready = callback; } }), on() {} }, BrowserWindow: Window,
++  const electron = { powerMonitor, app: { getPath: () => __dirname, whenReady: () => ({ then: callback => { ready = callback; } }), on() {} }, BrowserWindow: Window,
+     session: { defaultSession: { setPermissionRequestHandler() {} } }, dialog: {}, shell: {},
+     Menu: { buildFromTemplate: template => template, setApplicationMenu: value => { menu = value; } },
+   };
+@@ -87,4 +90,6 @@ test('desktop startup triggers a non-blocking check and exposes a manual menu ac
+   assert.equal(checks.length, 1, 'startup checks once without waiting for the network');
+   menu.find(item => item.label === 'Ajuda').submenu[0].click();
+   assert.equal(checks[1].manual, true);
++  powerMonitor.emit("suspend");
++  assert.equal(suspended, true);
+ });

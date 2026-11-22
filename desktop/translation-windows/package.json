@@ -1,0 +1,23 @@
+{
+  "name": "live-translation-local",
+  "version": "0.7.5",
+  "private": true,
+  "description": "Tradução ao vivo em canais para o computador da igreja",
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.cjs",
+    "package:windows": "node build-windows.cjs",
+    "test": "node --test server.test.cjs audio-codec.test.cjs ponte-publisher.test.cjs radio-stream.test.cjs audience.test.cjs update-checker.test.cjs installer.test.cjs channels.test.cjs bridge.test.cjs presenter-service.test.cjs language-flags.test.cjs",
+    "check": "node --check main.cjs && node --check server.cjs && node --check bridge.cjs && node --check transport.js && node --check renderer.js && node --check audience.js && node --check playback.js && node --check capture.js && node --check audio-codec.js && node --check ponte-publisher.cjs && node --check build-windows.cjs && node --check radio-stream.cjs && node --check radio.js && node --check update-checker.cjs && node --check languages.js && node --check translation-channels.cjs && node --check network-address.cjs && node --check qr-code.cjs && node --check language-flags.js && node --check windows-script.cjs"
+  },
+  "devDependencies": {
+    "electron": "^42.0.0",
+    "jsqr": "1.4.0",
+    "rcedit": "5.0.2"
+  },
+  "dependencies": {
+    "lamejs": "1.2.1",
+    "ws": "^8.18.0"
+  }
+}

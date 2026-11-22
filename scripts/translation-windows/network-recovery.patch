@@ -1,0 +1,670 @@
+diff --git a/bridge.cjs b/bridge.cjs
+index e4e46f5..6ff7820 100644
+--- a/bridge.cjs
++++ b/bridge.cjs
+@@ -1,13 +1,15 @@
+ const WebSocket = require('ws');
+ class TranslationBridge {
+   constructor(emit, Socket = WebSocket) { this.emit = emit; this.Socket = Socket; }
+-  stop() { clearTimeout(this.timer); const old = this.socket; this.socket = null; if (old) old.terminate(); }
++  stop() { clearTimeout(this.timer); clearInterval(this.heartbeat); const old = this.socket; this.socket = null; if (old) old.terminate(); }
+   start(key, targetLanguageCode = 'en') {
+     this.stop();
+     const current = new this.Socket('wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent', { headers: { 'x-goog-api-key': key }, maxPayload: 8 * 1024 * 1024 });
+     this.socket = current;
+-    const fail = error => { if (this.socket === current) { this.stop(); this.emit({ error }); } };
+-    this.timer = setTimeout(() => fail('Tempo esgotado ao conectar ao Gemini.'), 20000);
++    const fail = (error, reason, retryable, code) => { if (this.socket === current) { this.stop(); this.emit({ error, reason, retryable, code }); } };
++    this.timer = setTimeout(() => fail('Tempo esgotado ao conectar ao Gemini.', 'setup-timeout', true), 20000);
++    let waitingForPong = false;
++    current.on('pong', () => { waitingForPong = false; });
+     current.on('open', () => current.send(JSON.stringify({ setup: {
+       model: 'models/gemini-3.5-live-translate-preview',
+       generationConfig: { responseModalities: ['AUDIO'], translationConfig: { targetLanguageCode, echoTargetLanguage: true } },
+@@ -17,18 +19,32 @@ class TranslationBridge {
+       if (this.socket !== current) return;
+       try {
+         const message = JSON.parse(raw.toString());
+-        if (message.setupComplete) { clearTimeout(this.timer); this.emit({ ready: true }); }
+-        if (message.error) { fail('Gemini: ' + String(message.error.message || 'Erro da API.').split(key).join('[chave omitida]')); return; }
++        if (message.setupComplete) {
++          clearTimeout(this.timer);
++          clearInterval(this.heartbeat);
++          this.heartbeat = setInterval(() => {
++            if (waitingForPong) return fail('Gemini não respondeu.', 'heartbeat-timeout', true);
++            waitingForPong = true;
++            current.ping();
++          }, 30000);
++          this.emit({ ready: true });
++        }
++        if (message.error) { const code = Number(message.error.code) || undefined; fail('Gemini: ' + String(message.error.message || 'Erro da API.').split(key).join('[chave omitida]'), 'api', code === 429 || code >= 500, code); return; }
+         if (message.serverContent) this.emit({ content: message.serverContent });
+-        if (message.goAway) fail('A sessão expirou. Inicie novamente.');
+-      } catch { fail('Resposta inválida do servidor.'); }
++        if (message.goAway) fail('Sessão Gemini expirada.', 'session-expired', true);
++      } catch { fail('Resposta inválida do servidor.', 'invalid-response', false); }
+     });
+-    current.on('error', () => fail('Falha de conexão. Verifique internet, chave e acesso ao modelo.'));
+-    current.on('close', code => fail(`Sessão Gemini encerrada (${code}). Verifique a chave, a cota e o acesso ao modelo.`));
++    current.on('unexpected-response', (_request, response) => {
++      const code = response.statusCode;
++      response.destroy();
++      fail('Gemini recusou a conexão (' + code + ').', 'handshake', code === 429 || code >= 500, code);
++    });
++    current.on('error', () => fail('Falha de conexão. Verifique internet, chave e acesso ao modelo.', 'network', true));
++    current.on('close', code => fail(`Sessão Gemini encerrada (${code}). Verifique a chave, a cota e o acesso ao modelo.`, 'socket-close', [1000, 1001, 1005, 1006, 1011, 1012, 1013, 1014].includes(code), code));
+   }
+   audio(bytes) {
+     if (!this.socket || this.socket.readyState !== WebSocket.OPEN) return;
+-    if (this.socket.bufferedAmount > 128000) { this.stop(); this.emit({ error: 'Conexão lenta demais. Inicie novamente.' }); return; }
++    if (this.socket.bufferedAmount > 128000) { this.stop(); this.emit({ error: 'Conexão lenta demais.', reason: 'backpressure', retryable: true }); return; }
+     this.socket.send(JSON.stringify({ realtimeInput: { audio: { data: Buffer.from(bytes).toString('base64'), mimeType: 'audio/pcm;rate=16000' } } }));
+   }
+ }
+diff --git a/bridge.test.cjs b/bridge.test.cjs
+index b5eefb9..b4c90d6 100644
+--- a/bridge.test.cjs
++++ b/bridge.test.cjs
+@@ -61,3 +61,37 @@ test("each Gemini bridge configures its channel target and redacts its key from
+   );
+   assert.equal(events.length, count);
+ });
++
++test('unanswered Gemini heartbeat fails once and requests recovery', t => {
++  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
++  let socket;
++  class Socket extends EventEmitter {
++    constructor() { super(); socket = this; }
++    ping() {}
++    terminate() {}
++  }
++  const events = [];
++  const bridge = new TranslationBridge(message => events.push(message), Socket);
++  bridge.start('test');
++  socket.emit('message', '{"setupComplete":{}}');
++  t.mock.timers.tick(30000);
++  t.mock.timers.tick(30000);
++  socket.emit('close', 1006);
++  assert.deepEqual(events.map(e => e.reason), [undefined, 'heartbeat-timeout']);
++  assert.equal(events[1].retryable, true);
++});
++
++test('diagnostics rotate readable timestamped records and tolerate unavailable storage', t => {
++  const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
++  const { createDiagnostics } = require('./diagnostics.cjs');
++  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'translation-log-'));
++  t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
++  const file = path.join(dir, 'traducao.txt');
++  fs.writeFileSync(file, Buffer.alloc(1024 * 1024));
++  createDiagnostics(dir)('gemini.failure', {channel: 'en', code: 1006});
++  assert.equal(fs.statSync(file + '.1').size, 1024 * 1024);
++  const entry = JSON.parse(fs.readFileSync(file, 'utf8'));
++  assert.equal(entry.event, 'gemini.failure');
++  assert.ok(Date.parse(entry.time));
++  assert.doesNotThrow(() => createDiagnostics(file)('desktop.start'));
++});
+diff --git a/build-windows.cjs b/build-windows.cjs
+index e973334..d5a056a 100644
+--- a/build-windows.cjs
++++ b/build-windows.cjs
+@@ -14,7 +14,7 @@ fs.renameSync(path.join(destination, 'electron.exe'), path.join(destination, 'Po
+ const iconStamp = spawnSync(process.execPath, [path.join(root, 'set-app-icon.cjs'), path.join(destination, 'Ponte-Traducao.exe'), path.join(root, 'app-icon.ico')], { stdio: 'inherit', windowsHide: true });
+ if (iconStamp.status !== 0) throw new Error('Could not set executable icon.');
+ fs.mkdirSync(application, { recursive: true });
+-const sources = ['main.cjs','update-checker.cjs','server.cjs','network-address.cjs','qr-code.cjs','qr-code.LICENSE.txt','translation-channels.cjs','languages.js','language-flags.js','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','app-icon.png','app-icon.ico','README.md'];
++const sources = ['main.cjs','diagnostics.cjs','update-checker.cjs','server.cjs','network-address.cjs','qr-code.cjs','qr-code.LICENSE.txt','translation-channels.cjs','languages.js','language-flags.js','bridge.cjs','ponte-publisher.cjs','audio-codec.js','capture.js','transport.js','renderer.js','audience.js','playback.js','radio-stream.cjs','radio.js','index.html','audience.html','style.css','logo.png','app-icon.png','app-icon.ico','README.md'];
+ for (const file of sources) fs.copyFileSync(path.join(root, file), path.join(application, file));
+ fs.writeFileSync(path.join(application, 'package.json'), JSON.stringify({ name: 'ponte-traducao', productName: 'Ponte · Tradução ao vivo', version, main: 'main.cjs' }, null, 2));
+ fs.cpSync(path.join(root, 'flags'), path.join(application, 'flags'), { recursive: true });
+diff --git a/channels.test.cjs b/channels.test.cjs
+index fc4b3e0..0fabda5 100644
+--- a/channels.test.cjs
++++ b/channels.test.cjs
+@@ -257,3 +257,21 @@ test(
+     );
+   },
+ );
++
++test("transient failure resumes one channel, preserves text and cancels pending retries on stop", t => {
++  t.mock.timers.enable({ apis: ["setTimeout"] });
++  const { manager, bridges } = fixture();
++  manager.add("es");
++  manager.start("synthetic");
++  bridges[0].emit({ content: { outputTranscription: { text: "before" } } });
++  const fail = () => bridges[0].emit({ error: "offline", retryable: true });
++  fail();
++  assert.deepEqual(manager.list().map(c => c.state), ["connecting", "live"]);
++  t.mock.timers.tick(1000);
++  assert.equal(manager.channels.get("en").transcript, "before");
++  assert.equal(manager.channels.get("en").state, "live");
++  fail();
++  manager.stop();
++  t.mock.timers.tick(60000);
++  assert.equal(manager.channels.get("en").state, "idle");
++});
+diff --git a/diagnostics.cjs b/diagnostics.cjs
+new file mode 100644
+index 0000000..e285558
+--- /dev/null
++++ b/diagnostics.cjs
+@@ -0,0 +1,16 @@
++const fs = require('node:fs');
++const path = require('node:path');
++
++// Callers supply fixed event names, language IDs and numeric metadata only.
++function createDiagnostics(directory) {
++  const file = path.join(directory, 'traducao.txt');
++  return (event, fields = {}) => {
++    try {
++      fs.mkdirSync(directory, { recursive: true });
++      if ((fs.statSync(file, { throwIfNoEntry: false })?.size || 0) >= 1024 * 1024)
++        fs.renameSync(file, file + '.1');
++      fs.appendFileSync(file, JSON.stringify({ time: new Date().toISOString(), event, ...fields }) + '\n');
++    } catch { /* A storage failure must not interrupt capture. */ }
++  };
++}
++module.exports = { createDiagnostics };
+diff --git a/main.cjs b/main.cjs
+index 8f91219..5b53aca 100644
+--- a/main.cjs
++++ b/main.cjs
+@@ -8,7 +8,10 @@ const version = require('./package.json').version;
+ let win, instance;
+ const checkUpdates = createUpdateChecker({ version, getWindow: () => win, dialog, shell });
+ app.whenReady().then(async () => {
+-  instance = createTranslationServer();
++  const directory = path.join(app.getPath('userData'), 'logs');
++  const log = require('./diagnostics.cjs').createDiagnostics(directory);
++  log('desktop.start', { version });
++  instance = createTranslationServer({ log });
+   try {
+     const info = await instance.listen();
+     session.defaultSession.setPermissionRequestHandler((contents, permission, callback) => callback(contents === win?.webContents && permission === 'media'));
+@@ -26,6 +29,7 @@ app.whenReady().then(async () => {
+       { label: 'Editar', submenu: [{ role: 'undo', label: 'Desfazer' }, { role: 'redo', label: 'Refazer' }, { type: 'separator' }, { role: 'cut', label: 'Recortar' }, { role: 'copy', label: 'Copiar' }, { role: 'paste', label: 'Colar' }, { role: 'selectAll', label: 'Selecionar tudo' }] },
+       { label: 'Ajuda', submenu: [
+         { label: 'Verificar atualizações…', click: () => void checkUpdates({ manual: true }) },
++        { label: 'Abrir pasta de logs', click: async () => { if (await shell.openPath(directory)) dialog.showErrorBox('Logs indisponíveis', 'Não foi possível abrir a pasta de logs.'); } },
+         { label: 'Versão ' + version, enabled: false },
+       ] },
+     ]));
+diff --git a/package-lock.json b/package-lock.json
+index cbec5fb..07adb3f 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,12 +1,12 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.3",
++  "version": "0.7.4",
+   "lockfileVersion": 3,
+   "requires": true,
+   "packages": {
+     "": {
+       "name": "live-translation-local",
+-      "version": "0.7.3",
++      "version": "0.7.4",
+       "dependencies": {
+         "lamejs": "1.2.1",
+         "ws": "^8.18.0"
+diff --git a/package.json b/package.json
+index 57c9b57..925d4dc 100644
+--- a/package.json
++++ b/package.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "live-translation-local",
+-  "version": "0.7.3",
++  "version": "0.7.4",
+   "private": true,
+   "description": "Tradução ao vivo em canais para o computador da igreja",
+   "main": "main.cjs",
+diff --git a/ponte-publisher.cjs b/ponte-publisher.cjs
+index def0e29..1699127 100644
+--- a/ponte-publisher.cjs
++++ b/ponte-publisher.cjs
+@@ -1,7 +1,7 @@
+ const { randomUUID } = require('node:crypto');
+
+ class PontePublisher {
+-  constructor(emit, request = fetch) { this.emit = emit; this.request = request; this.sessionId = randomUUID(); this.generation = 0; }
++  constructor(emit, request = fetch, log = () => {}) { this.log = log; this.emit = emit; this.request = request; this.sessionId = randomUUID(); this.generation = 0; }
+   configure(value) {
+     if (this.published || this.busy) throw new Error('Retire a publicação antes de alterar a ligação.');
+     let configuration;
+@@ -10,6 +10,8 @@ class PontePublisher {
+     if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) || url.username || url.password || url.search || url.hash || !/^[a-f0-9]{64}$/.test(configuration.token)) throw new Error('Ligação do Ponte inválida.');
+     const appOrigin = new URL(configuration.appOrigin || url.origin);
+     if (appOrigin.protocol !== 'https:' && !(appOrigin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(appOrigin.hostname))) throw new Error('Origem da PWA inválida.');
++    clearTimeout(this.retryTimer);
++    ++this.generation;
+     this.configuration = { apiUrl: url.href.replace(/\/$/, ''), token: configuration.token };
+     this.origin = appOrigin.origin;
+     this.emit({ publication: { configured: true, published: false } });
+@@ -20,17 +22,18 @@ class PontePublisher {
+       method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${this.configuration.token}` },
+       body: JSON.stringify({ sessionId: this.sessionId, ...body }), signal: AbortSignal.timeout(8000), redirect: 'error'
+     });
+-    if (!response.ok) throw new Error(response.status === 401 ? 'Ligação revogada. Gere outra na administração do Ponte.' : `Não foi possível atualizar a publicação no Ponte (${response.status}).`);
++    if (!response.ok) throw Object.assign(new Error(response.status === 401 ? 'Ligação revogada. Gere outra na administração do Ponte.' : `Não foi possível atualizar a publicação no Ponte (${response.status}).`), { status: response.status });
+     return response.json();
+   }
+   async publish(audienceUrl) {
+     if (this.busy || this.published) return;
++    clearTimeout(this.retryTimer);
+     this.busy = true;
+     const generation = ++this.generation;
+     try {
+       const result = await this.call('publish', { audienceUrl });
+       if (generation !== this.generation) { await this.call('unpublish', {}).catch(() => {}); return; }
+-      this.published = true; this.audienceUrl = audienceUrl;
++      this.log('ponte.published'); this.leasePossible = true; this.published = true; this.audienceUrl = audienceUrl;
+       this.emit({ publication: { configured: true, published: true, expiresAt: result.expiresAt } });
+       this.timer = setInterval(async () => {
+         if (this.renewing) return; this.renewing = true;
+@@ -39,14 +42,29 @@ class PontePublisher {
+           const renewal = await this.renewal;
+           if (generation === this.generation) this.emit({ publication: { configured: true, published: true, expiresAt: renewal.expiresAt } });
+         } catch (error) {
+-          if (generation === this.generation) { clearInterval(this.timer); this.published = false; this.emit({ publication: { configured: true, published: false, error: `${error.message} A publicação expira automaticamente em até 2 minutos.` } }); }
++          if (generation === this.generation) { clearInterval(this.timer); this.published = false; this.scheduleRetry(error, audienceUrl, generation); this.emit({ publication: { configured: true, published: false, error: `${error.message} A publicação expira automaticamente em até 2 minutos.` } }); }
+         } finally { this.renewing = false; this.renewal = null; }
+       }, 30000);
++    } catch (error) {
++      this.scheduleRetry(error, audienceUrl, generation);
++      throw error;
+     } finally { this.busy = false; }
+   }
++  scheduleRetry(error, audienceUrl, generation) {
++    if (generation !== this.generation) return;
++    const status = error.status;
++    const retry = !status || status === 408 || status === 429 || status >= 500;
++    this.log('ponte.failure', { status, retry });
++    if (!retry) return;
++    this.retryTimer = setTimeout(() => {
++      if (generation === this.generation)
++        void this.publish(audienceUrl).catch(() => {}); // publish schedules the next attempt
++    }, 30000);
++  }
+   async unpublish() {
++    clearTimeout(this.retryTimer);
+     ++this.generation; clearInterval(this.timer);
+-    const wasPublished = this.published; this.published = false;
++    const wasPublished = this.leasePossible; this.leasePossible = false; this.published = false;
+     if (wasPublished) {
+       await this.renewal?.catch(() => {});
+       try { await this.call('unpublish', {}); }
+diff --git a/ponte-publisher.test.cjs b/ponte-publisher.test.cjs
+index dd4e8ba..79a8510 100644
+--- a/ponte-publisher.test.cjs
++++ b/ponte-publisher.test.cjs
+@@ -39,3 +39,23 @@ test('presence renewal stops when publication is withdrawn', async t => {
+   t.mock.timers.tick(90000); await new Promise(setImmediate);
+   assert.equal(requests.filter(url => url.endsWith('/publish')).length, 2);
+ });
++
++test('temporary publication failures recover and revoked credentials stop retries', async t => {
++  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
++  let calls = 0;
++  const statuses = [503, 200, 401];
++  const publisher = new PontePublisher(() => {}, async () => {
++    calls++;
++    const status = statuses.shift();
++    return { status, ok: status === 200, json: async () => ({}) };
++  });
++  publisher.configure(JSON.stringify({ apiUrl: 'https://ponte.example', token: 'b'.repeat(64) }));
++  await assert.rejects(publisher.publish('http://192.168.1.2'));
++  t.mock.timers.tick(30000); await new Promise(setImmediate);
++  assert.equal(publisher.published, true);
++  t.mock.timers.tick(30000); await new Promise(setImmediate);
++  assert.equal(publisher.published, false);
++  assert.deepEqual(statuses, []);
++  t.mock.timers.tick(60000); await new Promise(setImmediate);
++  assert.equal(calls, 3);
++});
+diff --git a/renderer.js b/renderer.js
+index bf1d237..a9393f1 100644
+--- a/renderer.js
++++ b/renderer.js
+@@ -326,6 +326,13 @@ $("start").onclick = async () => {
+ };
+ $("stop").onclick = () => stop();
+ window.translator.listen((message) => {
++  if (message.reconnecting) {
++    connected = false;
++    publishing = false;
++    $("status").textContent = "Reconectando ao servidor local.";
++    renderActions();
++    return;
++  }
+   if (message.authenticated) {
+     connected = true;
+     $("status").textContent = "Pronto para iniciar";
+@@ -338,7 +345,7 @@ window.translator.listen((message) => {
+       if (!channels.some((channel) => channel.id === id))
+         channelTexts.delete(id);
+     if (active && message.running === false)
+-      stop("Nenhum canal aberto. Abra um canal para iniciar.");
++      stop(message.authenticated ? "Sessão encerrada. Inicie a tradução novamente." : "Nenhum canal aberto. Abra um canal para iniciar.");
+     renderChannels();
+     if (active)
+       $("status").textContent = translationReady
+@@ -398,7 +405,7 @@ window.translator.listen((message) => {
+     return;
+   }
+   if (!active) return;
+-  if (message.ready && source && capture && !audioWired) {
++  if ((message.ready || (message.authenticated && translationReady)) && source && capture && !audioWired) {
+     source.connect(capture);
+     capture.connect(context.destination);
+     audioWired = true;
+diff --git a/server.cjs b/server.cjs
+index ab491e8..84472bb 100644
+--- a/server.cjs
++++ b/server.cjs
+@@ -11,9 +11,10 @@ const { TranslationChannels } = require('./translation-channels.cjs');
+ const { preferredAddress, selectAudienceUrl } = require('./network-address.cjs');
+ const { toSvg } = require('./qr-code.cjs');
+ const languageFlags = require('./language-flags.js');
+-function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = TranslationBridge, networkInterfaces = os.networkInterfaces, getPreferredAddress = preferredAddress } = {}) {
++function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = TranslationBridge, log = () => {}, networkInterfaces = os.networkInterfaces, getPreferredAddress = preferredAddress } = {}) {
+   const presenterToken = randomBytes(32).toString('hex'), room = randomBytes(12).toString('hex');
+   let presenter = null, audienceUrl = null, serviceGeneration = 0, autoPublish = false, publishing = false, wasRunning = false;
++  let presenterTimeout, closing = false;
+   const audience = new Set();
+   const send = (client, data) => {
+     if (client.readyState !== WebSocket.OPEN) return;
+@@ -21,12 +22,12 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+     client.send(JSON.stringify(data));
+   };
+   const counts = () => { if (presenter) send(presenter, { viewers: audience.size }); };
+-  const publisher = new PontePublisher(message => { if (presenter) send(presenter, message); });
++  const publisher = new PontePublisher(message => { if (presenter) send(presenter, message); }, fetch, log);
+   const selectedSnapshot = client => {
+     const channel = channels.channels.get(client.channelId);
+     return { selectedChannel: channel?.id ?? null, channelId: channel?.id ?? null, state: channel?.state ?? 'idle', snapshot: channel?.transcript ?? '', reset: true };
+   };
+-  const channels = new TranslationChannels({ Bridge, onCount: counts,
++  const channels = new TranslationChannels({ Bridge, log, onCount: counts,
+     onCatalogue: () => {
+       const data = { channels: channels.list(), running: channels.running, state: channels.state };
+       if (presenter) send(presenter, data);
+@@ -125,9 +126,16 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+     }
+     let authenticated = false;
+     const timeout = setTimeout(() => client.close(1008, 'Authentication required'), 5000);
+-    client.on('close', () => {
++    client.on('close', code => {
+       clearTimeout(timeout);
+-      if (presenter === client) { presenter = null; autoPublish = false; serviceGeneration++; channels.stop(); void publisher.unpublish(); }
++      if (presenter === client) {
++        log('presenter.disconnected', { code });
++        presenter = null;
++        const stopAbandonedSession = () => { autoPublish = false; serviceGeneration++; channels.stop(); };
++        if (!closing && client.canResume && channels.running)
++          presenterTimeout = setTimeout(stopAbandonedSession, 30000);
++        else if (!closing) stopAbandonedSession();
++      }
+     });
+     client.on('message', (raw, binary) => {
+       if (binary) { if (authenticated && presenter === client && channels.running) channels.audio(raw); return; }
+@@ -135,16 +143,17 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       if (!message || typeof message !== 'object') { client.close(1008); return; }
+       if (!authenticated) {
+         const token = Buffer.from(typeof message.token === 'string' ? message.token : '');
+-        if (token.length !== presenterToken.length || !timingSafeEqual(token, Buffer.from(presenterToken)) || presenter) { client.close(1008, 'Access denied'); return; }
+-        clearTimeout(timeout); authenticated = true; presenter = client;
+-        send(client, { authenticated: true, links: audienceLinks(), audienceUrl, viewers: audience.size, channels: channels.list(), running: channels.running, state: channels.state }); return;
++        if (token.length !== presenterToken.length || !timingSafeEqual(token, Buffer.from(presenterToken))) { client.close(1008, 'Access denied'); return; }
++        if (presenter) { client.close(1013, 'Presenter connected'); return; }
++        clearTimeout(timeout); clearTimeout(presenterTimeout); client.canResume = message.canResume === true; authenticated = true; presenter = client; log('presenter.connected');
++        send(client, { authenticated: true, publication: { published: Boolean(publisher.published), publishing }, links: audienceLinks(), audienceUrl, viewers: audience.size, channels: channels.list(), running: channels.running, state: channels.state }); return;
+       }
+       if (message.action === 'start-service') { void startService(client, message); return; }
+       if (message.action === 'publish-service') { if (channels.state === 'live') void publishService(); return; }
+       if (message.action === 'start' && typeof message.key === 'string' && message.key.trim() && message.key.length < 512) {
+         try { channels.start(message.key.trim()); }
+         catch (error) { send(client, { channelError: error.message }); }
+-      } else if (message.action === 'stop') { autoPublish = false; serviceGeneration++; channels.stop(); void publisher.unpublish(); }
++      } else if (message.action === 'stop') { log('service.stop'); autoPublish = false; serviceGeneration++; channels.stop(); void publisher.unpublish(); }
+       else if (message.action === 'open-channel') {
+         try { channels.add(message.languageCode); } catch (error) { send(client, { channelError: error.message }); }
+       } else if (message.action === 'close-channel') {
+@@ -194,7 +203,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       channels.start(message.key.trim());
+     } catch (error) { autoPublish = false; if (presenter === client) send(client, { serviceError: error.message }); }
+   }
+-  const heartbeat = setInterval(() => { for (const client of wss.clients) { if (!client.isAlive) client.terminate(); else { client.isAlive = false; client.ping(); } } }, 15000);
++  const heartbeat = setInterval(() => { for (const client of wss.clients) { if (!client.isAlive) { if (client === presenter) log('presenter.heartbeat-timeout'); client.terminate(); } else { client.isAlive = false; client.ping(); } } }, 15000);
+   function audienceLinks() {
+     const actualPort = server.address().port;
+     const ips = Object.values(networkInterfaces()).flat().filter(item => item && item.family === 'IPv4' && !item.internal).map(item => item.address);
+@@ -206,7 +215,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+       server.once('error', reject);
+       server.listen(port, host, async () => { server.removeListener('error', reject); audienceUrl = selectAudienceUrl(audienceLinks(), networkInterfaces(), await getPreferredAddress()); resolve({ presenterUrl: `http://localhost:${server.address().port}/presenter#${presenterToken}`, audienceLinks: audienceLinks() }); });
+     }),
+-    close: async () => { clearInterval(heartbeat); channels.stop(); await publisher.unpublish(); for (const client of wss.clients) client.terminate(); wss.close(); return new Promise(resolve => server.close(resolve)); }
++    close: async () => { closing = true; clearTimeout(presenterTimeout); clearInterval(heartbeat); channels.stop(); await publisher.unpublish(); for (const client of wss.clients) client.terminate(); wss.close(); return new Promise(resolve => server.close(resolve)); }
+   };
+ }
+ module.exports = { createTranslationServer };
+diff --git a/server.test.cjs b/server.test.cjs
+index e4144a1..c12f290 100644
+--- a/server.test.cjs
++++ b/server.test.cjs
+@@ -98,3 +98,34 @@ test('only a configured PWA origin can connect across origins, and only to the a
+   const forbidden = new WebSocket(base + '/presenter-ws', { origin: 'https://ponte.example' });
+   assert.match((await once(forbidden, 'error'))[0].message, /hang up/);
+ });
++
++test('presenter resumes the same running bridge after losing its local socket', { timeout: 5000 }, async t => {
++  let starts = 0;
++  class Bridge {
++    constructor(emit) { this.emit = emit; }
++    start() { starts++; this.emit({ ready: true }); }
++    stop() {}
++  }
++  const instance = createTranslationServer({ port: 0, host: '127.0.0.1', Bridge });
++  t.after(() => instance.close());
++  const url = new URL((await instance.listen()).presenterUrl);
++  const connect = async () => {
++    const socket = new WebSocket('ws://127.0.0.1:' + url.port + '/presenter-ws', { origin: 'http://127.0.0.1:' + url.port });
++    const next = inbox(socket);
++    await once(socket, 'open');
++    socket.send(JSON.stringify({ token: url.hash.slice(1), canResume: true }));
++    const state = await next(message => message.authenticated);
++    return { socket, next, state };
++  };
++  const first = await connect();
++  first.socket.send(JSON.stringify({ action: 'start', key: 'synthetic' }));
++  await first.next(message => message.ready);
++  first.socket.terminate();
++  await once(first.socket, 'close');
++  const second = await connect();
++  assert.equal(second.state.running, true);
++  assert.equal(second.state.state, 'live');
++  assert.equal(starts, 1);
++  second.socket.send(JSON.stringify({ action: 'stop' }));
++  await second.next(message => message.running === false);
++});
+diff --git a/translation-channels.cjs b/translation-channels.cjs
+index c1caf14..1b461e2 100644
+--- a/translation-channels.cjs
++++ b/translation-channels.cjs
+@@ -3,12 +3,14 @@ const { RadioStream } = require("./radio-stream.cjs");
+ class TranslationChannels {
+   constructor({
+     Bridge,
++    log = () => {},
+     onCatalogue = () => {},
+     onMessage = () => {},
+     onError = () => {},
+     onCount = () => {},
+   }) {
+     this.Bridge = Bridge;
++    this.log = log;
+     this.onCatalogue = onCatalogue;
+     this.onMessage = onMessage;
+     this.onError = onError;
+@@ -62,6 +64,16 @@ class TranslationChannels {
+       )
+         return;
+       if (message.error) {
++        this.log('gemini.failure', { channel: id, reason: message.reason || 'unknown', code: message.code });
++        if (message.retryable) {
++          channel.state = "connecting";
++          const delay = Math.min(30000, 1000 * 2 ** Math.min(channel.failures++, 5));
++          this.log('gemini.retry', { channel: id, delay });
++          clearTimeout(channel.retryTimer);
++          channel.retryTimer = setTimeout(() => this.startChannel(channel, true), delay);
++          this.onCatalogue();
++          return;
++        }
+         channel.state = "error";
+         channel.bridge.stop();
+         channel.radio.stop();
+@@ -71,6 +83,8 @@ class TranslationChannels {
+       }
+       if (message.ready) {
+         channel.state = "live";
++        channel.failures = 0;
++        this.log("gemini.ready", { channel: id });
+         this.onCatalogue();
+       }
+       if (message.content && channel.state !== "live") return;
+@@ -88,11 +102,15 @@ class TranslationChannels {
+     if (this.running) this.startChannel(channel);
+     return channel;
+   }
+-  startChannel(channel) {
++  startChannel(channel, recovering = false) {
++    this.log("gemini.connect", { channel: channel.id });
+     channel.state = "connecting";
+-    channel.transcript = "";
++    if (!recovering) {
++      channel.failures = 0;
++      channel.transcript = "";
++      this.onMessage(channel, { reset: true });
++    }
+     this.onCatalogue();
+-    this.onMessage(channel, { reset: true });
+     try {
+       channel.bridge.start(this.key, channel.id);
+     } catch {
+@@ -112,6 +130,7 @@ class TranslationChannels {
+     const channel = this.channels.get(id);
+     if (!channel) throw Error("Este canal já foi fechado.");
+     this.channels.delete(id);
++    clearTimeout(channel.retryTimer);
+     channel.bridge.stop();
+     channel.radio.stop();
+     if (!this.channels.size) {
+@@ -132,6 +151,7 @@ class TranslationChannels {
+     this.running = false;
+     this.key = "";
+     for (const channel of this.channels.values()) {
++      clearTimeout(channel.retryTimer);
+       channel.state = "idle";
+       channel.bridge.stop();
+       channel.radio.stop();
+diff --git a/transport.js b/transport.js
+index eb36fa0..b608345 100644
+--- a/transport.js
++++ b/transport.js
+@@ -3,21 +3,37 @@
+   const token = location.hash.slice(1);
+   history.replaceState(null, '', location.pathname);
+   let authenticated = false;
+-  const socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/presenter-ws`);
+-  socket.onopen = () => socket.send(JSON.stringify({ token }));
+-  socket.onmessage = event => {
+-    const message = JSON.parse(event.data);
+-    if (message.authenticated) { authenticated = true; for (const resolve of pending.splice(0)) resolve(); }
+-    for (const callback of callbacks) callback(message);
+-  };
+-  socket.onclose = () => {
+-    authenticated = false;
+-    for (const resolve of pending.splice(0)) resolve();
+-    for (const callback of callbacks) callback({ error: 'Conexão com o servidor encerrada. Reabra o aplicativo ou seu link privado.' });
+-    document.getElementById('status').textContent = 'Desconectado. Reabra o aplicativo ou seu link privado.';
+-    document.getElementById('start').disabled = true;
+-
+-  };
++  let socket, delay = 500, stopPending = false;
++  const notify = message => callbacks.forEach(callback => callback(message));
++  function connect() {
++    socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/presenter-ws`);
++    socket.onopen = () => socket.send(JSON.stringify({ token, canResume: true }));
++    socket.onmessage = event => {
++      const message = JSON.parse(event.data);
++      if (message.authenticated) {
++        authenticated = true;
++        delay = 500;
++        if (stopPending) {
++          socket.send(JSON.stringify({ action: 'stop' }));
++          stopPending = false;
++        }
++        for (const resolve of pending.splice(0)) resolve();
++      }
++      notify(message);
++    };
++    socket.onclose = ({ code }) => {
++      authenticated = false;
++      for (const resolve of pending.splice(0)) resolve();
++      if (code === 1008) {
++        notify({ error: 'Acesso ao apresentador recusado. Reabra o aplicativo.' });
++        return;
++      }
++      notify({ reconnecting: true });
++      setTimeout(connect, delay);
++      delay = Math.min(delay * 2, 10000);
++    };
++  }
++  connect();
+   window.translator = {
+     startService: async (key, configuration) => {
+       if (!authenticated && socket.readyState < WebSocket.CLOSING) await new Promise(resolve => pending.push(resolve));
+@@ -30,7 +46,7 @@
+       if (!authenticated) throw new Error('Página sem autorização. Use o link privado do apresentador.');
+       socket.send(JSON.stringify({ action: 'start', key }));
+     },
+-    stop: () => { if (authenticated) socket.send(JSON.stringify({ action: 'stop' })); },
++    stop: () => { if (authenticated) socket.send(JSON.stringify({ action: 'stop' })); else stopPending = true; },
+     clear: channelId => { if (authenticated) socket.send(JSON.stringify({ action: 'clear', channelId })); },
+     openChannel: languageCode => { if (authenticated) socket.send(JSON.stringify({ action: 'open-channel', languageCode })); },
+     closeChannel: channelId => { if (authenticated) socket.send(JSON.stringify({ action: 'close-channel', channelId })); },
+diff --git a/update-checker.test.cjs b/update-checker.test.cjs
+index 6da65c0..c2f2e4b 100644
+--- a/update-checker.test.cjs
++++ b/update-checker.test.cjs
+@@ -58,7 +58,7 @@ test('pagination finds releases beyond the first page', async () => {
+   const urls = [];
+   const update = await fetchUpdate('0.3.2', async url => { urls.push(url); return { ok: true, json: async () => urls.length === 1 ? Array.from({ length: 100 }, () => ({ tag_name: 'web-release' })) : [release('0.4.0')] }; });
+   assert.equal(update.version, '0.4.0'); assert.match(urls[1], /page=2$/);
+-});
++});
+ const vm = require('node:vm'), fs = require('node:fs');
+ test('desktop startup triggers a non-blocking check and exposes a manual menu action', async () => {
+   let ready, menu, options, loaded = false;
+@@ -68,13 +68,14 @@ test('desktop startup triggers a non-blocking check and exposes a manual menu ac
+     async loadURL() { loaded = true; }
+     on() {}
+   }
+-  const electron = { app: { whenReady: () => ({ then: callback => { ready = callback; } }), on() {} }, BrowserWindow: Window,
++  const electron = { app: { getPath: () => __dirname, whenReady: () => ({ then: callback => { ready = callback; } }), on() {} }, BrowserWindow: Window,
+     session: { defaultSession: { setPermissionRequestHandler() {} } }, dialog: {}, shell: {},
+     Menu: { buildFromTemplate: template => template, setApplicationMenu: value => { menu = value; } },
+   };
+   vm.runInNewContext(fs.readFileSync(__dirname + '/main.cjs', 'utf8'), {
+     __dirname, require: name => {
+       if (name === 'electron') return electron;
++      if (name === './diagnostics.cjs') return { createDiagnostics: () => () => {} };
+       if (name === './server.cjs') return { createTranslationServer: () => ({ listen: async () => ({ presenterUrl: 'http://localhost:3210/presenter#test' }) }) };
+       if (name === './update-checker.cjs') return { createUpdateChecker: config => { assert.equal(config.version, require('./package.json').version); return settings => { checks.push(settings); return pending; }; } };
+       return require(name);
+@@ -86,4 +87,4 @@ test('desktop startup triggers a non-blocking check and exposes a manual menu ac
+   assert.equal(checks.length, 1, 'startup checks once without waiting for the network');
+   menu.find(item => item.label === 'Ajuda').submenu[0].click();
+   assert.equal(checks[1].manual, true);
+-});
++});

@@ -1,8 +1,6 @@
 # Tradução ao vivo na rede local
 
-O aplicativo Windows tem código e ciclo de publicação próprios, fora deste
-repositório. Os patches versionados abaixo mantêm o leitor, o atualizador e o empacotamento;
-a existência deles não comprova a versão do ZIP atualmente distribuído.
+O código-fonte do aplicativo Windows fica em [desktop/translation-windows](../desktop/translation-windows). O pacote tem versão e publicação próprias no GitHub Releases.
 
 Validação do leitor: a fixture `channels-smoke.cjs` na pasta Live translation usa microfone e Gemini simulados para verificar a interface do apresentador, a publicação e o player local com MP3 nativo. Toques nas bandeiras selecionam, iniciam, pausam e retomam a escuta. Execute com Electron e um diretório de saída opcional para capturas. Não usa contas reais nem chama o Gemini.
 
@@ -28,6 +26,20 @@ O catálogo e a seleção de canais passam diretamente pelo WebSocket local. A p
 
 No protocolo local, as mensagens de conteúdo incluem channelId; o catálogo contém id, name, nativeName e state (idle, connecting, live ou error). O ouvinte usa select-channel com channelId e recebe selectedChannel, snapshot e state. O áudio usa /audio/<sala>.mp3?channel=<código>. A URL sem canal mantém o padrão inglês, ou o primeiro aberto quando não houver inglês. As ações open-channel (languageCode), close-channel e retry-channel (channelId) exigem autenticação do apresentador.
 
+## Diagnóstico e recuperação no Windows 0.7.5
+
+Em **Ajuda → Abrir pasta de logs**, abra `traducao.txt` no Bloco de Notas. Cada linha registra horário UTC e evento. Compare `presenter.disconnected` (conexão local do apresentador), `gemini.failure` (canal e motivo) e `ponte.failure` (publicação no portal). A sequência de tentativas e confirmações permite medir a duração de uma interrupção. O aplicativo mantém o arquivo atual e a rotação anterior, `traducao.txt.1`, com cerca de 1 MiB por arquivo. Os registros são locais e contêm apenas metadados operacionais. Chaves, URLs, áudio e transcrições ficam fora dos logs.
+
+Cada canal tenta recuperar falhas transitórias do Gemini com intervalos de 1, 2, 4, 8, 16 e até 30 segundos. Se a conexão deixar de responder ao ping, o canal também reconecta. O texto já recebido permanece disponível e a tradução recomeça com a fala atual. Erros de autorização exigem corrigir a credencial.
+
+- **Apresentador.** O PC envia áudio de retorno à janela apenas para o canal em monitoração. Se a fila acumular 128.000 bytes, o servidor descarta novas prévias locais e continua enviando conteúdo aos ouvintes. A prévia volta quando a fila baixa para menos de 32.000 bytes. Em uma desconexão, o servidor mantém a sessão em memória por até 10 minutos e a janela tenta retornar à mesma sessão. O microfone pertence à janela: durante uma perda efetiva dessa conexão ou um travamento completo da captura, pode haver lacunas no áudio. Ao fechar pelo X, clicar em Parar ou suspender o Windows, a transmissão encerra.
+- **Microfone.** Se o dispositivo desaparecer, a janela avisa e leva o foco ao seletor. Escolha o substituto e clique em **Usar este microfone**. Os canais e a publicação permanecem ativos durante a troca; novas falas voltam a ser traduzidas quando a captura retorna.
+- **Portal.** Após falhas temporárias, o desktop espera 3, 6, 12, 24, 48 e depois 60 segundos entre tentativas, enquanto a transmissão estiver ativa. O sinal de rede disponível do Windows antecipa uma tentativa pendente. Uma publicação bem-sucedida reinicia a sequência. Se o endereço anterior sair das interfaces do PC, a publicação seguinte usa o endereço local disponível e atualiza o QR.
+- **Ouvinte.** A página local já aberta tenta recuperar o texto e retomar o áudio do canal escolhido. Uma pausa voluntária é respeitada. Se o computador deixar de responder, aparece **Voltar ao Ponte e reconectar à tradução**, que abre a entrada pública em igrejaponte.com. Se o endereço estiver inacessível antes da primeira abertura do leitor, use Voltar no navegador para retornar ao portal.
+- **Diagnóstico.** O log registra início, recuperação e expiração da espera do apresentador, descarte e retomada da prévia, perda e substituição do microfone e suspensão. A rotação ocorre antes de exceder 1 MiB por arquivo e conserva apenas o atual e o anterior (até 2 MiB no total). Os eventos registram mudanças de estado; o áudio e o texto da tradução não são gravados.
+
+A fonte versionada do desktop já incorpora os ajustes descritos acima.
+
 ## Tela do apresentador
 
 A configuração segue a ordem: chave Gemini, ligação gerada pelo administrador e microfone. Abaixo há exatamente três colunas de canais. Painéis sem canal ficam em cinza e permitem escolher o idioma e abrir um canal. Cada painel ativo contém seu texto e controles para monitorar áudio neste computador, limpar texto, reconectar ou fechar o canal. A monitoração é independente da seleção dos ouvintes.
@@ -48,7 +60,7 @@ A navegação para a origem local evita carregar áudio HTTP de um IP privado de
 
 Use o pacote Windows atual. A seleção por bandeiras requer 0.7.0 ou superior; o estado de espera amigável requer 0.7.1 ou superior; a correção do instalador CMD requer 0.7.2 ou superior. Deve-se manter a aba aberta e continuar no Wi-Fi. A codificação MP3 mono a 48 kbit/s ocorre uma vez no PC, compartilhada pelos ouvintes, com silêncio entre falas. Brave, Android, iOS, chamadas e políticas de bateria ainda podem interromper mídia: a validação com tela bloqueada precisa ocorrer no aparelho real. A página não promete reprodução após encerrar o navegador.
 
-A fonte Windows fica na pasta irmã **Live translation**, fora do Git deste repositório. Os patches para manter essa fonte estão relacionados na seção de manutenção abaixo.
+A pasta do desktop contém a aplicação Electron, os testes, o instalador e o empacotamento.
 
 Visitantes sem conta também podem acompanhar a tradução. O login consulta `GET /api/v1/live-translation/public-status` e, somente durante uma publicação válida, mostra **Ouvir tradução ao vivo — sem entrar**, com o aviso de que é necessário usar o Wi-Fi da igreja. O botão abre `/listen-translation`, uma página pública com a mesma entrada para o leitor local. A rota pública divulga somente disponibilidade, endereço da audiência e expiração; as rotas administrativas e o status autenticado permanecem protegidos. O áudio continua na rede local e não é retransmitido pela Vercel. Fora do Wi-Fi, a página pode abrir, mas não alcança o computador da igreja.
 
@@ -89,10 +101,14 @@ O empacotamento grava Instalar.cmd em UTF-8 sem BOM, com CRLF, e install-windows
 
 O pacote inclui `GUIA-COMECE-AQUI.html` (guia visual que abre no navegador sem internet) e `LEIA-ME-PRIMEIRO.txt` (Bloco de Notas), ao lado de `Ponte-Traducao.exe`. A página administrativa mostra o mesmo conteúdo em seções expansíveis. A fonte é `apps/web/src/content/translation-windows-guide.json`; o empacotamento lê esse arquivo ao receber o caminho do Ponte e mantém uma cópia local para builds independentes. O guia cobre extração do ZIP, ligação ao Ponte, chave Gemini, microfone, publicação, uso pelos ouvintes, encerramento e problemas comuns.
 
-No repositório **Live translation**, execute no Windows:
+Na raiz deste repositório, execute no Windows:
 
 ```powershell
-node build-windows.cjs "C:\caminho\para\Ponte"
+cd desktop/translation-windows
+npm ci
+npm test
+npm run check
+node build-windows.cjs ../..
 ```
 
 O script inclui o runtime Electron, a aplicação, `ws`, `lamejs`, as bandeiras SVG e o módulo de QR code com suas licenças, sem credenciais, histórico ou arquivos de ambiente. As ferramentas de testes, o leitor de QR de desenvolvimento e as dependências de build não entram no runtime. Produz `dist/Ponte-Traducao-Windows.zip` e SHA-256. A cópia opcional para `Ponte/private-storage/translation/` habilita o download autenticado em desenvolvimento (API iniciada pelo workspace ou pela raiz). O ZIP inclui `Instalar.cmd` e `install-windows.ps1`, que instalam por usuário, sem privilégios de administrador. O pacote ainda não tem assinatura de código própria.
@@ -139,7 +155,7 @@ Para preparar uma fonte Windows 0.7.2, copie a arte e o script para sua raiz, ma
 
 ## Manutenção da fonte Windows
 
-Confira a versão de base antes de aplicar cada patch com git apply --no-index. Não reaplique um patch já incorporado. Os caminhos abaixo são relativos à raiz do Ponte; a aplicação ocorre na pasta da fonte Windows.
+A fonte em desktop/translation-windows já está pronta para o build. Para reconstruir uma fonte antiga, confira a versão de base antes de aplicar cada patch com git apply --no-index. Não reaplique um patch já incorporado. Os caminhos abaixo são relativos à raiz do Ponte; a aplicação ocorre na pasta da fonte Windows.
 
 | Patch                                                                         | Base → resultado | Responsabilidade                                     |
 | ----------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------- |

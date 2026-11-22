@@ -1,0 +1,187 @@
+diff --git a/ponte-publisher.cjs b/ponte-publisher.cjs
+index 1699127..d43714d 100644
+--- a/ponte-publisher.cjs
++++ b/ponte-publisher.cjs
+@@ -1,6 +1,9 @@
+ const { randomUUID } = require('node:crypto');
+
++const retryDelays = [1000, 2000, 4000, 8000, 16000, 30000, 60000];
++
+ class PontePublisher {
++  retryStep = 0;
+   constructor(emit, request = fetch, log = () => {}) { this.log = log; this.emit = emit; this.request = request; this.sessionId = randomUUID(); this.generation = 0; }
+   configure(value) {
+     if (this.published || this.busy) throw new Error('Retire a publicação antes de alterar a ligação.');
+@@ -10,7 +13,8 @@ class PontePublisher {
+     if ((url.protocol !== 'https:' && !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) || url.username || url.password || url.search || url.hash || !/^[a-f0-9]{64}$/.test(configuration.token)) throw new Error('Ligação do Ponte inválida.');
+     const appOrigin = new URL(configuration.appOrigin || url.origin);
+     if (appOrigin.protocol !== 'https:' && !(appOrigin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(appOrigin.hostname))) throw new Error('Origem da PWA inválida.');
+-    clearTimeout(this.retryTimer);
++    this.cancelRetry();
++    this.retryStep = 0;
+     ++this.generation;
+     this.configuration = { apiUrl: url.href.replace(/\/$/, ''), token: configuration.token };
+     this.origin = appOrigin.origin;
+@@ -27,12 +31,13 @@ class PontePublisher {
+   }
+   async publish(audienceUrl) {
+     if (this.busy || this.published) return;
+-    clearTimeout(this.retryTimer);
++    this.cancelRetry();
+     this.busy = true;
+     const generation = ++this.generation;
+     try {
+       const result = await this.call('publish', { audienceUrl });
+       if (generation !== this.generation) { await this.call('unpublish', {}).catch(() => {}); return; }
++      this.retryStep = 0;
+       this.log('ponte.published'); this.leasePossible = true; this.published = true; this.audienceUrl = audienceUrl;
+       this.emit({ publication: { configured: true, published: true, expiresAt: result.expiresAt } });
+       this.timer = setInterval(async () => {
+@@ -53,16 +58,25 @@ class PontePublisher {
+   scheduleRetry(error, audienceUrl, generation) {
+     if (generation !== this.generation) return;
+     const status = error.status;
+-    const retry = !status || status === 408 || status === 429 || status >= 500;
++    const retry = !status || status === 408 || status === 409 || status === 429 || status >= 500;
+     this.log('ponte.failure', { status, retry });
+     if (!retry) return;
+-    this.retryTimer = setTimeout(() => {
++    const delay = retryDelays[this.retryStep];
++    this.retryStep = Math.min(this.retryStep + 1, retryDelays.length - 1);
++    this.retryNow = () => {
+       if (generation === this.generation)
+         void this.publish(audienceUrl).catch(() => {}); // publish schedules the next attempt
+-    }, 30000);
++    };
++    this.log('ponte.retry', { delay });
++    this.retryTimer = setTimeout(this.retryNow, delay);
+   }
+-  async unpublish() {
++  cancelRetry() {
+     clearTimeout(this.retryTimer);
++    this.retryNow = undefined;
++  }
++  async unpublish() {
++    this.cancelRetry();
++    this.retryStep = 0;
+     ++this.generation; clearInterval(this.timer);
+     const wasPublished = this.leasePossible; this.leasePossible = false; this.published = false;
+     if (wasPublished) {
+diff --git a/ponte-publisher.test.cjs b/ponte-publisher.test.cjs
+index 79a8510..a8b2043 100644
+--- a/ponte-publisher.test.cjs
++++ b/ponte-publisher.test.cjs
+@@ -59,3 +59,71 @@ test('temporary publication failures recover and revoked credentials stop retrie
+   t.mock.timers.tick(60000); await new Promise(setImmediate);
+   assert.equal(calls, 3);
+ });
++
++test('republication keeps the minute interval beyond 250 attempts and wakes on network recovery', async t => {
++  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
++  let calls = 0, available = false;
++  const publisher = new PontePublisher(() => {}, async () => {
++    calls++;
++    if (!available) throw Error('offline');
++    return { ok: true, json: async () => ({}) };
++  });
++  publisher.configure(JSON.stringify({ apiUrl: 'https://ponte.example', token: 'b'.repeat(64) }));
++  await assert.rejects(publisher.publish('http://192.168.1.2'));
++  const advance = async ms => { t.mock.timers.tick(ms); await new Promise(setImmediate); };
++  const delays = [1, 2, 4, 8, 16, 30, ...Array(246).fill(60)];
++  for (const seconds of delays) {
++    const before = calls;
++    await advance(seconds * 1000 - 1);
++    assert.equal(calls, before);
++    await advance(1);
++    assert.equal(calls, before + 1);
++  }
++  const before = calls;
++  available = true;
++  publisher.retryNow?.();
++  publisher.retryNow?.();
++  await new Promise(setImmediate);
++  assert.equal(calls, before + 1);
++  assert.equal(publisher.published, true);
++  available = false;
++  await advance(30000); // renewal fails
++  await advance(999);
++  assert.equal(calls, before + 2);
++  await advance(1); // new outage starts again at one second
++  assert.equal(calls, before + 3);
++  await publisher.unpublish();
++  const stopped = calls;
++  publisher.retryNow?.();
++  await advance(60000);
++  assert.equal(calls, stopped);
++});
++
++test('presenter forwards Windows connectivity recovery after authentication and prioritizes stop', () => {
++  const vm = require('node:vm');
++  const fs = require('node:fs');
++  const events = {}, actions = [], window = { addEventListener: (name, fn) => { events[name] = fn; } };
++  let socket;
++  class Socket {
++    static OPEN = 1;
++    readyState = 1;
++    constructor() { socket = this; }
++    send(message) { actions.push(JSON.parse(message).action); }
++  }
++  vm.runInNewContext(fs.readFileSync(__dirname + '/transport.js', 'utf8'), {
++    window, WebSocket: Socket, history: {replaceState() {}},
++    location: { hash: '#test', protocol: 'http:', host: 'localhost', pathname: '/' },
++    setTimeout: callback => callback(),
++  });
++  const authenticate = () => socket.onmessage({data: '{"authenticated":true}'});
++  events.online();
++  assert.deepEqual(actions, []);
++  authenticate();
++  events.online();
++  assert.deepEqual(actions, ['network-online', 'network-online']);
++  socket.onclose({code: 1006});
++  events.online();
++  window.translator.stop();
++  authenticate();
++  assert.deepEqual(actions, ['network-online', 'network-online', 'stop']);
++});
+diff --git a/server.cjs b/server.cjs
+index 84472bb..1e6dee0 100644
+--- a/server.cjs
++++ b/server.cjs
+@@ -148,6 +148,7 @@ function createTranslationServer({ port = 3210, host = '0.0.0.0', Bridge = Trans
+         clearTimeout(timeout); clearTimeout(presenterTimeout); client.canResume = message.canResume === true; authenticated = true; presenter = client; log('presenter.connected');
+         send(client, { authenticated: true, publication: { published: Boolean(publisher.published), publishing }, links: audienceLinks(), audienceUrl, viewers: audience.size, channels: channels.list(), running: channels.running, state: channels.state }); return;
+       }
++      if (message.action === 'network-online') { publisher.retryNow?.(); return; }
+       if (message.action === 'start-service') { void startService(client, message); return; }
+       if (message.action === 'publish-service') { if (channels.state === 'live') void publishService(); return; }
+       if (message.action === 'start' && typeof message.key === 'string' && message.key.trim() && message.key.length < 512) {
+diff --git a/transport.js b/transport.js
+index b608345..43eb18a 100644
+--- a/transport.js
++++ b/transport.js
+@@ -5,6 +5,15 @@
+   let authenticated = false;
+   let socket, delay = 500, stopPending = false;
+   const notify = message => callbacks.forEach(callback => callback(message));
++  let onlinePending = false;
++  function forwardOnline() {
++    onlinePending = true;
++    if (authenticated && socket.readyState === WebSocket.OPEN) {
++      socket.send(JSON.stringify({ action: 'network-online' }));
++      onlinePending = false;
++    }
++  }
++  window.addEventListener('online', forwardOnline);
+   function connect() {
+     socket = new WebSocket(`${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/presenter-ws`);
+     socket.onopen = () => socket.send(JSON.stringify({ token, canResume: true }));
+@@ -16,7 +25,8 @@
+         if (stopPending) {
+           socket.send(JSON.stringify({ action: 'stop' }));
+           stopPending = false;
+-        }
++          onlinePending = false;
++        } else if (onlinePending) forwardOnline();
+         for (const resolve of pending.splice(0)) resolve();
+       }
+       notify(message);

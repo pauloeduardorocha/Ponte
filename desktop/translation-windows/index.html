@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ponte · Tradução ao vivo</title><link rel="stylesheet" href="/style.css"></head>
+<body class="presenter"><main>
+<header class="brand"><img src="/logo.png" alt="A Ponte" width="44" height="44"><div><strong>A Ponte</strong><span>Tradução ao vivo · Computador da igreja</span></div></header>
+<p class="eyebrow">APRESENTADOR · CANAIS DE TRADUÇÃO</p><h1>Conhecer a Cristo e fazê-lo conhecido</h1>
+<section class="settings setup" aria-label="Configuração da transmissão">
+<label for="key">1. Chave Gemini API</label><input id="key" type="password" autocomplete="off" aria-required="true" placeholder="Cole sua chave do Google AI Studio"><small>Usada para gerar a tradução. Fica somente na memória durante o uso.</small>
+<label for="ponte-config">2. Ligação gerada pelo administrador</label><input id="ponte-config" type="password" autocomplete="off" aria-required="true" placeholder="Cole a ligação gerada na administração do Ponte"><small>Autoriza a publicação da transmissão no Ponte.</small>
+<p id="microphone-notice" role="alert" hidden></p><label for="microphone">3. Microfone</label><div class="microphone-row"><select id="microphone"><option value="">Padrão do sistema</option></select><button id="refresh">Atualizar microfones</button></div>
+<div class="service-controls"><button id="start" disabled>Iniciar tradução e publicar</button><button id="stop" disabled>Parar transmissão</button><span id="status" role="status">Conectando ao aplicativo…</span></div><p id="publication-status" role="status">A publicação será feita ao iniciar a tradução.</p>
+</section>
+<section class="channels-section" aria-labelledby="channels-title"><div class="heading"><h2 id="channels-title">Canais de tradução</h2><span id="channel-count">1 de 3 abertos</span></div><p class="channel-help">O idioma falado é detectado automaticamente. Abra até três canais e acompanhe cada tradução abaixo. Use fones para ouvir neste computador.</p><div id="channel-list" class="channel-grid" role="list" aria-label="Canais de tradução"></div><p id="channel-notice" role="status"></p></section>
+<section class="sharing direct-access" aria-labelledby="access-title"><div><div class="heading"><h2 id="access-title">Acesso direto para os ouvintes</h2><span id="viewers">0 ouvintes</span></div><p>Quem vai ouvir precisa estar no Wi-Fi da igreja. Compartilhe o link ou peça para ler o QR code.</p><a id="audience-link" class="direct-link" target="_blank" rel="noopener noreferrer" hidden></a><button id="copy-link" disabled>Copiar link</button><p id="link-status" role="status">Preparando acesso pela rede da igreja…</p></div><figure id="qr-panel" hidden><img id="audience-qr" width="180" height="180" alt="QR code para abrir os canais de tradução"><figcaption>Escaneie para escolher um canal</figcaption></figure></section>
+<footer>Mantenha este computador ligado e conectado à rede durante o culto.</footer>
+</main><script src="/languages.js"></script><script src="/transport.js"></script><script src="/renderer.js"></script></body></html>

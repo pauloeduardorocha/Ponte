@@ -1,0 +1,9 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>A Ponte</title><link rel="stylesheet" href="/style.css"></head>
+<body><main class="listener listener-minimal"><header class="brand"><img src="/logo.png" alt="A Ponte" width="48" height="48"><strong>A Ponte</strong></header>
+<div id="broadcast-notice" class="broadcast-notice" role="status" hidden><svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14v-3a8 8 0 0 1 16 0v3"/><rect x="3" y="12" width="4" height="8" rx="2"/><rect x="17" y="12" width="4" height="8" rx="2"/></svg><strong>Aguardando a transmissão</strong><p>Assim que começar, a tradução aparecerá aqui. Pode manter esta página aberta.</p></div>
+<p id="reconnect-portal" hidden>O computador da tradução não respondeu. <a href="https://igrejaponte.com/listen-translation">Voltar ao Ponte e reconectar à tradução</a></p>
+<div id="listener-channel" class="listener-channel-grid" data-count="0" role="group" aria-label="Canais de tradução"></div>
+<audio id="radio" preload="none" aria-label="Áudio do canal de tradução"></audio>
+<div id="text" dir="auto" role="log" aria-live="polite" aria-label="Texto da tradução" hidden></div>
+<span id="radio-status" class="screen-reader-only" role="status"></span><span id="status" class="screen-reader-only" role="status"></span><span id="channel-notice" class="screen-reader-only" role="status"></span>
+</main><script src="/language-flags.js"></script><script src="/radio.js"></script><script src="/audience.js"></script></body></html>

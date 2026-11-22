@@ -76,6 +76,10 @@
       "solution": "Abra Downloads, encontre o ZIP e use Extrair Tudo. Depois abra a pasta extraída e procure Ponte-Traducao.exe. Não procure o aplicativo na loja do Windows."
     },
     {
+      "problem": "A tradução caiu durante a transmissão",
+      "solution": "Na versão Windows 0.7.5, mantenha a janela aberta durante uma queda. O aplicativo tenta reconectar cada canal e retoma a partir da fala atual. O servidor aguarda a janela por até 10 minutos. Se esse prazo acabar, clique em Iniciar tradução e publicar. Anote o horário da queda e abra Ajuda → Abrir pasta de logs para consultar traducao.txt e o arquivo anterior, traducao.txt.1."
+    },
+    {
       "problem": "O microfone não aparece ou não capta a voz",
       "solution": "Confira se o cabo está conectado e se o microfone está ligado. Clique em Atualizar microfones e selecione-o novamente. Nas Configurações do Windows, pesquise Microfone e confira a permissão de acesso para aplicativos de área de trabalho."
     },

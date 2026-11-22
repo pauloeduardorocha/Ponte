@@ -12,6 +12,7 @@ export default tseslint.config(
       '**/coverage/**',
       '**/node_modules/**',
       'tmp/**',
+      'desktop/translation-windows/qr-code.cjs',
     ],
   },
   eslint.configs.recommended,
@@ -43,6 +44,25 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },
+  },
+  {
+    files: ['desktop/translation-windows/*.{js,cjs}'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser, AudioWorkletProcessor: 'readonly', registerProcessor: 'readonly' },
+    },
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
+  {
+    files: ['desktop/translation-windows/{*.test,smoke-*,*-smoke}.cjs'],
+    rules: { '@typescript-eslint/no-this-alias': 'off' },
+  },
+  {
+    files: ['desktop/translation-windows/playback.js'],
+    languageOptions: { sourceType: 'script', globals: { LocalAudioCodec: 'readonly' } },
+    rules: { '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^TranslationPlayback$' }] },
   },
   {
     files: ['scripts/*.mjs'],
